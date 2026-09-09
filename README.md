@@ -26,6 +26,7 @@ GoDental/
 │   └── GoDental.Tests/
 ├── database/
 ├── docs/
+├── scripts/
 └── .github/
 ```
 
@@ -46,6 +47,24 @@ Reglas principales:
 4. Configurar localmente la conexión SQL; `appsettings.local.json` está ignorado por Git.
 5. Restaurar paquetes NuGet y compilar la solución.
 
+## Probar antes de subir cambios
+
+Desde PowerShell en la raíz del repositorio:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+Ese script ejecuta Restore + Build Release + Tests + Coverage, equivalente al pipeline principal de GitHub Actions. Los resultados quedan en `TestResults/`.
+
+También puedes ejecutar las pruebas desde **Visual Studio → Test → Test Explorer**.
+
+## GitHub / CI
+
+Cada Pull Request a `main` y cada push a `main` ejecuta CI automáticamente. También puede lanzarse manualmente desde **Actions → CI → Run workflow**. Los resultados y cobertura se publican como artifacts descargables.
+
+Guía completa: [`docs/GITHUB.md`](docs/GITHUB.md).
+
 ## Configuración sensible
 
 Nunca subir connection strings reales, contraseñas, tokens, certificados, `.bak`, logs o secretos fiscales/comerciales. Los valores locales viven fuera del control de versiones.
@@ -62,5 +81,6 @@ La documentación fuente vive en `docs/` y es la referencia para decisiones func
 
 - Ramas: `feature/...`, `fix/...`, `chore/...`.
 - `main` debe mantenerse integrable.
-- Ejecutar `dotnet build GoDental.sln -c Release` y `dotnet test GoDental.sln -c Release` antes de integrar cambios relevantes.
+- Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.
+- Instrucciones para agentes/asistentes de programación: `AGENTS.md`.

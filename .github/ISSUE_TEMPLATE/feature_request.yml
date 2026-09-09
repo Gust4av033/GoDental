@@ -1,0 +1,62 @@
+name: Mejora o nueva funcionalidad
+description: Propón una mejora alineada con la documentación vigente de GoDental.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de proponer una regla nueva, revisa DM-01 y el documento funcional del módulo correspondiente.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema u oportunidad
+      description: ¿Qué necesidad real del negocio quieres resolver?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+      description: Describe el comportamiento esperado sin entrar todavía en implementación innecesaria.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Módulo
+      options:
+        - Arquitectura
+        - UX / Design System
+        - Seguridad
+        - Inventario
+        - Ventas / POS
+        - Caja / Crédito
+        - Compras / Importaciones
+        - Fiscal / DTE
+        - Comercial / Online
+        - Reportes
+        - Base de datos
+        - DevOps / GitHub
+        - Otro
+    validations:
+      required: true
+
+  - type: input
+    id: docs
+    attributes:
+      label: Documento relacionado
+      description: Ejemplo ARQ-01, VEN-01, INV-01. Déjalo vacío si todavía no está definido.
+      placeholder: VEN-01 v0.1
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
