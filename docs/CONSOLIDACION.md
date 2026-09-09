@@ -13,6 +13,6 @@ La incidencia [GoDentalAPP #1 — Problemas](https://github.com/Gust4av033/GoDen
 
 Se obtuvieron copias mirror completas de los dos repositorios y se verificaron con `git fsck --full` sin errores. Se mantienen fuera del nuevo repositorio para no incorporar configuraciones e historial legado.
 
-La limpieza prevista consiste en archivar ambos repositorios después de publicar GoDental y verificar su contenido. El archivado preserva código, commits e incidencias; no se elimina ningún repositorio. El estado de ejecución se informa al cerrar la tarea.
+El 8 de septiembre de 2026 se publicó GoDental como repositorio privado, se verificó su contenido en main y se archivaron GoDentalAPP y DepositoDental. GitHub confirmó ambos archivados. El archivado preserva código, commits e incidencias; no se eliminó ningún repositorio.
 
 Si se reutiliza código posteriormente, revisar compatibilidad con DM-01/DB-01 y conservar los avisos Apache-2.0 de los originales cuando corresponda. No se ha asignado una licencia nueva al proyecto.
