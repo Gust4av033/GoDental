@@ -61,8 +61,28 @@ Las plantillas de `.github/ISSUE_TEMPLATE/` separan errores de nuevas funcionali
 
 `.github/dependabot.yml` revisa semanalmente paquetes NuGet y GitHub Actions. Cuando encuentre actualizaciones, propondrá Pull Requests en vez de modificar dependencias silenciosamente.
 
-## Configuración administrativa recomendada
+## Protección recomendada para main
 
-`main` debe protegerse desde GitHub Settings/Rules para requerir Pull Request y CI exitoso antes del merge. Esta configuración vive en GitHub, no dentro del repositorio.
+Actualmente esta política se configura en GitHub y no mediante un archivo del repositorio.
 
-También es recomendable mantener activadas las funciones de seguridad que el plan del repositorio permita, especialmente alertas de dependencias y detección de secretos.
+En **Settings → Rules → Rulesets** crea una regla dirigida a la rama `main` y activa, como mínimo:
+
+- Require a pull request before merging.
+- Require status checks to pass before merging.
+- Seleccionar el check `Build & Test` cuando ya aparezca disponible.
+- Require branches to be up to date before merging.
+- Require conversation resolution before merging.
+- Bloquear force pushes.
+- No permitir deletions de `main`.
+
+Si trabajas solo, no es necesario exigir una aprobación de otra persona todavía; el objetivo inicial es impedir que se integre código sin PR y sin CI verde.
+
+## Seguridad del repositorio
+
+Mantén activadas las funciones que permita el plan del repositorio, especialmente:
+
+- Dependabot alerts.
+- Dependency graph.
+- Secret scanning / push protection cuando estén disponibles.
+
+No guardes secrets de SQL Server, DTE, Meta/WhatsApp ni otros proveedores en el repositorio. Cuando una integración requiera secretos para CI o despliegue, deben ir en GitHub Secrets/Environments, no en `appsettings.json`.
