@@ -1,9 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GoDental.Infrastructure</RootNamespace>
+    <AssemblyName>GoDental.Infrastructure</AssemblyName>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../GoDental.Application/GoDental.Application.csproj" />
-    <ProjectReference Include="../GoDental.Domain/GoDental.Domain.csproj" />
+    <ProjectReference Include="..\GoDental.Application\GoDental.Application.csproj" />
+    <ProjectReference Include="..\GoDental.Domain\GoDental.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="QuestPDF" />
   </ItemGroup>
 </Project>

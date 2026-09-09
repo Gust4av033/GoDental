@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GoDental.Domain</RootNamespace>
+    <AssemblyName>GoDental.Domain</AssemblyName>
   </PropertyGroup>
 </Project>

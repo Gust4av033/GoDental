@@ -1,8 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GoDental.Application</RootNamespace>
+    <AssemblyName>GoDental.Application</AssemblyName>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../GoDental.Domain/GoDental.Domain.csproj" />
+    <ProjectReference Include="..\GoDental.Domain\GoDental.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 </Project>

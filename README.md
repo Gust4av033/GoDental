@@ -1,64 +1,66 @@
 # GoDental
 
-Sistema de gestión de un depósito de insumos odontológicos en El Salvador.
-Base del proyecto según **DM-01 v0.2** y **DB-01 v0.1** del 6 de septiembre de 2026.
+GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
-## Estado
+## Stack
 
-Repositorio inicial de documentación y arquitectura C#. Los proyectos establecen las dependencias entre capas; todavía no implementan ventas, login, persistencia ni una interfaz operativa.
-DB-01 continúa como borrador técnico: no se incluyen scripts SQL ejecutables ni una base de producción.
+- .NET 8 + C# 12
+- WPF / MVVM
+- SQL Server central
+- Dapper + Microsoft.Data.SqlClient
+- Microsoft.Extensions.Hosting / Dependency Injection
+- QuestPDF
+- xUnit
 
-## Tecnología definida
+## Arquitectura
 
-C# · .NET 8 · WPF/MVVM · SQL Server central · Dapper · QuestPDF · Microsoft.Extensions.DependencyInjection.
-Las bibliotecas externas se incorporarán con versiones revisadas al implementar cada módulo; este esqueleto todavía no las instala.
+```text
+GoDental/
+├── GoDental.sln
+├── src/
+│   ├── GoDental.Domain/
+│   ├── GoDental.Application/
+│   ├── GoDental.Infrastructure/
+│   └── GoDental.Wpf/
+├── tests/
+│   └── GoDental.Tests/
+├── database/
+├── docs/
+└── .github/
+```
+
+Reglas principales:
+
+1. `Domain` no conoce WPF, Dapper, SQL Server ni QuestPDF.
+2. `Application` depende únicamente de `Domain` y define contratos/casos de uso.
+3. `Infrastructure` implementa acceso a datos, archivos, PDF e integraciones.
+4. `Wpf` es UI + composition root; no contiene SQL ni lógica transaccional.
+5. Las operaciones críticas se validan en SQL Server y deben ser seguras para múltiples PCs.
+6. No se crea `GoDental.Worker` hasta que exista una tarea que deba ejecutarse con WPF cerrado.
+
+## Abrir en Visual Studio
+
+1. Clonar el repositorio.
+2. Abrir `GoDental.sln` en Visual Studio 2022 con el workload **.NET desktop development** y SDK .NET 8 instalado.
+3. Copiar `src/GoDental.Wpf/appsettings.local.example.json` a `appsettings.local.json`.
+4. Configurar localmente la conexión SQL; `appsettings.local.json` está ignorado por Git.
+5. Restaurar paquetes NuGet y compilar la solución.
+
+## Configuración sensible
+
+Nunca subir connection strings reales, contraseñas, tokens, certificados, `.bak`, logs o secretos fiscales/comerciales. Los valores locales viven fuera del control de versiones.
+
+## Base de datos
+
+`database/` conserva la secuencia 001–008 definida por la arquitectura. Los archivos actuales son marcadores de estructura hasta incorporar los scripts SQL v0.1 aprobados; no contienen un esquema inventado.
 
 ## Documentación
 
-- [Documento Maestro DM-01](docs/DM-01.md)
-- [Modelo de datos DB-01](docs/DB-01.md)
-- [Arquitectura y dependencias](docs/ARQUITECTURA.md)
-- [Roadmap y pendientes](docs/ROADMAP.md)
-- [Consolidación de repositorios anteriores](docs/CONSOLIDACION.md)
-- [Documentos originales y hashes](docs/referencias/)
-
-Las transcripciones Markdown facilitan la lectura en GitHub; los documentos originales conservan las tablas y el formato normativo.
-
-## Estructura
-
-```text
-GoDental.sln
-src/
-  GoDental.Domain/
-  GoDental.Application/
-  GoDental.Infrastructure/
-  GoDental.Wpf/
-database/           # plan de evolución SQL, pendiente de revisión de DB-01
-docs/               # documentación vigente y referencias originales
-```
-
-GoDental.Worker está reservado para una fase futura y aún no se crea.
+La documentación fuente vive en `docs/` y es la referencia para decisiones funcionales/técnicas. Si el código necesita contradecir una regla documentada, primero se versiona la decisión; no se introduce una excepción silenciosa.
 
 ## Desarrollo
 
-En Windows, instalar el SDK de .NET 8 y las herramientas de escritorio .NET/WPF.
-
-```powershell
-dotnet restore GoDental.sln
-dotnet build GoDental.sln --configuration Release --no-restore
-```
-
-Wpf es por ahora una biblioteca de presentación, sin ventana de inicio. Se convertirá en aplicación ejecutable durante la fase 2, junto con MVVM, DI, navegación, temas y login.
-No se necesita una conexión SQL para compilar esta base.
-
-## Reglas esenciales
-
-- View → ViewModel → Application → Repository → SQL Server; ninguna View ejecuta SQL.
-- Una venta completa es atómica y no permite stock negativo ni correlativos duplicados.
-- Inventario trazable y promedio ponderado móvil con costo puesto en bodega.
-- Permisos granulares y auditoría; el administrador también puede vender.
-- Venta y documento fiscal separados; DTE y Online son integraciones futuras.
-- Backups diarios `.bak`; nunca sincronizar MDF/LDF activos con OneDrive.
-- Ramas por cambio y PR para integrar cambios relevantes a `main`.
-
-No agregar credenciales, datos reales de clientes, backups ni archivos de producción.
+- Ramas: `feature/...`, `fix/...`, `chore/...`.
+- `main` debe mantenerse integrable.
+- Ejecutar `dotnet build GoDental.sln -c Release` y `dotnet test GoDental.sln -c Release` antes de integrar cambios relevantes.
+- Convenciones adicionales: `CONTRIBUTING.md`.

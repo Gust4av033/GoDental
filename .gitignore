@@ -1,22 +1,39 @@
+# Visual Studio / .NET
+.vs/
 **/bin/
 **/obj/
-.vs/
-.idea/
-**/publish/
-**/logs/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+artifacts/
+
+# Runtime / local data
+logs/
 *.log
-.env
-.env.*
-!.env.example
-appsettings.Local.json
-appsettings.Production.json
-**/secrets.json
 *.bak
 *.mdf
 *.ldf
-*.pfx
-*.p12
-*.key
-TestResults/
+*.tmp
+*.temp
+
+# Local configuration / secrets
+appsettings.local.json
+**/appsettings.local.json
+*.secrets.json
+.env
+.env.*
+!.env.example
+
+# Generated documents / exports
+exports/
+temp/
+*.generated.pdf
+
+# OS / tooling
+.DS_Store
+Thumbs.db
+.idea/
+_ReSharper*/
+*.DotSettings.user
