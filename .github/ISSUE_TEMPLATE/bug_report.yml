@@ -1,0 +1,63 @@
+name: Reporte de error
+description: Reporta un comportamiento incorrecto o una regresión en GoDental.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar el problema. No incluyas contraseñas, connection strings ni datos reales de clientes.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Descripción
+      description: ¿Qué ocurrió y qué esperabas que ocurriera?
+      placeholder: Describe el problema de forma concreta.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      placeholder: |
+        1. Abrir...
+        2. Ir a...
+        3. Ejecutar...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit o versión
+      description: SHA, rama o versión donde ocurre.
+      placeholder: main / abc1234
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - WPF / UI
+        - Seguridad / Login
+        - Inventario
+        - Ventas / POS
+        - Caja / Crédito
+        - Compras / Importaciones
+        - Fiscal / DTE
+        - Comercial / Online
+        - SQL Server / Base de datos
+        - CI / GitHub
+        - Otro
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Evidencia técnica
+      description: Pega sólo el error relevante o adjunta captura. Elimina secretos y datos sensibles.
+      render: shell
