@@ -5,12 +5,18 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-test:
+    name: Build & Test
     runs-on: windows-latest
     timeout-minutes: 15
 
@@ -22,6 +28,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
 
       - name: Restore
         run: dotnet restore GoDental.sln
@@ -30,4 +40,13 @@ jobs:
         run: dotnet build GoDental.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage"
+        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger "trx;LogFileName=godental-tests.trx" --results-directory TestResults
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: TestResults/**
+          if-no-files-found: warn
+          retention-days: 14
