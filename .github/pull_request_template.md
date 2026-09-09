@@ -1,11 +1,21 @@
-## Cambio
+## Qué cambia
 
-Describir el problema y el comportamiento resultante.
+<!-- Resumen corto y concreto. -->
+
+## Módulo / capa
+
+- [ ] Domain
+- [ ] Application
+- [ ] Infrastructure
+- [ ] WPF
+- [ ] Database
+- [ ] Docs
 
 ## Validación
 
-Indicar compilación y pruebas realizadas.
-
-## Documentación
-
-Indicar decisiones DM-01/DB-01 afectadas y pendientes.
+- [ ] Compila en Release
+- [ ] Pruebas ejecutadas
+- [ ] Sin secretos/configuración local
+- [ ] Permisos/seguridad revisados si aplica
+- [ ] Concurrencia/transacción revisada si aplica
+- [ ] Documentación actualizada si cambia una decisión

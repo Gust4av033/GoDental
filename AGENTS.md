@@ -1,11 +1,14 @@
 # Instrucciones de GoDental
 
-- Responder en español. Lenguaje principal C# y base SQL Server.
-- Consultar docs/DM-01.md, docs/DB-01.md y sus originales antes de diseñar módulos.
-- Conservar las referencias originales; decisiones nuevas se documentan con estado y versión.
-- Mantener .NET 8, WPF/MVVM, Dapper, QuestPDF y DI definidos en DM-01; no sustituir tecnologías silenciosamente.
-- Domain no depende de WPF ni persistencia. La UI no ejecuta SQL.
-- No inventar aprobación de DB-01 ni reglas pendientes.
-- No incluir secretos, respaldos o datos reales de clientes.
-- Probar atomicidad y concurrencia cuando se implementen operaciones críticas.
-- main debe compilar; usar ramas y PR para cambios relevantes.
+- Responder y documentar decisiones del proyecto en español. Lenguaje principal: C#; base de datos: SQL Server.
+- Antes de diseñar o implementar un módulo, consultar DM-01, DB-01 y ARQ-01, más el documento funcional correspondiente bajo `docs/`.
+- ARQ-01 manda la ubicación del código: Domain → Application → Infrastructure/WPF según responsabilidades; no romper dependencias silenciosamente.
+- Mantener .NET 8, WPF/MVVM, Dapper, QuestPDF y Microsoft.Extensions DI/Host salvo decisión arquitectónica versionada.
+- Domain no depende de persistencia/UI. Application no depende de WPF ni implementaciones SQL. Infrastructure no depende de Views/ViewModels. WPF no ejecuta SQL.
+- No usar Service Locator, `GenericRepository<T>`, estado global mutable para concurrencia, `.Result`, `.Wait()` ni `Thread.Sleep` en UI.
+- No inventar tablas, procedimientos, reglas fiscales, proveedores externos o decisiones marcadas como pendientes. Si falta una definición, documentarla antes de implementarla.
+- No incluir secretos, credenciales, backups, datos reales de clientes, PAN/CVV, certificados ni configuración local sensible.
+- Operaciones críticas deben contemplar transacción, concurrencia multi-PC, permisos y auditoría según SEC-01.
+- Toda View nueva debe respetar UX-01: recursos compartidos, Light/Dark, estados loading/empty/error, accesibilidad y 1366×768.
+- `main` debe mantenerse integrable. Usar ramas `feature/`, `fix/` o `chore/` y PR para cambios relevantes.
+- Antes de integrar: `dotnet build GoDental.sln -c Release` y `dotnet test GoDental.sln -c Release`.

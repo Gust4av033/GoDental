@@ -1,18 +1,18 @@
-# Evolución de SQL Server
+# Base de datos
 
-DB-01 v0.1 es el modelo de referencia, todavía en revisión. No hay scripts ejecutables en este directorio.
+La arquitectura aprobada define una secuencia SQL 001–008. Este repositorio conserva desde el inicio los nombres y el orden para evitar que cada módulo invente su propia estructura.
 
-Plan de DB-01, sección 11:
+> **Importante:** los archivos 001–008 presentes aquí son marcadores y todavía no contienen el SQL aprobado. No deben ejecutarse como migraciones reales hasta sustituir su contenido por los scripts SQL v0.1 formalmente validados contra DB-01.
 
-| Script previsto | Contenido |
-| --- | --- |
-| 001_Core.sql | Base, esquemas, seguridad, sistema, catálogos |
-| 002_Inventario.sql | Productos, lotes, saldos, kardex, conteos |
-| 003_Compras.sql | Proveedores, OC, importación, recepción, costeo |
-| 004_ClientesVentas.sql | Clientes, caja, precios, ventas, crédito, devoluciones |
-| 005_Fiscal_Base.sql | Cimientos fiscales desacoplados |
-| 006_Comercial_Base.sql | Cimientos de prospectos y campañas |
-| 007_Seed.sql | Roles, permisos, catálogos y parámetros |
-| 008_ViewsProcedures.sql | Operaciones críticas y reportes validados |
+Orden:
 
-Crear los scripts después de revisar el diseño. No generar ni incluir backups, datos reales o credenciales. Antes de producción se requieren pruebas de concurrencia, rollback, correlativos, integridad de pagos y restauración de backups.
+1. `001_Core.sql`
+2. `002_Inventario.sql`
+3. `003_Compras.sql`
+4. `004_ClientesVentas.sql`
+5. `005_Fiscal_Base.sql`
+6. `006_Comercial_Base.sql`
+7. `007_Seed.sql`
+8. `008_ViewsProcedures.sql`
+
+Una vez un script haya sido ejecutado en producción, no se reescribe como si nunca hubiera ocurrido; los cambios posteriores deben tener estrategia de migración/versionado.
