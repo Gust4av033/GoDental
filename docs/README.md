@@ -12,6 +12,7 @@ Los documentos fuente vigentes se organizan por código dentro de este directori
 | INV-01 | Inventario, Productos, Lotes, Costeo y Trazabilidad | v0.1 |
 | IMP-01 | Compras, Proveedores, Importaciones, DHL, Recepciones y Costeo | v0.1 |
 | VEN-01 | Ventas, POS, Precios, Descuentos, Caja, Pagos, Crédito y Devoluciones | v0.1 |
+| VEN-01A | Cierre de pendientes comerciales previos al desarrollo | v0.1 |
 | FIS-01 | Fiscal, Facturación, DTE y Crédito Fiscal | v0.1 |
 | ONL-01 | Prospección, Campañas y Conversión | v0.1 |
 
@@ -23,5 +24,6 @@ Los documentos fuente vigentes se organizan por código dentro de este directori
 - **SEC-01**: seguridad transversal, permisos, sesión y auditoría.
 - **UX-01**: implementación visual y consistencia WPF.
 - **INV/IMP/VEN/FIS/ONL**: reglas y flujos de sus módulos.
+- **VEN-01A**: complementa VEN-01 y fija la precedencia de precios/promociones antes del desarrollo; cuando trate esa materia, prevalece sobre las propuestas provisionales de VEN-01 v0.1.
 
 Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en la fuente correspondiente; no se corrige silenciosamente desde C#.
