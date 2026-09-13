@@ -1,8 +1,48 @@
-# Validación inicial
+# Validación de baseline v0.1
 
-- Los cuatro proyectos de GoDental.sln compilaron en Release con cero errores y cero advertencias.
-- Validación local con SDK 10.0.101, manteniendo destinos net8.0 y net8.0-windows según DM-01.
-- No existen casos de uso implementados; esta compilación valida la estructura, no comportamiento comercial ni conexión SQL.
-- Los dos DOCX se copiaron sin modificaciones; sus hashes SHA-256 están registrados en docs/referencias/SHA256.json.
-- Los mirrors de los repositorios anteriores pasaron git fsck --full.
-- No se ejecutaron migraciones ni operaciones contra bases de datos.
+## Solución .NET
+
+- La solución mantiene cuatro proyectos: Domain, Application, Infrastructure y WPF, más el proyecto de pruebas.
+- El destino oficial es .NET 8 / C# 12; WPF usa `net8.0-windows`.
+- La composición usa Generic Host + Dependency Injection.
+- El flujo de GitHub Actions ejecuta restore, build Release, tests y cobertura en Windows y ya cuenta con ejecuciones satisfactorias en `main`.
+- `scripts/verify.ps1` reproduce localmente restore + build + tests + coverage.
+
+## Estructura del repositorio
+
+- La estructura está alineada con ARQ-01.
+- La carpeta de PDF de Infrastructure quedó normalizada como `Pdf/`; se eliminó la variante duplicada `PDF/`.
+- Visual Studio 2022 es el IDE de referencia para el desarrollo del proyecto.
+
+## SQL v0.1
+
+Se revisó estáticamente la secuencia completa `database/001` a `008` contra DB-01 y la documentación funcional vigente.
+
+Resultados:
+
+- `001`–`006` crean **72 tablas**; DB-01 documenta exactamente las mismas 72 tablas.
+- No se detectaron tablas faltantes ni tablas adicionales fuera del modelo aprobado.
+- Las referencias cruzadas principales entre esquemas/scripts resuelven dentro de la baseline.
+- Se utilizan PK, FK, CHECK, índices y ROWVERSION de acuerdo con el diseño.
+- No se utilizan triggers.
+- `007_Seed.sql` es idempotente, no crea credenciales administrativas por defecto y activa la precedencia comercial definida en VEN-01A.
+- `008_ViewsProcedures.sql` contiene **8 vistas** y **12 procedimientos almacenados**.
+- Las operaciones críticas de venta, caja, abonos, correlativos y recepción de compra usan transacciones explícitas y mecanismos de bloqueo para concurrencia.
+
+### Límite de esta validación
+
+En este entorno no se ejecutó la secuencia sobre una instancia real de SQL Server. Por tanto, la baseline está aprobada para integración y desarrollo, pero la instalación del motor debe certificarse ejecutando `001 → 008` sobre una base local/de desarrollo antes de producción.
+
+## Decisión VEN-01A
+
+VEN-01A cierra la precedencia de precios que VEN-01 v0.1 había dejado pendiente:
+
+**lista base → condición/tipo de cliente → comparación con promoción → mejor precio válido → descuento manual autorizado**.
+
+No existe acumulación automática entre beneficios; una promoción sólo se acumula cuando está marcada expresamente como acumulable. `007_Seed.sql` refleja esta decisión con `Precios.PrecedenciaDefinida = true`.
+
+## Alcance pendiente intencional
+
+No forman parte de la baseline funcional inicial y continúan como evolución/preproducción: integración DTE real con Hacienda, proveedor definitivo de tarjeta, automatizaciones externas de WhatsApp/Instagram/Facebook y otras decisiones operativas que VEN-01A clasifica como diferidas.
+
+Esta validación certifica el **punto de partida técnico/documental del repositorio**, no una aplicación funcional terminada.
