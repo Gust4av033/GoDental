@@ -4,9 +4,11 @@ using Microsoft.Data.SqlClient;
 
 internal static class DevelopmentDatabase
 {
+    // Sólo el ejecutable de pruebas permite LocalDB; no cambia la conexión del producto.
+    public static string TestServer { get; set; } = "localhost";
     public static string ConnectionString(string database) => new SqlConnectionStringBuilder
     {
-        DataSource = "localhost", InitialCatalog = database, IntegratedSecurity = true,
+        DataSource = TestServer, InitialCatalog = database, IntegratedSecurity = true,
         Encrypt = SqlConnectionEncryptOption.Mandatory, TrustServerCertificate = true, ConnectTimeout = 5
     }.ConnectionString;
 
@@ -38,6 +40,7 @@ internal static class DevelopmentDatabase
             Console.WriteLine("SQL " + Path.GetFileName(file));
         }
         var counts = await connection.QuerySingleAsync("SELECT (SELECT COUNT(*) FROM sys.tables) Tables,(SELECT COUNT(*) FROM sys.views) Views,(SELECT COUNT(*) FROM sys.procedures) Procedures");
-        if ((int)counts.Tables != 72 || (int)counts.Views != 8 || (int)counts.Procedures != 12) throw new InvalidOperationException("Objetos de baseline incompletos.");
+        if ((int)counts.Tables != 72 || (int)counts.Views != 8 || (int)counts.Procedures != 14) throw new InvalidOperationException("Objetos de baseline incompletos.");
     }
 }
+

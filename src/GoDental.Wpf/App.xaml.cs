@@ -51,6 +51,8 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ConnectionViewModel>();
                     services.AddSingleton<AccessViewModel>();
+                    services.AddSingleton<InventoryViewModel>();
+                    services.AddSingleton<CategoriesViewModel>();
                     services.AddSingleton<ProductsViewModel>();
                     services.AddSingleton<UsersViewModel>();
                     services.AddSingleton<ShellViewModel>();
@@ -107,3 +109,4 @@ public partial class App : System.Windows.Application
         base.OnExit(e);
     }
 }
+

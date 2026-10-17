@@ -17,6 +17,7 @@ public sealed class ProductData
     public decimal AvailableStock { get; set; }
     public bool TracksLot { get; set; }
     public bool TracksExpiry { get; set; }
+    public short? ExpiryAlertDays { get; set; }
     public bool TracksSerial { get; set; }
     public bool Active { get; set; } = true;
     public byte[] RowVersion { get; set; } = [];
@@ -29,5 +30,6 @@ public sealed class CatalogOption
     public override string ToString() => Name;
 }
 public sealed record ProductCatalogs(IReadOnlyList<CatalogOption> Categories, IReadOnlyList<CatalogOption> Brands, IReadOnlyList<CatalogOption> Units);
-public sealed record ProductSearch(string Search = "", bool IncludeInactive = false, int Page = 1, int PageSize = 30);
+public sealed record ProductSearch(string Search = "", bool IncludeInactive = false, int Page = 1, int PageSize = 30, int? CategoryId = null, int? BrandId = null, bool LowStockOnly = false);
 public sealed record ProductPage(IReadOnlyList<ProductData> Items, int Total);
+

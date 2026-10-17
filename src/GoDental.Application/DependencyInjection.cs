@@ -11,7 +11,10 @@ public static class DependencyInjection
         services.AddSingleton<ISessionController, UserSession>();
         services.AddSingleton<IUserSession>(provider => provider.GetRequiredService<ISessionController>());
         services.AddTransient<ProductService>();
+        services.AddTransient<InventoryService>();
+        services.AddTransient<CategoryService>();
         services.AddTransient<UserManagementService>();
         return services;
     }
 }
+

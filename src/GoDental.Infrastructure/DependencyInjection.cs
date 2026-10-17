@@ -24,9 +24,12 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddTransient<IIdentityGateway, SqlIdentityGateway>();
         services.AddTransient<IProductRepository, SqlProductRepository>();
+        services.AddTransient<IInventoryRepository, SqlInventoryRepository>();
+        services.AddTransient<ICategoryRepository, SqlCategoryRepository>();
         services.AddTransient<IUserRepository, SqlUserRepository>();
         services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();
 
         return services;
     }
 }
+

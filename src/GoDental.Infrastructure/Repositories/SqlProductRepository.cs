@@ -12,7 +12,7 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
     private const string Columns = """
         p.IdProducto Id,p.SKU Sku,p.Nombre Name,p.Descripcion Description,p.IdCategoria CategoryId,p.IdMarca BrandId,
         p.IdUnidadMedida UnitId,c.Nombre Category,u.Codigo Unit,p.PrecioVentaReferencia Price,p.StockMinimo MinimumStock,
-        p.StockMaximo MaximumStock,p.ControlaLote TracksLot,p.ControlaVencimiento TracksExpiry,p.ControlaSerie TracksSerial,p.Activo Active,p.RowVersion,
+        p.StockMaximo MaximumStock,p.ControlaLote TracksLot,p.ControlaVencimiento TracksExpiry,p.ControlaSerie TracksSerial,p.DiasAlertaVencimiento ExpiryAlertDays,p.Activo Active,p.RowVersion,
         ISNULL((SELECT SUM(ep.StockActual-ep.StockReservado) FROM inv.ExistenciasProducto ep JOIN inv.Almacenes a ON a.IdAlmacen=ep.IdAlmacen AND a.Activo=1 WHERE ep.IdProducto=p.IdProducto),0) AvailableStock
         """;
 
@@ -20,10 +20,12 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
     {
         await using var c = await factory.OpenConnectionAsync(cancellationToken);
         var filter = """
-            WHERE (@IncludeInactive=1 OR p.Activo=1) AND (@Search=N'' OR CHARINDEX(@Search,p.SKU)>0 OR CHARINDEX(@Search,p.Nombre)>0
+            WHERE (@CategoryId IS NULL OR p.IdCategoria=@CategoryId) AND (@BrandId IS NULL OR ISNULL(p.IdMarca,0)=@BrandId)
+            AND (@LowStockOnly=0 OR ISNULL((SELECT SUM(e.StockActual-e.StockReservado) FROM inv.ExistenciasProducto e JOIN inv.Almacenes a ON a.IdAlmacen=e.IdAlmacen AND a.Activo=1 WHERE e.IdProducto=p.IdProducto),0)<=p.StockMinimo)
+            AND (@IncludeInactive=1 OR p.Activo=1) AND (@Search=N'' OR CHARINDEX(@Search,p.SKU)>0 OR CHARINDEX(@Search,p.Nombre)>0
             OR EXISTS(SELECT 1 FROM inv.ProductoCodigosBarra cb WHERE cb.IdProducto=p.IdProducto AND cb.Activo=1 AND cb.Codigo=@Search))
             """;
-        var parameters = new { search.Search, search.IncludeInactive, Offset = checked((search.Page - 1) * search.PageSize), search.PageSize };
+        var parameters = new { search.Search, search.IncludeInactive, search.CategoryId, search.BrandId, search.LowStockOnly, Offset = checked((search.Page - 1) * search.PageSize), search.PageSize };
         using var grid = await c.QueryMultipleAsync(new CommandDefinition($"""
             SELECT COUNT(*) FROM inv.Productos p {filter};
             SELECT {Columns} FROM inv.Productos p JOIN cat.CategoriasProducto c ON c.IdCategoria=p.IdCategoria
@@ -53,9 +55,9 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
         {
             if (!await HasPermissionAsync(c, tx, userId, cancellationToken)) return Result<int>.Failure("FORBIDDEN", "El permiso para gestionar productos ya no está disponible.");
             var catalogsValid = await c.ExecuteScalarAsync<int>(Cmd("""
-                SELECT CASE WHEN EXISTS(SELECT 1 FROM cat.CategoriasProducto WHERE IdCategoria=@CategoryId AND Activo=1)
-                AND EXISTS(SELECT 1 FROM cat.UnidadesMedida WHERE IdUnidadMedida=@UnitId AND Activo=1)
-                AND (@BrandId IS NULL OR EXISTS(SELECT 1 FROM cat.Marcas WHERE IdMarca=@BrandId AND Activo=1)) THEN 1 ELSE 0 END;
+                SELECT CASE WHEN EXISTS(SELECT 1 FROM cat.CategoriasProducto WITH(HOLDLOCK) WHERE IdCategoria=@CategoryId AND Activo=1)
+                AND EXISTS(SELECT 1 FROM cat.UnidadesMedida WITH(HOLDLOCK) WHERE IdUnidadMedida=@UnitId AND Activo=1)
+                AND (@BrandId IS NULL OR EXISTS(SELECT 1 FROM cat.Marcas WITH(HOLDLOCK) WHERE IdMarca=@BrandId AND Activo=1)) THEN 1 ELSE 0 END;
                 """, product, tx, cancellationToken));
             if (catalogsValid == 0) return Result<int>.Failure("CATALOG_CHANGED", "La categoría, marca o unidad ya no está activa. Recarga los catálogos.");
             ProductData? previous = null;
@@ -63,6 +65,8 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
             {
                 previous = await c.QuerySingleOrDefaultAsync<ProductData>(Cmd($"SELECT {Columns} FROM inv.Productos p WITH(UPDLOCK,HOLDLOCK) JOIN cat.CategoriasProducto c ON c.IdCategoria=p.IdCategoria JOIN cat.UnidadesMedida u ON u.IdUnidadMedida=p.IdUnidadMedida WHERE p.IdProducto=@Id", product, tx, cancellationToken));
                 if (previous is null || !previous.RowVersion.SequenceEqual(product.RowVersion)) return Result<int>.Failure("CONCURRENCY_CONFLICT", "Otra estación modificó este producto. Recarga y revisa los cambios antes de guardar.");
+                if (previous.Sku != product.Sku && await c.ExecuteScalarAsync<int>(Cmd("SELECT COUNT(*) FROM inv.MovimientosInventario WHERE IdProducto=@Id;", product, tx, cancellationToken)) > 0)
+                    return Result<int>.Failure("TRACEABILITY", "El SKU tiene movimientos y debe conservarse para trazabilidad.");
                 if ((previous.TracksLot != product.TracksLot || previous.TracksExpiry != product.TracksExpiry || previous.TracksSerial != product.TracksSerial || previous.UnitId != product.UnitId) &&
                     await c.ExecuteScalarAsync<int>(Cmd("""
                         SELECT CASE WHEN EXISTS(SELECT 1 FROM inv.MovimientosInventario WHERE IdProducto=@Id)
@@ -73,15 +77,15 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
             }
             var id = product.Id == 0
                 ? await c.ExecuteScalarAsync<int>(Cmd("""
-                    INSERT INTO inv.Productos(SKU,Nombre,Descripcion,IdCategoria,IdMarca,IdUnidadMedida,PrecioVentaReferencia,StockMinimo,StockMaximo,ControlaLote,ControlaVencimiento,ControlaSerie,Activo)
-                    OUTPUT INSERTED.IdProducto VALUES(@Sku,@Name,@Description,@CategoryId,@BrandId,@UnitId,@Price,@MinimumStock,@MaximumStock,@TracksLot,@TracksExpiry,@TracksSerial,@Active);
+                    INSERT INTO inv.Productos(SKU,Nombre,Descripcion,IdCategoria,IdMarca,IdUnidadMedida,PrecioVentaReferencia,StockMinimo,StockMaximo,ControlaLote,ControlaVencimiento,ControlaSerie,DiasAlertaVencimiento,Activo)
+                    OUTPUT INSERTED.IdProducto VALUES(@Sku,@Name,@Description,@CategoryId,@BrandId,@UnitId,@Price,@MinimumStock,@MaximumStock,@TracksLot,@TracksExpiry,@TracksSerial,@ExpiryAlertDays,@Active);
                     """, product, tx, cancellationToken))
                 : product.Id;
             if (product.Id != 0)
             {
                 var changed = await c.ExecuteAsync(Cmd("""
                     UPDATE inv.Productos SET SKU=@Sku,Nombre=@Name,Descripcion=@Description,IdCategoria=@CategoryId,IdMarca=@BrandId,IdUnidadMedida=@UnitId,
-                    PrecioVentaReferencia=@Price,StockMinimo=@MinimumStock,StockMaximo=@MaximumStock,ControlaLote=@TracksLot,ControlaVencimiento=@TracksExpiry,ControlaSerie=@TracksSerial,Activo=@Active
+                    PrecioVentaReferencia=@Price,StockMinimo=@MinimumStock,StockMaximo=@MaximumStock,ControlaLote=@TracksLot,ControlaVencimiento=@TracksExpiry,ControlaSerie=@TracksSerial,DiasAlertaVencimiento=@ExpiryAlertDays,Activo=@Active
                     WHERE IdProducto=@Id AND RowVersion=@RowVersion;
                     """, product, tx, cancellationToken));
                 if (changed != 1) return Result<int>.Failure("CONCURRENCY_CONFLICT", "El producto cambió. Recarga antes de guardar.");
@@ -122,3 +126,4 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
         WHERE u.IdUsuario=@userId AND u.Activo=1 AND u.DebeCambiarClave=0) THEN 1 ELSE 0 END);
         """, new { userId }, tx, ct));
 }
+

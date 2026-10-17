@@ -15,6 +15,8 @@ public static class ProductValidator
         if (p.MaximumStock is { } max && (max < p.MinimumStock || max >= 100000000000000m || decimal.Round(max, 4) != max)) return "El stock máximo debe ser mayor o igual al mínimo, con hasta cuatro decimales.";
         if (p.TracksExpiry && !p.TracksLot) return "El control de vencimiento requiere control de lote.";
         if (p.Id != 0 && p.RowVersion.Length != 8) return "Recarga el producto antes de editarlo.";
+        if (p.ExpiryAlertDays is < 0) return "Los días de alerta no pueden ser negativos.";
         return null;
     }
 }
+

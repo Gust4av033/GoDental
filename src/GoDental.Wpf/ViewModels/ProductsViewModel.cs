@@ -14,11 +14,18 @@ public sealed partial class ProductsViewModel : ObservableObject
     private readonly ProductService service;
     private readonly ISessionController session;
     private readonly ILogger<ProductsViewModel> logger;
+    public CategoriesViewModel? CategoryManager { get; }
+    public InventoryViewModel? Inventory { get; }
+    [ObservableProperty] private bool isEditorOpen;
     private ProductData editing = new();
     public ObservableCollection<ProductData> Products { get; } = [];
     public ObservableCollection<CatalogOption> Categories { get; } = [];
     public ObservableCollection<CatalogOption> Brands { get; } = [];
     public ObservableCollection<CatalogOption> Units { get; } = [];
+    [ObservableProperty] private CatalogOption? filterCategory;
+    [ObservableProperty] private CatalogOption? filterBrand;
+    [ObservableProperty] private bool lowStockOnly;
+    [ObservableProperty] private string expiryAlertDays = "90";
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] private ProductData? selectedProduct;
@@ -42,18 +49,22 @@ public sealed partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string editorTitle = "Nuevo producto";
     public bool CanView => service.CanRead;
     public bool CanManage => service.CanManage;
-    public bool CanEdit => CanManage && !IsBusy;
-    public bool IsNotBusy => !IsBusy;
+    public bool CanEdit => CanManage && IsNotBusy;
+    public bool IsNotBusy => !IsBusy && Inventory?.IsBusy != true && CategoryManager?.IsBusy != true;
     public bool IsEmpty => Total == 0;
     public string PageLabel => $"{Total} productos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
 
-    public ProductsViewModel(ProductService service, ISessionController session, ILogger<ProductsViewModel> logger)
+    public ProductsViewModel(ProductService service, ISessionController session, ILogger<ProductsViewModel> logger, InventoryViewModel? inventory = null, CategoriesViewModel? categories = null)
     {
+        Inventory = inventory; CategoryManager = categories;
+        if (inventory is not null) inventory.InventoryChanged += (_, _) => ReloadCommand.Execute(null);
+        if (categories is not null) categories.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); };
+        if (inventory is not null) inventory.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); };
         this.service = service; this.session = session; this.logger = logger;
         session.Changed += (_, _) =>
         {
             Products.Clear(); Categories.Clear(); Units.Clear(); Brands.Clear(); SelectedProduct = null; Total = 0; Page = 1;
-            ResetEditor(); StatusMessage = "Busca o registra tu primer producto.";
+            ResetEditor(); IsEditorOpen = false; StatusMessage = "Busca o registra tu primer producto.";
             OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit));
             OnPropertyChanged(nameof(CanManage));
         };
@@ -61,6 +72,7 @@ public sealed partial class ProductsViewModel : ObservableObject
     partial void OnTracksExpiryChanged(bool value) { if (value) TracksLot = true; }
     partial void OnTracksLotChanged(bool value) { if (!value) TracksExpiry = false; }
 
+    [RelayCommand] private async Task ClearFiltersAsync() { Search = ""; FilterCategory = null; FilterBrand = null; LowStockOnly = false; IncludeInactive = false; Page = 1; await LoadAsync(); }
     [RelayCommand] private async Task SearchAsync() { Page = 1; await LoadAsync(); }
     [RelayCommand] private async Task ReloadAsync() => await LoadAsync();
     [RelayCommand] private async Task NextAsync() { if (IsBusy || Page * 30 >= Total) return; Page++; await LoadAsync(); }
@@ -68,13 +80,13 @@ public sealed partial class ProductsViewModel : ObservableObject
 
     private async Task LoadAsync()
     {
-        if (IsBusy || !service.CanRead) return;
+        if (!IsNotBusy || !service.CanRead) return;
         IsBusy = true; var revision = session.Revision;
         try
         {
             var catalogs = await service.GetCatalogsAsync();
             if (catalogs.IsSuccess && catalogs.Value is { } values && revision == session.Revision) SetCatalogs(values);
-            var result = await service.SearchAsync(new(Search.Trim(), IncludeInactive, Page));
+            var result = await service.SearchAsync(new(Search.Trim(), IncludeInactive, Page, CategoryId: FilterCategory?.Id, BrandId: FilterBrand?.Id, LowStockOnly: LowStockOnly));
             if (revision != session.Revision) return;
             if (!result.IsSuccess || result.Value is null) { StatusMessage = result.Message ?? "No se pudo consultar."; return; }
             Products.Clear(); foreach (var row in result.Value.Items) Products.Add(row);
@@ -85,12 +97,18 @@ public sealed partial class ProductsViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    [RelayCommand] private void NewProduct() { if (CanEdit) ResetEditor(); }
+    [RelayCommand] private async Task OpenInventoryAsync()
+    {
+        if (!IsNotBusy || SelectedProduct is null || Inventory is null) return;
+        IsEditorOpen = false; await Inventory.OpenAsync(SelectedProduct);
+    }
+    [RelayCommand] private void CloseEditor() { if (CanEdit) IsEditorOpen = false; }
+    [RelayCommand] private void NewProduct() { if (CanEdit) { ResetEditor(); IsEditorOpen = true; } }
     [RelayCommand] private void EditSelected()
     {
         if (!CanEdit || SelectedProduct is null) return;
-        editing = SelectedProduct;
-        Sku = editing.Sku; Name = editing.Name; Description = editing.Description ?? "";
+        IsEditorOpen = true; editing = SelectedProduct;
+        ExpiryAlertDays = editing.ExpiryAlertDays?.ToString() ?? "90"; Sku = editing.Sku; Name = editing.Name; Description = editing.Description ?? "";
         Price = editing.Price.ToString("0.00", CultureInfo.InvariantCulture);
         MinimumStock = editing.MinimumStock.ToString(CultureInfo.InvariantCulture);
         MaximumStock = editing.MaximumStock?.ToString(CultureInfo.InvariantCulture) ?? "";
@@ -100,7 +118,7 @@ public sealed partial class ProductsViewModel : ObservableObject
     }
     private void ResetEditor()
     {
-        editing = new(); Sku = ""; Name = ""; Description = ""; Price = "0.00"; MinimumStock = "0"; MaximumStock = "";
+        editing = new(); ExpiryAlertDays = "90"; Sku = ""; Name = ""; Description = ""; Price = "0.00"; MinimumStock = "0"; MaximumStock = "";
         Category = Categories.FirstOrDefault(); Brand = Brands.FirstOrDefault(); Unit = Units.FirstOrDefault();
         TracksExpiry = false; TracksLot = false; Active = true; EditorTitle = "Nuevo producto"; NewCategory = "";
     }
@@ -112,12 +130,13 @@ public sealed partial class ProductsViewModel : ObservableObject
         if (!TryNumber(Price, out var parsedPrice) || !TryNumber(MinimumStock, out var minimum) ||
             (!string.IsNullOrWhiteSpace(MaximumStock) && !TryNumber(MaximumStock, out _)))
         { StatusMessage = "Usa valores numéricos con punto decimal; por ejemplo, 12.50."; return; }
+        if (!short.TryParse(ExpiryAlertDays, out var alertDays) || alertDays < 0) { StatusMessage = "Indica días de alerta entre 0 y 32767."; return; }
         var product = new ProductData
         {
             Id = editing.Id, RowVersion = editing.RowVersion.ToArray(), Sku = Sku.Trim(), Name = Name.Trim(), Description = Description.Trim(),
             CategoryId = Category?.Id ?? 0, BrandId = Brand?.Id is > 0 ? Brand.Id : null, UnitId = checked((short)(Unit?.Id ?? 0)),
             Price = parsedPrice, MinimumStock = minimum, MaximumStock = string.IsNullOrWhiteSpace(MaximumStock) ? null : decimal.Parse(MaximumStock, CultureInfo.InvariantCulture),
-            TracksLot = TracksLot, TracksExpiry = TracksExpiry, TracksSerial = editing.TracksSerial, Active = Active
+            ExpiryAlertDays = alertDays, TracksLot = TracksLot, TracksExpiry = TracksExpiry, TracksSerial = editing.TracksSerial, Active = Active
         };
         IsBusy = true; var revision = session.Revision;
         try
@@ -167,3 +186,4 @@ public sealed partial class ProductsViewModel : ObservableObject
         StatusMessage = "No se pudo completar la operación. Revisa la conexión e inténtalo de nuevo. Si estabas guardando, recarga antes de repetir.";
     }
 }
+

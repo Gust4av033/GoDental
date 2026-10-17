@@ -4,52 +4,52 @@
       <ColumnDefinition Width="{Binding SidebarWidth}" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
-    <Border Background="{StaticResource SidebarBrush}" Padding="16,28,16,20">
+    <Border Background="{DynamicResource SidebarBrush}" Padding="16,28,16,20">
       <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Margin="12,0,0,36" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Text="GoDental" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource SidebarTextBrush}" />
-          <TextBlock Text="GESTIÓN DENTAL" FontSize="11" Foreground="{StaticResource BrandAccentBrush}" Margin="0,6,0,0" />
+          <TextBlock Text="GoDental" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource SidebarTextBrush}" />
+          <TextBlock Text="GESTIÓN COMERCIAL" FontSize="11" Foreground="{DynamicResource BrandAccentBrush}" Margin="0,6,0,0" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="12,24,8,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Text="CATÁLOGO Y SEGURIDAD" Foreground="{StaticResource BrandAccentBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8" />
-          <TextBlock Text="Versión 0.2.0 · En desarrollo" Foreground="{StaticResource SidebarMutedBrush}" FontSize="12" />
-          <TextBlock Text="{Binding Access.IdentityLabel}" Foreground="{StaticResource SidebarMutedBrush}" FontSize="12" Margin="0,6,0,0" />
+          <TextBlock Text="ESPACIO DE TRABAJO" Foreground="{DynamicResource BrandAccentBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8" />
+          <TextBlock Text="Versión 0.3 · En desarrollo" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="12" />
+          <TextBlock Text="{Binding Access.IdentityLabel}" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="12" Margin="0,6,0,0" />
         </StackPanel>
         <StackPanel>
           <RadioButton ToolTip="Inicio" AutomationProperties.Name="Inicio" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsHome, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Home}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Inicio" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Inicio" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Acceso de usuarios" AutomationProperties.Name="Acceso de usuarios" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsAccess, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Access}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Acceso de usuarios" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Acceso de usuarios" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Productos" AutomationProperties.Name="Productos" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenProducts, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsProducts, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Products}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Productos" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Productos" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Administrar usuarios" AutomationProperties.Name="Administrar usuarios" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenUsers, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsUsers, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Users}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Administrar usuarios" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Administrar usuarios" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Preparación del sistema" AutomationProperties.Name="Preparación del sistema" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPreparation, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Preparation}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Preparación" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Preparación" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Conexión y apariencia" AutomationProperties.Name="Conexión y apariencia" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsConnection, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Conexión y apariencia" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Conexión y apariencia" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
         </StackPanel>

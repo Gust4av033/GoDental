@@ -11,6 +11,15 @@ using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
+if (args.Contains("--run-inventory"))
+{
+    if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
+    var inventoryDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(inventoryDatabase, Path.Combine(root, "database"));
+    await InventoryIntegration.RunAsync(new TestConnectionFactory(inventoryDatabase));
+    Console.WriteLine("Base aislada retenida: " + inventoryDatabase);
+    return;
+}
 if (args.Contains("--install-development"))
 {
     await DevelopmentDatabase.InstallAsync("GoDental_Development", Path.Combine(root, "database"));
@@ -166,3 +175,4 @@ internal sealed class TestProfileStore(WorkstationSettings profile) : IWorkstati
     public Task<WorkstationSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(Profile);
     public Task SaveAsync(WorkstationSettings value, CancellationToken ct = default) { Profile = value; return Task.CompletedTask; }
 }
+

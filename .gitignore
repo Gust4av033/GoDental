@@ -37,3 +37,7 @@ Thumbs.db
 .idea/
 _ReSharper*/
 *.DotSettings.user
+
+
+# Temporary WPF compilation projects
+*_wpftmp.csproj

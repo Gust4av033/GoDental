@@ -26,3 +26,19 @@ internal sealed class FakeUserRepository : IUserRepository
     public Task<Result> SetActiveAsync(UserSummary u, bool v, string r, int a, int? e, CancellationToken ct = default) => Task.FromResult(Result.Success());
     public Task<Result> ResetPasswordAsync(UserSummary u, string h, string r, int a, int? e, CancellationToken ct = default) => Task.FromResult(Result.Success());
 }
+
+
+// Datos controlados sólo para pruebas de enlaces/layout; nunca registrados en App.
+internal sealed class VisualInventoryRepository : IInventoryRepository
+{
+    public Task<IReadOnlyList<CatalogOption>> WarehousesAsync(int userId, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<CatalogOption>>([new(){Id=1,Name="Almacén de prueba"}]);
+    public Task<InventorySnapshot> ReadAsync(int p, int w, int u, CancellationToken ct = default) => Task.FromResult(new InventorySnapshot([new(){WarehouseId=1,Warehouse="Almacén de prueba",Quantity=10,Sellable=10,AverageCost=2,RowVersion=new byte[8]}],[new(){Id=1,Number="LOTE-PRUEBA",Expires=new DateTime(2027,1,1),Quantity=10,Active=true,Status="Vigente"}]));
+    public Task<MovementPage> MovementsAsync(MovementFilter f, int u, CancellationToken ct = default) => Task.FromResult(new MovementPage([],0));
+    public Task<Result<long>> AdjustAsync(InventoryAdjustment r,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<long>.Failure("TEST","Prueba visual sin escritura."));
+    public Task<Result<long>> SetLotStateAsync(LotStateChange r,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<long>.Failure("TEST","Prueba visual sin escritura."));
+}
+internal sealed class VisualCategoryRepository : ICategoryRepository
+{
+    public Task<IReadOnlyList<CategoryData>> ListAsync(int u,CancellationToken ct=default) => Task.FromResult<IReadOnlyList<CategoryData>>([]);
+    public Task<Result<int>> SaveAsync(CategoryChange c,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<int>.Failure("TEST","Prueba visual sin escritura."));
+}

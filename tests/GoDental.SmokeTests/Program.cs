@@ -112,7 +112,9 @@ internal static class Program
             var nav = new NavigationService();
             var session = new UserSession();
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
-            var products = new ProductsViewModel(new ProductService(new FakeProductRepository(), session), session, NullLogger<ProductsViewModel>.Instance);
+            var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance);
+            var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
+            var products = new ProductsViewModel(new ProductService(new FakeProductRepository(), session), session, NullLogger<ProductsViewModel>.Instance,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session);
             shell.NavigateCommand.Execute(SetupPage.Connection);
@@ -141,10 +143,20 @@ internal static class Program
                 shell.IsSidebarCompact = false;
                 nav.Navigate(SetupPage.Access); await access.PrepareCommand.ExecuteAsync(null);
                 await RenderAsync(shell, 1280, 900, Path.Combine(output, "primer-administrador.png"));
-                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS"], false));
+                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS"], false));
                 await products.ReloadCommand.ExecuteAsync(null);
                 nav.Navigate(SetupPage.Products);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
+                await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
+                Check(inventory.CanWrite && inventory.Stocks.Count==1,"Carga existencias y habilita operaciones con sesión autorizada");
+                inventory.Quantity="1"; inventory.Reason="Prueba visual"; await inventory.SaveCommand.ExecuteAsync(null);
+                Check(inventory.StatusMessage.Contains("confirma"),"Exige confirmación antes de escribir");
+                foreach(var theme in new[]{"Light","Dark"})
+                {
+                    themes.Apply(theme);
+                    for(var tab=0;tab<4;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
+                }
+                inventory.CloseCommand.Execute(null);
                 await users.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Users);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "usuarios.png"));
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
@@ -161,6 +173,24 @@ internal static class Program
             Console.WriteLine($"{passed} comprobaciones correctas.");
         }
         finally { Directory.Delete(temporaryFolder, recursive: true); }
+    }
+
+    private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
+    {
+        var view=new GoDental.Wpf.Views.Inventory.InventoryView {DataContext=model};
+        view.Measure(new Size(1080,660));view.Arrange(new Rect(0,0,1080,660));view.UpdateLayout();
+        TabControl? FindTabs(DependencyObject node)
+        {
+            if(node is TabControl found) return found;
+            for(var i=0;i<VisualTreeHelper.GetChildrenCount(node);i++) if(FindTabs(VisualTreeHelper.GetChild(node,i)) is {} child) return child;
+            return null;
+        }
+        FindTabs(view)!.SelectedIndex=tab;
+        await Dispatcher.CurrentDispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
+        view.Measure(new Size(1080,760));view.Arrange(new Rect(0,0,1080,760));view.UpdateLayout();
+        var bitmap=new RenderTargetBitmap(1080,760,96,96,PixelFormats.Pbgra32);bitmap.Render(view);
+        var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        await using var stream=File.Create(Path.Combine(output,$"inventario-{theme}-{tab}.png"));encoder.Save(stream);
     }
 
     private static object appResource(string key) => System.Windows.Application.Current.FindResource(key);
@@ -211,3 +241,4 @@ internal static class Program
         public override void WriteLine(string? message) => Write(message);
     }
 }
+

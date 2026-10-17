@@ -35,7 +35,7 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool IsUsers => navigation.CurrentPage == SetupPage.Users;
     public bool CanOpenUsers => Users.CanView;
     public bool CanOpenProducts => Products.CanView;
-    public bool CanSignOut => Access.IsAuthenticated && !Products.IsBusy && !Access.IsBusy && !Users.IsBusy;
+    public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy;
 
     public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session)
     {
@@ -75,3 +75,4 @@ public sealed partial class ShellViewModel : ObservableObject
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
 }
+
