@@ -49,9 +49,17 @@ Reglas principales:
 
 ## Base de datos
 
-La interfaz inicial incluye navegación, menú compacto, temas claro/oscuro y diagnóstico de conexión. Todavía no implementa login, permisos ni operaciones comerciales. [Alcance del avance](docs/DEV-01-Arranque.md).
+La versión 0.2 incluye primer administrador, inicio/cierre de sesión, cambio de contraseñas, gestión de usuarios y catálogo de productos con categorías, búsqueda, edición concurrente y auditoría. [Alcance y guía](docs/DEV-02-Seguridad-Catalogo.md).
 
-El diagnóstico visual usa un perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json`. La configuración `Database:ConnectionString` de `appsettings.local.json` sigue disponible para el acceso de infraestructura; es independiente del diagnóstico. La cuenta SQL de aplicación y su almacén protegido se incorporarán con SEC-01.
+El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
+
+En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. Abre **Acceso de usuarios** y elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
+
+```powershell
+dotnet run --project tests/GoDental.DatabaseTests -- --install-development .
+```
+
+La herramienta limita el destino a una base local de desarrollo marcada. Nunca instala sobre `GoDental` ni sobre una base existente sin su marcador.
 
 `database/` contiene la **baseline SQL v0.1** aprobada y validada estáticamente contra DB-01. Para una base nueva los scripts deben ejecutarse, obligatoriamente, en este orden:
 
@@ -64,6 +72,7 @@ El diagnóstico visual usa un perfil sin credenciales en `%LOCALAPPDATA%\GoDenta
 006_Comercial_Base.sql
 007_Seed.sql
 008_ViewsProcedures.sql
+009_Seguridad_Parametros.sql
 ```
 
 La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.

@@ -33,7 +33,7 @@ public sealed class SqlConnectionFactory(IOptions<DatabaseOptions> options) : ID
             InitialCatalog = settings.Database.Trim(),
             IntegratedSecurity = true,
             Encrypt = SqlConnectionEncryptOption.Mandatory,
-            TrustServerCertificate = false,
+            TrustServerCertificate = settings.LocalDevelopment,
             ConnectTimeout = 5,
             ConnectRetryCount = 0,
             ApplicationName = "GoDental.Configuration"

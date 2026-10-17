@@ -1,3 +1,4 @@
+param([switch]$SqlIntegration)
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -24,6 +25,10 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green
+    if ($SqlIntegration) {
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
     Write-Host "    Resultados: $repoRoot\TestResults"
 }
 finally {

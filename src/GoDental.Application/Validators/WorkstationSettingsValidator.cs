@@ -12,6 +12,11 @@ public static class WorkstationSettingsValidator
             return "Revisa la longitud del servidor y del nombre de la base de datos.";
         if (settings.Server.Contains("(localdb)", StringComparison.OrdinalIgnoreCase))
             return "Usa una instancia de SQL Server compartida; LocalDB no es la base central de GoDental.";
+        if (settings.LocalDevelopment && (!IsLocalServer(settings.Server) || !System.Text.RegularExpressions.Regex.IsMatch(settings.Database, @"^GoDental_(Development|Tests_[A-Za-z0-9]+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)))
+            return "El certificado de desarrollo sólo se admite en este equipo y en una base GoDental_ separada.";
         return null;
     }
+
+    public static bool IsLocalServer(string server) => new[] { ".", "localhost", Environment.MachineName }
+        .Contains(server.Trim(), StringComparer.OrdinalIgnoreCase);
 }

@@ -50,6 +50,9 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ConnectionViewModel>();
+                    services.AddSingleton<AccessViewModel>();
+                    services.AddSingleton<ProductsViewModel>();
+                    services.AddSingleton<UsersViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
                 })
@@ -62,7 +65,7 @@ public partial class App : System.Windows.Application
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             MainWindow = mainWindow;
             mainWindow.Show();
-            _host.Services.GetRequiredService<ILogger<App>>().LogInformation("Inicio de GoDental 0.1.0; configuración inicial sin sesión de negocio.");
+            _host.Services.GetRequiredService<ILogger<App>>().LogInformation("Inicio de GoDental 0.2.0; catálogo y seguridad.");
         }
         catch (Exception ex)
         {

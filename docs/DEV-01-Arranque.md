@@ -2,6 +2,8 @@
 
 Versión 0.1 · 17/10/2026 · Implementado para revisión, sin habilitación de producción.
 
+Documento histórico del primer incremento. [DEV-02](DEV-02-Seguridad-Catalogo.md) actualiza la conexión operativa, autenticación y catálogo para la versión 0.2.
+
 ## Alcance
 
 Evoluciona el arranque preliminar de la baseline `0344200` con Shell/MVVM, navegación interna, menú de 228/72 px, temas Light/Dark y configuración inicial. Conserva Generic Host, DI, .NET 8/C# 12, Dapper, QuestPDF y la configuración de infraestructura existente.

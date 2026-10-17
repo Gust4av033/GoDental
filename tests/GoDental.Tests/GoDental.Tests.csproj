@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GoDental.Application\GoDental.Application.csproj" />
     <ProjectReference Include="..\..\src\GoDental.Domain\GoDental.Domain.csproj" />
+    <ProjectReference Include="..\..\src\GoDental.Infrastructure\GoDental.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

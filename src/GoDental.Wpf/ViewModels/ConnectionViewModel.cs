@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using GoDental.Application.DTOs;
 using GoDental.Application.Abstractions.Configuration;
 using GoDental.Application.Validators;
+using GoDental.Application.Abstractions.Security;
 using GoDental.Wpf.Themes;
 using Microsoft.Extensions.Logging;
 
@@ -12,7 +13,7 @@ namespace GoDental.Wpf.ViewModels;
 
 public sealed partial class ConnectionViewModel(
     IWorkstationSettingsStore store, IConnectionHealthCheck healthCheck,
-    IThemeService themes, ILogger<ConnectionViewModel> logger) : ObservableObject
+    IThemeService themes, ILogger<ConnectionViewModel> logger, ISessionController? session = null) : ObservableObject
 {
     [ObservableProperty] private string server = "";
     [ObservableProperty] private string database = "";
@@ -20,6 +21,7 @@ public sealed partial class ConnectionViewModel(
     [ObservableProperty] private string connectionStatus = "Sin comprobar";
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
     [ObservableProperty] private bool isDark;
+    [ObservableProperty] private bool localDevelopment;
     public bool IsNotBusy => !IsBusy;
     public string WorkstationName => Environment.MachineName;
 
@@ -31,6 +33,7 @@ public sealed partial class ConnectionViewModel(
             Server = settings.Server;
             Database = settings.Database;
             IsDark = settings.Theme == "Dark";
+            LocalDevelopment = settings.LocalDevelopment;
             themes.Apply(settings.Theme);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -42,23 +45,35 @@ public sealed partial class ConnectionViewModel(
 
     partial void OnServerChanged(string value) => InvalidateConnection();
     partial void OnDatabaseChanged(string value) => InvalidateConnection();
+    partial void OnLocalDevelopmentChanged(bool value) => InvalidateConnection();
     partial void OnIsDarkChanged(bool value) => themes.Apply(value ? "Dark" : "Light");
     private void InvalidateConnection()
     {
         ConnectionStatus = "Sin comprobar";
         StatusMessage = "La configuración cambió. Comprueba la conexión antes de continuar.";
     }
-    private WorkstationSettings Snapshot() => new(Server.Trim(), Database.Trim(), IsDark ? "Dark" : "Light");
+    private WorkstationSettings Snapshot() => new(Server.Trim(), Database.Trim(), IsDark ? "Dark" : "Light", LocalDevelopment);
     private bool CanOperate() => !IsBusy;
     partial void OnIsBusyChanged(bool value)
     {
         SaveCommand.NotifyCanExecuteChanged();
         CheckConnectionCommand.NotifyCanExecuteChanged();
+        UseLocalDevelopmentCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanOperate))]
+    private void UseLocalDevelopment()
+    {
+        if (IsBusy) return;
+        if (session?.IsAuthenticated == true) { StatusMessage = "Cierra sesión antes de cambiar de base."; return; }
+        Server = "localhost"; Database = "GoDental_Development"; LocalDevelopment = true;
+        StatusMessage = "Perfil de desarrollo local seleccionado. Guarda la configuración antes de entrar.";
     }
 
     [RelayCommand(CanExecute = nameof(CanOperate))]
     private async Task SaveAsync()
     {
+        if (session?.IsAuthenticated == true) { StatusMessage = "Cierra sesión antes de guardar cambios de conexión."; return; }
         var snapshot = Snapshot();
         if (WorkstationSettingsValidator.Validate(snapshot) is { } error)
         {

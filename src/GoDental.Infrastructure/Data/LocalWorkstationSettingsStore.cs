@@ -15,7 +15,7 @@ public sealed class LocalWorkstationSettingsStore(string path) : IWorkstationSet
         var settings = await JsonSerializer.DeserializeAsync<WorkstationSettings>(stream, JsonOptions, cancellationToken);
         return settings is null
             ? throw new JsonException("El perfil de estación no es válido.")
-            : new(settings.Server ?? "", settings.Database ?? "", settings.Theme == "Dark" ? "Dark" : "Light");
+            : new(settings.Server ?? "", settings.Database ?? "", settings.Theme == "Dark" ? "Dark" : "Light", settings.LocalDevelopment);
     }
 
     public async Task SaveAsync(WorkstationSettings settings, CancellationToken cancellationToken = default)

@@ -20,6 +20,7 @@ $scripts = @(
     '006_Comercial_Base.sql',
     '007_Seed.sql',
     '008_ViewsProcedures.sql'
+    '009_Seguridad_Parametros.sql'
 )
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue

@@ -56,3 +56,14 @@ Esta validación certifica el **punto de partida técnico/documental del reposit
 - Auditoría NuGet, incluyendo dependencias transitivas: sin vulnerabilidades conocidas reportadas por las fuentes consultadas tras fijar Pkcs 10.0.13.
 - Distribución local de prueba: Windows x64 autocontenida con runtime 8.0.32.
 - No se conectó a una base operativa, no se instalaron scripts y no se certificaron aún login, permisos, ventas ni integridad SQL en ejecución.
+
+## Catálogo y seguridad · v0.2 · 17/10/2026
+
+Esta sección actualiza los límites del incremento anterior según [DEV-02](DEV-02-Seguridad-Catalogo.md).
+
+- Se instaló 001–009 en `localhost/GoDental_Development`, separada de cualquier base operativa: 72 tablas, 8 vistas y 12 procedimientos. La base de desarrollo queda sin usuarios/contraseñas predeterminados y sin productos artificiales.
+- 49 comprobaciones SQL sobre bases aisladas `GoDental_Tests_<GUID>`: primer administrador concurrente, bloqueo y contadores concurrentes, cambios de contraseña, vendedor/permisos, gestión de cuentas, contexto y vinculación de sesión, productos/categorías, rowversion, trazabilidad y rollback de auditoría.
+- 16 casos xUnit de política, hashes, sesión y validaciones, incluyendo los dos casos anteriores de Result.
+- 22 comprobaciones de smoke WPF, con vistas de acceso, productos y usuarios en Light/Dark y estado de vendedor. Sin errores de binding.
+- Build Release local con SDK 10.0.401, C# 12, .NET 8; el proyecto conserva el SDK .NET 8 definido por `global.json` para los equipos que lo tengan instalado.
+- Los cambios no habilitan producción ni certifican todavía ventas, compras, movimientos de stock, backups o dos laptops por LAN.
