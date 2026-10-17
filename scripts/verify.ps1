@@ -19,6 +19,10 @@ try {
         --results-directory TestResults
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    Write-Host '==> GoDental: smoke WPF + vistas' -ForegroundColor Cyan
+    dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- "$repoRoot\TestResults\UiPreviews"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
     Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green
     Write-Host "    Resultados: $repoRoot\TestResults"
 }

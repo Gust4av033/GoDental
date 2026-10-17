@@ -1,48 +1,118 @@
 <Window x:Class="GoDental.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GoDental"
-        Width="1200"
-        Height="760"
-        MinWidth="1000"
-        MinHeight="650"
-        WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource Brush.Surface.Background}"
-        Foreground="{DynamicResource Brush.Text.Primary}">
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="232" />
-      <ColumnDefinition Width="*" />
-    </Grid.ColumnDefinitions>
-
-    <Border Grid.Column="0"
-            Background="{DynamicResource Brush.Surface.Sidebar}"
-            BorderBrush="{DynamicResource Brush.Border.Default}"
-            BorderThickness="0,0,1,0">
-      <StackPanel Margin="20,24">
-        <TextBlock Text="GoDental"
-                   FontSize="24"
-                   FontWeight="SemiBold" />
-        <TextBlock Margin="0,4,0,24"
-                   Text="ERP / POS dental"
-                   Foreground="{DynamicResource Brush.Text.Secondary}" />
-        <TextBlock Text="Estructura base lista"
-                   Style="{StaticResource Text.Body}" />
-      </StackPanel>
-    </Border>
-
-    <Grid Grid.Column="1" Margin="32">
-      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Text="GoDental"
-                   Style="{StaticResource Text.H1}"
-                   HorizontalAlignment="Center" />
-        <TextBlock Margin="0,12,0,0"
-                   MaxWidth="620"
-                   TextAlignment="Center"
-                   TextWrapping="Wrap"
-                   Foreground="{DynamicResource Brush.Text.Secondary}"
-                   Text="Bootstrap de arquitectura completado. Login, Shell, navegación y módulos se implementarán siguiendo ARQ-01 y UX-01." />
-      </StackPanel>
+        xmlns:nav="clr-namespace:GoDental.Wpf.Navigation"
+        Title="GoDental · Configuración inicial" Width="1280" Height="760" MinWidth="860" MinHeight="520"
+        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="14"
+        Background="{DynamicResource BackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+    <Grid Background="{DynamicResource BackgroundBrush}">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="{Binding SidebarWidth}" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <Border Background="{StaticResource SidebarBrush}" Padding="16,28,16,20">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Margin="12,0,0,36" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="GoDental" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource SidebarTextBrush}" />
+                    <TextBlock Text="GESTIÓN DENTAL" FontSize="11" Foreground="{StaticResource BrandAccentBrush}" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="12,24,8,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="CONFIGURACIÓN INICIAL" Foreground="{StaticResource BrandAccentBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock Text="Versión 0.1.0 · En desarrollo" Foreground="{StaticResource SidebarMutedBrush}" FontSize="12" />
+                    <TextBlock Text="Sin sesión de usuario" Foreground="{StaticResource SidebarMutedBrush}" FontSize="12" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel>
+                    <RadioButton ToolTip="Inicio" AutomationProperties.Name="Inicio" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsHome, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Home}">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" /><TextBlock Text="Inicio" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" /></StackPanel>
+                    </RadioButton>
+                    <RadioButton ToolTip="Preparación del sistema" AutomationProperties.Name="Preparación del sistema" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPreparation, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Preparation}">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" /><TextBlock Text="Preparación" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" /></StackPanel>
+                    </RadioButton>
+                    <RadioButton ToolTip="Conexión y apariencia" AutomationProperties.Name="Conexión y apariencia" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsConnection, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" /><TextBlock Text="Conexión y apariencia" Foreground="{StaticResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" /></StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions><RowDefinition Height="76" /><RowDefinition Height="*" /><RowDefinition Height="36" /></Grid.RowDefinitions>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="32,12">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Button Content="&#xE700;" FontFamily="Segoe MDL2 Assets" Command="{Binding ToggleSidebarCommand}" ToolTip="Expandir o contraer menú" AutomationProperties.Name="Expandir o contraer menú" Margin="0,0,16,0" Padding="10" Width="40" />
+                    <TextBlock Grid.Column="1" Text="{Binding PageTitle}" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" />
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Connection.ConnectionStatus}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="12" />
+                        <TextBlock Text="{Binding Connection.WorkstationName}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="11" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid Margin="{StaticResource PagePadding}">
+                    <StackPanel Visibility="{Binding IsHome, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Bienvenido a GoDental" Style="{StaticResource Heading}" />
+                        <TextBlock Text="El punto de partida para organizar tu depósito dental." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                            <StackPanel>
+                                <TextBlock Text="Comencemos por tu equipo" Style="{StaticResource SectionHeading}" />
+                                <TextBlock Text="Configura el servidor central y comprueba la conexión. Este primer avance prepara la aplicación para incorporar usuarios, inventario y ventas." Style="{StaticResource MutedText}" MaxWidth="680" HorizontalAlignment="Left" />
+                                <Button Content="Configurar conexión →" Style="{StaticResource PrimaryButton}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}" HorizontalAlignment="Left" Margin="0,20,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="Una base para toda tu operación" Style="{StaticResource SectionHeading}" />
+                        <Border Style="{StaticResource Card}" Padding="24,8">
+                            <StackPanel>
+                                <Grid Margin="0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="Inventario" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Productos, lotes, vencimientos y trazabilidad." Style="{StaticResource MutedText}" /></Grid>
+                                <Separator Background="{DynamicResource BorderBrush}" />
+                                <Grid Margin="0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="Ventas y clientes" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Cotizaciones, precios, cobros y crédito." Style="{StaticResource MutedText}" /></Grid>
+                                <Separator Background="{DynamicResource BorderBrush}" />
+                                <Grid Margin="0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="Compras" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Proveedores, importaciones y costo real." Style="{StaticResource MutedText}" /></Grid>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="Módulos previstos. Las operaciones comerciales todavía no están disponibles." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0" />
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding IsPreparation, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Preparación del sistema" Style="{StaticResource Heading}" />
+                        <TextBlock Text="El avance actual y los siguientes pasos para comenzar a operar." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="01    Aplicación de escritorio" Style="{StaticResource SectionHeading}" />
+                                <TextBlock Text="Disponible: navegación inicial, temas claro y oscuro, perfil del equipo y comprobación de conexión." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
+                                <TextBlock Text="02    Base de datos y seguridad" Style="{StaticResource SectionHeading}" />
+                                <TextBlock Text="Siguiente: validar la instalación en una base de pruebas, crear el primer administrador e incorporar inicio de sesión, permisos y auditoría." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
+                                <TextBlock Text="03    Inventario y operación" Style="{StaticResource SectionHeading}" />
+                                <TextBlock Text="Después: catálogos y productos; luego compras, clientes, ventas y caja, con pruebas de concurrencia." Style="{StaticResource MutedText}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding IsConnection, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Prepara tu conexión" Style="{StaticResource Heading}" />
+                        <TextBlock Text="Las estaciones de GoDental compartirán una base central de SQL Server." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel DataContext="{Binding Connection}">
+                                <StackPanel IsEnabled="{Binding IsNotBusy}">
+                                    <Label Content="_Servidor SQL" Target="{Binding ElementName=ServerInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,8" />
+                                    <TextBox x:Name="ServerInput" Text="{Binding Server, UpdateSourceTrigger=PropertyChanged}" MaxLength="256" AutomationProperties.Name="Servidor SQL" />
+                                    <TextBlock Text="Nombre del equipo e instancia, o dirección y puerto del servidor." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,16" />
+                                    <Label Content="_Base de datos" Target="{Binding ElementName=DatabaseInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,8" />
+                                    <TextBox x:Name="DatabaseInput" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" MaxLength="128" AutomationProperties.Name="Base de datos" />
+                                    <TextBlock Text="La base debe existir. Esta comprobación no la crea ni instala tablas." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,16" />
+                                    <CheckBox Content="Usar tema oscuro" IsChecked="{Binding IsDark}" Margin="0,0,0,20" />
+                                </StackPanel>
+                                <WrapPanel>
+                                    <Button Content="Comprobar conexión" Style="{StaticResource PrimaryButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8" />
+                                    <Button Content="Guardar configuración" Command="{Binding SaveCommand}" Margin="0,0,12,8" />
+                                    <Button Content="Cancelar" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8" />
+                                </WrapPanel>
+                                <ProgressBar IsIndeterminate="True" Height="3" Foreground="{DynamicResource PrimaryBrush}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0" />
+                                <Border Background="{DynamicResource TintBrush}" Padding="16" CornerRadius="6" Margin="0,12,0,0">
+                                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="Esta prueba usa tu cuenta de Windows y valida el certificado del servidor. La cuenta de la aplicación se incorporará con el inicio de sesión. Una conexión correcta no valida todavía la instalación de GoDental." Style="{StaticResource MutedText}" FontSize="12" Margin="0,16,0,0" />
+                        <TextBlock Text="Para conservar el tema elegido, guarda la configuración junto con el servidor y la base." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+            <TextBlock Grid.Row="2" Text="GoDental · Configuración inicial · Operaciones comerciales pendientes de implementación" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="32,8,12,0" />
+        </Grid>
     </Grid>
-  </Grid>
 </Window>

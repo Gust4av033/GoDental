@@ -43,11 +43,15 @@ Reglas principales:
 
 1. Clonar el repositorio.
 2. Abrir `GoDental.sln` en **Visual Studio 2022** con el workload **.NET desktop development** y SDK .NET 8 instalado.
-3. Copiar `src/GoDental.Wpf/appsettings.local.example.json` a `appsettings.local.json`.
-4. Configurar localmente la conexión SQL; `appsettings.local.json` está ignorado por Git.
+3. Establecer `GoDental.Wpf` como proyecto de inicio y ejecutar.
+4. Abrir **Conexión y apariencia** para guardar el servidor/base y comprobar el acceso con la cuenta de Windows. No hace falta SQL para abrir la interfaz.
 5. Restaurar paquetes NuGet y compilar la solución.
 
 ## Base de datos
+
+La interfaz inicial incluye navegación, menú compacto, temas claro/oscuro y diagnóstico de conexión. Todavía no implementa login, permisos ni operaciones comerciales. [Alcance del avance](docs/DEV-01-Arranque.md).
+
+El diagnóstico visual usa un perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json`. La configuración `Database:ConnectionString` de `appsettings.local.json` sigue disponible para el acceso de infraestructura; es independiente del diagnóstico. La cuenta SQL de aplicación y su almacén protegido se incorporarán con SEC-01.
 
 `database/` contiene la **baseline SQL v0.1** aprobada y validada estáticamente contra DB-01. Para una base nueva los scripts deben ejecutarse, obligatoriamente, en este orden:
 

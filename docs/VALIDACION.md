@@ -46,3 +46,13 @@ No existe acumulación automática entre beneficios; una promoción sólo se acu
 No forman parte de la baseline funcional inicial y continúan como evolución/preproducción: integración DTE real con Hacienda, proveedor definitivo de tarjeta, automatizaciones externas de WhatsApp/Instagram/Facebook y otras decisiones operativas que VEN-01A clasifica como diferidas.
 
 Esta validación certifica el **punto de partida técnico/documental del repositorio**, no una aplicación funcional terminada.
+
+## Avance de escritorio · 17/10/2026
+
+- [DEV-01](DEV-01-Arranque.md): Shell/MVVM, navegación, menú compacto, Light/Dark, perfil local y diagnóstico SQL de sólo lectura.
+- Build Release: 0 errores y 0 advertencias, con SDK 10.0.401, C# 12 y destinos .NET 8 de la baseline. No se cambió `global.json`.
+- Pruebas xUnit existentes: 2 aprobadas, con cobertura.
+- Smoke WPF: 20 comprobaciones aprobadas y vistas renderizadas en 1280×720 y 910×510. Se revisaron los PNG; no hubo errores de binding. El tamaño reducido permite revisar el área disponible con escalado, sin afirmar certificación completa de DPI/hardware.
+- Auditoría NuGet, incluyendo dependencias transitivas: sin vulnerabilidades conocidas reportadas por las fuentes consultadas tras fijar Pkcs 10.0.13.
+- Distribución local de prueba: Windows x64 autocontenida con runtime 8.0.32.
+- No se conectó a una base operativa, no se instalaron scripts y no se certificaron aún login, permisos, ventas ni integridad SQL en ejecución.

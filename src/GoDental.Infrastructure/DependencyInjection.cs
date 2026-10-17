@@ -1,4 +1,5 @@
 using GoDental.Application.Abstractions.Persistence;
+using GoDental.Application.Abstractions.Configuration;
 using GoDental.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,9 @@ public static class DependencyInjection
             .AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection(DatabaseOptions.SectionName));
 
-        services.AddTransient<IDbConnectionFactory, SqlConnectionFactory>();
+        services.AddTransient<SqlConnectionFactory>();
+        services.AddTransient<IDbConnectionFactory>(provider => provider.GetRequiredService<SqlConnectionFactory>());
+        services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();
 
         return services;
     }

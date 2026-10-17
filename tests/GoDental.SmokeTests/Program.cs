@@ -1,0 +1,192 @@
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using GoDental.Application.DTOs;
+using GoDental.Application.Abstractions.Configuration;
+using GoDental.Application.Validators;
+using GoDental.Infrastructure.Data;
+using GoDental.Wpf.Navigation;
+using GoDental.Wpf.Themes;
+using GoDental.Wpf.ViewModels;
+using GoDental.Wpf;
+using Microsoft.Extensions.Logging.Abstractions;
+
+internal static class Program
+{
+    private static int passed;
+
+    [STAThread]
+    private static void Main(string[] args)
+    {
+        var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls" })
+            app.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri($"/GoDental;component/Themes/{name}.xaml", UriKind.Relative)
+            });
+        app.Resources.Add("BoolToVisibility", new BooleanToVisibilityConverter());
+        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
+        Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
+        {
+            try { await RunAsync(args.FirstOrDefault()); }
+            catch (Exception ex) { Console.Error.WriteLine(ex); Environment.ExitCode = 1; }
+            finally { Dispatcher.CurrentDispatcher.InvokeShutdown(); }
+        });
+        Dispatcher.Run();
+    }
+
+    private static void Check(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException(message);
+        Console.WriteLine("OK " + message);
+        passed++;
+    }
+
+    private static async Task RunAsync(string? artifactDirectory)
+    {
+        var temporaryFolder = Path.Combine(Path.GetTempPath(), "GoDental.SmokeTests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(temporaryFolder);
+        try
+        {
+            var profilePath = Path.Combine(temporaryFolder, "workstation.json");
+            var store = new LocalWorkstationSettingsStore(profilePath);
+            Check(await store.LoadAsync() == new WorkstationSettings(), "Primer arranque sin archivo de configuración");
+            Check(WorkstationSettingsValidator.Validate(new()) is not null, "Rechaza perfil incompleto");
+            Check(WorkstationSettingsValidator.Validate(new("(localdb)\\MSSQLLocalDB", "GoDental")) is not null, "Rechaza LocalDB como servidor central");
+            var profile = new WorkstationSettings("servidor\\instancia", "GoDentalPruebas", "Dark");
+            await store.SaveAsync(profile);
+            Check(await store.LoadAsync() == profile, "Guarda y recupera perfil y tema");
+            Check(!Directory.EnumerateFiles(temporaryFolder, "*.tmp").Any(), "No deja archivos temporales tras guardar");
+
+            var fake = new ControlledHealthCheck();
+            var themes = new ThemeService();
+            var vm = new ConnectionViewModel(store, fake, themes, NullLogger<ConnectionViewModel>.Instance);
+            await vm.InitializeAsync();
+            Check(vm.IsDark && themes.CurrentTheme == "Dark", "Restaura el tema al iniciar");
+            var probe = vm.CheckConnectionCommand.ExecuteAsync(null);
+            Check(vm.IsBusy && !vm.SaveCommand.CanExecute(null) && !vm.CheckConnectionCommand.CanExecute(null), "Bloquea operaciones solapadas durante la comprobación");
+            fake.Complete(new(true, "Respuesta controlada para prueba"));
+            await probe;
+            Check(vm.ConnectionStatus == "Conexión comprobada" && !vm.IsBusy, "Refleja una comprobación exitosa sin crear sesión");
+            vm.Server = "otro-servidor";
+            Check(vm.ConnectionStatus == "Sin comprobar", "Editar el perfil invalida el resultado previo");
+
+            fake.Reset();
+            probe = vm.CheckConnectionCommand.ExecuteAsync(null);
+            vm.CheckConnectionCancelCommand.Execute(null);
+            await probe;
+            Check(vm.ConnectionStatus == "Sin comprobar" && !vm.IsBusy, "Cancela la comprobación y recupera la interfaz");
+
+            fake.Reset();
+            probe = vm.CheckConnectionCommand.ExecuteAsync(null);
+            fake.Complete(new(false, "Servidor no disponible"));
+            await probe;
+            Check(vm.ConnectionStatus == "Sin conexión" && vm.StatusMessage == "Servidor no disponible", "Muestra un fallo de conexión sin simular éxito");
+
+            vm.Server = "";
+            await vm.CheckConnectionCommand.ExecuteAsync(null);
+            Check(fake.CallCount == 3 && !vm.IsBusy, "No consulta SQL con un perfil inválido");
+            var actualHealthCheck = new SqlConnectionHealthCheck(new SqlConnectionFactory(Microsoft.Extensions.Options.Options.Create(new DatabaseOptions())), NullLogger<SqlConnectionHealthCheck>.Instance);
+            Check(!(await actualHealthCheck.CheckAsync(new())).IsSuccess, "El servicio real valida antes de abrir conexiones");
+            using (var cancelled = new CancellationTokenSource())
+            {
+                cancelled.Cancel();
+                var observedCancellation = false;
+                try { await actualHealthCheck.CheckAsync(new("tcp:127.0.0.1,1", "GoDentalTests"), cancelled.Token); }
+                catch (OperationCanceledException) { observedCancellation = true; }
+                Check(observedCancellation, "Propaga cancelación al acceso SQL real");
+            }
+            await File.WriteAllTextAsync(profilePath, "{malformado");
+            await vm.InitializeAsync();
+            Check(vm.StatusMessage.Contains("No se pudo leer"), "Permite recuperar un perfil local dañado");
+            await File.WriteAllTextAsync(profilePath, "{\"Server\":null,\"Database\":null,\"Theme\":null}");
+            Check(await store.LoadAsync() == new WorkstationSettings(), "Normaliza campos nulos de configuración");
+
+            var nav = new NavigationService();
+            var shell = new ShellViewModel(nav, vm);
+            shell.NavigateCommand.Execute(SetupPage.Connection);
+            Check(shell.IsConnection && !shell.IsHome && shell.PageTitle.Contains("Conexión"), "La navegación actualiza página y título");
+            shell.ToggleSidebarCommand.Execute(null);
+            Check(shell.SidebarWidth == 72 && !shell.IsSidebarExpanded, "El menú compacto conserva navegación");
+
+            var bindingErrors = new BindingErrorListener();
+            PresentationTraceSources.DataBindingSource.Listeners.Add(bindingErrors);
+            PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
+            var output = artifactDirectory ?? Path.Combine(AppContext.BaseDirectory, "previews");
+            Directory.CreateDirectory(output);
+            try
+            {
+                vm.Server = "";
+                vm.Database = "";
+                vm.IsDark = false;
+                shell.IsSidebarCompact = false;
+                nav.Navigate(SetupPage.Home);
+                await RenderAsync(shell, 1280, 720, Path.Combine(output, "inicio-claro.png"));
+                vm.IsDark = true;
+                nav.Navigate(SetupPage.Connection);
+                await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
+                shell.IsSidebarCompact = true;
+                await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
+                Check(bindingErrors.Errors.Count == 0, "Ventana, temas y navegación sin errores de enlaces WPF: " + string.Join(";", bindingErrors.Errors));
+                Check(((SolidColorBrush)appResource("TextBrush")).Color != ((SolidColorBrush)appResource("BackgroundBrush")).Color, "El tema mantiene recursos distintos para texto y fondo");
+                Console.WriteLine("Vistas renderizadas: " + output);
+            }
+            finally { PresentationTraceSources.DataBindingSource.Listeners.Remove(bindingErrors); }
+            Console.WriteLine($"{passed} comprobaciones correctas.");
+        }
+        finally { Directory.Delete(temporaryFolder, recursive: true); }
+    }
+
+    private static object appResource(string key) => System.Windows.Application.Current.FindResource(key);
+
+    private static async Task RenderAsync(ShellViewModel shell, double width, double height, string path)
+    {
+        var window = new MainWindow(shell) { Width = width, Height = height, ShowActivated = false };
+        try
+        {
+            // Renderizar fuera del compositor evita capturas parciales al cerrar/cambiar ventanas.
+            var root = (FrameworkElement)window.Content;
+            window.Content = null;
+            root.DataContext = shell;
+            TextElement.SetFontFamily(root, window.FontFamily);
+            TextElement.SetFontSize(root, window.FontSize);
+            TextElement.SetForeground(root, window.Foreground);
+            root.Measure(new Size(width, height));
+            root.Arrange(new Rect(0, 0, width, height));
+            await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            root.UpdateLayout();
+            var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(root);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            await using var stream = File.Create(path);
+            encoder.Save(stream);
+        }
+        finally { window.Close(); }
+    }
+
+    private sealed class ControlledHealthCheck : IConnectionHealthCheck
+    {
+        private TaskCompletionSource<ConnectionCheckResult> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int CallCount { get; private set; }
+        public async Task<ConnectionCheckResult> CheckAsync(WorkstationSettings settings, CancellationToken cancellationToken = default)
+        {
+            CallCount++;
+            return await completion.Task.WaitAsync(cancellationToken);
+        }
+        public void Complete(ConnectionCheckResult result) => completion.SetResult(result);
+        public void Reset() => completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+
+    private sealed class BindingErrorListener : TraceListener
+    {
+        public List<string> Errors { get; } = [];
+        public override void Write(string? message) { if (message is not null) Errors.Add(message); }
+        public override void WriteLine(string? message) => Write(message);
+    }
+}
