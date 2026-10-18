@@ -95,6 +95,36 @@
     <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
     <Setter Property="Padding" Value="{StaticResource CardPadding}" />
   </Style>
+  <Style x:Key="DialogWindow" TargetType="Window">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontFamily" Value="Segoe UI" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Window">
+          <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+              <Border Background="{DynamicResource TintBrush}" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeading}" Margin="0" AutomationProperties.HeadingLevel="Level1"/>
+              </Border>
+              <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,16">
+                <ContentPresenter Content="{TemplateBinding Content}"/>
+              </ScrollViewer>
+              <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
+                <DockPanel LastChildFill="False">
+                  <Button DockPanel.Dock="Right" Content="{Binding PrimaryActionLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="{Binding PrimaryActionLabel}" Margin="8,0,0,0"/>
+                  <Button DockPanel.Dock="Right" Content="{Binding SecondaryActionLabel}" Command="{Binding CancelCommand}" AutomationProperties.Name="{Binding SecondaryActionLabel}"/>
+                  <ProgressBar Width="120" Height="4" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center"/>
+                </DockPanel>
+              </Border>
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
   <Style TargetType="Button">
     <Setter Property="MinHeight" Value="40" />
     <Setter Property="Padding" Value="16,8" />

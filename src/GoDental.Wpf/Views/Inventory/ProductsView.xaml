@@ -2,8 +2,8 @@
   <StackPanel>
     <DockPanel>
       <WrapPanel DockPanel.Dock="Right" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}">
-        <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" Click="FocusEditor" IsEnabled="{Binding CanEdit}" Margin="0,0,8,0" />
-        <Button Content="Nuevo producto" Command="{Binding NewProductCommand}" Click="FocusEditor" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" />
+        <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" IsEnabled="{Binding CanEditSelected}" Margin="0,0,8,0" />
+        <Button Content="Nuevo producto" Command="{Binding NewProductCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" />
       </WrapPanel>
       <TextBlock Text="Inventario" Style="{StaticResource Heading}" />
     </DockPanel>
@@ -40,7 +40,7 @@
         <CheckBox Content="Sólo stock bajo" IsChecked="{Binding LowStockOnly}" Margin="0,12,0,0"/>
         <CheckBox Content="Incluir productos inactivos" IsChecked="{Binding IncludeInactive}" Margin="0,12,0,12" IsEnabled="{Binding IsNotBusy}" />
         <Button Content="Ver existencias, lotes y movimientos" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding IsNotBusy}" HorizontalAlignment="Left" Margin="0,0,0,12" />
-        <DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="280" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="Catálogo de productos">
+        <DataGrid MouseDoubleClick="OnProductDoubleClick" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="280" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="Catálogo de productos">
           <DataGrid.Columns>
             <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="120" />
             <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="150" />
@@ -76,61 +76,5 @@
       </StackPanel></Border>
     </Expander>
     <local:InventoryView DataContext="{Binding Inventory}" Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
-    <Border x:Name="EditorPanel" Style="{StaticResource Card}" Margin="0,20,0,0" IsEnabled="{Binding CanEdit}" Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVisibility}}">
-      <StackPanel>
-        <DockPanel Margin="0,0,0,16">
-          <WrapPanel DockPanel.Dock="Right">
-            <Button Content="Cerrar formulario" Command="{Binding CloseEditorCommand}" Margin="0,0,8,0" />
-            <Button Content="Nuevo / limpiar" Command="{Binding NewProductCommand}" Margin="0,0,8,0" />
-            <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" />
-          </WrapPanel>
-          <TextBlock Text="{Binding EditorTitle}" Style="{StaticResource SectionHeading}" />
-        </DockPanel>
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="24" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
-          <StackPanel>
-            <Label Content="SKU *" Target="{Binding ElementName=SkuInput}" />
-            <TextBox x:Name="SkuInput" Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}" MaxLength="60" />
-            <Label Content="Nombre *" Target="{Binding ElementName=ProductNameInput}" Margin="0,8,0,0" />
-            <TextBox x:Name="ProductNameInput" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" />
-            <Label Content="Categoría *" Margin="0,8,0,0" />
-            <ComboBox ItemsSource="{Binding Categories}" DisplayMemberPath="Name" SelectedItem="{Binding Category}" AutomationProperties.Name="Categoría" />
-            <Grid Margin="0,8,0,0">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-              </Grid.ColumnDefinitions>
-              <TextBox Text="{Binding NewCategory, UpdateSourceTrigger=PropertyChanged}" MaxLength="120" ToolTip="Nombre de nueva categoría" AutomationProperties.Name="Nueva categoría" />
-              <Button Grid.Column="1" Content="Crear categoría" Command="{Binding CreateCategoryCommand}" Margin="8,0,0,0" />
-            </Grid>
-            <Label Content="Marca" Margin="0,8,0,0" />
-            <ComboBox ItemsSource="{Binding Brands}" DisplayMemberPath="Name" SelectedItem="{Binding Brand}" AutomationProperties.Name="Marca" />
-            <Label Content="Descripción" Margin="0,8,0,0" />
-            <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="78" AutomationProperties.Name="Descripción" />
-          </StackPanel>
-          <StackPanel Grid.Column="2">
-            <Label Content="Unidad de medida *" />
-            <ComboBox ItemsSource="{Binding Units}" DisplayMemberPath="Name" SelectedItem="{Binding Unit}" AutomationProperties.Name="Unidad de medida" />
-            <Label Content="Precio de referencia USD *" Margin="0,8,0,0" />
-            <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Precio de referencia" />
-            <TextBlock Text="Usa punto decimal; por ejemplo, 12.50." Style="{StaticResource MutedText}" FontSize="11" Margin="0,4,0,0" />
-            <Label Content="Stock mínimo" Margin="0,8,0,0" />
-            <TextBox Text="{Binding MinimumStock, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stock mínimo" />
-            <Label Content="Stock máximo (opcional)" Margin="0,8,0,0" />
-            <TextBox Text="{Binding MaximumStock, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stock máximo" />
-            <Label Content="Días de alerta de vencimiento" Margin="0,8,0,0"/><TextBox Text="{Binding ExpiryAlertDays, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Días de alerta de vencimiento"/>
-            <CheckBox Content="Controla lotes" IsChecked="{Binding TracksLot}" Margin="0,16,0,0" />
-            <CheckBox Content="Controla vencimiento" IsChecked="{Binding TracksExpiry}" Margin="0,12,0,0" />
-            <CheckBox Content="Producto activo" IsChecked="{Binding Active}" Margin="0,12,0,0" />
-            <Button Content="Guardar producto" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,24,0,0" />
-            <TextBlock Text="Desactivar conserva el historial. Guardar no ingresa ni ajusta existencias." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0" />
-          </StackPanel>
-        </Grid>
-      </StackPanel>
-    </Border>
   </StackPanel>
 </UserControl>

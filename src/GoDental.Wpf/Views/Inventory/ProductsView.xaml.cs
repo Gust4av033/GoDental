@@ -1,18 +1,21 @@
-using System.Windows.Controls;
 using System.Windows;
-using System.Windows.Threading;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using GoDental.Wpf.ViewModels;
+
 namespace GoDental.Wpf.Views.Inventory;
+
 public partial class ProductsView : UserControl
 {
     public ProductsView() => InitializeComponent();
-    private void FocusEditor(object sender, RoutedEventArgs e)
+
+    private void OnProductDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        // Click precede al comando: esperar a que el editor sea visible y esté dispuesto.
-        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
-        {
-            if (!EditorPanel.IsVisible) return;
-            SkuInput.BringIntoView();
-            SkuInput.Focus();
-        }));
+        if (DataContext is not ProductsViewModel model || !model.CanEdit || e.OriginalSource is not DependencyObject source) return;
+        while (source is not null && source is not DataGridRow)
+            source = source is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+        if (source is DataGridRow) model.EditSelectedCommand.Execute(null);
     }
 }
