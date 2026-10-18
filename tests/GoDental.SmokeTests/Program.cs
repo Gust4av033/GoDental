@@ -17,6 +17,7 @@ using GoDental.Wpf.Themes;
 using GoDental.Wpf.ViewModels;
 using GoDental.Wpf.Dialogs;
 using GoDental.Wpf.Views.Inventory;
+using GoDental.Wpf.Views.Auth;
 using GoDental.Wpf;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -79,6 +80,12 @@ internal static class Program
             Check(vm.ConnectionStatus == "Conexión comprobada" && !vm.IsBusy, "Refleja una comprobación exitosa sin crear sesión");
             vm.Server = "otro-servidor";
             Check(vm.ConnectionStatus == "Sin comprobar", "Editar el perfil invalida el resultado previo");
+            vm.IsDark = false;
+            await vm.SaveThemePreferenceCommand.ExecuteAsync(null);
+            var themeOnly = await store.LoadAsync();
+            Check(themeOnly.Theme == "Light" && themeOnly.Server == profile.Server && themeOnly.Database == profile.Database
+                && vm.ThemePreferenceStatus.Contains("guardado"),
+                "El interruptor conserva el tema sin guardar cambios pendientes de conexión");
 
             fake.Reset();
             probe = vm.CheckConnectionCommand.ExecuteAsync(null);
@@ -114,14 +121,14 @@ internal static class Program
             var nav = new NavigationService();
             var session = new UserSession();
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
-            var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance);
+            var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService());
             var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
             var productRepository = new FakeProductRepository();
             var productService = new ProductService(productRepository, session);
             var dialogHarness = new FakeDialogService();
             var editorFactory = new ProductEditorFactory(productService, session, NullLogger<ProductEditorViewModel>.Instance);
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
-            var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance);
+            var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
             var shell = new ShellViewModel(nav, vm, access, products, users, session);
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle.Contains("Conexión"), "La navegación actualiza página y título");
@@ -210,6 +217,49 @@ internal static class Program
                     themes.Apply(theme);
                     await RenderDialogAsync(editorFactory.Create(null, await productRepository.GetCatalogsAsync()),
                         Path.Combine(output, $"producto-dialogo-{theme}.png"));
+                    await categories.ReloadCommand.ExecuteAsync(null);
+                    using (var categoryModel = new CategoryDialogModel(categories))
+                        await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-dialogo-{theme}.png"));
+                    await users.ReloadCommand.ExecuteAsync(null);
+                    var createView = new UserCreateDialogView { DataContext = users };
+                    using (var createModel = new UserDialogModel(users, true, createView.ReadPasswords, createView.ClearPasswords, createView.HasPasswords))
+                        await RenderDialogAsync(createModel, createView, Path.Combine(output, $"crear-usuario-dialogo-{theme}.png"));
+                    users.SelectedUser = users.Users.First();
+                    var manageView = new UserManageDialogView { DataContext = users };
+                    using (var manageModel = new UserDialogModel(users, false, manageView.ReadPasswords, manageView.ClearPasswords, manageView.HasPasswords))
+                        await RenderDialogAsync(manageModel, manageView, Path.Combine(output, $"administrar-usuario-dialogo-{theme}.png"));
+                }
+                categories.Selected = categories.Items.First();
+                categories.Name = "General actualizada";
+                using (var categoryModel = new CategoryDialogModel(categories))
+                {
+                    var categoryClosed = false; categoryModel.Saved += (_, _) => categoryClosed = true;
+                    Check(categoryModel.HasUnsavedChanges, "El diálogo de categorías detecta cambios sin guardar");
+                    await categories.SaveCommand.ExecuteAsync(null);
+                    Check(!categoryClosed && categories.StatusMessage.Contains("Prueba visual sin escritura"),
+                        "Un error de categoría permanece en el diálogo");
+                }
+                users.UserName = "visual_nuevo"; users.DisplayName = "Cuenta de prueba";
+                using (var createModel = new UserDialogModel(users, true,
+                    () => ("ClaveTemporalSegura2026", "distinta"), () => { }, () => true))
+                {
+                    var closed = false; createModel.Saved += (_, _) => closed = true;
+                    await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)createModel.SaveCommand).ExecuteAsync(null);
+                    Check(!closed && users.StatusMessage.Contains("no coinciden"), "Contraseñas distintas mantienen abierto el diálogo de cuenta");
+                }
+                using (var createModel = new UserDialogModel(users, true,
+                    () => ("ClaveTemporalSegura2026", "ClaveTemporalSegura2026"), () => { }, () => true))
+                {
+                    var closed = false; createModel.Saved += (_, _) => closed = true;
+                    await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)createModel.SaveCommand).ExecuteAsync(null);
+                    Check(closed && users.StatusMessage.Contains("Usuario creado"), "Crear cuenta confirma y cierra el diálogo");
+                }
+                users.SelectedUser = users.Users.First(); users.Reason = "Prueba visual";
+                using (var manageModel = new UserDialogModel(users, false, () => ("", ""), () => { }, () => false))
+                {
+                    var closed = false; manageModel.Saved += (_, _) => closed = true;
+                    await users.ToggleActiveCommand.ExecuteAsync(null);
+                    Check(closed && users.StatusMessage.Contains("Usuario desactivado"), "Administrar cuenta confirma y cierra al cambiar estado");
                 }
                 var cancelEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
                 _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => cancelEditor.CancelCommand.Execute(null)), DispatcherPriority.Loaded);
@@ -243,14 +293,34 @@ internal static class Program
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
                 await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
                 Check(inventory.CanWrite && inventory.Stocks.Count==1,"Carga existencias y habilita operaciones con sesión autorizada");
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-detalle.png"));
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    using var movementModel = new InventoryMovementDialogModel(inventory);
+                    await RenderDialogAsync(movementModel, new InventoryMovementDialogView { DataContext = inventory }, Path.Combine(output, $"movimiento-dialogo-{theme}.png"));
+                }
+                themes.Apply("Light");
+                inventory.Quantity = "5";
+                await inventory.OpenMovementDialogCommand.ExecuteAsync(null);
+                Check(inventory.Quantity == "", "Cada apertura del diálogo de movimiento limpia el formulario");
+                using (var movementModel = new InventoryMovementDialogModel(inventory))
+                {
+                    var closed = false; movementModel.Saved += (_, _) => closed = true;
+                    inventory.SelectedLot = inventory.Lots.First(); inventory.Quantity = "-1"; inventory.Reason = "Prueba visual"; inventory.Confirmed = true;
+                    await inventory.SaveCommand.ExecuteAsync(null);
+                    Check(!closed && inventory.StatusMessage.Contains("Prueba visual sin escritura"),
+                        "Un movimiento rechazado permanece en el diálogo con su error");
+                }
                 inventory.Quantity="1"; inventory.Reason="Prueba visual"; await inventory.SaveCommand.ExecuteAsync(null);
                 Check(inventory.StatusMessage.Contains("confirma"),"Exige confirmación antes de escribir");
                 foreach(var theme in new[]{"Light","Dark"})
                 {
                     themes.Apply(theme);
-                    for(var tab=0;tab<4;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
+                    for(var tab=0;tab<3;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
                 }
                 inventory.CloseCommand.Execute(null);
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-regreso.png"));
                 await users.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Users);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "usuarios.png"));
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
@@ -269,9 +339,12 @@ internal static class Program
         finally { Directory.Delete(temporaryFolder, recursive: true); }
     }
 
-    private static async Task RenderDialogAsync(ProductEditorViewModel editor, string path)
+    private static Task RenderDialogAsync(ProductEditorViewModel editor, string path) =>
+        RenderDialogAsync(editor, new ProductEditorView { DataContext = editor }, path);
+
+    private static async Task RenderDialogAsync(IDialogModel model, UIElement body, string path)
     {
-        var window = new DialogWindow(editor, new ProductEditorView { DataContext = editor }) { ShowActivated = false };
+        var window = new DialogWindow(model, body) { ShowActivated = false };
         try
         {
             window.Show();
@@ -289,6 +362,10 @@ internal static class Program
     {
         public Func<ProductEditorViewModel, Task<bool>> Action { get; set; } = _ => Task.FromResult(false);
         public Task<bool> ShowProductEditorAsync(ProductEditorViewModel editor) => Action(editor);
+        public Task<bool> ShowCategoryManagerAsync(CategoriesViewModel manager) => Task.FromResult(false);
+        public Task<bool> ShowCreateUserAsync(UsersViewModel manager) => Task.FromResult(false);
+        public Task<bool> ShowManageUserAsync(UsersViewModel manager) => Task.FromResult(false);
+        public Task<bool> ShowInventoryMovementAsync(InventoryViewModel manager) => Task.FromResult(false);
     }
 
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
@@ -307,7 +384,7 @@ internal static class Program
         FindTabs(view)!.SelectedIndex=tab;
         await Dispatcher.CurrentDispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
         view.Measure(new Size(1080,760));view.Arrange(new Rect(0,0,1080,760));view.UpdateLayout();
-        if (theme == "Dark" && tab == 3)
+        if (theme == "Dark" && tab == 2)
         {
             var picker = Descendant<DatePicker>(view)!;
             var popup = (System.Windows.Controls.Primitives.Popup)picker.Template.FindName("PART_Popup", picker);

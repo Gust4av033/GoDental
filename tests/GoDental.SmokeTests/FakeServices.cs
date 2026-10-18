@@ -35,7 +35,7 @@ internal sealed class FakeProductRepository : IProductRepository
 }
 internal sealed class FakeUserRepository : IUserRepository
 {
-    public Task<IReadOnlyList<UserSummary>> ListAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<UserSummary>>([]);
+    public Task<IReadOnlyList<UserSummary>> ListAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<UserSummary>>([new() { Id = 3, UserName = "usuario_visual", DisplayName = "Usuario de prueba visual", Roles = "Vendedor", Active = true, RowVersion = new byte[8] }]);
     public Task<IReadOnlyList<CatalogOption>> RolesAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<CatalogOption>>([new() { Id = 1, Name = "Vendedor" }]);
     public Task<Result> CreateAsync(string u, string n, int r, string h, int a, int? e, CancellationToken ct = default) => Task.FromResult(Result.Success());
     public Task<Result> SetActiveAsync(UserSummary u, bool v, string r, int a, int? e, CancellationToken ct = default) => Task.FromResult(Result.Success());
@@ -54,6 +54,6 @@ internal sealed class VisualInventoryRepository : IInventoryRepository
 }
 internal sealed class VisualCategoryRepository : ICategoryRepository
 {
-    public Task<IReadOnlyList<CategoryData>> ListAsync(int u,CancellationToken ct=default) => Task.FromResult<IReadOnlyList<CategoryData>>([]);
+    public Task<IReadOnlyList<CategoryData>> ListAsync(int u,CancellationToken ct=default) => Task.FromResult<IReadOnlyList<CategoryData>>([new(){Id=1,Name="General",Active=true}]);
     public Task<Result<int>> SaveAsync(CategoryChange c,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<int>.Failure("TEST","Prueba visual sin escritura."));
 }
