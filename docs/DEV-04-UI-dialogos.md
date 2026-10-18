@@ -10,6 +10,6 @@ Se añade un servicio de diálogos inyectado y una ventana reutilizable con los 
 
 La administración de categorías, la edición de inventario y la gestión de cuentas conservan por ahora sus flujos actuales. Son fases posteriores y requieren una decisión de alcance propia.
 
-## Verificación prevista
+## Verificación
 
-Compilación y pruebas de solución, `scripts/verify.ps1` y smoke WPF en Windows, incluidos temas Light/Dark, enlaces, guardado, cancelación y filtros.
+En el entorno Linux se completó la compilación cruzada Release de la solución con .NET 8 y `EnableWindowsTargeting=true` (0 errores, 0 advertencias), y `dotnet test` aprobó los 20 casos ejecutables allí. Los smoke WPF incluyen render Light/Dark y comprobaciones de enlaces, filtros, guardado, rechazo, estado ocupado, cancelación y confirmación de cambios sin guardar. Al intentar ejecutarlos en Linux, el host informó que falta `Microsoft.WindowsDesktop.App` 8.0; requieren Windows. Su ejecución, así como `scripts/verify.ps1`, queda pendiente de Windows; la compilación cruzada no demuestra el comportamiento visual ni que `ValidateOnBuild` funcione al iniciar la aplicación.
