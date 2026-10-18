@@ -57,6 +57,21 @@ internal static class InventoryIntegration
         Check((await service.AdjustAsync(trackedEntry)).IsSuccess,"Entrada por lote con vencimiento");
         var lots=(await service.ReadAsync(tracked,warehouse)).Lots;
         var lot=lots.Single(); Check(lot.Quantity==5 && lot.Status=="Próximo a vencer","Alerta por vencimiento cercano");
+        Check((await service.AdjustAsync(await Request(tracked,-2,lot:lot.Id,destination:target))).IsSuccess,"Transfiere lote existente sin duplicarlo");
+        var sourceLot=(await service.ReadAsync(tracked,warehouse)).Lots.Single();
+        var targetLot=(await service.ReadAsync(tracked,target)).Lots.Single();
+        Check(sourceLot.Id==targetLot.Id && sourceLot.Quantity==3 && targetLot.Quantity==2 && targetLot.EntryCost==8,
+            "Transferencia conserva identidad, cantidad total y costo histórico del lote");
+        Check((await service.AdjustAsync(await Request(tracked,2,12,lot.Id))).IsSuccess,"Entrada adicional al lote existente");
+        snapshot=await service.ReadAsync(tracked,warehouse);
+        Check(snapshot.Stocks.Single(s=>s.WarehouseId==warehouse).AverageCost==9.6m && snapshot.Lots.Single().EntryCost==8,
+            "Promedio decimal cambia sin reescribir costo histórico del lote");
+        var tracedProduct=(await products.SearchAsync(new("INV-LOTE"))).Value!.Items.Single();
+        tracedProduct.Sku="SKU-CAMBIADO";
+        Check((await products.SaveAsync(tracedProduct)).ErrorCode=="TRACEABILITY","Conserva SKU con movimientos registrados");
+        var usedCategory=(await categoryRepo.ListAsync(identity.Id)).Single(x=>x.Id==catalogs.Categories.First().Id);
+        Check((await categoryRepo.SaveAsync(new(usedCategory.Id,usedCategory.Name,false,usedCategory.Name,usedCategory.Active),identity.Id,identity.WorkstationId)).ErrorCode=="IN_USE",
+            "Impide desactivar categoría con productos activos");
         Check(!(await service.AdjustAsync((await Request(tracked,1,9)) with {NewLotNumber="LOT-001",Expires=today.AddDays(20)})).IsSuccess,"No duplica lote físico");
         Check(!(await service.AdjustAsync(await Request(tracked,-1))).IsSuccess,"Salida exige lote");
         Check((await service.SetLotStateAsync(new(lot.Id,true,false,"Retiro preventivo"))).IsSuccess,"Bloqueo auditado");

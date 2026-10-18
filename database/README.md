@@ -14,6 +14,8 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 6. `006_Comercial_Base.sql`
 7. `007_Seed.sql`
 8. `008_ViewsProcedures.sql`
+9. `009_Seguridad_Parametros.sql`
+10. `010_Inventario_Operativo.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -35,7 +37,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio/Azure Data Studio respetando el orden 001–008.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–010.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -44,6 +46,10 @@ La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro
 `009_Seguridad_Parametros.sql` se ejecuta después de la baseline y agrega los parámetros iniciales de 5 intentos fallidos y 15 minutos de bloqueo. No reemplaza valores ya configurados y no crea usuarios ni claves por defecto.
 
 La herramienta `tests/GoDental.DatabaseTests --install-development` crea sólo `localhost/GoDental_Development`, con marcador de desarrollo. Conserva la baseline y reemplaza su destino en memoria, incluyendo el `USE GoDental` sin corchetes de 005. Sobre una base existente marcada y completa ejecuta sólo migraciones posteriores a 008; no vuelve a sembrar ni resetear reglas.
+
+## Migración 010
+
+`010_Inventario_Operativo.sql` agrega `inv.sp_RegistrarAjuste` e `inv.sp_CambiarEstadoLote`: ajustes, bajas y transferencias, más bloqueo/reactivación de lotes. Incluye `USE [GoDental]`, igual que la baseline; al desplegar manualmente sobre otro nombre debe ajustarse el destino. El instalador de desarrollo adapta ese destino en memoria. No modifica datos existentes al instalarse y eleva el total a 14 procedimientos. Consultar decisiones y validaciones en [DEV-03](../docs/DEV-03-Inventario-operativo.md).
 
 ## Evolución futura
 

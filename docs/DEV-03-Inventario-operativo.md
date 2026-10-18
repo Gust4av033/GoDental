@@ -21,9 +21,19 @@ Incremento de INV-01 v0.1 / DB-01 v0.1. Conserva las tablas y procedimientos 001
 
 Ejecutar 010 después de 009, sobre la misma base de datos, antes de abrir las nuevas operaciones. No ejecutar scripts de prueba en producción. El instalador de desarrollo incluye 010 automáticamente. Sin migración, la UI informa el fallo y no simula guardado.
 
+El 17/10/2026 se aplicó 010 a `localhost/GoDental_Development`, verificando su marcador antes de actualizar. Se conservaron datos y cuentas; no se reejecutó el seed. Resultado: 72 tablas, 8 vistas y 14 procedimientos.
+
 ## Validación
 
-Se documentarán aquí los resultados efectivamente ejecutados al cerrar el PR. La revisión visual WPF y las pruebas SQL requieren Windows/SQL Server; la compilación cruzada en Linux no las sustituye.
+Verificación local realizada el 17/10/2026 sobre Windows y SQL Server 2022:
+
+- Build Release: 0 errores y 0 advertencias; SDK 10.0.401 con destinos .NET 8 / C# 12, sin cambiar `global.json`.
+- 20 casos xUnit aprobados.
+- 49 comprobaciones SQL de regresión de acceso, cuentas, catálogo y seguridad; 40 de inventario, en bases aisladas `GoDental_Tests_<GUID>`.
+- 28 comprobaciones WPF con vistas Light/Dark sin errores de binding, incluyendo conservación de filtros y calendario del Kardex.
+- Se reprodujo y corrigió la pérdida de categoría y marca al buscar con ComboBoxes enlazados; la prueba falló antes de corregir y pasó después. Se corrigió el foco diferido del editor y el contraste de categorías/selectores de fecha en oscuro.
+- El instalador general incluye ahora 010; `verify.ps1 -SqlIntegration` ejecuta ambas suites SQL. La migración declara explícitamente su base destino.
+- El commit inicial de inventario también pasó CI Windows (ejecución 22). Estos resultados locales incluyen las correcciones posteriores.
 
 ## Catálogo y categorías
 
@@ -35,4 +45,14 @@ Se añaden filtros por categoría, marca y stock bajo, y días de alerta configu
 - SQL: `dotnet run --project tests/GoDental.DatabaseTests -c Release -- --run-inventory .` crea una base `GoDental_Tests_<GUID>` aislada. En CI se añade `--localdb`, exclusivamente en el ejecutable de pruebas; LocalDB continúa prohibido como base central de la aplicación.
 - SQL cubre costo promedio, compensaciones, bloqueo/vencimiento, transferencias, auditoría/rollback, última unidad desde dos conexiones, reservas, permisos revocados y paginación.
 - Smoke WPF renderiza Light/Dark, navegación y las cuatro secciones de Inventario. Las clases de datos controlados sólo existen en tests, sin registro en App.
-- La compilación cruzada Release mediante MSBuild pasó en los bloques de persistencia y UI. El CLI y VSTest no funcionan en el entorno Linux de edición; los resultados canónicos de `dotnet build/test` y SQL/WPF se comprobarán en Windows CI antes de integrar.
+- Las compilaciones cruzadas anteriores se complementaron con las ejecuciones reales de Windows/SQL detalladas arriba.
+
+## Uso de la versión 0.3
+
+1. Abrir GoDental y acceder con una cuenta autorizada; si la base aún no tiene cuentas, crear el primer administrador.
+2. En Productos, seleccionar un producto y pulsar **Ver existencias, lotes y movimientos**. El detalle aparece bajo el catálogo y se desplaza a la vista automáticamente.
+3. Elegir almacén y **Actualizar existencias** al cambiarlo. Consultar las pestañas de saldos, lotes o Kardex.
+4. Para un movimiento, escribir tipo, cantidad firmada y motivo. Las entradas requieren costo y, si aplica, lote nuevo o existente. Una transferencia usa cantidad negativa y un destino diferente.
+5. Revisar los datos y marcar la confirmación antes de registrar. Un conflicto exige recargar; un movimiento confirmado se corrige mediante otro movimiento.
+
+La distribución autocontenida Windows x64 está en `work/GoDental-0.3.0` fuera del repositorio; incluye instrucciones de uso y no incluye una copia de la base. Compras, ventas/caja, conteos, series, política definitiva de inventario inicial y despliegue de producción siguen pendientes.

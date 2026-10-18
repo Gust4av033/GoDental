@@ -114,7 +114,8 @@ internal static class Program
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
             var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance);
             var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
-            var products = new ProductsViewModel(new ProductService(new FakeProductRepository(), session), session, NullLogger<ProductsViewModel>.Instance,inventory,categories);
+            var productRepository = new FakeProductRepository();
+            var products = new ProductsViewModel(new ProductService(productRepository, session), session, NullLogger<ProductsViewModel>.Instance,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session);
             shell.NavigateCommand.Execute(SetupPage.Connection);
@@ -145,6 +146,19 @@ internal static class Program
                 await RenderAsync(shell, 1280, 900, Path.Combine(output, "primer-administrador.png"));
                 session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS"], false));
                 await products.ReloadCommand.ExecuteAsync(null);
+                var filterView = new GoDental.Wpf.Views.Inventory.ProductsView { DataContext = products };
+                filterView.Measure(new Size(1080, 768));
+                filterView.Arrange(new Rect(0, 0, 1080, 768));
+                await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                products.FilterCategory = products.Categories.First();
+                products.FilterBrand = products.Brands.First(); // Sin marca es un filtro válido con Id=0.
+                await products.SearchCommand.ExecuteAsync(null);
+                Check(productRepository.LastSearch is { CategoryId: 1, BrandId: 0 }
+                    && products.FilterCategory?.Id == 1 && products.FilterBrand?.Id == 0,
+                    "Buscar conserva filtros de categoría y Sin marca al renovar catálogos enlazados");
+                await products.ClearFiltersCommand.ExecuteAsync(null);
+                Check(productRepository.LastSearch is { CategoryId: null, BrandId: null }, "Limpiar filtros consulta todas las categorías y marcas");
+                filterView.DataContext = null;
                 nav.Navigate(SetupPage.Products);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
                 await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
@@ -178,6 +192,9 @@ internal static class Program
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
     {
         var view=new GoDental.Wpf.Views.Inventory.InventoryView {DataContext=model};
+        view.Foreground = (Brush)appResource("TextBrush");
+        view.FontFamily = new FontFamily("Segoe UI");
+        view.FontSize = 14;
         view.Measure(new Size(1080,660));view.Arrange(new Rect(0,0,1080,660));view.UpdateLayout();
         TabControl? FindTabs(DependencyObject node)
         {
@@ -188,9 +205,26 @@ internal static class Program
         FindTabs(view)!.SelectedIndex=tab;
         await Dispatcher.CurrentDispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
         view.Measure(new Size(1080,760));view.Arrange(new Rect(0,0,1080,760));view.UpdateLayout();
+        if (theme == "Dark" && tab == 3)
+        {
+            var picker = Descendant<DatePicker>(view)!;
+            var popup = (System.Windows.Controls.Primitives.Popup)picker.Template.FindName("PART_Popup", picker);
+            Check(popup.Child is Calendar, "El selector de fecha conserva el calendario nativo con el tema oscuro");
+            ((Calendar)popup.Child).SelectedDate = new DateTime(2026, 10, 17);
+            Check(model.From == new DateTime(2026, 10, 17), "Seleccionar una fecha de calendario actualiza el filtro de Kardex");
+            model.From = null;
+        }
         var bitmap=new RenderTargetBitmap(1080,760,96,96,PixelFormats.Pbgra32);bitmap.Render(view);
         var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));
         await using var stream=File.Create(Path.Combine(output,$"inventario-{theme}-{tab}.png"));encoder.Save(stream);
+    }
+
+    private static T? Descendant<T>(DependencyObject node) where T : DependencyObject
+    {
+        if (node is T found) return found;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            if (Descendant<T>(VisualTreeHelper.GetChild(node, i)) is { } child) return child;
+        return null;
     }
 
     private static object appResource(string key) => System.Windows.Application.Current.FindResource(key);

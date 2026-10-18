@@ -67,7 +67,7 @@ public partial class App : System.Windows.Application
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             MainWindow = mainWindow;
             mainWindow.Show();
-            _host.Services.GetRequiredService<ILogger<App>>().LogInformation("Inicio de GoDental 0.2.0; catálogo y seguridad.");
+            _host.Services.GetRequiredService<ILogger<App>>().LogInformation("Inicio de GoDental 0.3.0; inventario operativo.");
         }
         catch (Exception ex)
         {

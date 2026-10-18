@@ -171,12 +171,15 @@ public sealed partial class ProductsViewModel : ObservableObject
     private void SetCatalogs(ProductCatalogs values)
     {
         var categoryId = Category?.Id; var brandId = Brand?.Id; var unitId = Unit?.Id;
+        var filterCategoryId = FilterCategory?.Id; var filterBrandId = FilterBrand?.Id;
         Categories.Clear(); foreach (var v in values.Categories) Categories.Add(v);
         Brands.Clear(); Brands.Add(new() { Id = 0, Name = "Sin marca" }); foreach (var v in values.Brands) Brands.Add(v);
         Units.Clear(); foreach (var v in values.Units) Units.Add(v);
         Category = categoryId is null ? Categories.FirstOrDefault() : Categories.FirstOrDefault(c => c.Id == categoryId);
         Brand = brandId is null ? Brands.FirstOrDefault() : Brands.FirstOrDefault(c => c.Id == brandId);
         Unit = unitId is null ? Units.FirstOrDefault() : Units.FirstOrDefault(c => c.Id == unitId);
+        FilterCategory = Categories.FirstOrDefault(c => c.Id == filterCategoryId);
+        FilterBrand = Brands.FirstOrDefault(b => b.Id == filterBrandId);
     }
     private static bool TryNumber(string value, out decimal number) => decimal.TryParse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out number);
     private void Fail(Exception ex)

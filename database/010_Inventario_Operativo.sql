@@ -3,6 +3,8 @@
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 GO
+USE [GoDental];
+GO
 CREATE OR ALTER PROCEDURE inv.sp_RegistrarAjuste
     @ProductId int, @WarehouseId int, @Quantity decimal(18,4), @UnitCost decimal(18,6),
     @Type nvarchar(30), @Reason nvarchar(500), @ExpectedVersion varbinary(8),

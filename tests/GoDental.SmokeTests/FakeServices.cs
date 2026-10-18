@@ -13,7 +13,12 @@ internal sealed class FakeIdentityGateway : IIdentityGateway
 }
 internal sealed class FakeProductRepository : IProductRepository
 {
-    public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken ct = default) => Task.FromResult(new ProductPage([], 0));
+    public ProductSearch? LastSearch { get; private set; }
+    public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken ct = default)
+    {
+        LastSearch = search;
+        return Task.FromResult(new ProductPage([], 0));
+    }
     public Task<ProductCatalogs> GetCatalogsAsync(CancellationToken ct = default) => Task.FromResult(new ProductCatalogs([new() { Id = 1, Name = "General" }], [], [new() { Id = 1, Name = "Unidad" }]));
     public Task<Result<int>> SaveAsync(ProductData p, int id, int? w, CancellationToken ct = default) => Task.FromResult(Result<int>.Success(1));
     public Task<Result<int>> CreateCategoryAsync(string n, int id, int? w, CancellationToken ct = default) => Task.FromResult(Result<int>.Success(1));

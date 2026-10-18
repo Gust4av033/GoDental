@@ -121,7 +121,7 @@
                 </Grid>
               </StackPanel>
             </Border>
-            <TextBlock Text="Disponibles: usuarios, permisos, categorías y productos. Ventas, compras y movimientos de stock siguen en desarrollo." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0" />
+            <TextBlock Text="Disponibles: usuarios, categorías, productos, existencias, lotes, ajustes, transferencias y Kardex. Ventas y compras siguen en desarrollo." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0" />
           </StackPanel>
           <StackPanel Visibility="{Binding IsPreparation, Converter={StaticResource BoolToVisibility}}">
             <TextBlock Text="Preparación del sistema" Style="{StaticResource Heading}" />
@@ -133,7 +133,7 @@
                 <TextBlock Text="02    Base de datos y seguridad" Style="{StaticResource SectionHeading}" />
                 <TextBlock Text="Disponible: primer administrador, inicio y cierre de sesión, cambio de contraseña, permisos y auditoría. La baseline se probó en una base local separada." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
                 <TextBlock Text="03    Inventario y operación" Style="{StaticResource SectionHeading}" />
-                <TextBlock Text="Disponible: buscar, crear, editar y desactivar productos; crear categorías y consultar stock. Siguiente: entradas de inventario trazables, clientes, compras, ventas y caja." Style="{StaticResource MutedText}" />
+                <TextBlock Text="Disponible: productos y categorías; existencias por almacén, lotes y vencimientos; ajustes, bajas y transferencias con auditoría y Kardex. Siguiente: clientes, compras, ventas y caja." Style="{StaticResource MutedText}" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -174,7 +174,7 @@
       </ScrollViewer>
       <DockPanel Grid.Row="2" Margin="32,0,12,0">
         <Button DockPanel.Dock="Right" Content="Cerrar sesión" Padding="10,2" MinHeight="28" Command="{Binding Access.SignOutCommand}" IsEnabled="{Binding CanSignOut}" Visibility="{Binding Access.IsAuthenticated, Converter={StaticResource BoolToVisibility}}" />
-        <TextBlock Text="GoDental · v0.2.0 · Catálogo y seguridad" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+        <TextBlock Text="GoDental · v0.3.0 · Inventario operativo" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
       </DockPanel>
     </Grid>
   </Grid>

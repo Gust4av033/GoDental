@@ -67,3 +67,13 @@ Esta sección actualiza los límites del incremento anterior según [DEV-02](DEV
 - 22 comprobaciones de smoke WPF, con vistas de acceso, productos y usuarios en Light/Dark y estado de vendedor. Sin errores de binding.
 - Build Release local con SDK 10.0.401, C# 12, .NET 8; el proyecto conserva el SDK .NET 8 definido por `global.json` para los equipos que lo tengan instalado.
 - Los cambios no habilitan producción ni certifican todavía ventas, compras, movimientos de stock, backups o dos laptops por LAN.
+
+## Inventario operativo · v0.3 · 17/10/2026
+
+Esta sección actualiza el alcance de inventario según [DEV-03](DEV-03-Inventario-operativo.md): existencias, lotes y vencimientos, ajustes, bajas, transferencias y Kardex reales en SQL, además de filtros y mantenimiento de categorías.
+
+- Build Release sin errores ni advertencias; 20 casos xUnit aprobados.
+- SQL Server 2022 local: 49 comprobaciones de regresión y 40 de inventario en bases aisladas, incluyendo costo decimal, transferencias con lotes, última unidad concurrente, permisos revocados y rollback de auditoría.
+- 28 comprobaciones WPF y capturas Light/Dark; sin errores de binding. Se corrigió una regresión de filtros reproducida con la vista enlazada, el contraste de fechas/categorías en oscuro y el foco del editor.
+- Instalador general actualizado a 001–010 y verificación opcional de ambas suites SQL.
+- La validación cubre movimientos de inventario de este incremento. Ventas, recepciones, caja, backups y dos laptops por LAN conservan su validación pendiente.

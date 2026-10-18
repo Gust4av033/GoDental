@@ -24,11 +24,13 @@ try {
     dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- "$repoRoot\TestResults\UiPreviews"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green
     if ($SqlIntegration) {
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
+    Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green
     Write-Host "    Resultados: $repoRoot\TestResults"
 }
 finally {

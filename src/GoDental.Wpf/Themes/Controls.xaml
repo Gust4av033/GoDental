@@ -25,7 +25,7 @@
               <ToggleButton.Template>
                 <ControlTemplate TargetType="ToggleButton">
                   <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
-                    <TextBlock Text="⌄" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <TextBlock Text="⌄" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
                   </Border>
                 </ControlTemplate>
               </ToggleButton.Template>
@@ -182,6 +182,9 @@
     <Setter Property="Padding" Value="6,0,0,0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
+  <Style TargetType="Expander">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+  </Style>
   <Style TargetType="TabControl">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Setter Property="BorderThickness" Value="0"/>
   </Style>
@@ -197,5 +200,23 @@
       </ControlTemplate.Triggers>
     </ControlTemplate></Setter.Value></Setter>
   </Style>
-  <Style TargetType="DatePicker"><Setter Property="MinHeight" Value="40"/><Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/></Style>
+  <Style TargetType="DatePicker">
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DatePicker">
+      <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <DatePickerTextBox x:Name="PART_TextBox" Background="{TemplateBinding Background}" Foreground="{TemplateBinding Foreground}" BorderThickness="0" Padding="8,6" VerticalContentAlignment="Center" />
+          <Button x:Name="PART_Button" Grid.Column="1" Content="&#xE787;" FontFamily="Segoe MDL2 Assets" Padding="8" MinHeight="36" AutomationProperties.Name="Abrir calendario" />
+          <Popup x:Name="PART_Popup" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" />
+        </Grid>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/></Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
 </ResourceDictionary>
