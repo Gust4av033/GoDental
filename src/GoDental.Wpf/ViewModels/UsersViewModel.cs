@@ -5,6 +5,7 @@ using GoDental.Application.Abstractions.Security;
 using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 using GoDental.Application.Services;
+using GoDental.Wpf.Dialogs;
 using Microsoft.Extensions.Logging;
 namespace GoDental.Wpf.ViewModels;
 public sealed partial class UsersViewModel : ObservableObject
@@ -12,28 +13,57 @@ public sealed partial class UsersViewModel : ObservableObject
     private readonly UserManagementService service;
     private readonly ISessionController session;
     private readonly ILogger<UsersViewModel> logger;
+    private readonly IDialogService dialogs;
+    private bool dialogOpen;
+    public event EventHandler? Saved;
     public ObservableCollection<UserSummary> Users { get; } = [];
     public ObservableCollection<CatalogOption> Roles { get; } = [];
-    [ObservableProperty] private UserSummary? selectedUser;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanManageSelected))] private UserSummary? selectedUser;
     [ObservableProperty] private CatalogOption? role;
     [ObservableProperty] private string userName = "";
     [ObservableProperty] private string displayName = "";
     [ObservableProperty] private string reason = "";
     [ObservableProperty] private string statusMessage = "Cada usuario debe tener su propia cuenta.";
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(CanOpenDialog))] [NotifyPropertyChangedFor(nameof(CanManageSelected))] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
     public bool CanView => service.CanRead;
     public bool CanManage => service.CanManage;
     public bool CanEdit => CanManage && !IsBusy;
+    public bool CanOpenDialog => CanEdit && !dialogOpen;
+    public bool CanManageSelected => CanOpenDialog && SelectedUser is not null;
+    public bool IsEmpty => Users.Count == 0;
+    public bool IsRolesEmpty => Roles.Count == 0;
     public bool IsNotBusy => !IsBusy;
-    public UsersViewModel(UserManagementService service, ISessionController session, ILogger<UsersViewModel> logger)
+    public UsersViewModel(UserManagementService service, ISessionController session, ILogger<UsersViewModel> logger, IDialogService dialogs)
     {
-        this.service = service; this.session = session; this.logger = logger;
+        this.service = service; this.session = session; this.logger = logger; this.dialogs = dialogs;
         session.Changed += (_, _) =>
         {
             Users.Clear(); Roles.Clear(); SelectedUser = null; UserName = ""; DisplayName = ""; Reason = "";
+            OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(IsRolesEmpty));
             OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit));
-            OnPropertyChanged(nameof(CanManage));
+            OnPropertyChanged(nameof(CanManage)); OnPropertyChanged(nameof(CanOpenDialog)); OnPropertyChanged(nameof(CanManageSelected));
         };
+    }
+    [RelayCommand] private async Task OpenCreateAsync()
+    {
+        if (!CanOpenDialog) return;
+        UserName = ""; DisplayName = "";
+        Role = Roles.FirstOrDefault(r => r.Name == "Vendedor") ?? Roles.FirstOrDefault();
+        StatusMessage = "Completa los datos de la nueva cuenta.";
+        dialogOpen = true; OnPropertyChanged(nameof(CanOpenDialog)); OnPropertyChanged(nameof(CanManageSelected));
+        try { await dialogs.ShowCreateUserAsync(this); }
+        catch (Exception ex) { Fail(ex); }
+        finally { dialogOpen = false; OnPropertyChanged(nameof(CanOpenDialog)); OnPropertyChanged(nameof(CanManageSelected)); }
+    }
+    [RelayCommand] private async Task OpenManageAsync()
+    {
+        if (!CanManageSelected) return;
+        Reason = "";
+        StatusMessage = "Indica un motivo antes de cambiar el estado o la contraseña.";
+        dialogOpen = true; OnPropertyChanged(nameof(CanOpenDialog)); OnPropertyChanged(nameof(CanManageSelected));
+        try { await dialogs.ShowManageUserAsync(this); }
+        catch (Exception ex) { Fail(ex); }
+        finally { dialogOpen = false; OnPropertyChanged(nameof(CanOpenDialog)); OnPropertyChanged(nameof(CanManageSelected)); }
     }
     [RelayCommand] private async Task ReloadAsync()
     {
@@ -45,7 +75,9 @@ public sealed partial class UsersViewModel : ObservableObject
             if (revision != session.Revision) return;
             if (!result.IsSuccess) { StatusMessage = result.Message ?? "No se pudieron consultar usuarios."; return; }
             Users.Clear(); foreach (var user in result.Value!) Users.Add(user);
+            OnPropertyChanged(nameof(IsEmpty));
             Roles.Clear(); foreach (var r in roles) Roles.Add(r);
+            OnPropertyChanged(nameof(IsRolesEmpty));
             Role = Roles.FirstOrDefault(r => r.Name == "Vendedor") ?? Roles.FirstOrDefault();
             SelectedUser = null; StatusMessage = $"{Users.Count} usuarios. Los cambios de estado y contraseña quedan auditados.";
         }
@@ -80,7 +112,7 @@ public sealed partial class UsersViewModel : ObservableObject
         {
             var result = await mutation(); if (revision != session.Revision) return;
             if (!result.IsSuccess) { StatusMessage = result.Message ?? "No se pudo guardar."; return; }
-            UserName = ""; DisplayName = ""; Reason = ""; IsBusy = false; await ReloadAsync(); StatusMessage = success;
+            UserName = ""; DisplayName = ""; Reason = ""; IsBusy = false; await ReloadAsync(); StatusMessage = success; Saved?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex) { Fail(ex); }
         finally { IsBusy = false; }

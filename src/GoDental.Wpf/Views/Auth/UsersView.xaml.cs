@@ -1,19 +1,21 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using GoDental.Wpf.ViewModels;
+
 namespace GoDental.Wpf.Views.Auth;
+
 public partial class UsersView : UserControl
 {
-    public UsersView() { InitializeComponent(); Unloaded += (_, _) => ClearPasswords(); IsVisibleChanged += (_, _) => { if (!IsVisible) ClearPasswords(); }; }
-    private async void CreateClicked(object sender, RoutedEventArgs e)
+    public UsersView() => InitializeComponent();
+
+    private void OnUserDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is not UsersViewModel vm) return;
-        try { await vm.CreateAsync(NewPassword.Password, NewConfirmation.Password); } finally { ClearPasswords(); }
+        if (DataContext is not UsersViewModel model || !model.CanManageSelected || e.OriginalSource is not DependencyObject source) return;
+        while (source is not null && source is not DataGridRow)
+            source = source is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+        if (source is DataGridRow) model.OpenManageCommand.Execute(null);
     }
-    private async void ResetClicked(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not UsersViewModel vm) return;
-        try { await vm.ResetPasswordAsync(ResetPassword.Password, ResetConfirmation.Password); } finally { ClearPasswords(); }
-    }
-    private void ClearPasswords() { NewPassword.Clear(); NewConfirmation.Clear(); ResetPassword.Clear(); ResetConfirmation.Clear(); }
 }

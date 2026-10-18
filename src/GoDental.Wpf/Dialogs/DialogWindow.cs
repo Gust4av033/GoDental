@@ -67,7 +67,7 @@ public sealed class DialogWindow : Window
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape) { Close(); e.Handled = true; return; }
-        if (e.Key != Key.Enter || e.OriginalSource is not DependencyObject source) return;
+        if (e.Key != Key.Enter || !model.ShowPrimaryAction || e.OriginalSource is not DependencyObject source) return;
         if (FindAncestor<TextBox>(source) is { AcceptsReturn: true }) return;
         if (FindAncestor<ComboBox>(source) is { IsDropDownOpen: true }) return;
         if (FindAncestor<ButtonBase>(source) is not null) return;

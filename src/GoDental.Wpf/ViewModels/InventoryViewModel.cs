@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using GoDental.Application.Abstractions.Security;
 using GoDental.Application.DTOs;
 using GoDental.Application.Services;
+using GoDental.Wpf.Dialogs;
 using Microsoft.Extensions.Logging;
 
 namespace GoDental.Wpf.ViewModels;
@@ -14,6 +15,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     private readonly InventoryService service;
     private readonly ISessionController session;
     private readonly ILogger<InventoryViewModel> logger;
+    private readonly IDialogService dialogs;
     public event EventHandler? InventoryChanged;
     private ProductData? product;
     private byte[]? version;
@@ -51,19 +53,22 @@ public sealed partial class InventoryViewModel : ObservableObject
     public bool CanWrite => CanAdjust && !IsBusy && version is not null;
     public bool TracksLot => product?.TracksLot == true;
     public bool IsHistoryEmpty => Total == 0;
+    public bool IsStocksEmpty => Stocks.Count == 0;
+    public bool IsLotsEmpty => Lots.Count == 0;
     public string PageLabel => $"{Total} movimientos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
 
-    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger)
+    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs)
     {
-        this.service = service; this.session = session; this.logger = logger;
+        this.service = service; this.session = session; this.logger = logger; this.dialogs = dialogs;
         session.Changed += (_, _) =>
         {
             product = null; version = null; IsOpen = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Warehouses.Clear();
             Warehouse = null; SelectedLot = null; Total = 0; ResetForm();
+            OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty));
             OnPropertyChanged(nameof(CanAdjust)); OnPropertyChanged(nameof(CanSeeCosts)); OnPropertyChanged(nameof(CanWrite));
         };
     }
-    partial void OnWarehouseChanged(CatalogOption? value) { version = null; Confirmed = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Total = 0; SelectedLot = null; OnPropertyChanged(nameof(CanWrite)); }
+    partial void OnWarehouseChanged(CatalogOption? value) { version = null; Confirmed = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Total = 0; SelectedLot = null; OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty)); }
     partial void OnCreateLotChanged(bool value) { Confirmed = false; if (value) SelectedLot = null; }
     partial void OnSelectedLotChanged(LotData? value) { Confirmed = false; }
     partial void OnQuantityChanged(string value) => Confirmed = false;
@@ -91,6 +96,12 @@ public sealed partial class InventoryViewModel : ObservableObject
         });
     }
     [RelayCommand] private void Close() { if (!IsBusy) IsOpen = false; }
+    [RelayCommand] private async Task OpenMovementDialogAsync()
+    {
+        if (!CanWrite || !IsOpen) return;
+        ResetForm();
+        await dialogs.ShowInventoryMovementAsync(this);
+    }
     [RelayCommand] private async Task ReloadAsync() { Page = 1; await ExecuteAsync(ReadCoreAsync); }
     [RelayCommand] private async Task SearchHistoryAsync() { Page = 1; await ExecuteAsync(ReadHistoryAsync); }
     [RelayCommand] private async Task NextAsync() { if (IsBusy || Page * 30 >= Total) return; Page++; await ExecuteAsync(ReadHistoryAsync); }
@@ -105,6 +116,7 @@ public sealed partial class InventoryViewModel : ObservableObject
         if (revision != session.Revision) return;
         Stocks.Clear(); foreach (var row in snapshot.Stocks) Stocks.Add(row);
         Lots.Clear(); foreach (var lot in snapshot.Lots) Lots.Add(lot);
+        OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty));
         SelectedLot = Lots.FirstOrDefault(l => l.Id == selectedId);
         version = Stocks.FirstOrDefault(s => s.WarehouseId == Warehouse.Id)?.RowVersion.ToArray();
         Confirmed = false; OnPropertyChanged(nameof(CanWrite));
@@ -154,14 +166,16 @@ public sealed partial class InventoryViewModel : ObservableObject
         if (!CanWrite || SelectedLot is null) return;
         if (!Confirmed) { StatusMessage = "Escribe el motivo y marca la confirmación antes de cambiar el estado del lote."; return; }
         var change = new LotStateChange(SelectedLot.Id, SelectedLot.Active, !SelectedLot.Active, Reason);
+        var changed = false;
         await ExecuteAsync(async revision =>
         {
             var result = await service.SetLotStateAsync(change);
             if (revision != session.Revision) return;
             Confirmed = false;
             if (!result.IsSuccess) { StatusMessage = result.Message ?? "No se pudo cambiar el estado."; return; }
-            await ReadCoreAsync(revision); StatusMessage = "Estado del lote actualizado con motivo y auditoría.";
+            await ReadCoreAsync(revision); StatusMessage = "Estado del lote actualizado con motivo y auditoría."; changed = true;
         });
+        if (changed) InventoryChanged?.Invoke(this, EventArgs.Empty);
     }
     private async Task ExecuteAsync(Func<long, Task> action)
     {

@@ -1,0 +1,28 @@
+<UserControl x:Class="GoDental.Wpf.Views.Inventory.InventoryMovementDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,12"><TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/></Border>
+    <TextBlock Text="Corrección física documentada. Usa cantidad positiva para entradas y negativa para bajas o transferencias." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+    <StackPanel IsEnabled="{Binding CanWrite}">
+      <WrapPanel>
+        <StackPanel Width="210" Margin="0,0,16,12"><Label Content="Tipo de movimiento" Target="{Binding ElementName=MovementTypeInput}"/><ComboBox x:Name="MovementTypeInput" ItemsSource="{Binding MovementTypes}" SelectedItem="{Binding MovementType}" AutomationProperties.Name="Tipo de movimiento"/></StackPanel>
+        <StackPanel Width="160" Margin="0,0,16,12"><Label Content="Cantidad (+ / −)" Target="{Binding ElementName=QuantityInput}"/><TextBox x:Name="QuantityInput" Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cantidad del movimiento"/></StackPanel>
+        <StackPanel Width="180" Margin="0,0,16,12"><Label Content="Costo USD (entrada)" Target="{Binding ElementName=UnitCostInput}"/><TextBox x:Name="UnitCostInput" Text="{Binding UnitCost, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Costo unitario de entrada"/></StackPanel>
+        <StackPanel Width="210" Margin="0,0,16,12"><Label Content="Destino (transferencia)" Target="{Binding ElementName=DestinationInput}"/><ComboBox x:Name="DestinationInput" ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Destination}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén destino"/></StackPanel>
+      </WrapPanel>
+      <StackPanel Visibility="{Binding TracksLot, Converter={StaticResource BoolToVisibility}}">
+        <Label Content="Lote existente" Target="{Binding ElementName=LotInput}"/><ComboBox x:Name="LotInput" ItemsSource="{Binding Lots}" SelectedItem="{Binding SelectedLot}" DisplayMemberPath="Number" AutomationProperties.Name="Lote para el movimiento"/>
+        <CheckBox Content="Registrar un lote nuevo con esta entrada" IsChecked="{Binding CreateLot}" Margin="0,12,0,8"/>
+        <WrapPanel Visibility="{Binding CreateLot, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Width="230" Margin="0,0,16,12"><Label Content="Número de lote" Target="{Binding ElementName=LotNumberInput}"/><TextBox x:Name="LotNumberInput" Text="{Binding LotNumber, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Número de lote nuevo"/></StackPanel>
+          <StackPanel Width="180" Margin="0,0,16,12"><Label Content="Fabricación (opcional)" Target="{Binding ElementName=ManufacturedInput}"/><DatePicker x:Name="ManufacturedInput" SelectedDate="{Binding Manufactured}" AutomationProperties.Name="Fecha de fabricación"/></StackPanel>
+          <StackPanel Width="180" Margin="0,0,16,12"><Label Content="Vencimiento" Target="{Binding ElementName=ExpiryInput}"/><DatePicker x:Name="ExpiryInput" SelectedDate="{Binding Expires}" AutomationProperties.Name="Fecha de vencimiento"/></StackPanel>
+        </WrapPanel>
+      </StackPanel>
+      <Label Content="Motivo obligatorio" Target="{Binding ElementName=ReasonInput}"/>
+      <TextBox x:Name="ReasonInput" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" MinHeight="64" TextWrapping="Wrap" AcceptsReturn="True" AutomationProperties.Name="Motivo del movimiento o bloqueo"/>
+      <CheckBox Content="Verifiqué producto, almacén, lote, cantidad y motivo de esta operación." IsChecked="{Binding Confirmed}" Margin="0,16,0,12"/>
+      <Button Content="Bloquear / reactivar lote seleccionado" Command="{Binding ToggleLotCommand}" Visibility="{Binding TracksLot, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Left"/>
+      <TextBlock Text="Los movimientos confirmados no se editan ni eliminan. Una corrección genera otro movimiento con su motivo." Style="{StaticResource MutedText}" Margin="0,12,0,0"/>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

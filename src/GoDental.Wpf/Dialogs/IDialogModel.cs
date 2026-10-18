@@ -7,6 +7,7 @@ public interface IDialogModel
     string Title { get; }
     string PrimaryActionLabel { get; }
     string SecondaryActionLabel { get; }
+    bool ShowPrimaryAction { get; }
     ICommand SaveCommand { get; }
     ICommand CancelCommand { get; }
     bool HasUnsavedChanges { get; }

@@ -47,6 +47,7 @@ public sealed partial class ProductEditorViewModel : ObservableObject, IDialogMo
     public string Title => editing.Id == 0 ? "Nuevo producto" : "Editar producto";
     public string PrimaryActionLabel => "Guardar";
     public string SecondaryActionLabel => "Cancelar";
+    public bool ShowPrimaryAction => true;
 
     public ProductEditorViewModel(ProductService service, ISessionController session, ILogger<ProductEditorViewModel> logger, ProductData? product, ProductCatalogs catalogs)
     {

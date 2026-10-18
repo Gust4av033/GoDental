@@ -8,6 +8,7 @@ internal sealed class DiscardConfirmationModel : IDialogModel
     public string Title => "Descartar cambios";
     public string PrimaryActionLabel => "Descartar";
     public string SecondaryActionLabel => "Volver";
+    public bool ShowPrimaryAction => true;
     public bool CanEdit => true;
     public bool HasUnsavedChanges => false;
     public bool IsBusy => false;

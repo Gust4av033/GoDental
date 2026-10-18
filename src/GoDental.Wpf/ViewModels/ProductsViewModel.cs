@@ -28,8 +28,8 @@ public sealed partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private bool lowStockOnly;
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditSelected))] private ProductData? selectedProduct;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(CanEditSelected))] private bool isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] private ProductData? selectedProduct;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] private bool isBusy;
     [ObservableProperty] private string statusMessage = "Busca o registra tu primer producto.";
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(PageLabel))] [NotifyPropertyChangedFor(nameof(IsEmpty))] private int total;
@@ -37,6 +37,7 @@ public sealed partial class ProductsViewModel : ObservableObject
     public bool CanManage => service.CanManage;
     public bool CanEdit => CanManage && IsNotBusy && !dialogOpen;
     public bool CanEditSelected => CanEdit && SelectedProduct is not null;
+    public bool CanOpenInventory => IsNotBusy && SelectedProduct is not null && Inventory is not null;
     public bool IsNotBusy => !IsBusy && Inventory?.IsBusy != true && CategoryManager?.IsBusy != true;
     public bool IsEmpty => Total == 0;
     public string PageLabel => $"{Total} productos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
@@ -49,12 +50,12 @@ public sealed partial class ProductsViewModel : ObservableObject
         Inventory = inventory; CategoryManager = categories;
         if (inventory is not null) inventory.InventoryChanged += (_, _) => ReloadCommand.Execute(null);
         if (categories is not null) categories.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); };
-        if (inventory is not null) inventory.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); };
+        if (inventory is not null) inventory.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); };
         session.Changed += (_, _) =>
         {
             Products.Clear(); Categories.Clear(); Brands.Clear(); catalogs = null; SelectedProduct = null; Total = 0; Page = 1;
             StatusMessage = "Busca o registra tu primer producto.";
-            OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanManage));
+            OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); OnPropertyChanged(nameof(CanManage));
         };
     }
 
@@ -92,6 +93,18 @@ public sealed partial class ProductsViewModel : ObservableObject
     }
 
     [RelayCommand] private async Task NewProductAsync() => await OpenEditorAsync(null);
+    [RelayCommand] private async Task ManageCategoriesAsync()
+    {
+        if (!CanEdit || CategoryManager is null) return;
+        dialogOpen = true; OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected));
+        try
+        {
+            if (await dialogs.ShowCategoryManagerAsync(CategoryManager) && await LoadAsync())
+                StatusMessage = "Categoría actualizada. Catálogo renovado.";
+        }
+        catch (Exception ex) { Fail(ex); }
+        finally { dialogOpen = false; OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); }
+    }
     [RelayCommand] private async Task EditSelectedAsync()
     {
         if (SelectedProduct is not null) await OpenEditorAsync(SelectedProduct);
