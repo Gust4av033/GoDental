@@ -14,13 +14,23 @@ internal sealed class FakeIdentityGateway : IIdentityGateway
 internal sealed class FakeProductRepository : IProductRepository
 {
     public ProductSearch? LastSearch { get; private set; }
+    public int SearchCount { get; private set; }
+    public int SaveCount { get; private set; }
+    public bool RejectSave { get; set; }
+    public TaskCompletionSource<Result<int>>? PendingSave { get; set; }
     public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken ct = default)
     {
         LastSearch = search;
+        SearchCount++;
         return Task.FromResult(new ProductPage([], 0));
     }
     public Task<ProductCatalogs> GetCatalogsAsync(CancellationToken ct = default) => Task.FromResult(new ProductCatalogs([new() { Id = 1, Name = "General" }], [], [new() { Id = 1, Name = "Unidad" }]));
-    public Task<Result<int>> SaveAsync(ProductData p, int id, int? w, CancellationToken ct = default) => Task.FromResult(Result<int>.Success(1));
+    public Task<Result<int>> SaveAsync(ProductData p, int id, int? w, CancellationToken ct = default)
+    {
+        SaveCount++;
+        if (PendingSave is { } pending) return pending.Task;
+        return Task.FromResult(RejectSave ? Result<int>.Failure("TEST", "Guardado rechazado para prueba.") : Result<int>.Success(1));
+    }
     public Task<Result<int>> CreateCategoryAsync(string n, int id, int? w, CancellationToken ct = default) => Task.FromResult(Result<int>.Success(1));
 }
 internal sealed class FakeUserRepository : IUserRepository

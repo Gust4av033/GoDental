@@ -15,6 +15,8 @@ using GoDental.Infrastructure.Security;
 using GoDental.Wpf.Navigation;
 using GoDental.Wpf.Themes;
 using GoDental.Wpf.ViewModels;
+using GoDental.Wpf.Dialogs;
+using GoDental.Wpf.Views.Inventory;
 using GoDental.Wpf;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -115,7 +117,10 @@ internal static class Program
             var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance);
             var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
             var productRepository = new FakeProductRepository();
-            var products = new ProductsViewModel(new ProductService(productRepository, session), session, NullLogger<ProductsViewModel>.Instance,inventory,categories);
+            var productService = new ProductService(productRepository, session);
+            var dialogHarness = new FakeDialogService();
+            var editorFactory = new ProductEditorFactory(productService, session, NullLogger<ProductEditorViewModel>.Instance);
+            var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session);
             shell.NavigateCommand.Execute(SetupPage.Connection);
@@ -158,6 +163,81 @@ internal static class Program
                     "Buscar conserva filtros de categoría y Sin marca al renovar catálogos enlazados");
                 await products.ClearFiltersCommand.ExecuteAsync(null);
                 Check(productRepository.LastSearch is { CategoryId: null, BrandId: null }, "Limpiar filtros consulta todas las categorías y marcas");
+                var beforeCancel = productRepository.SearchCount;
+                dialogHarness.Action = editor => { editor.Name = "Cancelado"; return Task.FromResult(false); };
+                await products.NewProductCommand.ExecuteAsync(null);
+                Check(productRepository.SaveCount == 0 && productRepository.SearchCount == beforeCancel,
+                    "Cancelar descarta la edición sin guardar ni refrescar el catálogo");
+                dialogHarness.Action = async editor =>
+                {
+                    editor.Sku = "PRUEBA-UI"; editor.Name = "Producto de prueba";
+                    await editor.SaveCommand.ExecuteAsync(null);
+                    return true;
+                };
+                await products.NewProductCommand.ExecuteAsync(null);
+                Check(productRepository.SaveCount == 1 && productRepository.SearchCount == beforeCancel + 1
+                    && products.StatusMessage == "Producto guardado correctamente.",
+                    "Guardar cierra la edición, refresca el listado y confirma en la página");
+                var invalidEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                invalidEditor.Price = "incorrecto";
+                await invalidEditor.SaveCommand.ExecuteAsync(null);
+                Check(invalidEditor.StatusMessage.Contains("valores numéricos") && productRepository.SaveCount == 1,
+                    "Un error de validación permanece dentro del editor y no guarda");
+                var rejectedEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                rejectedEditor.Sku = "RECHAZADO"; rejectedEditor.Name = "Producto rechazado";
+                var rejectionClosed = false; rejectedEditor.Saved += (_, _) => rejectionClosed = true;
+                productRepository.RejectSave = true;
+                await rejectedEditor.SaveCommand.ExecuteAsync(null);
+                Check(!rejectionClosed && rejectedEditor.StatusMessage == "Guardado rechazado para prueba.",
+                    "Un fallo al guardar deja abierto el editor y muestra el mensaje");
+                productRepository.RejectSave = false;
+                var busyEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                busyEditor.Sku = "OCUPADO"; busyEditor.Name = "Producto ocupado";
+                var gate = new TaskCompletionSource<GoDental.Application.Common.Result<int>>(TaskCreationOptions.RunContinuationsAsynchronously);
+                productRepository.PendingSave = gate;
+                var firstSave = busyEditor.SaveCommand.ExecuteAsync(null);
+                var writesDuringSave = productRepository.SaveCount;
+                Check(busyEditor.IsBusy && !busyEditor.CanEdit, "El editor bloquea acciones mientras guarda");
+                busyEditor.SaveCommand.Execute(null);
+                Check(productRepository.SaveCount == writesDuringSave, "Guardar dos veces no duplica la escritura");
+                gate.SetResult(GoDental.Application.Common.Result<int>.Success(1));
+                await firstSave; productRepository.PendingSave = null;
+                Check(!busyEditor.IsBusy, "El editor libera el estado ocupado al terminar");
+                Check(editorFactory.Create(null, await productRepository.GetCatalogsAsync()).Sku == "",
+                    "Cada apertura usa un editor con estado limpio");
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderDialogAsync(editorFactory.Create(null, await productRepository.GetCatalogsAsync()),
+                        Path.Combine(output, $"producto-dialogo-{theme}.png"));
+                }
+                var cancelEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => cancelEditor.CancelCommand.Execute(null)), DispatcherPriority.Loaded);
+                Check(!await new DialogService(System.Windows.Application.Current).ShowProductEditorAsync(cancelEditor), "Cancelar cierra el diálogo modal sin guardar");
+                var saveEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                saveEditor.Sku = "PRUEBA-MODAL"; saveEditor.Name = "Producto modal";
+                _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => saveEditor.SaveCommand.Execute(null)), DispatcherPriority.Loaded);
+                Check(await new DialogService(System.Windows.Application.Current).ShowProductEditorAsync(saveEditor), "Guardar cierra el diálogo modal con resultado correcto");
+                var dirtyEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                dirtyEditor.Sku = "CAMBIO";
+                Check(dirtyEditor.HasUnsavedChanges, "El editor detecta cambios sin guardar");
+                var dirtyWindow = new DialogWindow(dirtyEditor, new ProductEditorView { DataContext = dirtyEditor });
+                dirtyWindow.Show();
+                void AnswerConfirmation(bool discard)
+                {
+                    var confirmation = System.Windows.Application.Current.Windows.OfType<DialogWindow>()
+                        .Single(w => w.Owner == dirtyWindow && w.IsVisible);
+                    var answer = (IDialogModel)confirmation.DataContext;
+                    if (discard) answer.SaveCommand.Execute(null);
+                    else answer.CancelCommand.Execute(null);
+                }
+                _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => AnswerConfirmation(false)), DispatcherPriority.Loaded);
+                dirtyWindow.Close();
+                Check(dirtyWindow.IsVisible, "Volver conserva el diálogo y los cambios sin guardar");
+                _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => AnswerConfirmation(true)), DispatcherPriority.Loaded);
+                dirtyWindow.Close();
+                Check(!dirtyWindow.IsVisible, "Descartar confirma el cierre con cambios sin guardar");
+                themes.Apply("Light");
                 filterView.DataContext = null;
                 nav.Navigate(SetupPage.Products);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
@@ -187,6 +267,28 @@ internal static class Program
             Console.WriteLine($"{passed} comprobaciones correctas.");
         }
         finally { Directory.Delete(temporaryFolder, recursive: true); }
+    }
+
+    private static async Task RenderDialogAsync(ProductEditorViewModel editor, string path)
+    {
+        var window = new DialogWindow(editor, new ProductEditorView { DataContext = editor }) { ShowActivated = false };
+        try
+        {
+            window.Show();
+            await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+            var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(window);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            await using var stream = File.Create(path); encoder.Save(stream);
+        }
+        finally { window.Close(); }
+    }
+
+    private sealed class FakeDialogService : IDialogService
+    {
+        public Func<ProductEditorViewModel, Task<bool>> Action { get; set; } = _ => Task.FromResult(false);
+        public Task<bool> ShowProductEditorAsync(ProductEditorViewModel editor) => Action(editor);
     }
 
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
