@@ -15,12 +15,14 @@ public sealed partial class ConnectionViewModel(
     IWorkstationSettingsStore store, IConnectionHealthCheck healthCheck,
     IThemeService themes, ILogger<ConnectionViewModel> logger, ISessionController? session = null) : ObservableObject
 {
+    private readonly SemaphoreSlim settingsWriteGate = new(1, 1);
     [ObservableProperty] private string server = "";
     [ObservableProperty] private string database = "";
     [ObservableProperty] private string statusMessage = "Configura la conexión para comprobar el acceso al servidor.";
     [ObservableProperty] private string connectionStatus = "Sin comprobar";
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
     [ObservableProperty] private bool isDark;
+    [ObservableProperty] private string themePreferenceStatus = "";
     [ObservableProperty] private bool localDevelopment;
     public bool IsNotBusy => !IsBusy;
     public string WorkstationName => Environment.MachineName;
@@ -47,6 +49,26 @@ public sealed partial class ConnectionViewModel(
     partial void OnDatabaseChanged(string value) => InvalidateConnection();
     partial void OnLocalDevelopmentChanged(bool value) => InvalidateConnection();
     partial void OnIsDarkChanged(bool value) => themes.Apply(value ? "Dark" : "Light");
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task SaveThemePreferenceAsync()
+    {
+        ThemePreferenceStatus = "Guardando tema…";
+        await settingsWriteGate.WaitAsync();
+        try
+        {
+            var saved = await store.LoadAsync();
+            await store.SaveAsync(saved with { Theme = IsDark ? "Dark" : "Light" });
+            ThemePreferenceStatus = "Tema guardado en este equipo.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            logger.LogWarning("No se pudo conservar el tema: {ErrorType}.", ex.GetType().Name);
+            StatusMessage = "El tema se aplicó, pero no se pudo guardar en este equipo.";
+            ThemePreferenceStatus = "No se pudo guardar el tema.";
+        }
+        finally { settingsWriteGate.Release(); }
+    }
     private void InvalidateConnection()
     {
         ConnectionStatus = "Sin comprobar";
@@ -83,7 +105,9 @@ public sealed partial class ConnectionViewModel(
         IsBusy = true;
         try
         {
-            await store.SaveAsync(snapshot);
+            await settingsWriteGate.WaitAsync();
+            try { await store.SaveAsync(snapshot with { Theme = IsDark ? "Dark" : "Light" }); }
+            finally { settingsWriteGate.Release(); }
             StatusMessage = "Configuración guardada en este equipo.";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

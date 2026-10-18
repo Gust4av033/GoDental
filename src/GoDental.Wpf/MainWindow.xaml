@@ -70,9 +70,13 @@
           </Grid.ColumnDefinitions>
           <Button Content="" FontFamily="Segoe MDL2 Assets" Command="{Binding ToggleSidebarCommand}" ToolTip="Expandir o contraer menú" AutomationProperties.Name="Expandir o contraer menú" Margin="0,0,16,0" Padding="10" Width="40" />
           <TextBlock Grid.Column="1" Text="{Binding PageTitle}" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" />
-          <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Connection.ConnectionStatus}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="12" />
-            <TextBlock Text="{Binding Connection.WorkstationName}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="11" Margin="0,4,0,0" />
+          <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <StackPanel VerticalAlignment="Center" Margin="0,0,20,0">
+              <TextBlock Text="{Binding Connection.ConnectionStatus}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="12" />
+              <TextBlock Text="{Binding Connection.WorkstationName}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="11" Margin="0,4,0,0" />
+            </StackPanel>
+            <Label Content="Tema oscuro" Target="{Binding ElementName=ThemeSwitchHeader}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ToggleButton x:Name="ThemeSwitchHeader" Style="{StaticResource ThemeSwitch}" IsChecked="{Binding Connection.IsDark}" Command="{Binding Connection.SaveThemePreferenceCommand}" AutomationProperties.Name="Tema oscuro" AutomationProperties.HelpText="Pulsa Espacio para cambiar entre tema claro y oscuro" ToolTip="Cambiar tema claro u oscuro" />
           </StackPanel>
         </Grid>
       </Border>
@@ -150,7 +154,10 @@
                   <Label Content="_Base de datos" Target="{Binding ElementName=DatabaseInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,8" />
                   <TextBox x:Name="DatabaseInput" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" MaxLength="128" AutomationProperties.Name="Base de datos" />
                   <TextBlock Text="La base debe existir. Esta comprobación no la crea ni instala tablas." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,16" />
-                  <CheckBox Content="Usar tema oscuro" IsChecked="{Binding IsDark}" Margin="0,0,0,20" />
+                  <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <Label Content="Tema oscuro" Target="{Binding ElementName=ThemeSwitchSettings}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <ToggleButton x:Name="ThemeSwitchSettings" Style="{StaticResource ThemeSwitch}" IsChecked="{Binding IsDark}" Command="{Binding SaveThemePreferenceCommand}" AutomationProperties.Name="Tema oscuro" AutomationProperties.HelpText="Pulsa Espacio para cambiar entre tema claro y oscuro" />
+                  </StackPanel>
                   <CheckBox Content="Desarrollo local: aceptar certificado autofirmado" IsChecked="{Binding LocalDevelopment}" Margin="0,0,0,16" ToolTip="Sólo en este equipo y bases GoDental_ separadas. La conexión continúa cifrada." />
                 </StackPanel>
                 <WrapPanel>
@@ -165,7 +172,7 @@
               </StackPanel>
             </Border>
             <TextBlock Text="Esta versión usa tu cuenta de Windows para SQL Server. Los usuarios y permisos de GoDental se validan por separado. El modo de certificado local sólo se admite para desarrollo en este equipo; la cuenta SQL de producción sigue pendiente." Style="{StaticResource MutedText}" FontSize="12" Margin="0,16,0,0" />
-            <TextBlock Text="Para conservar el tema elegido, guarda la configuración junto con el servidor y la base." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0" />
+            <TextBlock Text="El tema se conserva en este equipo al cambiar el interruptor." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0" />
           </StackPanel>
           <auth:AccessView DataContext="{Binding Access}" Visibility="{Binding DataContext.IsAccess, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
           <inventory:ProductsView DataContext="{Binding Products}" Visibility="{Binding DataContext.IsProducts, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
@@ -175,6 +182,7 @@
       <DockPanel Grid.Row="2" Margin="32,0,12,0">
         <Button DockPanel.Dock="Right" Content="Cerrar sesión" Padding="10,2" MinHeight="28" Command="{Binding Access.SignOutCommand}" IsEnabled="{Binding CanSignOut}" Visibility="{Binding Access.IsAuthenticated, Converter={StaticResource BoolToVisibility}}" />
         <TextBlock Text="GoDental · v0.3.0 · Inventario operativo" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding Connection.ThemePreferenceStatus}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="16,0,0,0" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
       </DockPanel>
     </Grid>
   </Grid>

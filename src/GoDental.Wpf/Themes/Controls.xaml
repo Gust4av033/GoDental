@@ -114,7 +114,7 @@
               </ScrollViewer>
               <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
                 <DockPanel LastChildFill="False">
-                  <Button DockPanel.Dock="Right" Content="{Binding PrimaryActionLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="{Binding PrimaryActionLabel}" Margin="8,0,0,0"/>
+                  <Button DockPanel.Dock="Right" Content="{Binding PrimaryActionLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Visibility="{Binding ShowPrimaryAction, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="{Binding PrimaryActionLabel}" Margin="8,0,0,0"/>
                   <Button DockPanel.Dock="Right" Content="{Binding SecondaryActionLabel}" Command="{Binding CancelCommand}" AutomationProperties.Name="{Binding SecondaryActionLabel}"/>
                   <ProgressBar Width="120" Height="4" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center"/>
                 </DockPanel>
@@ -211,6 +211,36 @@
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="Padding" Value="6,0,0,0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="ThemeSwitch" TargetType="ToggleButton">
+    <Setter Property="Width" Value="58" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Background" Value="{DynamicResource TintBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Grid Width="58" Height="32">
+            <Border x:Name="Track" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="16" />
+            <Ellipse x:Name="Thumb" Width="24" Height="24" HorizontalAlignment="Left" Margin="4,0,0,0" Fill="{DynamicResource SurfaceBrush}" Stroke="{DynamicResource BorderBrush}" StrokeThickness="1" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Track" Property="Background" Value="{DynamicResource PrimaryBrush}" />
+              <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right" />
+              <Setter TargetName="Thumb" Property="Margin" Value="0,0,4,0" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource TextBrush}" />
+              <Setter TargetName="Track" Property="BorderThickness" Value="2" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5" /></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
   <Style TargetType="Expander">
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
