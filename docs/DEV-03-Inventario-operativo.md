@@ -50,9 +50,9 @@ Se añaden filtros por categoría, marca y stock bajo, y días de alerta configu
 ## Uso de la versión 0.3
 
 1. Abrir GoDental y acceder con una cuenta autorizada; si la base aún no tiene cuentas, crear el primer administrador.
-2. En Productos, seleccionar un producto y pulsar **Ver existencias, lotes y movimientos**. El detalle aparece bajo el catálogo y se desplaza a la vista automáticamente.
+2. En Productos, seleccionar un producto y pulsar **Ver existencias, lotes y movimientos**. El detalle sustituye el catálogo en el área central; **Volver al catálogo** regresa al listado.
 3. Elegir almacén y **Actualizar existencias** al cambiarlo. Consultar las pestañas de saldos, lotes o Kardex.
-4. Para un movimiento, escribir tipo, cantidad firmada y motivo. Las entradas requieren costo y, si aplica, lote nuevo o existente. Una transferencia usa cantidad negativa y un destino diferente.
+4. Pulsar **Registrar movimiento** para abrir el diálogo. Escribir tipo, cantidad firmada y motivo. Las entradas requieren costo y, si aplica, lote nuevo o existente. Una transferencia usa cantidad negativa y un destino diferente.
 5. Revisar los datos y marcar la confirmación antes de registrar. Un conflicto exige recargar; un movimiento confirmado se corrige mediante otro movimiento.
 
 La distribución autocontenida Windows x64 está en `work/GoDental-0.3.0` fuera del repositorio; incluye instrucciones de uso y no incluye una copia de la base. Compras, ventas/caja, conteos, series, política definitiva de inventario inicial y despliegue de producción siguen pendientes.

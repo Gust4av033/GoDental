@@ -8,7 +8,7 @@ UX-01 v0.1 limitaba los diálogos a acciones breves o críticas. El formulario d
 
 Se añade un servicio de diálogos inyectado y una ventana reutilizable con los recursos Light/Dark existentes. El editor de producto se mueve a un ViewModel nuevo por apertura; la página conserva catálogo, filtros, paginación, el estado de la operación y el detalle de existencias. Guardar correctamente cierra la ventana y refresca el catálogo; un error deja el formulario y su mensaje visibles. Salir con cambios solicita confirmación.
 
-La administración de categorías, la edición de inventario y la gestión de cuentas conservan por ahora sus flujos actuales. Son fases posteriores y requieren una decisión de alcance propia.
+La ampliación autorizada posteriormente para categorías, movimientos de inventario y cuentas se documenta en `DEV-05-UI-flujos.md`.
 
 ## Verificación
 

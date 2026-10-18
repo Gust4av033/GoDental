@@ -38,7 +38,7 @@ Se creó `GoDental_Development` exclusivamente para este avance, sin usuarios ni
 1. Abrir GoDental 0.2. El perfil local se dejó preparado si no había una configuración del usuario.
 2. Si hace falta, ir a **Conexión y apariencia → Usar base local de desarrollo → Guardar configuración**.
 3. Abrir **Acceso de usuarios**; crear nombre, usuario y contraseña del primer administrador.
-4. Entrar a **Productos** para registrar catálogo y categorías. **Nuevo producto** lleva al formulario. Para actualizar, seleccionar una fila y pulsar **Editar seleccionado**.
+4. Entrar a **Productos** para registrar catálogo y categorías. **Nuevo producto** abre el diálogo de alta. Para actualizar, seleccionar una fila y pulsar **Editar seleccionado** o hacer doble clic. **Administrar categorías** abre su propio diálogo.
 5. En **Administrar usuarios**, crear vendedores con contraseña temporal. Al entrar deberán elegir su propia clave. Para cambiar la propia, usar **Acceso de usuarios → Cambiar mi contraseña**.
 
 ## Pruebas reproducibles
