@@ -33,3 +33,7 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-09 · Conteos físicos](DEV-09-Conteos.md): flujo, concurrencia, migración 011 y contratos C#.
 - [DEV-10 · Proveedores](DEV-10-Proveedores.md): fichas, contactos y referencias comerciales.
 - [DEV-11 · Integración UI](DEV-11-Integracion-UI.md): servicios y flujos disponibles para el siguiente incremento de interfaz.
+
+## Incremento de interfaz · 19/10/2026
+
+- [DEV-12 · Interfaces de Conteos y Proveedores](DEV-12-UI-Conteos-Proveedores.md): flujos WPF conectados, pruebas y validación pendiente en Windows/SQL.

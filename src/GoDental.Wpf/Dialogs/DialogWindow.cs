@@ -71,6 +71,7 @@ public sealed class DialogWindow : Window
         if (FindAncestor<TextBox>(source) is { AcceptsReturn: true }) return;
         if (FindAncestor<ComboBox>(source) is { IsDropDownOpen: true }) return;
         if (FindAncestor<ButtonBase>(source) is not null) return;
+        if (FindAncestor<GoDental.Wpf.Views.Shared.ProductPickerView>(source) is not null) return;
         if (model.SaveCommand.CanExecute(null)) { model.SaveCommand.Execute(null); e.Handled = true; }
     }
 

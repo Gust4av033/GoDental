@@ -7,6 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/WorkflowViewModel.cs" Link="Ui/WorkflowViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/InventoryCountsViewModel.cs" Link="Ui/InventoryCountsViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/SuppliersViewModel.cs" Link="Ui/SuppliersViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/ProductPickerViewModel.cs" Link="Ui/ProductPickerViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/IDialogModel.cs" Link="Ui/IDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/IWorkflowDialogService.cs" Link="Ui/IWorkflowDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/OperationDialogModel.cs" Link="Ui/OperationDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/CountStartDialogModel.cs" Link="Ui/CountStartDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/SupplierEditorDialogModel.cs" Link="Ui/SupplierEditorDialogModel.cs" />
+    <Compile Include="../Shared/WorkflowRepositories.cs" Link="Ui/WorkflowRepositories.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

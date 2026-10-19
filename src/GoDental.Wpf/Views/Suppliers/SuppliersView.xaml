@@ -1,0 +1,96 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Suppliers.SuppliersView">
+  <StackPanel>
+    <TextBlock Text="COMPRAS / PROVEEDORES" Style="{StaticResource PageEyebrow}"/>
+    <TextBlock Text="Proveedores" Style="{StaticResource Heading}"/>
+    <TextBlock Text="Contactos y referencias comerciales en una sola ficha." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+    <WrapPanel IsEnabled="{Binding IsNotBusy}">
+      <StackPanel Width="280" Margin="0,0,16,12">
+        <TextBlock Text="Código, nombre o país" Margin="0,0,0,6"/>
+        <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código, nombre o país"/>
+      </StackPanel>
+      <CheckBox Content="Incluir inactivos" IsChecked="{Binding IncludeInactive}" Margin="0,6,16,12"/>
+      <Button Content="Buscar / Actualizar" Command="{Binding ReloadCommand}" Margin="0,0,8,8"/>
+      <Button Content="Nuevo proveedor…" Command="{Binding NewCommand}" Margin="0,0,8,8" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}"/>
+    </WrapPanel>
+    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource MutedText}" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="No hay proveedores para mostrar." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
+    <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" Margin="0,0,0,12" SelectionMode="Single">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="100"/>
+        <DataGridTextColumn Header="Proveedor" Binding="{Binding Name}" Width="*"/>
+        <DataGridTextColumn Header="País" Binding="{Binding Country}" Width="130"/>
+        <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="150"/>
+        <DataGridTextColumn Header="Activo" Binding="{Binding Active}" Width="65"/>
+      </DataGrid.Columns>
+    </DataGrid>
+    <WrapPanel IsEnabled="{Binding IsNotBusy}">
+      <Button Content="Anterior" Command="{Binding PreviousCommand}" Margin="0,0,8,8"/>
+      <Button Content="Siguiente" Command="{Binding NextCommand}" Margin="0,0,8,8"/>
+      <Button Content="Ver ficha / Recargar" Command="{Binding OpenCommand}" Margin="0,0,8,8"/>
+      <TextBlock Text="{Binding PageLabel}" VerticalAlignment="Center"/>
+    </WrapPanel>
+    <TextBlock Text="{Binding Detail.Name}" Style="{StaticResource SectionHeading}" Margin="0,16,0,8"/>
+    <TabControl>
+      <TabItem Header="Información general">
+        <StackPanel Margin="16">
+          <TextBlock Text="{Binding Detail.Code}"/>
+          <TextBlock Text="{Binding Detail.Country}"/>
+          <TextBlock Text="{Binding Detail.Address}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Detail.Email}"/>
+          <TextBlock Text="{Binding Detail.Phone}"/>
+          <TextBlock Text="{Binding Detail.Website}" TextWrapping="Wrap"/>
+          <CheckBox Content="Proveedor activo" IsChecked="{Binding Detail.Active, Mode=OneWay}" IsEnabled="False" Margin="0,8"/>
+          <Button Content="Editar ficha / Estado…" Command="{Binding EditSupplierCommand}" Margin="0,0,8,8" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Contactos">
+        <StackPanel Margin="16">
+          <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="200" Margin="0,0,0,12" SelectionMode="Single">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Cargo" Binding="{Binding Position}" Width="120"/>
+              <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="170"/>
+              <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="120"/>
+              <DataGridTextColumn Header="Principal" Binding="{Binding Primary}" Width="70"/>
+              <DataGridTextColumn Header="Activo" Binding="{Binding Active}" Width="60"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <WrapPanel Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}">
+            <Button Content="Nuevo contacto…" Command="{Binding NewContactCommand}" Margin="0,0,8,8"/>
+            <Button Content="Editar / Estado…" Command="{Binding EditContactCommand}" Margin="0,0,8,8"/>
+          </WrapPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Productos y referencias">
+        <StackPanel Margin="16">
+          <DataGrid ItemsSource="{Binding References}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="200" Margin="0,0,0,12" SelectionMode="Single">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="SKU local" Binding="{Binding LocalSku}" Width="90"/>
+              <DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="*"/>
+              <DataGridTextColumn Header="SKU externo" Binding="{Binding SupplierSku}" Width="110"/>
+              <DataGridTemplateColumn Header="Costo / moneda" Width="140">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}">
+                      <TextBlock Text="{Binding LastCost}" Margin="0,0,8,0"/>
+                      <TextBlock Text="{Binding Currency}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTextColumn Header="MOQ" Binding="{Binding MinimumQuantity}" Width="70"/>
+              <DataGridTextColumn Header="Días" Binding="{Binding LeadTimeDays}" Width="50"/>
+              <DataGridTextColumn Header="Preferido" Binding="{Binding Preferred}" Width="70"/>
+              <DataGridTextColumn Header="Activo" Binding="{Binding Active}" Width="60"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <WrapPanel Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}">
+            <Button Content="Nueva referencia…" Command="{Binding NewProductCommand}" Margin="0,0,8,8"/>
+            <Button Content="Editar / Estado…" Command="{Binding EditProductCommand}" Margin="0,0,8,8"/>
+          </WrapPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+  </StackPanel>
+</UserControl>

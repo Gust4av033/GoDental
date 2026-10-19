@@ -132,7 +132,9 @@ internal static class Program
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
             var settingsHarness = new FakeSettingsWindowService();
-            var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness);
+            var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
+                new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
+                new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance));
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
             shell.OpenSettingsCommand.Execute(null);
@@ -164,7 +166,7 @@ internal static class Program
                 shell.IsSidebarCompact = false;
                 nav.Navigate(SetupPage.Access); await access.PrepareCommand.ExecuteAsync(null);
                 await RenderAsync(shell, 1280, 900, Path.Combine(output, "primer-administrador.png"));
-                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS"], false));
+                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS","INVENTARIO.CONTEO","COMPRAS.VER","PROVEEDORES.GESTIONAR"], false));
                 await products.ReloadCommand.ExecuteAsync(null);
                 Check(shell.IsHome && shell.CanOpenProducts, "Una sesión autorizada abre el inicio con acceso al catálogo");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "inicio-sesion-claro.png"));
@@ -342,9 +344,47 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-regreso.png"));
                 await users.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Users);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "usuarios.png"));
+                await shell.Counts.ReloadCommand.ExecuteAsync(null);
+                shell.Counts.Selected = shell.Counts.Items.First(); await shell.Counts.OpenCommand.ExecuteAsync(null);
+                await shell.Suppliers.ReloadCommand.ExecuteAsync(null);
+                shell.Suppliers.Selected = shell.Suppliers.Items.First(); await shell.Suppliers.OpenCommand.ExecuteAsync(null);
+                Check(shell.CanOpenCounts && shell.CanOpenSuppliers && shell.Counts.CanEdit && shell.Suppliers.CanManage,
+                    "Conteos y proveedores se habilitan según permisos");
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    nav.Navigate(SetupPage.Counts);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-{theme}.png"));
+                    nav.Navigate(SetupPage.Suppliers);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-{theme}.png"));
+                    // Tamaño lógico equivalente al área de 1366×768 al 125 %.
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-125-{theme}.png"));
+                    var suppliersView = new GoDental.Wpf.Views.Suppliers.SuppliersView { DataContext = shell.Suppliers };
+                    suppliersView.Measure(new Size(1000, 700)); suppliersView.Arrange(new Rect(0, 0, 1000, 700)); suppliersView.UpdateLayout();
+                    var tabs = FindChildren<TabControl>(suppliersView).First();
+                    for (var tab = 0; tab < 3; tab++)
+                    {
+                        tabs.SelectedIndex = tab; suppliersView.UpdateLayout();
+                        Check(FindChildren<DataGrid>(suppliersView).All(g => !g.AutoGenerateColumns), $"Tablas explícitas de proveedores: pestaña {tab}, {theme}");
+                    }
+                    var start = new CountStartDialogModel([new() { Id = 1, Name = "Almacén de prueba" }], new(productService), _ => Task.FromResult(false));
+                    await RenderDialogAsync(start, new CountStartDialogView { DataContext = start }, Path.Combine(output, $"abrir-conteo-{theme}.png"));
+                    foreach (var kind in Enum.GetValues<SupplierEditorKind>())
+                    {
+                        var editor = new SupplierEditorDialogModel(kind, shell.Suppliers.Detail!, shell.Suppliers.Contacts.First(), shell.Suppliers.References.First(), new(productService), [new() { Id = 1, Name = "USD" }], _ => Task.FromResult(false));
+                        await RenderDialogAsync(editor, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor }, Path.Combine(output, $"proveedor-{kind}-{theme}.png"));
+                    }
+                }
+                session.Begin(new(3, "lector_compras", "Lector de compras", 1, [], ["COMPRAS.VER"], false));
+                await shell.Suppliers.ReloadCommand.ExecuteAsync(null);
+                shell.Suppliers.Selected = shell.Suppliers.Items.First(); await shell.Suppliers.OpenCommand.ExecuteAsync(null);
+                Check(shell.CanOpenSuppliers && !shell.Suppliers.CanManage && !shell.Suppliers.CanEditChildren,
+                    "El lector de compras puede consultar sin acciones de escritura");
+                nav.Navigate(SetupPage.Suppliers);
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "proveedores-solo-lectura.png"));
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
                 await products.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Products);
-                Check(products.CanView && !products.CanManage && !shell.CanOpenUsers, "El vendedor sólo ve acciones autorizadas");
+                Check(products.CanView && !products.CanManage && !shell.CanOpenUsers && !shell.CanOpenCounts && !shell.CanOpenSuppliers && shell.Suppliers.References.Count == 0, "El vendedor sólo ve acciones autorizadas");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
@@ -409,6 +449,8 @@ internal static class Program
         public Task<bool> ShowCategoryManagerAsync(CategoriesViewModel manager) => Task.FromResult(false);
         public Task<bool> ShowCreateUserAsync(UsersViewModel manager) => Task.FromResult(false);
         public Task<bool> ShowManageUserAsync(UsersViewModel manager) => Task.FromResult(false);
+        public Task<bool> ShowCountStartAsync(CountStartDialogModel model) => Task.FromResult(false);
+        public Task<bool> ShowSupplierEditorAsync(SupplierEditorDialogModel model) => Task.FromResult(false);
         public Task<bool> ShowInventoryMovementAsync(InventoryViewModel manager) => Task.FromResult(false);
     }
 
@@ -457,6 +499,16 @@ internal static class Program
     }
 
     private static object appResource(string key) => System.Windows.Application.Current.FindResource(key);
+
+    private static IEnumerable<T> FindChildren<T>(DependencyObject node) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+        {
+            var child = VisualTreeHelper.GetChild(node, i);
+            if (child is T match) yield return match;
+            foreach (var descendant in FindChildren<T>(child)) yield return descendant;
+        }
+    }
 
     private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
         RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);

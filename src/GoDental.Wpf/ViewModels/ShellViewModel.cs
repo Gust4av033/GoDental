@@ -14,6 +14,12 @@ public sealed partial class ShellViewModel : ObservableObject
     public AccessViewModel Access { get; }
     public ProductsViewModel Products { get; }
     public UsersViewModel Users { get; }
+    public InventoryCountsViewModel Counts { get; }
+    public SuppliersViewModel Suppliers { get; }
+    public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
+    public bool IsSuppliers => navigation.CurrentPage == SetupPage.Suppliers;
+    public bool CanOpenCounts => Counts.CanRead;
+    public bool CanOpenSuppliers => Suppliers.CanRead;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SidebarWidth))]
     [NotifyPropertyChangedFor(nameof(IsSidebarExpanded))]
@@ -27,6 +33,8 @@ public sealed partial class ShellViewModel : ObservableObject
         SetupPage.Connection => "Ajustes",
         SetupPage.Access => "Mi cuenta",
         SetupPage.Products => "Inventario / Productos",
+        SetupPage.Counts => "Inventario / Conteos",
+        SetupPage.Suppliers => "Compras / Proveedores",
         SetupPage.Users => "Seguridad / Usuarios",
         _ => "Inicio"
     };
@@ -38,15 +46,17 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool IsUsers => navigation.CurrentPage == SetupPage.Users;
     public bool CanOpenUsers => Users.CanView;
     public bool CanOpenProducts => Products.CanView;
-    public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy;
+    public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers)
     {
         this.navigation = navigation;
         this.settingsWindow = settingsWindow;
         Connection = connection;
         Access = access; Products = products;
-        Users = users;
+        Users = users; Counts = counts; Suppliers = suppliers;
+        counts.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
+        suppliers.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         users.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         products.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         access.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
@@ -54,6 +64,7 @@ public sealed partial class ShellViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(CanOpenProducts)); OnPropertyChanged(nameof(CanSignOut));
             OnPropertyChanged(nameof(CanOpenUsers));
+            OnPropertyChanged(nameof(CanOpenCounts)); OnPropertyChanged(nameof(CanOpenSuppliers));
             navigation.Navigate(session.IsAuthenticated ? SetupPage.Home : SetupPage.Access);
             if (session.IsAuthenticated) Products.ReloadCommand.Execute(null);
         };
@@ -65,6 +76,7 @@ public sealed partial class ShellViewModel : ObservableObject
             OnPropertyChanged(nameof(IsConnection));
             OnPropertyChanged(nameof(IsAccess)); OnPropertyChanged(nameof(IsProducts));
             OnPropertyChanged(nameof(IsUsers));
+            OnPropertyChanged(nameof(IsCounts)); OnPropertyChanged(nameof(IsSuppliers));
         };
     }
 
@@ -72,10 +84,14 @@ public sealed partial class ShellViewModel : ObservableObject
     {
         if (page == SetupPage.Products && !CanOpenProducts) page = SetupPage.Access;
         if (page == SetupPage.Users && !CanOpenUsers) page = SetupPage.Access;
+        if (page == SetupPage.Counts && !CanOpenCounts) page = SetupPage.Access;
+        if (page == SetupPage.Suppliers && !CanOpenSuppliers) page = SetupPage.Access;
         navigation.Navigate(page);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
         if (page == SetupPage.Products) Products.ReloadCommand.Execute(null);
         if (page == SetupPage.Users) Users.ReloadCommand.Execute(null);
+        if (page == SetupPage.Counts) Counts.ReloadCommand.Execute(null);
+        if (page == SetupPage.Suppliers) Suppliers.ReloadCommand.Execute(null);
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
     [RelayCommand] private void OpenSettings() => settingsWindow.Show();

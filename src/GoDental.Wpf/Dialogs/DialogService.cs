@@ -40,6 +40,12 @@ public sealed class DialogService(System.Windows.Application application) : IDia
         return Show(new DialogWindow(model, new InventoryMovementDialogView { DataContext = manager }));
     }
 
+    public Task<bool> ShowCountStartAsync(CountStartDialogModel model) =>
+        Show(new DialogWindow(model, new CountStartDialogView { DataContext = model }));
+
+    public Task<bool> ShowSupplierEditorAsync(SupplierEditorDialogModel model) =>
+        Show(new DialogWindow(model, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = model }));
+
     private Task<bool> Show(DialogWindow window)
     {
         var owner = application.MainWindow;
