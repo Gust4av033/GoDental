@@ -43,11 +43,23 @@ Reglas principales:
 
 1. Clonar el repositorio.
 2. Abrir `GoDental.sln` en **Visual Studio 2022** con el workload **.NET desktop development** y SDK .NET 8 instalado.
-3. Copiar `src/GoDental.Wpf/appsettings.local.example.json` a `appsettings.local.json`.
-4. Configurar localmente la conexión SQL; `appsettings.local.json` está ignorado por Git.
+3. Establecer `GoDental.Wpf` como proyecto de inicio y ejecutar.
+4. La aplicación abre la ventana de acceso. Desde allí, abrir **Ajustes de conexión** para guardar el servidor/base y comprobar el acceso con la cuenta de Windows. No hace falta SQL para abrir la interfaz.
 5. Restaurar paquetes NuGet y compilar la solución.
 
 ## Base de datos
+
+La versión 0.3 incluye usuarios y catálogo de la [v0.2](docs/DEV-02-Seguridad-Catalogo.md), más existencias, lotes/vencimientos, ajustes, bajas, transferencias y Kardex con auditoría. También incorpora filtros y mantenimiento de categorías. [Alcance y guía de inventario](docs/DEV-03-Inventario-operativo.md).
+
+El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
+
+En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. En la ventana de acceso, elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
+
+```powershell
+dotnet run --project tests/GoDental.DatabaseTests -- --install-development .
+```
+
+La herramienta limita el destino a una base local de desarrollo marcada. Nunca instala sobre `GoDental` ni sobre una base existente sin su marcador.
 
 `database/` contiene la **baseline SQL v0.1** aprobada y validada estáticamente contra DB-01. Para una base nueva los scripts deben ejecutarse, obligatoriamente, en este orden:
 
@@ -60,9 +72,11 @@ Reglas principales:
 006_Comercial_Base.sql
 007_Seed.sql
 008_ViewsProcedures.sql
+009_Seguridad_Parametros.sql
+010_Inventario_Operativo.sql
 ```
 
-La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
+La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. La migración 010 añade dos procedimientos de inventario (14 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
 
 Para una instalación local puede usarse `scripts/install-database.ps1` si `sqlcmd` está disponible. La primera ejecución debe hacerse contra una instancia de **desarrollo**, nunca directamente contra producción.
 
@@ -102,7 +116,7 @@ La documentación fuente vive en `docs/` y es la referencia para decisiones func
 
 ## Desarrollo
 
-- Ramas: `feature/...`, `fix/...`, `chore/...`.
+- Ramas activas: `main` (validada) y `feature/desarrollo` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
 - `main` debe mantenerse integrable.
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.

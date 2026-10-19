@@ -34,12 +34,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDental.Wpf", "src\GoDenta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDental.Tests", "tests\GoDental.Tests\GoDental.Tests.csproj", "{8A7593BD-2395-4665-AEF6-69F4FB350D3D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDental.SmokeTests", "tests\GoDental.SmokeTests\GoDental.SmokeTests.csproj", "{EA4C0CEA-3C2A-4759-8A8F-63470FB59274}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDental.DatabaseTests", "tests\GoDental.DatabaseTests\GoDental.DatabaseTests.csproj", "{A7040CC9-A0A2-4989-A77B-5A2931B1F34D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7040CC9-A0A2-4989-A77B-5A2931B1F34D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7040CC9-A0A2-4989-A77B-5A2931B1F34D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7040CC9-A0A2-4989-A77B-5A2931B1F34D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7040CC9-A0A2-4989-A77B-5A2931B1F34D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA4C0CEA-3C2A-4759-8A8F-63470FB59274}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA4C0CEA-3C2A-4759-8A8F-63470FB59274}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA4C0CEA-3C2A-4759-8A8F-63470FB59274}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA4C0CEA-3C2A-4759-8A8F-63470FB59274}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2F8BE890-2767-4405-BC71-F89A83DB9ED1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2F8BE890-2767-4405-BC71-F89A83DB9ED1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F8BE890-2767-4405-BC71-F89A83DB9ED1}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -62,6 +74,8 @@ Global
 		{8A7593BD-2395-4665-AEF6-69F4FB350D3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{A7040CC9-A0A2-4989-A77B-5A2931B1F34D} = {9CD675C3-AB48-4765-B11A-8E651CE977BC}
+		{EA4C0CEA-3C2A-4759-8A8F-63470FB59274} = {9CD675C3-AB48-4765-B11A-8E651CE977BC}
 		{2F8BE890-2767-4405-BC71-F89A83DB9ED1} = {586CB2F1-4C10-4D35-B3F3-D1B70E9B5CA8}
 		{35B27DE8-63A0-4980-986B-678218049609} = {586CB2F1-4C10-4D35-B3F3-D1B70E9B5CA8}
 		{7B6665D3-5AC5-406C-9648-189D866DCC01} = {586CB2F1-4C10-4D35-B3F3-D1B70E9B5CA8}

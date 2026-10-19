@@ -19,12 +19,14 @@ $scripts = @(
     '005_Fiscal_Base.sql',
     '006_Comercial_Base.sql',
     '007_Seed.sql',
-    '008_ViewsProcedures.sql'
+    '008_ViewsProcedures.sql',
+    '009_Seguridad_Parametros.sql',
+    '010_Inventario_Operativo.sql'
 )
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if (-not $sqlcmd) {
-    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-008 manualmente desde SSMS.'
+    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-010 manualmente desde SSMS.'
 }
 
 foreach ($scriptName in $scripts) {
@@ -36,7 +38,7 @@ foreach ($scriptName in $scripts) {
 
 Write-Host "Servidor: $ServerInstance"
 Write-Host 'Autenticación: Windows integrada'
-Write-Host 'Ejecutando baseline SQL v0.1 en orden 001 -> 008...'
+Write-Host 'Ejecutando baseline y migraciones en orden 001 -> 010...'
 
 foreach ($scriptName in $scripts) {
     $scriptPath = Join-Path $databaseDir $scriptName
@@ -54,4 +56,4 @@ foreach ($scriptName in $scripts) {
 }
 
 Write-Host "`nBaseline SQL v0.1 instalada correctamente en $ServerInstance."
-Write-Host 'Siguiente paso: configura src/GoDental.Wpf/appsettings.local.json con la conexión local.'
+Write-Host 'Siguiente paso: abre Conexión y apariencia en GoDental y configura servidor/base.'

@@ -46,3 +46,34 @@ No existe acumulación automática entre beneficios; una promoción sólo se acu
 No forman parte de la baseline funcional inicial y continúan como evolución/preproducción: integración DTE real con Hacienda, proveedor definitivo de tarjeta, automatizaciones externas de WhatsApp/Instagram/Facebook y otras decisiones operativas que VEN-01A clasifica como diferidas.
 
 Esta validación certifica el **punto de partida técnico/documental del repositorio**, no una aplicación funcional terminada.
+
+## Avance de escritorio · 17/10/2026
+
+- [DEV-01](DEV-01-Arranque.md): Shell/MVVM, navegación, menú compacto, Light/Dark, perfil local y diagnóstico SQL de sólo lectura.
+- Build Release: 0 errores y 0 advertencias, con SDK 10.0.401, C# 12 y destinos .NET 8 de la baseline. No se cambió `global.json`.
+- Pruebas xUnit existentes: 2 aprobadas, con cobertura.
+- Smoke WPF: 20 comprobaciones aprobadas y vistas renderizadas en 1280×720 y 910×510. Se revisaron los PNG; no hubo errores de binding. El tamaño reducido permite revisar el área disponible con escalado, sin afirmar certificación completa de DPI/hardware.
+- Auditoría NuGet, incluyendo dependencias transitivas: sin vulnerabilidades conocidas reportadas por las fuentes consultadas tras fijar Pkcs 10.0.13.
+- Distribución local de prueba: Windows x64 autocontenida con runtime 8.0.32.
+- No se conectó a una base operativa, no se instalaron scripts y no se certificaron aún login, permisos, ventas ni integridad SQL en ejecución.
+
+## Catálogo y seguridad · v0.2 · 17/10/2026
+
+Esta sección actualiza los límites del incremento anterior según [DEV-02](DEV-02-Seguridad-Catalogo.md).
+
+- Se instaló 001–009 en `localhost/GoDental_Development`, separada de cualquier base operativa: 72 tablas, 8 vistas y 12 procedimientos. La base de desarrollo queda sin usuarios/contraseñas predeterminados y sin productos artificiales.
+- 49 comprobaciones SQL sobre bases aisladas `GoDental_Tests_<GUID>`: primer administrador concurrente, bloqueo y contadores concurrentes, cambios de contraseña, vendedor/permisos, gestión de cuentas, contexto y vinculación de sesión, productos/categorías, rowversion, trazabilidad y rollback de auditoría.
+- 16 casos xUnit de política, hashes, sesión y validaciones, incluyendo los dos casos anteriores de Result.
+- 22 comprobaciones de smoke WPF, con vistas de acceso, productos y usuarios en Light/Dark y estado de vendedor. Sin errores de binding.
+- Build Release local con SDK 10.0.401, C# 12, .NET 8; el proyecto conserva el SDK .NET 8 definido por `global.json` para los equipos que lo tengan instalado.
+- Los cambios no habilitan producción ni certifican todavía ventas, compras, movimientos de stock, backups o dos laptops por LAN.
+
+## Inventario operativo · v0.3 · 17/10/2026
+
+Esta sección actualiza el alcance de inventario según [DEV-03](DEV-03-Inventario-operativo.md): existencias, lotes y vencimientos, ajustes, bajas, transferencias y Kardex reales en SQL, además de filtros y mantenimiento de categorías.
+
+- Build Release sin errores ni advertencias; 20 casos xUnit aprobados.
+- SQL Server 2022 local: 49 comprobaciones de regresión y 40 de inventario en bases aisladas, incluyendo costo decimal, transferencias con lotes, última unidad concurrente, permisos revocados y rollback de auditoría.
+- 28 comprobaciones WPF y capturas Light/Dark; sin errores de binding. Se corrigió una regresión de filtros reproducida con la vista enlazada, el contraste de fechas/categorías en oscuro y el foco del editor.
+- Instalador general actualizado a 001–010 y verificación opcional de ambas suites SQL.
+- La validación cubre movimientos de inventario de este incremento. Ventas, recepciones, caja, backups y dos laptops por LAN conservan su validación pendiente.

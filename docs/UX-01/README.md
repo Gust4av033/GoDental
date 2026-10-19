@@ -8,7 +8,7 @@ GoDental debe sentirse como un ERP/POS dental moderno, limpio y rápido, con ide
 
 - Diseñar para 1366×768 y escalar correctamente a 1920×1080 y 125/150% de Windows.
 - Tokens compartidos en `Themes/Colors.xaml`, `Typography.xaml`, `Spacing.xaml`, `Controls.xaml`, `LightTheme.xaml` y `DarkTheme.xaml`; ningún View inventa colores o estilos repetidos.
-- Navegación principal en Shell con sidebar y contenido central; diálogos sólo para acciones breves/críticas.
+- Navegación principal en Shell con sidebar y contenido central. Los diálogos modales se usan para crear o editar un registro acotado y para confirmar acciones críticas, aunque el formulario necesite desplazamiento interno. Consulta, listados y detalle de solo lectura permanecen en páginas o paneles. El encabezado y las acciones del diálogo quedan visibles mientras se desplaza el formulario.
 - Componentes reutilizables para botones, inputs, tablas, estados, diálogos, PageHeader, FilterBar y feedback cuando su uso se estabilice.
 - Tablas legibles, filtros claros, estados empty/loading/error, teclado accesible y permisos reflejados en UI.
 - Code-behind sólo para comportamiento estrictamente visual; reglas en ViewModel/Application.
@@ -26,4 +26,4 @@ GoDental debe sentirse como un ERP/POS dental moderno, limpio y rápido, con ide
 9. Compras/importaciones.
 10. Dashboard, reportes, ajustes, comercial y fiscal conforme existan datos/servicios reales.
 
-Los valores Hex finales, logo, mockups de alta fidelidad y hardware de impresión permanecen pendientes para v0.2.
+La identidad final (colores aprobados y logo) y el hardware de impresión permanecen pendientes para v0.2. Las referencias visuales del usuario guían el estilo provisional de esta fase: superficies claras, acento azul, navegación compacta y tarjetas. Los tokens se documentan en `../DEV-07-UI-referencia-visual.md`; las funciones sin datos permanecen pendientes.

@@ -1,0 +1,64 @@
+<UserControl x:Class="GoDental.Wpf.Views.Inventory.ProductEditorView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <TextBlock Text="CATÁLOGO DE PRODUCTOS" Style="{StaticResource PageEyebrow}"/>
+    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,14">
+      <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
+    </Border>
+    <TabControl x:Name="EditorSections" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Secciones del producto">
+      <TabItem Header="Información general">
+        <Grid Margin="0,16,0,8">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <StackPanel>
+            <Label Content="SKU *" Target="{Binding ElementName=SkuInput}"/>
+            <TextBox x:Name="SkuInput" Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}" MaxLength="60" AutomationProperties.Name="SKU"/>
+            <Label Content="Nombre *" Target="{Binding ElementName=ProductNameInput}" Margin="0,10,0,0"/>
+            <TextBox x:Name="ProductNameInput" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nombre del producto"/>
+            <Label Content="Categoría *" Target="{Binding ElementName=CategoryInput}" Margin="0,10,0,0"/>
+            <ComboBox x:Name="CategoryInput" ItemsSource="{Binding Categories}" DisplayMemberPath="Name" SelectedItem="{Binding Category}" AutomationProperties.Name="Categoría"/>
+            <Label Content="Nueva categoría" Target="{Binding ElementName=NewCategoryInput}" Margin="0,10,0,0"/>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <TextBox x:Name="NewCategoryInput" Text="{Binding NewCategory, UpdateSourceTrigger=PropertyChanged}" MaxLength="120" AutomationProperties.Name="Nueva categoría"/>
+              <Button Grid.Column="1" Content="Crear" Command="{Binding CreateCategoryCommand}" Margin="8,0,0,0" AutomationProperties.Name="Crear categoría"/>
+            </Grid>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <Label Content="Marca" Target="{Binding ElementName=BrandInput}"/>
+            <ComboBox x:Name="BrandInput" ItemsSource="{Binding Brands}" DisplayMemberPath="Name" SelectedItem="{Binding Brand}" AutomationProperties.Name="Marca"/>
+            <Label Content="Unidad de medida *" Target="{Binding ElementName=UnitInput}" Margin="0,10,0,0"/>
+            <ComboBox x:Name="UnitInput" ItemsSource="{Binding Units}" DisplayMemberPath="Name" SelectedItem="{Binding Unit}" AutomationProperties.Name="Unidad de medida"/>
+            <Label Content="Descripción" Target="{Binding ElementName=DescriptionInput}" Margin="0,10,0,0"/>
+            <TextBox x:Name="DescriptionInput" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="105" AutomationProperties.Name="Descripción"/>
+            <CheckBox Content="Producto activo" IsChecked="{Binding Active}" Margin="0,14,0,0"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Precio y stock">
+        <Grid Margin="0,16,0,8">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <StackPanel>
+            <Label Content="Precio de referencia USD *" Target="{Binding ElementName=PriceInput}"/>
+            <TextBox x:Name="PriceInput" Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Precio de referencia"/>
+            <TextBlock Text="Usa punto decimal; por ejemplo, 12.50." Style="{StaticResource MutedText}" FontSize="11" Margin="0,4,0,0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <Label Content="Stock mínimo" Target="{Binding ElementName=MinimumStockInput}"/>
+            <TextBox x:Name="MinimumStockInput" Text="{Binding MinimumStock, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stock mínimo"/>
+            <Label Content="Stock máximo (opcional)" Target="{Binding ElementName=MaximumStockInput}" Margin="0,10,0,0"/>
+            <TextBox x:Name="MaximumStockInput" Text="{Binding MaximumStock, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stock máximo"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Lotes y vencimiento">
+        <StackPanel Margin="0,16,0,8">
+          <TextBlock Text="Activa el control que requiere este producto. El vencimiento necesita seguimiento por lote." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+          <CheckBox Content="Controla lotes" IsChecked="{Binding TracksLot}" Margin="0,0,0,12"/>
+          <CheckBox Content="Controla vencimiento" IsChecked="{Binding TracksExpiry}" Margin="0,0,0,16"/>
+          <Label Content="Días de alerta de vencimiento" Target="{Binding ElementName=ExpiryDaysInput}"/>
+          <TextBox x:Name="ExpiryDaysInput" Text="{Binding ExpiryAlertDays, UpdateSourceTrigger=PropertyChanged}" Width="180" HorizontalAlignment="Left" AutomationProperties.Name="Días de alerta de vencimiento"/>
+          <TextBlock Text="Desactivar conserva el historial. Guardar no ingresa ni ajusta existencias." Style="{StaticResource MutedText}" FontSize="12" Margin="0,16,0,0"/>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+  </StackPanel>
+</UserControl>

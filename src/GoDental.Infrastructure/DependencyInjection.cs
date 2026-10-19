@@ -1,5 +1,9 @@
 using GoDental.Application.Abstractions.Persistence;
+using GoDental.Application.Abstractions.Configuration;
 using GoDental.Infrastructure.Data;
+using GoDental.Application.Abstractions.Security;
+using GoDental.Infrastructure.Security;
+using GoDental.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,8 +19,17 @@ public static class DependencyInjection
             .AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection(DatabaseOptions.SectionName));
 
-        services.AddTransient<IDbConnectionFactory, SqlConnectionFactory>();
+        services.AddTransient<SqlConnectionFactory>();
+        services.AddTransient<IDbConnectionFactory, WorkstationConnectionFactory>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddTransient<IIdentityGateway, SqlIdentityGateway>();
+        services.AddTransient<IProductRepository, SqlProductRepository>();
+        services.AddTransient<IInventoryRepository, SqlInventoryRepository>();
+        services.AddTransient<ICategoryRepository, SqlCategoryRepository>();
+        services.AddTransient<IUserRepository, SqlUserRepository>();
+        services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();
 
         return services;
     }
 }
+

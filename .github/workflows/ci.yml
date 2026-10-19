@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/desarrollo]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -42,6 +42,16 @@ jobs:
       - name: Test
         run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger "trx;LogFileName=godental-tests.trx" --results-directory TestResults
 
+      - name: Inventario sobre SQL Server aislado
+        shell: pwsh
+        run: |
+          sqllocaldb start MSSQLLocalDB
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --localdb .
+
+      - name: Smoke WPF y vistas
+        run: dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- TestResults/UiPreviews
+
       - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -50,3 +60,4 @@ jobs:
           path: TestResults/**
           if-no-files-found: warn
           retention-days: 14
+

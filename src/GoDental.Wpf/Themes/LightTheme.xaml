@@ -1,8 +1,18 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <SolidColorBrush x:Key="Brush.Surface.Background" Color="#F6F8FB" />
-  <SolidColorBrush x:Key="Brush.Surface.Sidebar" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#172033" />
-  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#64748B" />
-  <SolidColorBrush x:Key="Brush.Border.Default" Color="#E2E8F0" />
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource LightBackground}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource LightSurface}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource LightText}" />
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource LightMuted}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource LightBorder}" />
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource LightPrimary}" />
+    <SolidColorBrush x:Key="TintBrush" Color="{StaticResource LightTint}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource LightSuccess}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource LightAccent}" />
+    <SolidColorBrush x:Key="OnPrimaryBrush" Color="{StaticResource LightOnPrimary}" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource LightSidebar}" />
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource LightSidebarText}" />
+    <SolidColorBrush x:Key="SidebarMutedBrush" Color="{StaticResource LightSidebarMuted}" />
+    <SolidColorBrush x:Key="SidebarSelectionBrush" Color="{StaticResource LightSidebarSelection}" />
+    <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource LightBrandAccent}" />
 </ResourceDictionary>
+
