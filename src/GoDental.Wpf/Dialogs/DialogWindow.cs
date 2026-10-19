@@ -41,6 +41,11 @@ public sealed class DialogWindow : Window
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         if (saved) return;
+        if (model is MvpFormModel { SecretRequired: true, Operation.HasPending: true } authorization)
+        {
+            authorization.StatusMessage = "Consulta el estado de la autorización o vuelve a ingresar la contraseña para reenviar la misma solicitud antes de cerrar.";
+            e.Cancel = true; return;
+        }
         if (model.IsBusy) { e.Cancel = true; return; }
         if (!model.HasUnsavedChanges) return;
         var confirmation = new DialogWindow(new DiscardConfirmationModel(), new TextBlock

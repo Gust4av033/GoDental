@@ -45,3 +45,4 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-16 · Refinamiento de componentes UI](DEV-16-UI-Refinamiento.md)
 - [DEV-17 · Lógica del MVP operativo](DEV-17-MVP-Logica.md): ventas/POS, caja, crédito, cotizaciones, comprobante interno y pedidos/entrega; migraciones 012–013 y límites de validación.
 - [DEV-18 · Validación compartida](DEV-18-Validacion-Compartida.md): cierre de capturas y confirmación de descarte en el smoke de Windows.
+- [DEV-19 · Interfaces del recorrido MVP](DEV-19-UI-MVP.md)

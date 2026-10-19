@@ -25,3 +25,9 @@ Cada solicitud nueva lleva `OperationId` GUID y motivo. Crear el GUID una sola v
 Todos estos contratos están registrados en DI y sincronizados en ambas ramas. Requieren migraciones 012–013. [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837) aprobó Release, 116 casos xUnit, 329 comprobaciones SQL (102 del MVP) y 101 comprobaciones WPF existentes. La suite `--run-mvp` usa una base aislada y no modifica la base del usuario. Las pantallas de las funciones nuevas y su recorrido en dos estaciones siguen pendientes. Detalle de alcance y pruebas en DEV-17; corrección compartida del arnés visual en DEV-18.
 
 Si vuelve a fallar la preparación del acceso, recoger el tipo de error del registro local sin credenciales y reproducir contra la base de pruebas antes de atribuirlo a lógica.
+
+## Conexión de pantallas MVP · feature/ui
+
+Caja, POS/cálculo/cobro, autorización puntual, cotizaciones/conversión, crédito/abonos, pedidos/entregas y PDF interno quedaron **conectados** en las páginas de DEV-19. Pruebas de presentación verifican recuperación con OperationId, concurrencia y cálculos del servicio; la validación WPF Windows de esta interfaz se registra en DEV-19. Los estados de la tabla anterior describen la entrega de lógica; este apartado actualiza su estado de conexión.
+
+No falta ningún contrato para el recorrido solicitado. Caja de POS se consulta con CAJA.VER; gestión de cajas requiere también INVENTARIO.VER para el catálogo de almacenes. Saldo inicial/códigos y fiscal pendiente conservan UI pendiente, fuera de este bloque.
