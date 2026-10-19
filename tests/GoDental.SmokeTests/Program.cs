@@ -138,7 +138,7 @@ internal static class Program
             shell.OpenSettingsCommand.Execute(null);
             Check(settingsHarness.OpenCount == 1, "El acceso puede abrir los ajustes antes de iniciar sesión");
             shell.ToggleSidebarCommand.Execute(null);
-            Check(shell.SidebarWidth == 72 && !shell.IsSidebarExpanded, "El menú compacto conserva navegación");
+            Check(shell.SidebarWidth == 64 && !shell.IsSidebarExpanded, "El menú compacto conserva navegación");
 
             var bindingErrors = new BindingErrorListener();
             PresentationTraceSources.DataBindingSource.Listeners.Add(bindingErrors);
@@ -166,6 +166,8 @@ internal static class Program
                 await RenderAsync(shell, 1280, 900, Path.Combine(output, "primer-administrador.png"));
                 session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS"], false));
                 await products.ReloadCommand.ExecuteAsync(null);
+                Check(shell.IsHome && shell.CanOpenProducts, "Una sesión autorizada abre el inicio con acceso al catálogo");
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "inicio-sesion-claro.png"));
                 var filterView = new GoDental.Wpf.Views.Inventory.ProductsView { DataContext = products };
                 filterView.Measure(new Size(1080, 768));
                 filterView.Arrange(new Rect(0, 0, 1080, 768));
@@ -225,6 +227,13 @@ internal static class Program
                     themes.Apply(theme);
                     await RenderDialogAsync(editorFactory.Create(null, await productRepository.GetCatalogsAsync()),
                         Path.Combine(output, $"producto-dialogo-{theme}.png"));
+                    for (var section = 1; section <= 2; section++)
+                    {
+                        var sectionEditor = editorFactory.Create(null, await productRepository.GetCatalogsAsync());
+                        var sectionView = new ProductEditorView { DataContext = sectionEditor };
+                        ((TabControl)sectionView.FindName("EditorSections")!).SelectedIndex = section;
+                        await RenderDialogAsync(sectionEditor, sectionView, Path.Combine(output, $"producto-seccion-{section}-{theme}.png"));
+                    }
                     await categories.ReloadAsync();
                     using (var categoryModel = new CategoryDialogModel(categories))
                         await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-dialogo-{theme}.png"));
@@ -343,6 +352,8 @@ internal static class Program
                 var workspaceWindow = new MainWindow(shell) { ShowActivated = false };
                 var coordinator = new WindowCoordinator(System.Windows.Application.Current, loginWindow, workspaceWindow, session, access);
                 coordinator.Start();
+                Check(workspaceWindow.Width <= SystemParameters.WorkArea.Width && workspaceWindow.Height <= SystemParameters.WorkArea.Height,
+                    "El espacio de trabajo cabe en el área útil incluso con escala de Windows");
                 Check(loginWindow.IsVisible && !workspaceWindow.IsVisible && ReferenceEquals(System.Windows.Application.Current.MainWindow, loginWindow),
                     "Sin sesión se muestra la ventana de acceso");
                 Window? settingsOwner = null;
