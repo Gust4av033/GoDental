@@ -26,4 +26,4 @@ GoDental debe sentirse como un ERP/POS dental moderno, limpio y rápido, con ide
 9. Compras/importaciones.
 10. Dashboard, reportes, ajustes, comercial y fiscal conforme existan datos/servicios reales.
 
-Los valores Hex finales, logo, mockups de alta fidelidad y hardware de impresión permanecen pendientes para v0.2.
+La identidad final (colores aprobados y logo) y el hardware de impresión permanecen pendientes para v0.2. Las referencias visuales del usuario guían el estilo provisional de esta fase: superficies claras, acento azul, navegación compacta y tarjetas. Los tokens se documentan en `../DEV-07-UI-referencia-visual.md`; las funciones sin datos permanecen pendientes.
