@@ -12,6 +12,14 @@ using Microsoft.Data.SqlClient;
 
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
+if (args.Contains("--run-customers"))
+{
+    var customerDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(customerDatabase, Path.Combine(root, "database"));
+    await CustomerIntegration.RunAsync(new TestConnectionFactory(customerDatabase));
+    Console.WriteLine("Base aislada retenida: " + customerDatabase);
+    return;
+}
 if (args.Contains("--run-suppliers"))
 {
     var supplierDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
@@ -44,7 +52,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine("Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers [--localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine("Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers [--localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 
