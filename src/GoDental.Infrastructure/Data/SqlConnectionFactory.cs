@@ -2,14 +2,18 @@ using System.Data.Common;
 using GoDental.Application.DTOs;
 using GoDental.Application.Validators;
 using GoDental.Application.Abstractions.Persistence;
+using GoDental.Application.Abstractions.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 
 namespace GoDental.Infrastructure.Data;
 
-public sealed class SqlConnectionFactory(IOptions<DatabaseOptions> options) : IDbConnectionFactory
+public sealed class SqlConnectionFactory(IOptions<DatabaseOptions> options) : IDbConnectionFactory, IWorkstationConnectionOpener
 {
     private readonly DatabaseOptions _options = options.Value;
+
+    async Task<DbConnection> IWorkstationConnectionOpener.OpenAsync(WorkstationSettings settings, CancellationToken ct) =>
+        await OpenAsync(settings, ct);
 
     public async Task<DbConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {

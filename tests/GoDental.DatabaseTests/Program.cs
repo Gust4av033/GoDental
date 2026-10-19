@@ -151,10 +151,14 @@ try { await userRepository.CreateAsync("rollback_user", "Prueba rollback", selle
 catch (SqlException) { failedUserAudit = true; }
 Check(failedUserAudit && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.Usuarios") == userCount, "Revierte usuario, rol y preferencias cuando falla su auditoría");
 var profileStore = new TestProfileStore(new("localhost", database, "Light", true));
-var boundFactory = new WorkstationConnectionFactory(new SqlConnectionFactory(Microsoft.Extensions.Options.Options.Create(new DatabaseOptions())), profileStore, session);
+IWorkstationConnectionOpener profileOpener = args.Contains("--localdb") ? new IsolatedTestProfileOpener()
+    : new SqlConnectionFactory(Microsoft.Extensions.Options.Options.Create(new DatabaseOptions()));
+var boundFactory = new WorkstationConnectionFactory(profileOpener, profileStore, session);
 await using (var boundConnection = await boundFactory.OpenConnectionAsync())
     Check(await boundConnection.ExecuteScalarAsync<int>("SELECT TRY_CONVERT(int,SESSION_CONTEXT(N'IdUsuario'))") == identity.Id, "Cada conexión SQL recibe el contexto de usuario");
-profileStore.Profile = new("localhost", "GoDental_Development", "Light", true);
+var otherDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+await DevelopmentDatabase.InstallAsync(otherDatabase, Path.Combine(root, "database"));
+profileStore.Profile = new("localhost", otherDatabase, "Light", true);
 var otherDatabaseDenied = false;
 try { await using var other = await boundFactory.OpenConnectionAsync(); } catch (InvalidOperationException) { otherDatabaseDenied = true; }
 Check(otherDatabaseDenied, "La sesión no puede reutilizarse al cambiar de base de datos");
@@ -190,5 +194,19 @@ internal sealed class TestProfileStore(WorkstationSettings profile) : IWorkstati
     public WorkstationSettings Profile { get; set; } = profile;
     public Task<WorkstationSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(Profile);
     public Task SaveAsync(WorkstationSettings value, CancellationToken ct = default) { Profile = value; return Task.CompletedTask; }
+}
+
+// Sólo en el ejecutable de pruebas: cambia el transporte al LocalDB aislado del runner.
+// La fábrica de sesión, el contexto SQL y sus comprobaciones siguen siendo los de producción.
+internal sealed class IsolatedTestProfileOpener : IWorkstationConnectionOpener
+{
+    public Task<DbConnection> OpenAsync(WorkstationSettings settings, CancellationToken ct = default)
+    {
+        if (GoDental.Application.Validators.WorkstationSettingsValidator.Validate(settings) is { } error)
+            throw new ArgumentException(error, nameof(settings));
+        if (!System.Text.RegularExpressions.Regex.IsMatch(settings.Database, @"^GoDental_Tests_[A-Za-z0-9]+$"))
+            throw new ArgumentException("El adaptador sólo abre bases aisladas de pruebas.", nameof(settings));
+        return new TestConnectionFactory(settings.Database).OpenConnectionAsync(ct);
+    }
 }
 

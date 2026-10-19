@@ -20,6 +20,7 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(DatabaseOptions.SectionName));
 
         services.AddTransient<SqlConnectionFactory>();
+        services.AddTransient<IWorkstationConnectionOpener>(provider => provider.GetRequiredService<SqlConnectionFactory>());
         services.AddTransient<IDbConnectionFactory, WorkstationConnectionFactory>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddTransient<IIdentityGateway, SqlIdentityGateway>();

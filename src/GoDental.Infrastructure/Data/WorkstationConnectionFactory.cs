@@ -6,7 +6,7 @@ using Dapper;
 
 namespace GoDental.Infrastructure.Data;
 
-public sealed class WorkstationConnectionFactory(SqlConnectionFactory factory, IWorkstationSettingsStore store, IUserSession session) : IDbConnectionFactory
+public sealed class WorkstationConnectionFactory(IWorkstationConnectionOpener factory, IWorkstationSettingsStore store, IUserSession session) : IDbConnectionFactory
 {
     public async Task<DbConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {
