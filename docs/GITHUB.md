@@ -42,12 +42,12 @@ Los tests están en `tests/GoDental.Tests/`.
 
 El flujo recomendado es:
 
-1. Trabajar en `feature/desarrollo`, la única rama activa además de `main`.
+1. Trabajar en `feature/ui` o `feature/logica`, según responsabilidad; `main` conserva la versión validada.
 2. Hacer cambios y pruebas locales.
 3. Abrir Pull Request hacia `main`.
 4. Esperar CI verde.
 5. Revisar el diff.
-6. Integrar conservando el historial mediante merge; mantener `feature/desarrollo` y sincronizarla con `main` mediante `git merge --ff-only origin/main` después de actualizar referencias.
+6. Integrar conservando el historial mediante merge; mantener ambas ramas de desarrollo y sincronizarlas con `main` mediante `git merge origin/main` después de actualizar referencias.
 
 UI y lógica se separan por capas y commits. Las ramas anteriores están archivadas como etiquetas, según [DEV-08](DEV-08-Ramas.md).
 
@@ -63,7 +63,7 @@ Las plantillas de `.github/ISSUE_TEMPLATE/` separan errores de nuevas funcionali
 
 ## Dependabot
 
-Los PR automáticos de actualización de versiones NuGet y GitHub Actions están pausados con `open-pull-requests-limit: 0` para mantener las dos ramas activas acordadas. Sus propuestas pendientes se archivan sin aplicar cambios de dependencias. Las actualizaciones se revisarán en `feature/desarrollo`. Esto no desactiva las alertas de seguridad ni la configuración de actualizaciones de seguridad de GitHub; estas últimas pueden crear ramas adicionales si están habilitadas.
+Los PR automáticos de actualización de versiones NuGet y GitHub Actions están pausados con `open-pull-requests-limit: 0` para evitar ramas permanentes adicionales. Sus propuestas pendientes se archivan sin aplicar cambios de dependencias. Las actualizaciones se revisarán en la rama correspondiente según DEV-08. Esto no desactiva las alertas de seguridad ni la configuración de actualizaciones de seguridad de GitHub; estas últimas pueden crear ramas adicionales si están habilitadas.
 
 ## Protección recomendada para main
 

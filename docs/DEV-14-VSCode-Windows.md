@@ -18,11 +18,11 @@ Si falta el repositorio, clonarlo con Git y abrir la carpeta:
 ```powershell
 git clone https://github.com/Gust4av033/GoDental.git
 cd GoDental
-git switch feature/desarrollo
+git switch feature/ui
 code .
 ```
 
-Si ya existe la copia local, revisar `git status` y conservar sus cambios antes de actualizarla. Los commits de este chat deben estar publicados en `feature/desarrollo` para recuperarlos desde otro equipo.
+Si ya existe la copia local, revisar `git status` y conservar sus cambios antes de actualizarla. Los commits de este chat deben estar publicados en `feature/ui` para recuperarlos desde otro equipo.
 
 ## Uso
 

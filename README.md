@@ -131,7 +131,7 @@ Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV
 
 ## Desarrollo
 
-- Ramas activas: `main` (validada) y `feature/desarrollo` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
+- Ramas activas: `main` (validada) y `feature/ui` y `feature/logica` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
 - `main` debe mantenerse integrable.
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.

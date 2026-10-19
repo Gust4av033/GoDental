@@ -40,3 +40,6 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 
 - [DEV-13 · Clientes](DEV-13-Clientes.md): ficha comercial, contactos, direcciones, crédito separado e historiales.
 - [DEV-14 · VS Code en Windows](DEV-14-VSCode-Windows.md): preparación del SDK, tareas y depuración WPF.
+
+- [DEV-15 · Coordinación UI y lógica](DEV-15-Coordinacion-UI.md)
+- [DEV-16 · Refinamiento de componentes UI](DEV-16-UI-Refinamiento.md)
