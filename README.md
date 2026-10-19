@@ -44,7 +44,7 @@ Reglas principales:
 1. Clonar el repositorio.
 2. Abrir `GoDental.sln` en **Visual Studio 2022** con el workload **.NET desktop development** y SDK .NET 8 instalado.
 3. Establecer `GoDental.Wpf` como proyecto de inicio y ejecutar.
-4. Abrir **Conexión y apariencia** para guardar el servidor/base y comprobar el acceso con la cuenta de Windows. No hace falta SQL para abrir la interfaz.
+4. La aplicación abre la ventana de acceso. Desde allí, abrir **Ajustes de conexión** para guardar el servidor/base y comprobar el acceso con la cuenta de Windows. No hace falta SQL para abrir la interfaz.
 5. Restaurar paquetes NuGet y compilar la solución.
 
 ## Base de datos
@@ -53,7 +53,7 @@ La versión 0.3 incluye usuarios y catálogo de la [v0.2](docs/DEV-02-Seguridad-
 
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
-En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. Abre **Acceso de usuarios** y elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
+En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. En la ventana de acceso, elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
 
 ```powershell
 dotnet run --project tests/GoDental.DatabaseTests -- --install-development .
