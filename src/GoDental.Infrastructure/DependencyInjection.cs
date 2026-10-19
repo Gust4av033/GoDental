@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddTransient<IIdentityGateway, SqlIdentityGateway>();
         services.AddTransient<IProductRepository, SqlProductRepository>();
         services.AddTransient<IInventoryRepository, SqlInventoryRepository>();
+        services.AddTransient<IInventoryCountRepository, SqlInventoryCountRepository>();
         services.AddTransient<ICategoryRepository, SqlCategoryRepository>();
         services.AddTransient<IUserRepository, SqlUserRepository>();
         services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();

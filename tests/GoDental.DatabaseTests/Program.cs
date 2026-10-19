@@ -11,6 +11,15 @@ using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
+if (args.Contains("--run-counts"))
+{
+    if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
+    var countDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(countDatabase, Path.Combine(root, "database"));
+    await InventoryCountIntegration.RunAsync(new TestConnectionFactory(countDatabase), root);
+    Console.WriteLine("Base aislada retenida: " + countDatabase);
+    return;
+}
 if (args.Contains("--run-inventory"))
 {
     if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";

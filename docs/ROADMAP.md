@@ -12,6 +12,12 @@ Orden heredado de DM-01 v0.2:
 8. Online y prospección con revisión humana.
 9. Integración fiscal/DTE cuando estén disponibles requisitos y credenciales vigentes.
 
+## Avance de lógica · 19/10/2026
+
+- Fases 1–2: baseline, arquitectura, acceso y configuración implementados para desarrollo.
+- Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Los conteos físicos agregan contratos C#/SQL y pruebas en DEV-09; su pantalla queda para el incremento de UI. Inventario inicial definitivo, series, etiquetas y reposición avanzada conservan sus pendientes.
+- El siguiente bloque funcional es proveedores como base para órdenes y recepciones de compras. No se salta directamente a ventas ni se presenta la fase 3 como certificada para producción.
+
 ## Reglas comerciales ya documentadas
 
 - Descuento efectivo combinado: hasta 7% según permiso; más de 7% hasta 35% con motivo y bitácora; más de 35% con autenticación de administrador y motivo.

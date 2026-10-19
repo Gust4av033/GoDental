@@ -16,6 +16,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 8. `008_ViewsProcedures.sql`
 9. `009_Seguridad_Parametros.sql`
 10. `010_Inventario_Operativo.sql`
+11. `011_Conteos_Inventario.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -37,7 +38,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–010.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–011.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -52,5 +53,7 @@ La herramienta `tests/GoDental.DatabaseTests --install-development` crea sólo `
 `010_Inventario_Operativo.sql` agrega `inv.sp_RegistrarAjuste` e `inv.sp_CambiarEstadoLote`: ajustes, bajas y transferencias, más bloqueo/reactivación de lotes. Incluye `USE [GoDental]`, igual que la baseline; al desplegar manualmente sobre otro nombre debe ajustarse el destino. El instalador de desarrollo adapta ese destino en memoria. No modifica datos existentes al instalarse y eleva el total a 14 procedimientos. Consultar decisiones y validaciones en [DEV-03](../docs/DEV-03-Inventario-operativo.md).
 
 ## Evolución futura
+
+`011_Conteos_Inventario.sql` añade versión de cabecera, indicador de captura y fotografías de versiones a las tablas de conteos existentes. Agrega tres procedimientos para apertura, captura y cierre/cancelación transaccionales (17 procedimientos en total; se conservan 72 tablas y 8 vistas). No modifica saldos al instalarse. La lógica C# está lista para conectar desde WPF, según [DEV-09](../docs/DEV-09-Conteos.md).
 
 Una vez que esta baseline haya sido aplicada sobre una base compartida o productiva, no se deben reescribir scripts históricos para introducir cambios de esquema. Las modificaciones posteriores deberán versionarse mediante nuevos scripts/migraciones incrementales y quedar documentadas.
