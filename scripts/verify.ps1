@@ -1,4 +1,4 @@
-param([switch]$SqlIntegration)
+param([switch]$SqlIntegration, [string]$SqlServer = 'localhost')
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -25,15 +25,15 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     if ($SqlIntegration) {
-        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration $repoRoot
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory $repoRoot
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-counts $repoRoot
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-counts --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-suppliers $repoRoot
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-suppliers --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-customers $repoRoot
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-customers --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green

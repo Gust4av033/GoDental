@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="../GoDental.DatabaseTests/DevelopmentServerOptions.cs" Link="Tools/DevelopmentServerOptions.cs" />
   </ItemGroup>
 
   <ItemGroup>

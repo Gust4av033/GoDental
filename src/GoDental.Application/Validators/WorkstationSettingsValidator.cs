@@ -17,6 +17,11 @@ public static class WorkstationSettingsValidator
         return null;
     }
 
-    public static bool IsLocalServer(string server) => new[] { ".", "localhost", Environment.MachineName }
-        .Contains(server.Trim(), StringComparer.OrdinalIgnoreCase);
+    public static bool IsLocalServer(string server)
+    {
+        var parts = server.Trim().Split('\\');
+        return parts.Length is 1 or 2
+            && new[] { ".", "localhost", Environment.MachineName }.Contains(parts[0], StringComparer.OrdinalIgnoreCase)
+            && (parts.Length == 1 || System.Text.RegularExpressions.Regex.IsMatch(parts[1], @"\A[A-Za-z][A-Za-z0-9_]{0,15}\z"));
+    }
 }
