@@ -4,6 +4,7 @@ using GoDental.Infrastructure.Data;
 using GoDental.Application.Abstractions.Security;
 using GoDental.Infrastructure.Security;
 using GoDental.Infrastructure.Repositories;
+using GoDental.Infrastructure.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +30,14 @@ public static class DependencyInjection
         services.AddTransient<IInventoryCountRepository, SqlInventoryCountRepository>();
         services.AddTransient<ISupplierRepository, SqlSupplierRepository>();
         services.AddTransient<ICustomerRepository, SqlCustomerRepository>();
+        services.AddTransient<ISalesRepository, SqlMvpRepository>();
+        services.AddTransient<ICashRepository, SqlMvpRepository>();
+        services.AddTransient<IOrderRepository, SqlMvpRepository>();
+        services.AddTransient<IInventorySetupRepository, SqlMvpRepository>();
+        services.AddTransient<IFiscalPendingRepository, SqlMvpRepository>();
+        services.AddTransient<IMvpOperationRepository, SqlMvpRepository>();
+        services.AddOptions<ReceiptPdfOptions>().Bind(configuration.GetSection("Pdf"));
+        services.AddTransient<IReceiptRenderer, ReceiptPdfRenderer>();
         services.AddTransient<ICategoryRepository, SqlCategoryRepository>();
         services.AddTransient<IUserRepository, SqlUserRepository>();
         services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();

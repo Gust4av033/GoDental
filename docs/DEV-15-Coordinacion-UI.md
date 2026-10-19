@@ -1,11 +1,27 @@
 # DEV-15 · Coordinación UI y lógica
 
-Organización vigente: DEV-08. Este chat trabaja en `feature/ui`.
+Organización vigente: DEV-08. Presentación en `feature/ui`; contratos y persistencia en `feature/logica`.
 
 | Necesidad | Estado | Contrato y verificación |
 | --- | --- | --- |
 | Preparar acceso y detectar primer administrador | conectado | `IIdentityGateway.NeedsAdministratorAsync()`, sin entradas; booleano, sin sesión previa. Revisar conexión, esquema y permisos en Windows; una conexión comprobada no certifica el esquema. |
 | Guardar conexión y reintentar acceso | conectado | Ajustes y acceso comparten configuración; el usuario pulsa Reintentar acceso tras cerrar Ajustes. No se reintentan escrituras automáticamente. |
 | Conteos, proveedores y clientes | conectado | Contratos documentados en DEV-09 a DEV-13; pendiente validación WPF/SQL en Windows del nuevo estilo. |
+| Saldo inicial y códigos de barras | lógica implementada; UI pendiente | `InventorySetupService.InitializeAsync(InitialInventory)` y `SaveBarcodeAsync(BarcodeChange)`. Permisos de ajuste/productos existentes. Saldo inicial exige producto/almacén sin saldo ni historial, costo y motivo. Código exige versión del producto; vacío genera CODE128 interno. |
+| Caja y arqueo | lógica implementada; UI pendiente | `CashService.BoxesAsync/SaveBoxAsync`, `CurrentAsync/ReadAsync`, `OpenAsync/MoveAsync/CloseAsync`, `MovementsAsync`. Cierre/movimiento exigen `RowVersion` de turno leído. Permisos CAJA.VER y acción ABRIR/CERRAR/MOVIMIENTO; catálogo editable además AJUSTES.EDITAR. |
+| POS y cálculo comercial | lógica implementada; UI pendiente | `SalesService.SearchProductsAsync`, `PaymentMethodsAsync`, `QuoteAsync(SaleCart)` → `SaleQuote`. Mostrar sus líneas, precios, descuentos, impuestos, entrega, total y umbrales; conservar `Cart` y `Token` devueltos. No enviar precios/totales propios. Consultar DEV-17 para límites de lotes/impuestos/promociones. |
+| Confirmación y descuentos | lógica implementada; UI pendiente | `ConfirmAsync(ConfirmSale)` → `Result<MvpReceipt>`. VER+CREAR; crédito y descuentos agregan permisos. Pagos aplicados suman total exacto; efectivo recibido separado del aplicado; turno obligatorio si hay efectivo. `AuthorizeDiscountAsync(DiscountApproval, usuarioAdmin, clave)` devuelve ID de autorización de un uso, vinculado al token. No cambia la sesión del vendedor; no guardar contraseña. |
+| Cotizaciones | lógica implementada; UI pendiente | `SalesService.SaveQuotationAsync`, `QuotationsAsync`, `ReadQuotationAsync`. VER+COTIZAR y permisos de descuentos; más del umbral requiere autorización. Guardar vigencia y motivo. Listado es resumen; lectura por ID incluye `SnapshotJson` de `SaleQuote`. Para convertir: recuperar carrito, recalcular, mostrar/aceptar nuevo precio y enviar `QuotationId` al confirmar. Conversión única; no reserva stock. |
+| CxC y abonos | lógica implementada; UI pendiente | `CashService.AccountsAsync(vencidos, MvpFilter)` y `PayAsync(AccountPayment)`. Consulta CLIENTES.VER+VENTAS.VER; abono además CAJA.VER+CAJA.MOVIMIENTO. Exige versión de CxC y turno para efectivo. Refrescar saldo, historial del cliente y caja tras guardar. |
+| Pedidos y entregas | lógica implementada; UI pendiente | `OrderService.PlaceAsync/ReadAsync/SearchAsync/LinkSaleAsync/TransitionAsync/EventsAsync`. VER para leer, VER+CREAR para gestionar. Dirección seleccionada se fotografía; venta compatible se enlaza por ID. Estado de pago se deriva de venta. `OrderSnapshot.Events` contiene los 30 eventos recientes, `TotalEvents` informa total; paginar los demás con `EventsAsync`. Transiciones y enlace exigen versión del pedido. |
+| PDF interno y fiscal pendiente | lógica implementada; UI pendiente | `SaleReceiptService.ExportAsync(id)` → bytes PDF carta; VER+REIMPRIMIR y venta confirmada. UI elige destino/impresora. `FiscalPendingService.RegisterAsync/SearchAsync` sólo prepara FE/CCFE PENDIENTE, sin transmitir DTE. Registro exige FISCAL.VER+CONFIGURAR+VENTAS.VER. |
 
-No se necesitan contratos nuevos para este refinamiento visual. Si vuelve a fallar la preparación del acceso, recoger el tipo de error del registro local sin credenciales y reproducir contra la base de pruebas antes de atribuirlo a lógica.
+## Contrato común de escritura del MVP
+
+Cada solicitud nueva lleva `OperationId` GUID y motivo. Crear el GUID una sola vez al aceptar el usuario la operación y conservar tanto GUID como solicitud completa mientras su resultado sea incierto. `MvpOperationService.FindAsync(guid)` consulta el resultado para el usuario actual. Un reenvío idéntico devuelve el mismo ID; modificar contenido con el mismo GUID da conflicto. Un resultado nulo no prueba que otra conexión haya terminado: conservar la solicitud y reenviar únicamente la misma operación. No generar otra venta/abono por un timeout ni reintentar automáticamente.
+
+`Result<MvpReceipt>` contiene `Id` y `OperationId`. Errores de negocio: `VALIDATION`, `FORBIDDEN`, `INVALID_STATE`, `INSUFFICIENT_STOCK`, `CONCURRENCY_CONFLICT`, `DUPLICATE`. Ante conflicto refrescar y pedir que se revise la información; después crear una solicitud nueva si el usuario confirma una operación distinta. Las consultas pueden lanzar `UnauthorizedAccessException` o `ArgumentException`; errores SQL/transporte desconocidos se diagnostican sin mostrar SQL/credenciales al usuario. Paginación `MvpFilter`: páginas desde 1, tamaño 1–100.
+
+Todos estos contratos están registrados en DI. Requieren migraciones 012–013; la compilación y pruebas puras no certifican SQL. Ejecutar `--run-mvp` contra una base aislada antes de habilitar las pantallas para uso real. El entorno actual no dispone de SQL Server ejecutable; validación Windows/CI pendiente al publicar este incremento. Detalle de alcance y pruebas en DEV-17.
+
+Si vuelve a fallar la preparación del acceso, recoger el tipo de error del registro local sin credenciales y reproducir contra la base de pruebas antes de atribuirlo a lógica.
