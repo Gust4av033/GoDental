@@ -15,7 +15,7 @@ public sealed class DialogService(System.Windows.Application application) : IDia
 
     public async Task<bool> ShowCategoryManagerAsync(CategoriesViewModel manager)
     {
-        await manager.ReloadCommand.ExecuteAsync(null);
+        await manager.ReloadAsync();
         using var model = new CategoryDialogModel(manager);
         return await Show(new DialogWindow(model, new CategoryDialogView { DataContext = manager }));
     }

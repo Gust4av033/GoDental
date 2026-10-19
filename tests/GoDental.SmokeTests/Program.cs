@@ -34,7 +34,8 @@ internal static class Program
             {
                 Source = new Uri($"/GoDental;component/Themes/{name}.xaml", UriKind.Relative)
             });
-        app.Resources.Add("BoolToVisibility", new BooleanToVisibilityConverter());
+        if (app.TryFindResource("BoolToVisibility") is not BooleanToVisibilityConverter)
+            throw new InvalidOperationException("El convertidor de visibilidad debe estar disponible desde Controls.xaml.");
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
         Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
         {
@@ -217,7 +218,7 @@ internal static class Program
                     themes.Apply(theme);
                     await RenderDialogAsync(editorFactory.Create(null, await productRepository.GetCatalogsAsync()),
                         Path.Combine(output, $"producto-dialogo-{theme}.png"));
-                    await categories.ReloadCommand.ExecuteAsync(null);
+                    await categories.ReloadAsync();
                     using (var categoryModel = new CategoryDialogModel(categories))
                         await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-dialogo-{theme}.png"));
                     await users.ReloadCommand.ExecuteAsync(null);

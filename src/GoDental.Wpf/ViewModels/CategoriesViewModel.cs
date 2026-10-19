@@ -34,7 +34,7 @@ public sealed partial class CategoriesViewModel : ObservableObject
         Name = Selected?.Name ?? ""; Active = Selected?.Active ?? false;
         StatusMessage = "Cambios del formulario descartados.";
     }
-    [RelayCommand] private async Task ReloadAsync() => await ExecuteAsync(async revision =>
+    public async Task ReloadAsync() => await ExecuteAsync(async revision =>
     {
         var rows=await service.ListAsync(); if (revision!=session.Revision) return;
         Items.Clear(); foreach(var row in rows) Items.Add(row); Selected=null;
