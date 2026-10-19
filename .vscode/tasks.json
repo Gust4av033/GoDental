@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "GoDental: compilar Debug",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "GoDental.sln",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "GoDental: compilar Release",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "GoDental.sln",
+        "-c",
+        "Release"
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "GoDental: pruebas",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "GoDental.sln",
+        "-c",
+        "Release"
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test"
+    },
+    {
+      "label": "GoDental: ejecutar",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/GoDental.Wpf"
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "GoDental: verificar WPF y SQL",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/scripts/verify.ps1",
+        "-SqlIntegration"
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
+  ]
+}

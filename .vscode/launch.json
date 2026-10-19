@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GoDental (Windows / WPF)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "GoDental: compilar Debug",
+      "program": "${workspaceFolder}/src/GoDental.Wpf/bin/Debug/net8.0-windows/GoDental.exe",
+      "cwd": "${workspaceFolder}/src/GoDental.Wpf/bin/Debug/net8.0-windows",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}
