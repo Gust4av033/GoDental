@@ -157,10 +157,12 @@ internal static class Program
                 nav.Navigate(SetupPage.Home);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "inicio-claro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-claro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-claro.png"));
                 vm.IsDark = true;
                 nav.Navigate(SetupPage.Connection);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-oscuro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-oscuro.png"));
                 await RenderWindowAsync(new SettingsWindow(vm) { Width = 760, Height = 680 }, Path.Combine(output, "ajustes-ventana-oscuro.png"));
                 shell.IsSidebarCompact = true;
                 await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
