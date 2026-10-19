@@ -30,7 +30,8 @@ Los contratos se documentan en DEV-15 para el chat de UI. No se cambia WPF en es
 - 116 casos xUnit correctos: incluye cálculo comercial, impuestos incluidos/añadidos, redondeo por lote, FEFO, umbrales de autorización, estados terminales, validaciones, permisos, cambio de sesión y generación real de PDF con QuestPDF.
 - Migraciones y consultas revisadas con parser T-SQL 160 de Microsoft; esto comprueba sintaxis, no transacciones en ejecución.
 - Suite `MvpIntegration` añadida a CI Windows/LocalDB y `scripts/verify.ps1 -SqlIntegration`. Crea sólo `GoDental_Tests_<GUID>`: reenvíos concurrentes, última unidad, token obsoleto, listas/promociones, caja/cambio, cotización/conversión, crédito/abonos, autorización, lotes/impuestos, snapshots de entrega, transiciones, permisos revocados, rollback y reaplicación de migraciones.
-- SQL pendiente de ejecución en este entorno: la descarga oficial del contenedor SQL Server fue denegada. No se ejecutaron migraciones en el equipo Windows ni se crearon usuarios en la base del usuario.
+- [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837), código `f51f75c`: Release sin advertencias/errores, 116 casos xUnit, **329 comprobaciones SQL** (40 inventario, 49 seguridad/catálogo, 67 conteos, 38 proveedores, 33 clientes y **102 MVP**) y **101 comprobaciones WPF** correctas, sin errores de binding. SQL usa instancias LocalDB aisladas del runner, no la base del usuario. Se verificaron instalación/reaplicación de 012–013, 76 tablas/8 vistas/17 procedimientos y concurrencia con conexiones independientes.
+- La descarga del contenedor SQL Server fue denegada en Linux; la ejecución SQL se completó mediante CI Windows. No se ejecutaron migraciones ni se crearon usuarios en el equipo del usuario. El arnés de capturas corrige el bloqueo por confirmación de descarte según DEV-18; el mismo ajuste está integrado en ambas ramas.
 
 En Windows, desde la raíz del repositorio:
 
@@ -38,4 +39,4 @@ En Windows, desde la raíz del repositorio:
 dotnet run --project tests/GoDental.DatabaseTests -c Release -- --run-mvp --server '.\SQLEXPRESS' .
 ```
 
-Instalar/actualizar una base marcada de desarrollo se hace por separado con `--install-development --server '.\SQLEXPRESS' .`; la suite nunca utiliza esa base. Tras completar SQL y conectar la UI se valida el recorrido en Windows y en las dos estaciones antes de considerar terminado el MVP funcional.
+Instalar/actualizar una base marcada de desarrollo se hace por separado con `--install-development --server '.\SQLEXPRESS' .`; la suite nunca utiliza esa base. La lógica ya está sincronizada hacia `feature/ui`. Tras conectar las pantallas nuevas se valida el recorrido en Windows y en las dos estaciones antes de considerar terminado el MVP funcional; el smoke actual verifica las pantallas existentes.

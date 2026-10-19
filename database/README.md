@@ -62,6 +62,6 @@ La herramienta `tests/GoDental.DatabaseTests --install-development` crea sólo `
 
 `013_Pedidos_MVP.sql` agrega pedidos con dirección fotografiada, líneas y eventos. Total con ambas extensiones: **76 tablas, 8 vistas y 17 procedimientos**. Modelo/decisiones de estas cuatro tablas adicionales: [DEV-17](../docs/DEV-17-MVP-Logica.md). No cambia las 72 tablas documentadas en la baseline histórica de DB-01.
 
-Las dos nuevas migraciones requieren validación en SQL Server antes de uso operativo. La suite aislada `--run-mvp` está incorporada a CI y verifica reaplicación conservando historial. No se debe interpretar la revisión sintáctica como ejecución SQL satisfactoria.
+Las dos nuevas migraciones se verificaron en CI Windows/LocalDB: 102 comprobaciones de `--run-mvp`, incluida reaplicación conservando historial; ver DEV-17. La suite está incorporada a CI y a la verificación local. La base del usuario y el recorrido con las nuevas pantallas/dos estaciones mantienen su validación separada.
 
 Una vez que esta baseline haya sido aplicada sobre una base compartida o productiva, no se deben reescribir scripts históricos para introducir cambios de esquema. Las modificaciones posteriores deberán versionarse mediante nuevos scripts/migraciones incrementales y quedar documentadas.

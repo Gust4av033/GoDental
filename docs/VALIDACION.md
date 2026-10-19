@@ -2,7 +2,7 @@
 
 ## MVP operativo · lógica · 19/10/2026
 
-Incremento y límites en [DEV-17](DEV-17-MVP-Logica.md). Compilación Release cruzada para Windows sin errores/advertencias y 116 casos xUnit correctos, incluyendo generación de PDF. Se añade suite SQL aislada `--run-mvp` y migraciones aditivas 012–013 (76 tablas/8 vistas/17 procedimientos). Revisión T-SQL estática satisfactoria; ejecución SQL y pruebas WPF de las funciones nuevas pendientes. El contenedor SQL Server no pudo descargarse en el entorno Linux por denegación de red. No se instalaron cambios en la base del usuario ni se certifica todavía el MVP funcional completo.
+Incremento y límites en [DEV-17](DEV-17-MVP-Logica.md). [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837), código `f51f75c`: Release sin errores/advertencias, **116 casos xUnit**, **329 comprobaciones SQL** (102 del nuevo MVP) y **101 comprobaciones WPF** correctas, sin errores de binding. Incluye generación real de PDF, concurrencia, rollback e instalación/reaplicación de 012–013 (76 tablas/8 vistas/17 procedimientos). El contenedor SQL Server no pudo descargarse en Linux; SQL se ejecutó en LocalDB aislado del runner Windows. DEV-18 documenta la corrección del cierre de capturas integrada en ambas ramas. No se instalaron cambios en la base del usuario; faltan conectar las nuevas pantallas y validar el recorrido real en dos estaciones para cerrar el MVP funcional completo.
 
 ## Solución .NET
 
