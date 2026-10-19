@@ -156,6 +156,86 @@ public sealed class MvpUiTests
         checkout.Method = c.Repository.Methods[1]; checkout.Amount = "10"; checkout.AddCommand.Execute(null); Assert.Empty(checkout.Payments);
         checkout.Reference = "REFERENCIA-PRUEBA"; checkout.AddCommand.Execute(null); Assert.Single(checkout.Payments); Assert.Equal(123.45m, checkout.Quote.Total);
     }
+    [Fact]
+    public async Task InFlightWriteCannotBeReplacedByAnotherOperation()
+    {
+        var c = new Context(); var operation = c.Operation(); var result = new TaskCompletionSource<Result<MvpReceipt>>(); var id = Guid.NewGuid();
+        var request = new OpenCashShift(id, 1, 1, "Apertura");
+        var pending = operation.StartAsync(request, id, _ => result.Task, _ => Task.CompletedTask);
+        var sends = 0;
+        await operation.StartAsync(new OpenCashShift(Guid.NewGuid(), 1, 20, "Otra"), Guid.NewGuid(), _ => { sends++; return Task.FromResult(Result<MvpReceipt>.Success(new(2, Guid.NewGuid()))); }, _ => Task.CompletedTask);
+        Assert.Same(request, operation.Request); Assert.Equal(0, sends);
+        result.SetResult(Result<MvpReceipt>.Success(new(1, id))); await pending;
+    }
+    [Fact]
+    public async Task OrderCreationKeepsSelectedAddressAndLineSnapshot()
+    {
+        var c = new Context(); var vm = c.OrdersVm();
+        c.Dialogs.Action = async form =>
+        {
+            var draft = Assert.IsType<OrderDraftModel>(form.Body); draft.Customer.Selected = c.CustomersRepository.Customer;
+            draft.Address = c.CustomersRepository.Addresses.Single(); draft.Items.Add(new(1, "SKU", "Producto", 3, 0));
+            Set(form, "contact", "Contacto de prueba"); Set(form, "phone", "0000"); Set(form, "reason", "Pedido revisado"); await Save(form);
+        };
+        await vm.CreateCommand.ExecuteAsync(null);
+        var request = Assert.IsType<PlaceOrder>(Assert.Single(c.Repository.Writes)); Assert.Equal(1, request.CustomerAddressId); Assert.Equal(1, request.CustomerId); Assert.Equal(3, request.Items.Single().Quantity);
+    }
+    [Fact]
+    public async Task DiscountAuthorizationCanBeResolvedWithoutRetainingPassword()
+    {
+        var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null); vm.Items.Add(new(1, "SKU", "Prueba", 1, 40)); await vm.CalculateCommand.ExecuteAsync(null);
+        c.Repository.LoseResponse = true; var secret = "prueba-transitoria";
+        c.Dialogs.Action = async form => { Set(form, "user", "administrador_prueba"); Set(form, "reason", "Descuento revisado"); form.ReadSecret = () => secret; form.ClearSecret = () => secret = ""; await Save(form); };
+        await vm.AuthorizeCommand.ExecuteAsync(null);
+        Assert.True(vm.Operation.HasPending); Assert.Equal("", secret); var request = Assert.IsType<DiscountApproval>(vm.Operation.Request);
+        Assert.DoesNotContain("prueba-transitoria", JsonSerializer.Serialize(request));
+        c.Repository.FoundReceipt = new(20, request.OperationId); await vm.Operation.CheckCommand.ExecuteAsync(null);
+        Assert.Equal(20, vm.AuthorizationId); Assert.Single(c.Repository.Writes);
+    }
+    [Fact]
+    public async Task QuotationEmitsCanonicalCartWithValidityAndAuthorization()
+    {
+        var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null); vm.Items.Add(new(1, "SKU", "Prueba", 1, 0)); await vm.CalculateCommand.ExecuteAsync(null); var token = vm.Quote!.Token;
+        c.Dialogs.Action = async form => { form.Fields.Single(f => f.Key == "until").Date = DateTime.Today.AddDays(1); Set(form, "reason", "Cotización revisada"); await Save(form); };
+        await vm.SaveQuotationCommand.ExecuteAsync(null);
+        var request = Assert.IsType<SaveQuotation>(Assert.Single(c.Repository.Writes)); Assert.Equal(token, request.QuoteToken); Assert.Equal(DateTime.Today.AddDays(1), request.ValidUntil); Assert.Null(vm.Quote); Assert.Equal(10, vm.QuotationId); Assert.False(vm.CanChangeCart);
+    }
+    [Fact]
+    public async Task PdfExportsConfirmedSnapshotToUserChosenDestination()
+    {
+        var c = new Context(); var files = new TestPdfFiles(); var renderer = DispatchProxy.Create<IReceiptRenderer, PdfPort>();
+        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, renderer, c.Session), files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
+        await history.ReloadSalesCommand.ExecuteAsync(null); history.SelectedSale = history.Sales.Single(); await history.ReadSaleCommand.ExecuteAsync(null); await history.ExportCommand.ExecuteAsync(null);
+        Assert.Equal("GoDental-comprobante-interno-1.pdf", files.Name); Assert.Equal("%PDF-prueba", System.Text.Encoding.ASCII.GetString(files.Bytes!));
+    }
+    private sealed class TestPdfFiles : IPdfFileService
+    {
+        public byte[]? Bytes { get; private set; } public string? Name { get; private set; }
+        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) { Bytes = pdf; Name = suggestedName; return Task.FromResult(true); }
+    }
+    public class PdfPort : DispatchProxy { protected override object? Invoke(MethodInfo? method, object?[]? args) => System.Text.Encoding.ASCII.GetBytes("%PDF-prueba"); }
+    public class IdentityPort : DispatchProxy
+    {
+        protected override object? Invoke(MethodInfo? method, object?[]? args) => Task.FromResult(Result<UserIdentity>.Success(new(2, "administrador_prueba", "Administrador de prueba", 1, ["Administrador"], ["VENTAS.DESCUENTO_MAYOR_35"], false)));
+    }
+    [Fact]
+    public async Task CancellingCustomerSelectionLeavesPosCustomerUnchanged()
+    {
+        var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null);
+        c.Dialogs.Action = form => { Assert.IsType<CustomerLookupModel>(form.Body).Selected = c.CustomersRepository.Customer; return Task.CompletedTask; };
+        await vm.SelectCustomerCommand.ExecuteAsync(null); Assert.Null(vm.Customer.Selected);
+    }
+    [Fact]
+    public async Task RejectionOfRetryDoesNotEraseAnEarlierUncertainWrite()
+    {
+        var c = new Context(); var operation = c.Operation(); var id = Guid.NewGuid(); c.Repository.LoseResponse = true;
+        var request = new OpenCashShift(id, 1, 10, "Apertura");
+        await operation.StartAsync(request, id, q => c.Cash.OpenAsync(q), _ => Task.CompletedTask);
+        c.Repository.LoseResponse = false; c.Repository.RejectCode = "FORBIDDEN";
+        await operation.RetryCommand.ExecuteAsync(null);
+        Assert.True(operation.HasPending); Assert.Same(request, operation.Request); Assert.False(operation.CanStart);
+        c.Repository.FoundReceipt = new(1, id); await operation.CheckCommand.ExecuteAsync(null); Assert.False(operation.HasPending);
+    }
     private static Task Save(MvpFormModel form) { form.Confirmed = true; return ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null); }
     private static void Set(MvpFormModel f, string key, string value) => f.Fields.Single(x => x.Key == key).Value = value;
     private sealed class Context
@@ -163,7 +243,7 @@ public sealed class MvpUiTests
         public UserSession Session { get; } = new(); public MvpUiRepository Repository { get; } = new(); public TestDialogs Dialogs { get; } = new();
         public CustomerWorkflowRepository CustomersRepository { get; } = new();
         public MvpOperationService Operations { get; } public CashService Cash { get; } public SalesService Sales { get; } public CustomerService Customers { get; }
-        public Context() { Login(); Operations = new(Repository, Session); Cash = new(Repository, Session); Sales = new(Repository, Session, DispatchProxy.Create<IIdentityGateway, UnusedPort>()); Customers = new(CustomersRepository, Session); }
+        public Context() { Login(); Operations = new(Repository, Session); Cash = new(Repository, Session); Sales = new(Repository, Session, DispatchProxy.Create<IIdentityGateway, IdentityPort>()); Customers = new(CustomersRepository, Session); }
         public void Login() => Session.Begin(new(1, "prueba", "Prueba", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
         public MvpOperationModel Operation() => new(Session, Operations, NullLogger.Instance);
         public CashViewModel CashVm() => new(Cash, new InventoryService(DispatchProxy.Create<IInventoryRepository, UnusedPort>(), Session), Dialogs, Session, Operations, NullLogger<CashViewModel>.Instance);

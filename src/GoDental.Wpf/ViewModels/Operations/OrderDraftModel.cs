@@ -34,7 +34,7 @@ public sealed partial class OrderDraftModel : ObservableObject
         try
         {
             var result = await customers.ReadAsync(customerId); if (r != revision() || Customer.Selected?.Id != customerId) return;
-            Addresses.Clear(); foreach (var a in result?.Addresses.Where(a => a.Active && a.Type is "ENTREGA" or "AMBAS") ?? []) Addresses.Add(a);
+            Addresses.Clear(); foreach (var a in result?.Addresses.Where(a => a.Active && a.Type == "ENTREGA") ?? []) Addresses.Add(a);
             Address = Addresses.FirstOrDefault(a => a.Primary) ?? Addresses.FirstOrDefault(); StatusMessage = Addresses.Count == 0 ? "No hay direcciones de entrega; puedes escribir una dirección en Datos de entrega." : "Selecciona la dirección que se conservará en el pedido.";
         }
         catch (Exception) { StatusMessage = "No se pudieron consultar las direcciones."; }

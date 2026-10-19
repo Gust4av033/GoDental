@@ -36,13 +36,15 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     [ObservableProperty] private int total;
     private IReadOnlyList<PaymentMethodData> methods = [];
     public override bool CanRead => sales.CanRead && cash.CanRead;
-    public bool CanChooseCustomer => CanEdit && customers.CanRead;
+    public bool CanChangeCart => CanEdit && QuotationId is null;
+    public bool CanChooseCustomer => CanChangeCart && customers.CanRead;
     public bool CanSell => CanEdit && sales.CanSell && Quote is not null;
-    public bool CanQuote => CanEdit && sales.CanQuote && Quote is not null;
+    public bool CanQuote => CanEdit && sales.CanQuote && Quote is not null && QuotationId is null;
     public bool CanAuthorize => CanEdit && sales.CanSell && Quote is not null;
     public bool NeedsAuthorization => Quote?.Lines.Any(l => l.EffectiveDiscountPercent > Quote.AuthorizationThreshold) == true;
     public string QuoteLabel => Quote is null ? "Calcula para consultar precios, impuestos, descuentos y disponibilidad." : $"Total aceptado: {Quote.Total:N2} · Justificación > {Quote.JustificationThreshold}% · Autorización > {Quote.AuthorizationThreshold}%";
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanChooseCustomer), nameof(CanSell), nameof(CanQuote), nameof(CanAuthorize), nameof(NeedsAuthorization), nameof(QuoteLabel) }) OnPropertyChanged(n); }
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanChangeCart), nameof(CanChooseCustomer), nameof(CanSell), nameof(CanQuote), nameof(CanAuthorize), nameof(NeedsAuthorization), nameof(QuoteLabel) }) OnPropertyChanged(n); }
+    partial void OnQuotationIdChanged(long? value) => PermissionsChanged();
     partial void OnQuoteChanged(SaleQuote? value) => PermissionsChanged();
     partial void OnBoxChanged(CashBoxData? value) { Invalidate(); Products.Clear(); Product = null; }
     partial void OnPriceListChanged(CatalogOption? value) => Invalidate();
@@ -81,7 +83,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     [RelayCommand] private Task EditItemAsync() => EditLineAsync(true);
     private async Task EditLineAsync(bool editing)
     {
-        if (!CanEdit || editing && SelectedLine is null || !editing && Product is null) return;
+        if (!CanChangeCart || editing && SelectedLine is null || !editing && Product is null) return;
         var existing = editing ? SelectedLine : Items.FirstOrDefault(i => i.ProductId == Product!.Id);
         var p = editing ? null : Product;
         await ShowAsync(new MvpFormModel("Cantidad y descuento", "Aceptar", Operation, f =>
@@ -91,11 +93,12 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
             if (existing is not null) Items.Remove(existing); Items.Add(line); Invalidate(); f.Complete(); return Task.CompletedTask;
         }) { Description = existing?.Name ?? p!.Name }.Input("quantity", "Cantidad", (existing?.Quantity ?? 1).ToString()).Input("discount", "Descuento de línea (%)", (existing?.DiscountPercent ?? 0).ToString()));
     }
-    [RelayCommand] private void RemoveItem() { if (!CanEdit || SelectedLine is null) return; Items.Remove(SelectedLine); SelectedLine = null; Invalidate(); }
+    [RelayCommand] private void RemoveItem() { if (!CanChangeCart || SelectedLine is null) return; Items.Remove(SelectedLine); SelectedLine = null; Invalidate(); }
     [RelayCommand] private async Task SelectCustomerAsync()
     {
-        if (!CanEdit || !customers.CanRead) return;
-        await ShowAsync(new MvpFormModel("Cliente de la venta", "Usar cliente", Operation, f => { Invalidate(); f.Complete(); return Task.CompletedTask; }) { Body = Customer });
+        if (!CanChooseCustomer) return;
+        var choice = new CustomerLookupModel(customers, () => Session.Revision) { Selected = Customer.Selected };
+        await ShowAsync(new MvpFormModel("Cliente de la venta", "Usar cliente", Operation, f => { Customer.Selected = choice.Selected; Invalidate(); f.Complete(); return Task.CompletedTask; }) { Body = choice });
     }
     private SaleCart Cart() => new(Box?.Id ?? 0, Customer.Selected?.Id, Items.Select(i => new SaleItem(i.ProductId, i.Quantity, i.DiscountPercent, i.LotId)).ToArray(), CheckoutModel.Parse(GlobalDiscount, "descuento global"), PriceList?.Id > 0 ? PriceList.Id : null, CheckoutModel.Parse(DeliveryCharge, "cargo de entrega"));
     [RelayCommand] private Task CalculateAsync() => ReadAsync(async r =>
@@ -116,7 +119,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
             await Operation.StartAsync(request, id, q => sales.ConfirmAsync(q), receipt => ReadAsync(async revision =>
             {
                 Items.Clear(); Invalidate(); QuotationId = null;
-                var snapshot = await sales.ReadAsync(receipt.Id); if (!Current(revision)) return; ConfirmedSale = snapshot; StatusMessage = "Venta confirmada. Consulta el comprobante en Ventas y PDF.";
+                var snapshot = await sales.ReadAsync(receipt.Id); if (!Current(revision)) return; ConfirmedSale = snapshot; await SearchCoreAsync(revision); StatusMessage = "Venta confirmada. Consulta el comprobante en Ventas y PDF.";
             }));
         }) { Body = payment, Description = $"Total {accepted.Total:N2}. Los importes aplicados deben cubrir exactamente el total. Revisa el efectivo recibido y las referencias." }.Input("reason", "Motivo / justificación de descuentos"));
     }
@@ -127,7 +130,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
         {
             if (NeedsAuthorization && auth is null) throw new ArgumentException("Solicita autorización para los descuentos de este cálculo.");
             var id = Guid.NewGuid(); var request = new SaveQuotation(id, accepted.Cart, accepted.Token, f.Date("until"), f.Text("reason"), auth);
-            await Operation.StartAsync(request, id, q => sales.SaveQuotationAsync(q), _ => { Invalidate(); StatusMessage = "Cotización emitida. Disponible en Cotizaciones; no reserva stock."; return Task.CompletedTask; });
+            await Operation.StartAsync(request, id, q => sales.SaveQuotationAsync(q), receipt => { Invalidate(); QuotationId = receipt.Id; StatusMessage = "Cotización emitida. Vuelve a calcular para convertirla en venta, o vacía el carrito para iniciar otra operación. No reserva stock."; return Task.CompletedTask; });
         }) { Description = $"Total calculado: {accepted.Total:N2}. La cotización no reserva inventario." }.Calendar("until", "Vigencia (opcional)").Input("reason", "Motivo / justificación"));
     }
     [RelayCommand] private async Task AuthorizeAsync()

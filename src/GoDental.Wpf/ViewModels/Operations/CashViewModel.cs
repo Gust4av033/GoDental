@@ -32,12 +32,13 @@ public sealed partial class CashViewModel : MvpWorkspaceViewModel
     partial void OnShiftChanged(CashShiftData? value) => PermissionsChanged();
     public CashViewModel(CashService cash, InventoryService inventory, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<CashViewModel> logger) : base(session, operations, logger) { this.cash = cash; this.inventory = inventory; this.dialogs = dialogs; }
     protected override void Reset() { Boxes.Clear(); Movements.Clear(); Shift = null; Box = null; Total = 0; Page = 1; ShiftLookup = ""; }
-    [RelayCommand] private Task ReloadAsync() => ReadAsync(async r =>
+    [RelayCommand] private Task ReloadAsync() => ReadAsync(ReloadCoreAsync);
+    private async Task ReloadCoreAsync(long r)
     {
         var boxes = await cash.BoxesAsync(); if (!Current(r)) return;
         var id = Box?.Id; Boxes.Clear(); foreach (var b in boxes) Boxes.Add(b); Box = Boxes.FirstOrDefault(b => b.Id == id) ?? Boxes.FirstOrDefault(b => b.Active);
         await CurrentCoreAsync(r);
-    });
+    }
     [RelayCommand] private Task LoadShiftAsync() => ReadAsync(CurrentCoreAsync);
     private async Task CurrentCoreAsync(long r)
     {
@@ -49,6 +50,7 @@ public sealed partial class CashViewModel : MvpWorkspaceViewModel
     {
         if (!long.TryParse(ShiftLookup, out var id) || id <= 0) throw new ArgumentException("Escribe un número de turno válido.");
         var shift = await cash.ReadAsync(id); if (!Current(r)) return;
+        if (shift is not null) Box = Boxes.FirstOrDefault(b => b.Id == shift.CashBoxId);
         Shift = shift; Page = 1; await MovementsCoreAsync(r);
     });
     private async Task MovementsCoreAsync(long r)
@@ -104,9 +106,8 @@ public sealed partial class CashViewModel : MvpWorkspaceViewModel
             await ShowAsync(new MvpFormModel(editing ? "Editar caja" : "Nueva caja", "Guardar", Operation, async f =>
             {
                 var id = Guid.NewGuid(); var request = new CashBoxChange(id, b?.Id ?? 0, f.Text("code"), f.Text("name"), f.Choice<CatalogOption>("warehouse").Id, f.Choice<string>("active") == "ACTIVA", f.Text("reason"));
-                await Operation.StartAsync(request, id, q => cash.SaveBoxAsync(q), _ => Task.CompletedTask);
+                await Operation.StartAsync(request, id, q => cash.SaveBoxAsync(q), _ => ReloadCoreAsync(Session.Revision));
             }).Input("code", "Código", b?.Code ?? "").Input("name", "Nombre", b?.Name ?? "").Select("warehouse", "Almacén", warehouses, warehouses.FirstOrDefault(w => w.Id == b?.WarehouseId)).Select("active", "Estado", new[] { "ACTIVA", "INACTIVA" }, b?.Active == false ? "INACTIVA" : "ACTIVA", "").Input("reason", "Motivo"));
         });
-        if (!Operation.HasPending) await ReloadAsync();
     }
 }

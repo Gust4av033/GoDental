@@ -76,6 +76,13 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
             .Input("department", "Departamento").Input("municipality", "Municipio").Input("reference", "Referencia de entrega").Input("responsible", "Responsable de entrega")
             .Calendar("scheduled", "Fecha prevista").Input("delivery", "Cargo de entrega", "0").Input("reason", "Motivo"));
     }
+    private async Task RefreshOrderAsync(long id, long revision)
+    {
+        await LoadCoreAsync(revision); if (!Current(revision)) return;
+        Selected = Items.FirstOrDefault(o => o.Id == id);
+        if (Selected is not null) await DetailCoreAsync(id, revision);
+        else StatusMessage = "Pedido actualizado. No está en la página o filtro actual; cambia el filtro para consultarlo.";
+    }
     [RelayCommand] private async Task TransitionAsync()
     {
         if (!CanTransition || Detail is null) return; var order = Detail.Order;
@@ -83,7 +90,7 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
         await ShowAsync(new MvpFormModel($"Estado del pedido {order.Id}", "Actualizar estado", Operation, async f =>
         {
             var id = Guid.NewGuid(); var request = new OrderTransition(id, order.Id, order.RowVersion.ToArray(), f.Choice<string>("state"), f.Text("reason"));
-            await Operation.StartAsync(request, id, q => orders.TransitionAsync(q), _ => ReadAsync(r => DetailCoreAsync(order.Id, r)));
+            await Operation.StartAsync(request, id, q => orders.TransitionAsync(q), _ => ReadAsync(r => RefreshOrderAsync(order.Id, r)));
         }) { Description = $"Estado actual: {order.State}. En ruta y entregado requieren venta vinculada. Cancelar el pedido no revierte ventas ni pagos." }.Select("state", "Nuevo estado", states, states.FirstOrDefault(), "").Input("reason", "Motivo / observación de entrega"));
     }
     [RelayCommand] private async Task LinkAsync()
@@ -93,7 +100,7 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
         {
             if (!long.TryParse(f.Text("sale"), out var sale) || sale <= 0) throw new ArgumentException("Escribe el ID de la venta confirmada; puedes consultarlo en Ventas y PDF.");
             var id = Guid.NewGuid(); var request = new LinkOrderSale(id, order.Id, order.RowVersion.ToArray(), sale, f.Text("reason"));
-            await Operation.StartAsync(request, id, q => orders.LinkSaleAsync(q), _ => ReadAsync(r => DetailCoreAsync(order.Id, r)));
+            await Operation.StartAsync(request, id, q => orders.LinkSaleAsync(q), _ => ReadAsync(r => RefreshOrderAsync(order.Id, r)));
         }) { Description = "El servicio verifica cliente, productos, cantidades y cargo. El estado de pago procede de la venta y su cuenta por cobrar." }.Input("sale", "ID de venta confirmada").Input("reason", "Motivo"));
     }
 }

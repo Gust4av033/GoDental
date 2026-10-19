@@ -17,6 +17,7 @@ public sealed partial class MvpOperationModel : ObservableObject
     private Func<Task<Result<MvpReceipt>>>? send;
     private Func<MvpReceipt, Task>? completed;
     private long revision;
+    private bool uncertain;
     public long SessionRevision => session.Revision;
     public object? Request { get; private set; }
     [ObservableProperty, NotifyPropertyChangedFor(nameof(CanStart)), NotifyPropertyChangedFor(nameof(CanResolve))] private bool isBusy;
@@ -36,7 +37,7 @@ public sealed partial class MvpOperationModel : ObservableObject
     public async Task StartAsync<T>(T request, Guid id, Func<T, Task<Result<MvpReceipt>>> sender, Func<MvpReceipt, Task> onSuccess) where T : notnull
     {
         if (!CanStart || !session.IsAuthenticated) return;
-        LastErrorCode = null; Request = request; OperationId = id; revision = session.Revision;
+        uncertain = false; LastErrorCode = null; Request = request; OperationId = id; revision = session.Revision;
         send = () => sender(request); completed = onSuccess; HasPending = true;
         await SendAsync();
     }
@@ -66,6 +67,11 @@ public sealed partial class MvpOperationModel : ObservableObject
             if (result.IsSuccess && result.Value is not null) await FinishAsync(result.Value);
             else
             {
+                if (uncertain)
+                {
+                    StatusMessage = (result.Message ?? "El reenvío no fue aceptado.") + " El resultado del envío anterior sigue sin confirmar. Conservamos la solicitud; consulta su estado antes de iniciar otra.";
+                    return;
+                }
                 var code = result.ErrorCode; LastErrorCode = code; Clear();
                 StatusMessage = result.Message ?? "La operación fue rechazada. Revisa los datos.";
                 if (code == "CONCURRENCY_CONFLICT") StatusMessage += " Actualiza el detalle y revisa la versión antes de crear una nueva solicitud.";
@@ -79,15 +85,15 @@ public sealed partial class MvpOperationModel : ObservableObject
     {
         var refresh = completed; Clear();
         StatusMessage = $"Operación confirmada · Registro {receipt.Id}.";
-        Committed?.Invoke(this, EventArgs.Empty);
         // Refresh is deliberately outside the write outcome: a read failure cannot reopen a committed write.
-        try { if (refresh is not null) await refresh(receipt); }
+        try { Committed?.Invoke(this, EventArgs.Empty); if (refresh is not null) await refresh(receipt); }
         catch (Exception ex) { logger.LogWarning("Falló recarga MVP: {ErrorType}", ex.GetType().Name); StatusMessage += " No se pudo actualizar la consulta; pulsa Actualizar."; }
     }
     private void Unknown(Exception ex, long started)
     {
         logger.LogWarning("Resultado MVP incierto: {ErrorType}", ex.GetType().Name);
         if (started != session.Revision) return;
+        uncertain = true;
         StatusMessage = "No se pudo confirmar el resultado. Consulta la operación o reenvía la misma solicitud. No registres otra operación equivalente.";
     }
     private void Clear() { Request = null; send = null; completed = null; HasPending = false; }
