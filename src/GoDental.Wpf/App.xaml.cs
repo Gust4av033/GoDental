@@ -51,6 +51,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<System.Windows.Application>(this);
                     services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<INavigationService, NavigationService>();
+                    services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
                     services.AddSingleton<ConnectionViewModel>();
                     services.AddSingleton<AccessViewModel>();
                     services.AddSingleton<InventoryViewModel>();
@@ -61,6 +62,8 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<UsersViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
+                    services.AddSingleton<LoginWindow>();
+                    services.AddSingleton<WindowCoordinator>();
                 })
                 .UseDefaultServiceProvider(options => { options.ValidateOnBuild = true; options.ValidateScopes = true; })
                 .Build();
@@ -68,9 +71,7 @@ public partial class App : System.Windows.Application
             await _host.StartAsync();
             await _host.Services.GetRequiredService<ConnectionViewModel>().InitializeAsync();
 
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            MainWindow = mainWindow;
-            mainWindow.Show();
+            _host.Services.GetRequiredService<WindowCoordinator>().Start();
             _host.Services.GetRequiredService<ILogger<App>>().LogInformation("Inicio de GoDental 0.3.0; inventario operativo.");
         }
         catch (Exception ex)

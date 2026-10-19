@@ -45,10 +45,26 @@
           <StackPanel Width="200" Margin="0,0,12,0"><Label Content="Marca" Target="{Binding ElementName=BrandFilterInput}"/><ComboBox x:Name="BrandFilterInput" ItemsSource="{Binding Brands}" SelectedItem="{Binding FilterBrand}" DisplayMemberPath="Name" AutomationProperties.Name="Filtro de marca"/></StackPanel>
           <Button Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" VerticalAlignment="Bottom"/>
         </WrapPanel>
-        <CheckBox Content="Sólo stock bajo" IsChecked="{Binding LowStockOnly}" Margin="0,12,0,0"/>
-        <CheckBox Content="Incluir productos inactivos" IsChecked="{Binding IncludeInactive}" Margin="0,12,0,12" IsEnabled="{Binding IsNotBusy}" />
-        <Button Content="Ver existencias, lotes y movimientos" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding CanOpenInventory}" HorizontalAlignment="Left" Margin="0,0,0,12" />
-        <DataGrid MouseDoubleClick="OnProductDoubleClick" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="280" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="Catálogo de productos">
+        <WrapPanel Margin="0,12,0,12" IsEnabled="{Binding IsNotBusy}">
+          <CheckBox Content="Sólo stock bajo" IsChecked="{Binding LowStockOnly}" Margin="0,0,24,0" VerticalAlignment="Center"/>
+          <CheckBox Content="Incluir productos inactivos" IsChecked="{Binding IncludeInactive}" VerticalAlignment="Center"/>
+        </WrapPanel>
+        <Button Content="Ver existencias, lotes y movimientos" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding CanOpenInventory}" HorizontalAlignment="Left" Margin="0,0,0,12" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}" />
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel HorizontalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="Todavía no hay productos para mostrar" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
+            <TextBlock Text="Prueba otros filtros, actualiza el catálogo o registra un producto nuevo." Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"/>
+            <Button Content="Nuevo producto" Command="{Binding NewProductCommand}" Style="{StaticResource PrimaryButton}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowErrorState, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel HorizontalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="No se pudo cargar el catálogo" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
+            <TextBlock Text="Revisa el mensaje anterior y vuelve a intentarlo." Style="{StaticResource MutedText}" TextAlignment="Center" TextWrapping="Wrap"/>
+            <Button Content="Reintentar" Command="{Binding ReloadCommand}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+          </StackPanel>
+        </Border>
+        <DataGrid MouseDoubleClick="OnProductDoubleClick" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="280" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="Catálogo de productos" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
           <DataGrid.Columns>
             <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="120" />
             <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="150" />
@@ -58,8 +74,7 @@
             <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Active}" Width="80" />
           </DataGrid.Columns>
         </DataGrid>
-        <TextBlock Text="Sin productos para estos filtros." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource MutedText}" Margin="0,12,0,0" />
-        <DockPanel Margin="0,12,0,0">
+        <DockPanel Margin="0,12,0,0" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
           <WrapPanel DockPanel.Dock="Right" IsEnabled="{Binding IsNotBusy}">
             <Button Content="Anterior" Command="{Binding PreviousCommand}" Margin="0,0,8,0" />
             <Button Content="Siguiente" Command="{Binding NextCommand}" />

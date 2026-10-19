@@ -12,20 +12,20 @@
           <Button Content="Comprobar acceso / preparar cuenta" Command="{Binding PrepareCommand}" IsEnabled="{Binding IsNotBusy}" HorizontalAlignment="Left" Margin="0,0,0,20" />
           <StackPanel IsEnabled="{Binding IsNotBusy}">
             <Label Content="_Usuario" Target="{Binding ElementName=UserInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,6" />
-            <TextBox x:Name="UserInput" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" MaxLength="60" MinWidth="350" />
+            <TextBox x:Name="UserInput" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" MaxLength="60" MinWidth="350" AutomationProperties.Name="Usuario de GoDental" />
             <StackPanel Visibility="{Binding IsBootstrap, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
               <Label Content="_Nombre completo" Target="{Binding ElementName=NameInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,6" />
-              <TextBox x:Name="NameInput" Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" />
+              <TextBox x:Name="NameInput" Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" AutomationProperties.Name="Nombre completo del primer administrador" />
             </StackPanel>
             <StackPanel Visibility="{Binding MustChangePassword, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
               <Label Content="Contraseña _actual" Target="{Binding ElementName=CurrentPasswordInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,6" />
-              <PasswordBox x:Name="CurrentPasswordInput" MaxLength="128" />
+              <PasswordBox x:Name="CurrentPasswordInput" MaxLength="128" AutomationProperties.Name="Contraseña actual" />
             </StackPanel>
             <Label Content="_Contraseña" Target="{Binding ElementName=PasswordInput}" Foreground="{DynamicResource TextBrush}" Padding="0,12,0,6" />
-            <PasswordBox x:Name="PasswordInput" MaxLength="128" />
+            <PasswordBox x:Name="PasswordInput" MaxLength="128" AutomationProperties.Name="Contraseña" />
             <StackPanel Visibility="{Binding NeedsConfirmation, Converter={StaticResource BoolToVisibility}}">
               <Label Content="_Repite la contraseña" Target="{Binding ElementName=ConfirmationInput}" Foreground="{DynamicResource TextBrush}" Padding="0,12,0,6" />
-              <PasswordBox x:Name="ConfirmationInput" MaxLength="128" />
+              <PasswordBox x:Name="ConfirmationInput" MaxLength="128" AutomationProperties.Name="Confirmación de contraseña" />
               <TextBlock Text="Puedes usar una frase de 10 a 128 caracteres." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0" />
             </StackPanel>
             <Button Content="Continuar" Style="{StaticResource PrimaryButton}" Click="SubmitClicked" IsEnabled="{Binding IsReady}" HorizontalAlignment="Left" Margin="0,20,0,0" />

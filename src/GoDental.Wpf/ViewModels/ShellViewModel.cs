@@ -8,6 +8,7 @@ namespace GoDental.Wpf.ViewModels;
 public sealed partial class ShellViewModel : ObservableObject
 {
     private readonly INavigationService navigation;
+    private readonly ISettingsWindowService settingsWindow;
     public ConnectionViewModel Connection { get; }
     public AccessViewModel Access { get; }
     public ProductsViewModel Products { get; }
@@ -21,8 +22,8 @@ public sealed partial class ShellViewModel : ObservableObject
     public string PageTitle => navigation.CurrentPage switch
     {
         SetupPage.Preparation => "Preparación del sistema",
-        SetupPage.Connection => "Conexión y apariencia",
-        SetupPage.Access => "Acceso de usuarios",
+        SetupPage.Connection => "Ajustes",
+        SetupPage.Access => "Mi cuenta",
         SetupPage.Products => "Inventario / Productos",
         SetupPage.Users => "Seguridad / Usuarios",
         _ => "Inicio"
@@ -37,9 +38,10 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow)
     {
         this.navigation = navigation;
+        this.settingsWindow = settingsWindow;
         Connection = connection;
         Access = access; Products = products;
         Users = users;
@@ -74,5 +76,6 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Users) Users.ReloadCommand.Execute(null);
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
+    [RelayCommand] private void OpenSettings() => settingsWindow.Show();
 }
 

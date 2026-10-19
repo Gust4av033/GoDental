@@ -9,6 +9,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
+        MinWidth = Math.Min(MinWidth, SystemParameters.WorkArea.Width);
+        MinHeight = Math.Min(MinHeight, SystemParameters.WorkArea.Height);
         Width = Math.Min(Width, SystemParameters.WorkArea.Width);
         Height = Math.Min(Height, SystemParameters.WorkArea.Height);
     }

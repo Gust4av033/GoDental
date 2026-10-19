@@ -29,10 +29,11 @@ public sealed partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] private ProductData? selectedProduct;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] private bool isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(CanEdit))] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] [NotifyPropertyChangedFor(nameof(ShowEmptyState))] [NotifyPropertyChangedFor(nameof(ShowErrorState))] private bool isBusy;
     [ObservableProperty] private string statusMessage = "Busca o registra tu primer producto.";
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowEmptyState))] [NotifyPropertyChangedFor(nameof(ShowErrorState))] private bool hasLoadError;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(PageLabel))] [NotifyPropertyChangedFor(nameof(IsEmpty))] private int total;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(PageLabel))] [NotifyPropertyChangedFor(nameof(IsEmpty))] [NotifyPropertyChangedFor(nameof(ShowEmptyState))] [NotifyPropertyChangedFor(nameof(ShowErrorState))] [NotifyPropertyChangedFor(nameof(ShowCatalogTable))] private int total;
     public bool CanView => service.CanRead;
     public bool CanManage => service.CanManage;
     public bool CanEdit => CanManage && IsNotBusy && !dialogOpen;
@@ -40,6 +41,9 @@ public sealed partial class ProductsViewModel : ObservableObject
     public bool CanOpenInventory => IsNotBusy && SelectedProduct is not null && Inventory is not null;
     public bool IsNotBusy => !IsBusy && Inventory?.IsBusy != true && CategoryManager?.IsBusy != true;
     public bool IsEmpty => Total == 0;
+    public bool ShowEmptyState => IsEmpty && !IsBusy && !HasLoadError;
+    public bool ShowErrorState => IsEmpty && !IsBusy && HasLoadError;
+    public bool ShowCatalogTable => Total > 0;
     public string PageLabel => $"{Total} productos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
 
     public ProductsViewModel(ProductService service, ISessionController session, ILogger<ProductsViewModel> logger,
@@ -53,7 +57,7 @@ public sealed partial class ProductsViewModel : ObservableObject
         if (inventory is not null) inventory.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); };
         session.Changed += (_, _) =>
         {
-            Products.Clear(); Categories.Clear(); Brands.Clear(); catalogs = null; SelectedProduct = null; Total = 0; Page = 1;
+            Products.Clear(); Categories.Clear(); Brands.Clear(); catalogs = null; SelectedProduct = null; Total = 0; Page = 1; HasLoadError = false;
             StatusMessage = "Busca o registra tu primer producto.";
             OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); OnPropertyChanged(nameof(CanManage));
         };
@@ -68,7 +72,7 @@ public sealed partial class ProductsViewModel : ObservableObject
     private async Task<bool> LoadAsync()
     {
         if (!IsNotBusy || !service.CanRead) return false;
-        IsBusy = true; var revision = session.Revision;
+        IsBusy = true; HasLoadError = false; var revision = session.Revision;
         try
         {
             var fetched = await service.GetCatalogsAsync();
@@ -76,13 +80,13 @@ public sealed partial class ProductsViewModel : ObservableObject
             { catalogs = values; SetCatalogs(values); }
             var result = await service.SearchAsync(new(Search.Trim(), IncludeInactive, Page, CategoryId: FilterCategory?.Id, BrandId: FilterBrand?.Id, LowStockOnly: LowStockOnly));
             if (revision != session.Revision) return false;
-            if (!result.IsSuccess || result.Value is null) { StatusMessage = result.Message ?? "No se pudo consultar."; return false; }
+            if (!result.IsSuccess || result.Value is null) { HasLoadError = true; StatusMessage = result.Message ?? "No se pudo consultar."; return false; }
             Products.Clear(); foreach (var row in result.Value.Items) Products.Add(row);
             Total = result.Value.Total; SelectedProduct = null;
             StatusMessage = Total == 0 ? "No hay productos con estos filtros. Puedes registrar uno nuevo." : "Catálogo actualizado. El stock se consulta; no se edita desde esta pantalla.";
             return true;
         }
-        catch (Exception ex) { Fail(ex); return false; }
+        catch (Exception ex) { HasLoadError = true; Fail(ex); return false; }
         finally { IsBusy = false; }
     }
 

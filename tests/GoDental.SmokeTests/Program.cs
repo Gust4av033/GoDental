@@ -18,6 +18,7 @@ using GoDental.Wpf.ViewModels;
 using GoDental.Wpf.Dialogs;
 using GoDental.Wpf.Views.Inventory;
 using GoDental.Wpf.Views.Auth;
+using GoDental.Wpf.Views.Settings;
 using GoDental.Wpf;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -130,9 +131,12 @@ internal static class Program
             var editorFactory = new ProductEditorFactory(productService, session, NullLogger<ProductEditorViewModel>.Instance);
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
-            var shell = new ShellViewModel(nav, vm, access, products, users, session);
+            var settingsHarness = new FakeSettingsWindowService();
+            var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness);
             shell.NavigateCommand.Execute(SetupPage.Connection);
-            Check(shell.IsConnection && !shell.IsHome && shell.PageTitle.Contains("Conexión"), "La navegación actualiza página y título");
+            Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
+            shell.OpenSettingsCommand.Execute(null);
+            Check(settingsHarness.OpenCount == 1, "El acceso puede abrir los ajustes antes de iniciar sesión");
             shell.ToggleSidebarCommand.Execute(null);
             Check(shell.SidebarWidth == 72 && !shell.IsSidebarExpanded, "El menú compacto conserva navegación");
 
@@ -149,9 +153,12 @@ internal static class Program
                 shell.IsSidebarCompact = false;
                 nav.Navigate(SetupPage.Home);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "inicio-claro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-claro.png"));
                 vm.IsDark = true;
                 nav.Navigate(SetupPage.Connection);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-oscuro.png"));
+                await RenderWindowAsync(new SettingsWindow(vm) { Width = 760, Height = 680 }, Path.Combine(output, "ajustes-ventana-oscuro.png"));
                 shell.IsSidebarCompact = true;
                 await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
                 shell.IsSidebarCompact = false;
@@ -292,6 +299,8 @@ internal static class Program
                 filterView.DataContext = null;
                 nav.Navigate(SetupPage.Products);
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
+                Check(products.ShowEmptyState && !products.ShowCatalogTable,
+                    "El catálogo vacío muestra un estado visible en lugar de una tabla en blanco");
                 await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
                 Check(inventory.CanWrite && inventory.Stocks.Count==1,"Carga existencias y habilita operaciones con sesión autorizada");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-detalle.png"));
@@ -330,8 +339,31 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
+                var loginWindow = new LoginWindow(shell) { ShowActivated = false };
+                var workspaceWindow = new MainWindow(shell) { ShowActivated = false };
+                var coordinator = new WindowCoordinator(System.Windows.Application.Current, loginWindow, workspaceWindow, session, access);
+                coordinator.Start();
+                Check(loginWindow.IsVisible && !workspaceWindow.IsVisible && ReferenceEquals(System.Windows.Application.Current.MainWindow, loginWindow),
+                    "Sin sesión se muestra la ventana de acceso");
+                Window? settingsOwner = null;
+                _ = Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                {
+                    var settingsWindow = System.Windows.Application.Current.Windows.OfType<SettingsWindow>().Single(w => w.IsVisible);
+                    settingsOwner = settingsWindow.Owner;
+                    settingsWindow.Close();
+                }), DispatcherPriority.Loaded);
+                new SettingsWindowService(System.Windows.Application.Current, vm).Show();
+                Check(ReferenceEquals(settingsOwner, loginWindow), "Ajustes se abre desde acceso como ventana modal con propietario");
+                session.Begin(new(2, "vendedor_visual", "Vendedor de prueba visual", 1, ["Vendedor"], [ProductService.ReadPermission], false));
+                Check(workspaceWindow.IsVisible && !loginWindow.IsVisible && ReferenceEquals(System.Windows.Application.Current.MainWindow, workspaceWindow),
+                    "Al iniciar sesión se muestra el espacio de trabajo");
+                session.Clear();
+                Check(loginWindow.IsVisible && !workspaceWindow.IsVisible && ReferenceEquals(System.Windows.Application.Current.MainWindow, loginWindow),
+                    "Cerrar sesión vuelve a la ventana de acceso");
+                await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
                 Check(bindingErrors.Errors.Count == 0, "Ventana, temas y navegación sin errores de enlaces WPF: " + string.Join(";", bindingErrors.Errors));
                 Check(((SolidColorBrush)appResource("TextBrush")).Color != ((SolidColorBrush)appResource("BackgroundBrush")).Color, "El tema mantiene recursos distintos para texto y fondo");
+                coordinator.Dispose(); loginWindow.Close(); workspaceWindow.Close();
                 Console.WriteLine("Vistas renderizadas: " + output);
             }
             finally { PresentationTraceSources.DataBindingSource.Listeners.Remove(bindingErrors); }
@@ -367,6 +399,12 @@ internal static class Program
         public Task<bool> ShowCreateUserAsync(UsersViewModel manager) => Task.FromResult(false);
         public Task<bool> ShowManageUserAsync(UsersViewModel manager) => Task.FromResult(false);
         public Task<bool> ShowInventoryMovementAsync(InventoryViewModel manager) => Task.FromResult(false);
+    }
+
+    private sealed class FakeSettingsWindowService : ISettingsWindowService
+    {
+        public int OpenCount { get; private set; }
+        public void Show() => OpenCount++;
     }
 
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
@@ -409,15 +447,19 @@ internal static class Program
 
     private static object appResource(string key) => System.Windows.Application.Current.FindResource(key);
 
-    private static async Task RenderAsync(ShellViewModel shell, double width, double height, string path)
+    private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
+        RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);
+
+    private static async Task RenderWindowAsync(Window window, string path)
     {
-        var window = new MainWindow(shell) { Width = width, Height = height, ShowActivated = false };
+        var width = window.Width;
+        var height = window.Height;
         try
         {
             // Renderizar fuera del compositor evita capturas parciales al cerrar/cambiar ventanas.
             var root = (FrameworkElement)window.Content;
             window.Content = null;
-            root.DataContext = shell;
+            root.DataContext = window.DataContext;
             TextElement.SetFontFamily(root, window.FontFamily);
             TextElement.SetFontSize(root, window.FontSize);
             TextElement.SetForeground(root, window.Foreground);
