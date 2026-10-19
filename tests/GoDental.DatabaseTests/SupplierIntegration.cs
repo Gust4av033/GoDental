@@ -112,8 +112,8 @@ internal static class SupplierIntegration
         Check(await service.ReadAsync(int.MaxValue) is null, "Proveedor inexistente devuelve ausencia explícita");
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Bitacora WHERE Entidad=N'Proveedores' AND EntidadId=@id AND Accion=N'CREAR_PROVEEDOR'", new { id }) == 1,
             "Auditoría del alta se registra una sola vez");
-        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 72 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 17,
-            "Mantenimiento usa esquema aprobado sin tablas ni procedimientos adicionales");
+        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 76 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 17,
+            "Mantenimiento usa el esquema aprobado con las extensiones aditivas del MVP");
         Console.WriteLine($"{checks} comprobaciones de proveedores correctas.");
     }
 }
