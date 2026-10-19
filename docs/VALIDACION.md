@@ -1,5 +1,9 @@
 # Validación de baseline v0.1
 
+## MVP operativo · lógica · 19/10/2026
+
+Incremento y límites en [DEV-17](DEV-17-MVP-Logica.md). Compilación Release cruzada para Windows sin errores/advertencias y 116 casos xUnit correctos, incluyendo generación de PDF. Se añade suite SQL aislada `--run-mvp` y migraciones aditivas 012–013 (76 tablas/8 vistas/17 procedimientos). Revisión T-SQL estática satisfactoria; ejecución SQL y pruebas WPF de las funciones nuevas pendientes. El contenedor SQL Server no pudo descargarse en el entorno Linux por denegación de red. No se instalaron cambios en la base del usuario ni se certifica todavía el MVP funcional completo.
+
 ## Solución .NET
 
 - La solución mantiene cuatro proyectos: Domain, Application, Infrastructure y WPF, más el proyecto de pruebas.

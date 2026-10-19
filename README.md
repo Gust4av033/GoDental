@@ -51,9 +51,11 @@ Reglas principales:
 
 La versión 0.3 incluye usuarios y catálogo de la [v0.2](docs/DEV-02-Seguridad-Catalogo.md), más existencias, lotes/vencimientos, ajustes, bajas, transferencias y Kardex con auditoría. También incorpora filtros y mantenimiento de categorías. [Alcance y guía de inventario](docs/DEV-03-Inventario-operativo.md).
 
-La continuación agrega [lógica y persistencia de conteos físicos](docs/DEV-09-Conteos.md): apertura, captura, cierre con ajustes y cancelación auditados. Sus contratos están listos para el siguiente incremento de UI; todavía no hay pantalla de conteos. Requiere la migración 011.
+La continuación agrega [conteos físicos](docs/DEV-09-Conteos.md): apertura, captura, cierre con ajustes y cancelación auditados. Su pantalla y la de proveedores están conectadas según [DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). Requiere la migración 011.
 
-También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría. Estos contratos aún no tienen pantallas. La [guía de integración UI](docs/DEV-11-Integracion-UI.md) reúne los puntos de conexión; órdenes y recepciones siguen pendientes.
+También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría, y [clientes, direcciones, crédito e historiales](docs/DEV-13-Clientes.md).
+
+En `feature/logica`, el [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md) agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013. Sus pantallas están pendientes de conexión en `feature/ui`; [DEV-15](docs/DEV-15-Coordinacion-UI.md) documenta contratos y estado de validación. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
 
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
@@ -79,9 +81,11 @@ La herramienta limita el destino a una base local de desarrollo marcada. Nunca i
 009_Seguridad_Parametros.sql
 010_Inventario_Operativo.sql
 011_Conteos_Inventario.sql
+012_MVP_Operativo.sql
+013_Pedidos_MVP.sql
 ```
 
-La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos. No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
+La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos; 012–013 añaden cuatro tablas de operaciones/pedidos (76 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
 
 Para una instalación local puede usarse `scripts/install-database.ps1` si `sqlcmd` está disponible. La primera ejecución debe hacerse contra una instancia de **desarrollo**, nunca directamente contra producción.
 

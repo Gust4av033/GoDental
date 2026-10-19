@@ -18,6 +18,12 @@ Orden heredado de DM-01 v0.2:
 - Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Los conteos físicos agregan contratos C#/SQL y pruebas en DEV-09; su pantalla queda para el incremento de UI. Inventario inicial definitivo, series, etiquetas y reposición avanzada conservan sus pendientes.
 - Fase 4: proveedores, contactos y referencias comerciales de productos tienen lógica, persistencia y pruebas (DEV-10); UI pendiente. El siguiente bloque es órdenes y recepciones, con sus estados y costeo, antes de ventas. Prorrateo definitivo de importaciones y recepciones con costo incompleto conservan sus decisiones pendientes de IMP-01.
 
+## Primer MVP operativo · incremento de lógica
+
+El ciclo priorizado es existencias iniciales/ajustes → clientes → cotización → venta → cobro/crédito → pedido/entrega → arqueo. DEV-17 documenta su implementación en `feature/logica`, los contratos para `feature/ui`, las pruebas y sus límites. Esto adelanta un recorrido mínimo de operación; no declara completas todas las fases del roadmap. Las interfaces de conteos, proveedores y clientes ya existen en la base común.
+
+Para cerrar el MVP faltan ejecución SQL de la suite nueva, conexión de estas nuevas funciones desde UI y validación del recorrido en Windows/dos estaciones. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores se desarrollarán después con sus decisiones de negocio explícitas. La fase dos solicitada por el usuario es ese segundo ciclo de refinamiento/ampliación; no sustituye la numeración histórica de DM-01.
+
 ## Reglas comerciales ya documentadas
 
 - Descuento efectivo combinado: hasta 7% según permiso; más de 7% hasta 35% con motivo y bitácora; más de 35% con autenticación de administrador y motivo.

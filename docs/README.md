@@ -43,3 +43,4 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 
 - [DEV-15 · Coordinación UI y lógica](DEV-15-Coordinacion-UI.md)
 - [DEV-16 · Refinamiento de componentes UI](DEV-16-UI-Refinamiento.md)
+- [DEV-17 · Lógica del MVP operativo](DEV-17-MVP-Logica.md): ventas/POS, caja, crédito, cotizaciones, comprobante interno y pedidos/entrega; migraciones 012–013 y límites de validación.
