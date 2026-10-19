@@ -9,13 +9,15 @@
       </StackPanel.Style>
     <DockPanel>
       <WrapPanel DockPanel.Dock="Right" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}">
-        <Button Content="Administrar categorías" Command="{Binding ManageCategoriesCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,8,0" />
-        <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" IsEnabled="{Binding CanEditSelected}" Margin="0,0,8,0" />
-        <Button Content="Nuevo producto" Command="{Binding NewProductCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" />
+        <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" IsEnabled="{Binding CanEditSelected}" Visibility="{Binding CanEditSelected, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
+        <Button Content="+ Nuevo producto" Command="{Binding NewProductCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" />
       </WrapPanel>
-      <TextBlock Text="Inventario" Style="{StaticResource Heading}" />
+      <StackPanel>
+        <TextBlock Text="INVENTARIO" Style="{StaticResource PageEyebrow}"/>
+        <TextBlock Text="Productos" Style="{StaticResource Heading}" />
+      </StackPanel>
     </DockPanel>
-    <TextBlock Text="Tu catálogo, precios de referencia y existencias disponibles." Style="{StaticResource MutedText}" Margin="0,0,0,20" />
+    <TextBlock Text="Administra tu catálogo, precios de referencia y existencias disponibles." Style="{StaticResource MutedText}" Margin="0,0,0,16" />
     <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
       <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite" />
     </Border>
