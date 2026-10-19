@@ -155,6 +155,21 @@ internal static class MvpIntegration
         Check(!(await sales.ConfirmAsync(new(Guid.NewGuid(), creditQuote.Cart, creditQuote.Token, [new(credit, creditQuote.Total)], 0, null, "Crédito bloqueado"))).IsSuccess, "Servidor rechaza crédito bloqueado aunque cliente esté activo");
         await c.ExecuteAsync("UPDATE cli.Clientes SET BloqueadoCredito=0,MotivoBloqueoCredito=NULL WHERE IdCliente=@customerId;", new { customerId });
 
+        customer = (await customers.ReadAsync(customerId))!;
+        Check((await customers.SaveCreditAsync(new(customerId, customer.Customer.RowVersion, customer.Credit with { Limit = 150 }, "Límite para concurrencia"))).IsSuccess, "Fija crédito disponible para dos estaciones");
+        var creditRequests = new List<ConfirmSale>();
+        foreach (var sku in new[] { "MVP-LIMITE-A", "MVP-LIMITE-B" })
+        {
+            var creditProduct = await Product(sku, 100);
+            Saved(await setup.InitializeAsync(new(Guid.NewGuid(), creditProduct, warehouse, 1, 20, "Stock crédito concurrente")));
+            var creditCartQuote = await sales.QuoteAsync(new(box, customerId, [new(creditProduct, 1)]));
+            creditRequests.Add(new(Guid.NewGuid(), creditCartQuote.Cart, creditCartQuote.Token, [new(credit, 100)], 0, null, "Crédito concurrente"));
+        }
+        var competingCredit = await Task.WhenAll(creditRequests.Select(r => sales.ConfirmAsync(r)));
+        Check(competingCredit.Count(r => r.IsSuccess) == 1 && competingCredit.Count(r => !r.IsSuccess) == 1 && (await customers.BalanceAsync(customerId))!.Outstanding == 100, "Dos productos distintos no permiten exceder el límite de crédito concurrentemente");
+        customer = (await customers.ReadAsync(customerId))!;
+        Check((await customers.SaveCreditAsync(new(customerId, customer.Customer.RowVersion, customer.Credit with { Limit = 1000 }, "Restaurar límite"))).IsSuccess, "Restaura configuración para escenarios siguientes");
+
         // Descuento efectivo apenas mayor a 35: no se redondea para eludir reautenticación.
         var discounted = Cart() with { Items = [new(p, 1, 30)], GlobalDiscountPercent = 7.1429m };
         var discountQuote = await sales.QuoteAsync(discounted);
@@ -200,10 +215,22 @@ internal static class MvpIntegration
         Check((await orders.EventsAsync(orderId, new(1, 2))).Items.Count == 2, "Historial de pedido se pagina");
         Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "PREPARANDO", "Reabrir"))).IsSuccess, "Entregado es un estado terminal");
 
+        var unbilledOrderId = Saved(await orders.PlaceAsync(placed with { OperationId = Guid.NewGuid() }));
+        foreach (var state in new[] { "PREPARANDO", "LISTO" })
+        {
+            var pendingOrder = (await orders.ReadAsync(unbilledOrderId))!;
+            Saved(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, pendingOrder.Order.RowVersion, state, "Preparación sin venta")));
+        }
+        var unbilled = (await orders.ReadAsync(unbilledOrderId))!;
+        Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "EN_RUTA", "Despachar sin venta"))).IsSuccess && !(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "ENTREGADO", "Entregar sin venta"))).IsSuccess, "No despacha ni entrega sin venta e inventario registrados");
+        Saved(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "CANCELADO", "Cancelar pedido no facturado")));
+
         var fiscal = new FiscalPendingService(repository, session);
+        customer = (await customers.ReadAsync(customerId))!;
+        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, new() { Type = "FISCAL", Address = "Dirección fiscal aislada" }, "Preparación fiscal"))).IsSuccess, "Completa datos fiscales mediante contrato de clientes");
         Saved(await fiscal.RegisterAsync(new(Guid.NewGuid(), saleId, "FE", "Registro pendiente")));
         Check((await fiscal.SearchAsync(new())).Items.Single().State == "PENDIENTE" && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM fis.DocumentosDte;") == 0, "Preparación fiscal no inventa DTE aceptado");
-        Check(!(await fiscal.RegisterAsync(new(Guid.NewGuid(), saleId, "CCFE", "Segundo tipo"))).IsSuccess, "No agrega otro tipo fiscal activo a la misma venta");
+        Check((await fiscal.RegisterAsync(new(Guid.NewGuid(), saleId, "CCFE", "Segundo tipo"))).ErrorCode == "INVALID_STATE", "No agrega otro tipo fiscal activo a la misma venta aun con datos completos");
 
         // Error de auditoría provoca rollback del saldo, movimiento y registro de reenvío.
         var before = (await cash.CurrentAsync(box))!;

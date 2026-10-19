@@ -30,8 +30,8 @@ public sealed partial class SqlMvpRepository
         var id = await w.Scalar<long>("INSERT INTO ven.PedidosMvp(IdCliente,ClienteSnapshot,Contacto,Telefono,Direccion,Departamento,Municipio,Referencia,FechaPrevista,Responsable,IdResponsable,CargoEntrega) OUTPUT INSERTED.IdPedido VALUES(@CustomerId,@customer,@Contact,@Phone,@Address,@Department,@Municipality,@Reference,@Scheduled,@Responsible,@ResponsibleUserId,@DeliveryCharge);", new { r.CustomerId, customer, Contact = r.Contact.Trim(), Phone = r.Phone.Trim(), Address = address.Address.Trim(), address.Department, address.Municipality, address.Reference, r.Scheduled, r.Responsible, r.ResponsibleUserId, r.DeliveryCharge });
         foreach (var line in r.Items.OrderBy(i => i.ProductId))
         {
-            var changed = await w.Execute("INSERT INTO ven.PedidoLineasMvp(IdPedido,IdProducto,SKU,Nombre,Cantidad) SELECT @id,IdProducto,SKU,Nombre,@Quantity FROM inv.Productos WITH(HOLDLOCK) WHERE IdProducto=@ProductId AND Activo=1;", new { id, line.ProductId, line.Quantity });
-            Require(changed == 1, "VALIDATION", "Un producto del pedido no está disponible.");
+            var changed = await w.Execute("INSERT INTO ven.PedidoLineasMvp(IdPedido,IdProducto,SKU,Nombre,Cantidad) SELECT @id,p.IdProducto,p.SKU,p.Nombre,@Quantity FROM inv.Productos p WITH(HOLDLOCK) JOIN cat.UnidadesMedida u WITH(HOLDLOCK) ON u.IdUnidadMedida=p.IdUnidadMedida WHERE p.IdProducto=@ProductId AND p.Activo=1 AND p.ControlaSerie=0 AND (u.PermiteDecimales=1 OR FLOOR(@Quantity)=@Quantity);", new { id, line.ProductId, line.Quantity });
+            Require(changed == 1, "VALIDATION", "Un producto o cantidad del pedido no es compatible con el POS.");
         }
 
         await OrderEvent(w, id, userId, "RECIBIDO", r.Reason);
@@ -51,6 +51,8 @@ public sealed partial class SqlMvpRepository
         Check(r);
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
         Require(OrderRules.CanTransition(order.State, r.State), "INVALID_STATE", "La transición no está permitida para el estado actual.");
+        if (r.State is "EN_RUTA" or "ENTREGADO")
+            Require(order.SaleId is not null && await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId AND Estado=N'CONFIRMADA') THEN 1 ELSE 0 END);", new { order.SaleId }), "INVALID_STATE", "Vincula una venta confirmada antes de despachar o entregar el pedido.");
         await w.Execute("UPDATE ven.PedidosMvp SET Estado=@State,FechaEntrega=CASE WHEN @State=N'ENTREGADO' THEN SYSDATETIMEOFFSET() ELSE NULL END,EntregadoPor=CASE WHEN @State=N'ENTREGADO' THEN @userId ELSE NULL END WHERE IdPedido=@OrderId;", new { r.State, userId, r.OrderId });
         await OrderEvent(w, r.OrderId, userId, r.State, r.Reason);
         return r.OrderId;
