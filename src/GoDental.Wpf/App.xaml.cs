@@ -57,8 +57,10 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<InventoryViewModel>();
                     services.AddSingleton<InventoryCountsViewModel>();
                     services.AddSingleton<SuppliersViewModel>();
+                    services.AddSingleton<CustomersViewModel>();
                     services.AddSingleton<CategoriesViewModel>();
                     services.AddSingleton<IDialogService, DialogService>();
+                    services.AddSingleton<ICustomerDialogService>(sp => (DialogService)sp.GetRequiredService<IDialogService>());
                     services.AddSingleton<IWorkflowDialogService>(sp => sp.GetRequiredService<IDialogService>());
                     services.AddSingleton<ProductEditorFactory>();
                     services.AddSingleton<ProductsViewModel>();

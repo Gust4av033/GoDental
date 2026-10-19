@@ -17,6 +17,10 @@
     <Compile Include="../../src/GoDental.Wpf/Dialogs/OperationDialogModel.cs" Link="Ui/OperationDialogModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/CountStartDialogModel.cs" Link="Ui/CountStartDialogModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/SupplierEditorDialogModel.cs" Link="Ui/SupplierEditorDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/CustomersViewModel.cs" Link="Ui/CustomersViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/ICustomerDialogService.cs" Link="Ui/ICustomerDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/CustomerEditorDialogModel.cs" Link="Ui/CustomerEditorDialogModel.cs" />
+    <Compile Include="../Shared/CustomerWorkflowRepository.cs" Link="Ui/CustomerWorkflowRepository.cs" />
     <Compile Include="../Shared/WorkflowRepositories.cs" Link="Ui/WorkflowRepositories.cs" />
   </ItemGroup>
   <ItemGroup>

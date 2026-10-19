@@ -5,7 +5,7 @@ using GoDental.Wpf.Views.Auth;
 
 namespace GoDental.Wpf.Dialogs;
 
-public sealed class DialogService(System.Windows.Application application) : IDialogService
+public sealed class DialogService(System.Windows.Application application) : IDialogService, ICustomerDialogService
 {
     public Task<bool> ShowProductEditorAsync(ProductEditorViewModel editor)
     {
@@ -45,6 +45,9 @@ public sealed class DialogService(System.Windows.Application application) : IDia
 
     public Task<bool> ShowSupplierEditorAsync(SupplierEditorDialogModel model) =>
         Show(new DialogWindow(model, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = model }));
+
+    public Task<bool> ShowCustomerEditorAsync(CustomerEditorDialogModel model) =>
+        Show(new DialogWindow(model, new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = model }));
 
     private Task<bool> Show(DialogWindow window)
     {

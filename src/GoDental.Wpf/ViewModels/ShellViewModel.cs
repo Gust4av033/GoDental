@@ -16,6 +16,9 @@ public sealed partial class ShellViewModel : ObservableObject
     public UsersViewModel Users { get; }
     public InventoryCountsViewModel Counts { get; }
     public SuppliersViewModel Suppliers { get; }
+    public CustomersViewModel Customers { get; }
+    public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
+    public bool CanOpenCustomers => Customers.CanRead;
     public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
     public bool IsSuppliers => navigation.CurrentPage == SetupPage.Suppliers;
     public bool CanOpenCounts => Counts.CanRead;
@@ -34,6 +37,7 @@ public sealed partial class ShellViewModel : ObservableObject
         SetupPage.Access => "Mi cuenta",
         SetupPage.Products => "Inventario / Productos",
         SetupPage.Counts => "Inventario / Conteos",
+        SetupPage.Customers => "Clientes",
         SetupPage.Suppliers => "Compras / Proveedores",
         SetupPage.Users => "Seguridad / Usuarios",
         _ => "Inicio"
@@ -46,15 +50,16 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool IsUsers => navigation.CurrentPage == SetupPage.Users;
     public bool CanOpenUsers => Users.CanView;
     public bool CanOpenProducts => Products.CanView;
-    public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing;
+    public bool CanSignOut => Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers)
     {
         this.navigation = navigation;
         this.settingsWindow = settingsWindow;
         Connection = connection;
         Access = access; Products = products;
-        Users = users; Counts = counts; Suppliers = suppliers;
+        Users = users; Counts = counts; Suppliers = suppliers; Customers = customers;
+        customers.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         counts.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         suppliers.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
         users.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
@@ -64,7 +69,7 @@ public sealed partial class ShellViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(CanOpenProducts)); OnPropertyChanged(nameof(CanSignOut));
             OnPropertyChanged(nameof(CanOpenUsers));
-            OnPropertyChanged(nameof(CanOpenCounts)); OnPropertyChanged(nameof(CanOpenSuppliers));
+            OnPropertyChanged(nameof(CanOpenCounts)); OnPropertyChanged(nameof(CanOpenSuppliers)); OnPropertyChanged(nameof(CanOpenCustomers));
             navigation.Navigate(session.IsAuthenticated ? SetupPage.Home : SetupPage.Access);
             if (session.IsAuthenticated) Products.ReloadCommand.Execute(null);
         };
@@ -76,7 +81,7 @@ public sealed partial class ShellViewModel : ObservableObject
             OnPropertyChanged(nameof(IsConnection));
             OnPropertyChanged(nameof(IsAccess)); OnPropertyChanged(nameof(IsProducts));
             OnPropertyChanged(nameof(IsUsers));
-            OnPropertyChanged(nameof(IsCounts)); OnPropertyChanged(nameof(IsSuppliers));
+            OnPropertyChanged(nameof(IsCounts)); OnPropertyChanged(nameof(IsSuppliers)); OnPropertyChanged(nameof(IsCustomers));
         };
     }
 
@@ -86,12 +91,14 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Users && !CanOpenUsers) page = SetupPage.Access;
         if (page == SetupPage.Counts && !CanOpenCounts) page = SetupPage.Access;
         if (page == SetupPage.Suppliers && !CanOpenSuppliers) page = SetupPage.Access;
+        if (page == SetupPage.Customers && !CanOpenCustomers) page = SetupPage.Access;
         navigation.Navigate(page);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
         if (page == SetupPage.Products) Products.ReloadCommand.Execute(null);
         if (page == SetupPage.Users) Users.ReloadCommand.Execute(null);
         if (page == SetupPage.Counts) Counts.ReloadCommand.Execute(null);
         if (page == SetupPage.Suppliers) Suppliers.ReloadCommand.Execute(null);
+        if (page == SetupPage.Customers) Customers.ReloadCommand.Execute(null);
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
     [RelayCommand] private void OpenSettings() => settingsWindow.Show();

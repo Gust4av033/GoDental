@@ -134,7 +134,8 @@ internal static class Program
             var settingsHarness = new FakeSettingsWindowService();
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
-                new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance));
+                new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance));
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
             shell.OpenSettingsCommand.Execute(null);
@@ -166,7 +167,7 @@ internal static class Program
                 shell.IsSidebarCompact = false;
                 nav.Navigate(SetupPage.Access); await access.PrepareCommand.ExecuteAsync(null);
                 await RenderAsync(shell, 1280, 900, Path.Combine(output, "primer-administrador.png"));
-                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS","INVENTARIO.CONTEO","COMPRAS.VER","PROVEEDORES.GESTIONAR"], false));
+                session.Begin(new(1, "prueba_visual", "Usuario de prueba visual", 1, ["Administrador"], [ProductService.ReadPermission, ProductService.ManagePermission,"INVENTARIO.AJUSTAR","INVENTARIO.COSTOS_VER","USUARIOS.VER","USUARIOS.GESTIONAR","SEGURIDAD.ROLES_PERMISOS","INVENTARIO.CONTEO","COMPRAS.VER","PROVEEDORES.GESTIONAR","CLIENTES.VER","CLIENTES.CREAR","CLIENTES.EDITAR","CLIENTES.CREDITO_CONFIGURAR","VENTAS.VER"], false));
                 await products.ReloadCommand.ExecuteAsync(null);
                 Check(shell.IsHome && shell.CanOpenProducts, "Una sesión autorizada abre el inicio con acceso al catálogo");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "inicio-sesion-claro.png"));
@@ -375,6 +376,31 @@ internal static class Program
                         await RenderDialogAsync(editor, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor }, Path.Combine(output, $"proveedor-{kind}-{theme}.png"));
                     }
                 }
+                await shell.Customers.ReloadCommand.ExecuteAsync(null);
+                shell.Customers.Selected = shell.Customers.Items.First(); await shell.Customers.OpenCommand.ExecuteAsync(null);
+                await shell.Customers.LoadSalesCommand.ExecuteAsync(null); await shell.Customers.LoadAccountsCommand.ExecuteAsync(null); await shell.Customers.LoadPaymentsCommand.ExecuteAsync(null);
+                Check(shell.CanOpenCustomers && shell.Customers.CanConfigureCredit && shell.Customers.Addresses.Count == 1,
+                    "Clientes conecta permisos, contactos, direcciones e historial");
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme); nav.Navigate(SetupPage.Customers);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"clientes-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-125-{theme}.png"));
+                    var view = new GoDental.Wpf.Views.Customers.CustomersView { DataContext = shell.Customers };
+                    view.Measure(new Size(1000, 700)); view.Arrange(new Rect(0, 0, 1000, 700)); view.UpdateLayout();
+                    var tabs = FindChildren<TabControl>(view).First();
+                    Check(tabs.Items.Count == 8, "Ficha de cliente organizada en ocho pestañas");
+                    for (var i = 0; i < tabs.Items.Count; i++) { tabs.SelectedIndex = i; view.UpdateLayout(); Check(FindChildren<DataGrid>(view).All(g => g.IsReadOnly && !g.AutoGenerateColumns), $"Consulta de cliente explícita: {theme}, pestaña {i}"); }
+                    foreach (var kind in Enum.GetValues<CustomerEditorKind>())
+                    {
+                        var form = new CustomerEditorDialogModel(kind, shell.Customers.Detail!, shell.Customers.Contacts.First(), shell.Customers.Addresses.First(), shell.Customers.Credit, new([new() { Id = 1, Name = "Clínica" }], []), _ => Task.FromResult(false));
+                        await RenderDialogAsync(form, new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = form }, Path.Combine(output, $"cliente-{kind}-{theme}.png"));
+                    }
+                }
+                session.Begin(new(4, "lector_clientes", "Lector clientes", 1, [], ["CLIENTES.VER"], false));
+                await shell.Customers.ReloadCommand.ExecuteAsync(null); shell.Customers.Selected = shell.Customers.Items.First(); await shell.Customers.OpenCommand.ExecuteAsync(null);
+                Check(shell.CanOpenCustomers && !shell.Customers.CanCreate && !shell.Customers.CanEdit && !shell.Customers.CanReadHistory && shell.Customers.Sales.Count == 0,
+                    "El lector de clientes no obtiene edición ni historial financiero");
                 session.Begin(new(3, "lector_compras", "Lector de compras", 1, [], ["COMPRAS.VER"], false));
                 await shell.Suppliers.ReloadCommand.ExecuteAsync(null);
                 shell.Suppliers.Selected = shell.Suppliers.Items.First(); await shell.Suppliers.OpenCommand.ExecuteAsync(null);
@@ -384,7 +410,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "proveedores-solo-lectura.png"));
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
                 await products.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Products);
-                Check(products.CanView && !products.CanManage && !shell.CanOpenUsers && !shell.CanOpenCounts && !shell.CanOpenSuppliers && shell.Suppliers.References.Count == 0, "El vendedor sólo ve acciones autorizadas");
+                Check(products.CanView && !products.CanManage && !shell.CanOpenUsers && !shell.CanOpenCounts && !shell.CanOpenSuppliers && shell.Suppliers.References.Count == 0 && !shell.CanOpenCustomers && shell.Customers.Addresses.Count == 0, "El vendedor sólo ve acciones autorizadas");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");

@@ -37,3 +37,6 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 ## Incremento de interfaz · 19/10/2026
 
 - [DEV-12 · Interfaces de Conteos y Proveedores](DEV-12-UI-Conteos-Proveedores.md): flujos WPF conectados, pruebas y validación pendiente en Windows/SQL.
+
+- [DEV-13 · Clientes](DEV-13-Clientes.md): ficha comercial, contactos, direcciones, crédito separado e historiales.
+- [DEV-14 · VS Code en Windows](DEV-14-VSCode-Windows.md): preparación del SDK, tareas y depuración WPF.

@@ -121,7 +121,13 @@ La documentación fuente vive en `docs/` y es la referencia para decisiones func
 
 ## Conteos y proveedores
 
-Las interfaces de conteos físicos y proveedores consumen los servicios existentes: apertura/captura/cierre/cancelación de conteos y fichas/contactos/referencias comerciales de proveedores. [Alcance y validación de DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). La ejecución visual y la suite SQL de este incremento requieren validación en Windows antes de integrar o avanzar con Clientes.
+Las interfaces de conteos físicos y proveedores consumen los servicios existentes: apertura/captura/cierre/cancelación de conteos y fichas/contactos/referencias comerciales de proveedores. [Alcance y validación de DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). La ejecución visual y la suite SQL de este incremento requieren validación en Windows antes de integrar. El usuario autorizó continuar con Clientes manteniendo pendiente esa validación.
+
+## Clientes y VS Code
+
+El módulo Clientes incorpora ficha, contactos, direcciones fiscales/de entrega, condiciones comerciales y configuración separada de crédito. Las consultas de ventas, cuentas y abonos leen las tablas existentes según permisos. [Alcance y comprobaciones de DEV-13](docs/DEV-13-Clientes.md).
+
+Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV-14](docs/DEV-14-VSCode-Windows.md). El repositorio incluye tareas de compilación/pruebas y configuración de F5.
 
 ## Desarrollo
 
