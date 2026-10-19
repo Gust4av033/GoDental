@@ -465,7 +465,24 @@ internal static class Program
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
             await using var stream = File.Create(path); encoder.Save(stream);
         }
-        finally { window.Close(); }
+        finally
+        {
+            // Los formularios de operaciones piden confirmar el descarte incluso en
+            // capturas sin guardar. Responder a esa ventana evita bloquear el runner.
+            if (model.HasUnsavedChanges)
+            {
+                var discard = window.Dispatcher.InvokeAsync(() =>
+                {
+                    var confirmation = System.Windows.Application.Current.Windows.OfType<DialogWindow>()
+                        .Single(w => w.Owner == window && w.IsVisible);
+                    ((IDialogModel)confirmation.DataContext).SaveCommand.Execute(null);
+                }, DispatcherPriority.Loaded);
+                window.Close();
+                await discard;
+                Check(!window.IsVisible, "La captura descarta su formulario y cierra sin guardar: " + model.Title);
+            }
+            else window.Close();
+        }
     }
 
     private sealed class FakeDialogService : IDialogService
