@@ -30,8 +30,17 @@ public sealed class WindowCoordinator : IDisposable
     public void Start()
     {
         application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        FitToWorkArea(login);
+        FitToWorkArea(workspace);
         ShowCurrentWindow();
         PrepareAccessIfNeeded();
+    }
+
+    private static void FitToWorkArea(Window window)
+    {
+        var bounds = SystemParameters.WorkArea;
+        window.Width = Math.Min(window.Width, bounds.Width * 0.96);
+        window.Height = Math.Min(window.Height, bounds.Height * 0.96);
     }
 
     private void OnSessionChanged(object? sender, EventArgs e)

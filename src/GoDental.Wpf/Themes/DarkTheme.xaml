@@ -9,10 +9,10 @@
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource DarkSuccess}" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource DarkAccent}" />
     <SolidColorBrush x:Key="OnPrimaryBrush" Color="{StaticResource DarkBackground}" />
-    <SolidColorBrush x:Key="SidebarBrush" Color="#192B3A" />
-    <SolidColorBrush x:Key="SidebarTextBrush" Color="#E5EDF6" />
-    <SolidColorBrush x:Key="SidebarMutedBrush" Color="#ADC0D5" />
-    <SolidColorBrush x:Key="SidebarSelectionBrush" Color="#2A4160" />
-    <SolidColorBrush x:Key="BrandAccentBrush" Color="#8ED1D4" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource DarkSidebar}" />
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource DarkSidebarText}" />
+    <SolidColorBrush x:Key="SidebarMutedBrush" Color="{StaticResource DarkSidebarMuted}" />
+    <SolidColorBrush x:Key="SidebarSelectionBrush" Color="{StaticResource DarkSidebarSelection}" />
+    <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource DarkBrandAccent}" />
 </ResourceDictionary>
 

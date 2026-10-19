@@ -15,23 +15,25 @@ public sealed partial class AccessViewModel : ObservableObject
     [ObservableProperty] private string userName = "";
     [ObservableProperty] private string displayName = "";
     [ObservableProperty] private string statusMessage = "Guarda la conexión y comprueba la instalación para iniciar sesión.";
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] private bool isBootstrap;
-    [ObservableProperty] private bool isReady;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] private bool mustChangePassword;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(ShowPrepareAction))] private bool isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool isBootstrap;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowPrepareAction))] private bool isReady;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool mustChangePassword;
     public bool IsNotBusy => !IsBusy;
     public bool IsAuthenticated => session.IsAuthenticated;
     public string IdentityLabel => session.DisplayName ?? "Sin sesión de usuario";
     public bool NeedsConfirmation => IsBootstrap || MustChangePassword;
     public bool ShowSignIn => !session.IsAuthenticated;
-    public string FormTitle => session.IsAuthenticated ? "Sesión iniciada" : MustChangePassword ? "Actualiza tu contraseña" : IsBootstrap ? "Crea el primer administrador" : "Inicia sesión";
+    public bool ShowPrepareAction => !IsReady && !IsBusy && !IsAuthenticated;
+    public string PrimaryActionLabel => MustChangePassword ? "Cambiar contraseña" : IsBootstrap ? "Crear administrador" : "Iniciar sesión";
+    public string FormTitle => session.IsAuthenticated ? "Sesión iniciada" : MustChangePassword ? "Actualiza tu contraseña" : IsBootstrap ? "Crea el primer administrador" : "Iniciar sesión";
 
     public AccessViewModel(IIdentityGateway gateway, ISessionController session, ILogger<AccessViewModel> logger)
     {
         this.gateway = gateway; this.session = session; this.logger = logger;
         session.Changed += (_, _) =>
         {
-            OnPropertyChanged(nameof(IsAuthenticated)); OnPropertyChanged(nameof(IdentityLabel)); OnPropertyChanged(nameof(FormTitle)); OnPropertyChanged(nameof(ShowSignIn));
+            OnPropertyChanged(nameof(IsAuthenticated)); OnPropertyChanged(nameof(IdentityLabel)); OnPropertyChanged(nameof(FormTitle)); OnPropertyChanged(nameof(ShowSignIn)); OnPropertyChanged(nameof(ShowPrepareAction));
             if (!session.IsAuthenticated) { IsReady = false; StatusMessage = "Tu sesión terminó. Comprueba el acceso para volver a ingresar."; }
         };
     }

@@ -1,13 +1,18 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Color x:Key="LightBackground">#F5F8FA</Color>
+    <Color x:Key="LightBackground">#F4F8FE</Color>
     <Color x:Key="LightSurface">#FFFFFF</Color>
-    <Color x:Key="LightText">#233B49</Color>
-    <Color x:Key="LightMuted">#52677D</Color>
-    <Color x:Key="LightBorder">#E3E9EE</Color>
-    <Color x:Key="LightPrimary">#276A86</Color>
-    <Color x:Key="LightTint">#EDF5F7</Color>
+    <Color x:Key="LightText">#172B4D</Color>
+    <Color x:Key="LightMuted">#637897</Color>
+    <Color x:Key="LightBorder">#DFE9F6</Color>
+    <Color x:Key="LightPrimary">#176BEE</Color>
+    <Color x:Key="LightTint">#EAF3FF</Color>
     <Color x:Key="LightSuccess">#18765A</Color>
-    <Color x:Key="LightAccent">#DFF5FA</Color>
+    <Color x:Key="LightAccent">#D8ECFF</Color>
+    <Color x:Key="LightSidebar">#FFFFFF</Color>
+    <Color x:Key="LightSidebarText">#344765</Color>
+    <Color x:Key="LightSidebarMuted">#7184A1</Color>
+    <Color x:Key="LightSidebarSelection">#E6F1FF</Color>
+    <Color x:Key="LightBrandAccent">#176BEE</Color>
     <Color x:Key="DarkBackground">#142132</Color>
     <Color x:Key="DarkSurface">#1D2D41</Color>
     <Color x:Key="DarkText">#E5EDF6</Color>
@@ -17,16 +22,11 @@
     <Color x:Key="DarkTint">#2A4160</Color>
     <Color x:Key="DarkSuccess">#81D9B6</Color>
     <Color x:Key="DarkAccent">#244554</Color>
-    <Color x:Key="SidebarColor">#102A43</Color>
-    <Color x:Key="SidebarTextColor">#E4EFF9</Color>
-    <Color x:Key="SidebarMutedColor">#B3C8DC</Color>
-    <Color x:Key="SidebarSelectionColor">#234F73</Color>
-    <Color x:Key="BrandAccentColor">#66D6DD</Color>
+    <Color x:Key="DarkSidebar">#192B3A</Color>
+    <Color x:Key="DarkSidebarText">#E5EDF6</Color>
+    <Color x:Key="DarkSidebarMuted">#ADC0D5</Color>
+    <Color x:Key="DarkSidebarSelection">#2A4160</Color>
+    <Color x:Key="DarkBrandAccent">#8ED1D4</Color>
     <Color x:Key="LightOnPrimary">#FFFFFF</Color>
-    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
-    <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource SidebarTextColor}" />
-    <SolidColorBrush x:Key="SidebarMutedBrush" Color="{StaticResource SidebarMutedColor}" />
-    <SolidColorBrush x:Key="SidebarSelectionBrush" Color="{StaticResource SidebarSelectionColor}" />
-    <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource BrandAccentColor}" />
 </ResourceDictionary>
 

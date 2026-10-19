@@ -5,15 +5,15 @@
     <Setter Property="Padding" Value="0,4,0,6" />
   </Style>
   <Style TargetType="PasswordBox">
-    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="MinHeight" Value="36" />
     <Setter Property="Padding" Value="12,8" />
-    <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
   </Style>
   <Style TargetType="ComboBox">
-    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="MinHeight" Value="36" />
     <Setter Property="Padding" Value="8" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -70,13 +70,13 @@
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="GridLinesVisibility" Value="None" />
     <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}" />
-    <Setter Property="RowHeight" Value="42" />
+    <Setter Property="RowHeight" Value="40" />
     <Setter Property="HeadersVisibility" Value="Column" />
   </Style>
   <Style TargetType="DataGridColumnHeader">
     <Setter Property="Background" Value="{DynamicResource TintBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-    <Setter Property="Padding" Value="10" />
+    <Setter Property="Padding" Value="12,10" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style TargetType="DataGridCell">
@@ -97,7 +97,7 @@
     <Setter Property="Padding" Value="{StaticResource CardPadding}" />
   </Style>
   <Style TargetType="Button">
-    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="MinHeight" Value="36" />
     <Setter Property="Padding" Value="16,8" />
     <Setter Property="Background" Value="{DynamicResource TintBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
@@ -108,7 +108,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -134,6 +134,24 @@
     <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style x:Key="DashboardTile" TargetType="Border" BasedOn="{StaticResource Card}">
+    <Setter Property="Padding" Value="20" />
+    <Setter Property="Margin" Value="0,0,12,12" />
+  </Style>
+  <Style x:Key="SidebarActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+  </Style>
+  <Style x:Key="SidebarSectionLabel" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource SidebarMutedBrush}" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="10,16,0,8" />
   </Style>
   <Style x:Key="DialogWindow" TargetType="Window">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -194,9 +212,9 @@
     </Setter>
   </Style>
   <Style TargetType="TextBox">
-    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="MinHeight" Value="36" />
     <Setter Property="Padding" Value="12,8" />
-    <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
@@ -262,8 +280,8 @@
     </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="DatePicker">
-    <Setter Property="MinHeight" Value="40" />
-    <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DatePicker">

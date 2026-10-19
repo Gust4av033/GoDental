@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GoDental.Wpf.Navigation;
 using GoDental.Application.Abstractions.Security;
+using System.Globalization;
 
 namespace GoDental.Wpf.ViewModels;
 
@@ -17,8 +18,9 @@ public sealed partial class ShellViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SidebarWidth))]
     [NotifyPropertyChangedFor(nameof(IsSidebarExpanded))]
     private bool isSidebarCompact;
-    public double SidebarWidth => IsSidebarCompact ? 72 : 228;
+    public double SidebarWidth => IsSidebarCompact ? 64 : 208;
     public bool IsSidebarExpanded => !IsSidebarCompact;
+    public string TodayLabel => DateTime.Now.ToString("dddd, d 'de' MMMM 'de' yyyy", CultureInfo.GetCultureInfo("es-SV"));
     public string PageTitle => navigation.CurrentPage switch
     {
         SetupPage.Preparation => "Preparación del sistema",
@@ -52,7 +54,7 @@ public sealed partial class ShellViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(CanOpenProducts)); OnPropertyChanged(nameof(CanSignOut));
             OnPropertyChanged(nameof(CanOpenUsers));
-            navigation.Navigate(session.IsAuthenticated ? (Products.CanView ? SetupPage.Products : SetupPage.Home) : SetupPage.Access);
+            navigation.Navigate(session.IsAuthenticated ? SetupPage.Home : SetupPage.Access);
             if (session.IsAuthenticated) Products.ReloadCommand.Execute(null);
         };
         navigation.PageChanged += (_, _) =>
