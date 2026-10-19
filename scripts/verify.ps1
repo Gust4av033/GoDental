@@ -31,6 +31,8 @@ try {
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-counts $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-suppliers $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green
     Write-Host "    Resultados: $repoRoot\TestResults"

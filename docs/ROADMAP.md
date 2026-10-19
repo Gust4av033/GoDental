@@ -16,7 +16,7 @@ Orden heredado de DM-01 v0.2:
 
 - Fases 1–2: baseline, arquitectura, acceso y configuración implementados para desarrollo.
 - Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Los conteos físicos agregan contratos C#/SQL y pruebas en DEV-09; su pantalla queda para el incremento de UI. Inventario inicial definitivo, series, etiquetas y reposición avanzada conservan sus pendientes.
-- El siguiente bloque funcional es proveedores como base para órdenes y recepciones de compras. No se salta directamente a ventas ni se presenta la fase 3 como certificada para producción.
+- Fase 4: proveedores, contactos y referencias comerciales de productos tienen lógica, persistencia y pruebas (DEV-10); UI pendiente. El siguiente bloque es órdenes y recepciones, con sus estados y costeo, antes de ventas. Prorrateo definitivo de importaciones y recepciones con costo incompleto conservan sus decisiones pendientes de IMP-01.
 
 ## Reglas comerciales ya documentadas
 

@@ -12,7 +12,9 @@ Valida:
 2. Compilación Release de `GoDental.sln`.
 3. Ejecución de tests xUnit.
 4. Recolección de cobertura de código.
-5. Publicación de `TestResults` como artifact descargable durante 14 días.
+5. Suites SQL aisladas de seguridad/catálogo, inventario, conteos y proveedores sobre LocalDB del runner (no la base central de la aplicación).
+6. Smoke tests WPF con capturas y comprobaciones de enlaces.
+7. Publicación de `TestResults` como artifact descargable durante 14 días.
 
 ## Ejecutar lo mismo localmente
 

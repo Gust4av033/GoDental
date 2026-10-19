@@ -11,9 +11,17 @@ using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
+if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
+if (args.Contains("--run-suppliers"))
+{
+    var supplierDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(supplierDatabase, Path.Combine(root, "database"));
+    await SupplierIntegration.RunAsync(new TestConnectionFactory(supplierDatabase));
+    Console.WriteLine("Base aislada retenida: " + supplierDatabase);
+    return;
+}
 if (args.Contains("--run-counts"))
 {
-    if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
     var countDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
     await DevelopmentDatabase.InstallAsync(countDatabase, Path.Combine(root, "database"));
     await InventoryCountIntegration.RunAsync(new TestConnectionFactory(countDatabase), root);
@@ -22,7 +30,6 @@ if (args.Contains("--run-counts"))
 }
 if (args.Contains("--run-inventory"))
 {
-    if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
     var inventoryDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
     await DevelopmentDatabase.InstallAsync(inventoryDatabase, Path.Combine(root, "database"));
     await InventoryIntegration.RunAsync(new TestConnectionFactory(inventoryDatabase));
@@ -37,7 +44,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine("Uso: --install-development o --run-integration [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine("Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers [--localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 

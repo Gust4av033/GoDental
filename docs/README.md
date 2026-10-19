@@ -27,3 +27,9 @@ Los documentos fuente vigentes se organizan por código dentro de este directori
 - **VEN-01A**: complementa VEN-01 y fija la precedencia de precios/promociones antes del desarrollo; cuando trate esa materia, prevalece sobre las propuestas provisionales de VEN-01 v0.1.
 
 Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en la fuente correspondiente; no se corrige silenciosamente desde C#.
+
+## Incremento de lógica · 19/10/2026
+
+- [DEV-09 · Conteos físicos](DEV-09-Conteos.md): flujo, concurrencia, migración 011 y contratos C#.
+- [DEV-10 · Proveedores](DEV-10-Proveedores.md): fichas, contactos y referencias comerciales.
+- [DEV-11 · Integración UI](DEV-11-Integracion-UI.md): servicios y flujos disponibles para el siguiente incremento de interfaz.

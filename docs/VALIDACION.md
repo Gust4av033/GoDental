@@ -77,3 +77,13 @@ Esta sección actualiza el alcance de inventario según [DEV-03](DEV-03-Inventar
 - 28 comprobaciones WPF y capturas Light/Dark; sin errores de binding. Se corrigió una regresión de filtros reproducida con la vista enlazada, el contraste de fechas/categorías en oscuro y el foco del editor.
 - Instalador general actualizado a 001–010 y verificación opcional de ambas suites SQL.
 - La validación cubre movimientos de inventario de este incremento. Ventas, recepciones, caja, backups y dos laptops por LAN conservan su validación pendiente.
+
+## Conteos y proveedores · lógica · 19/10/2026
+
+- `scripts/verify.ps1 -SqlIntegration` completo en Windows con SQL Server local: Release sin errores ni advertencias; 40 casos xUnit y 57 comprobaciones WPF existentes correctas, sin errores de enlaces.
+- 194 comprobaciones SQL correctas en bases aisladas: 49 de seguridad/catálogo, 40 de inventario, 67 nuevas de conteos y 38 nuevas de proveedores. No se aplicaron migraciones ni datos de pruebas sobre `GoDental_Development` del usuario.
+- Conteos: captura/cierre concurrentes, protección de reservas hasta 0.0001, fotografía obsoleta incluso cuando el saldo vuelve a su valor anterior, lotes, costos históricos, permisos revocados y rollback atómico. Reaplicar 009–011 conserva cantidades, pendientes, versiones e historial.
+- Proveedores: código único/histórico, versión del agregado con contactos y relaciones, principal único activo, costos/moneda/MOQ, ocultación de costo tras revocar permiso, ausencia de movimientos de stock y rollback de auditoría.
+- Los servicios/repositorios nuevos se registran en DI. No hay cambios en las vistas ni ViewModels WPF; los contratos y la guía para conectarlos están en DEV-09, DEV-10 y DEV-11.
+- La migración 011 conserva 72 tablas/8 vistas y eleva a 17 los procedimientos. Debe instalarse en la base elegida antes de conectar las pantallas de conteos.
+- El CI incorpora las cuatro suites SQL sobre bases LocalDB aisladas del runner, además de xUnit y smoke WPF. Las pruebas concurrentes usan conexiones distintas al mismo SQL; no equivalen a una certificación real de dos PCs por LAN ni a despliegue productivo.

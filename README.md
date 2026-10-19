@@ -53,6 +53,8 @@ La versión 0.3 incluye usuarios y catálogo de la [v0.2](docs/DEV-02-Seguridad-
 
 La continuación agrega [lógica y persistencia de conteos físicos](docs/DEV-09-Conteos.md): apertura, captura, cierre con ajustes y cancelación auditados. Sus contratos están listos para el siguiente incremento de UI; todavía no hay pantalla de conteos. Requiere la migración 011.
 
+También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría. Estos contratos aún no tienen pantallas. La [guía de integración UI](docs/DEV-11-Integracion-UI.md) reúne los puntos de conexión; órdenes y recepciones siguen pendientes.
+
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
 En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. En la ventana de acceso, elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
