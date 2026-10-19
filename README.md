@@ -116,7 +116,7 @@ La documentación fuente vive en `docs/` y es la referencia para decisiones func
 
 ## Desarrollo
 
-- Ramas: `feature/...`, `fix/...`, `chore/...`.
+- Ramas activas: `main` (validada) y `feature/desarrollo` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
 - `main` debe mantenerse integrable.
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.

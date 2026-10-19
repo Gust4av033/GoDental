@@ -10,5 +10,5 @@
 - No incluir secretos, credenciales, backups, datos reales de clientes, PAN/CVV, certificados ni configuración local sensible.
 - Operaciones críticas deben contemplar transacción, concurrencia multi-PC, permisos y auditoría según SEC-01.
 - Toda View nueva debe respetar UX-01: recursos compartidos, Light/Dark, estados loading/empty/error, accesibilidad y 1366×768.
-- `main` debe mantenerse integrable. Usar ramas `feature/`, `fix/` o `chore/` y PR para cambios relevantes.
+- Mantener sólo `main` (versión validada) y `feature/desarrollo` (trabajo activo). UI y lógica se separan por capas y commits, no por ramas permanentes. Usar PR hacia `main` para integrar cambios relevantes; conservar la rama de trabajo después del merge. Ver `docs/DEV-08-Ramas.md`.
 - Antes de integrar: `dotnet build GoDental.sln -c Release` y `dotnet test GoDental.sln -c Release`.

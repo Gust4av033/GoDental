@@ -2,10 +2,11 @@
 
 ## Flujo de trabajo
 
-- `main`: versión integrable/estable.
-- Funcionalidad: `feature/<modulo>-<descripcion>`.
-- Corrección: `fix/<modulo>-<descripcion>`.
-- Infraestructura/mantenimiento: `chore/<descripcion>`.
+- `main`: versión validada e integrable.
+- `feature/desarrollo`: única rama de trabajo para funcionalidades, UI, correcciones y mantenimiento.
+- Separar UI y lógica en sus capas y en commits enfocados; no mantener ramas permanentes por capa.
+- Abrir PR de `feature/desarrollo` hacia `main`, validar y revisar antes de integrar. Conservar la rama de trabajo y sincronizarla con `main` después del merge.
+- Las ramas anteriores se conservan mediante etiquetas `archive/2026-10-18/<rama>`. Ver [decisión y recuperación](docs/DEV-08-Ramas.md).
 
 ## Antes de programar
 

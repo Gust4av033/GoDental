@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, feature/arranque-escritorio, feature/inventario-operativo]
+    branches: [main, feature/desarrollo]
   pull_request:
-    branches: [main, feature/arranque-escritorio, feature/inventario-operativo]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
