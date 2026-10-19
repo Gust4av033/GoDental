@@ -22,7 +22,7 @@ Orden heredado de DM-01 v0.2:
 
 El ciclo priorizado es existencias iniciales/ajustes → clientes → cotización → venta → cobro/crédito → pedido/entrega → arqueo. DEV-17 documenta su implementación en `feature/logica`, los contratos para `feature/ui`, las pruebas y sus límites. Esto adelanta un recorrido mínimo de operación; no declara completas todas las fases del roadmap. Las interfaces de conteos, proveedores y clientes ya existen en la base común.
 
-Para cerrar el MVP faltan ejecución SQL de la suite nueva, conexión de estas nuevas funciones desde UI y validación del recorrido en Windows/dos estaciones. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores se desarrollarán después con sus decisiones de negocio explícitas. La fase dos solicitada por el usuario es ese segundo ciclo de refinamiento/ampliación; no sustituye la numeración histórica de DM-01.
+La suite SQL nueva ya pasó en CI Windows, junto con regresiones y smoke WPF (DEV-17). Para cerrar el MVP faltan conexión de estas nuevas funciones desde UI y validación del recorrido en Windows/dos estaciones. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores se desarrollarán después con sus decisiones de negocio explícitas. La fase dos solicitada por el usuario es ese segundo ciclo de refinamiento/ampliación; no sustituye la numeración histórica de DM-01.
 
 ## Reglas comerciales ya documentadas
 
