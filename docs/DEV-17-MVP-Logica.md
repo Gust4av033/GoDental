@@ -34,6 +34,8 @@ Diseño autorizado antes de implementar (20/10/2026): `ConfirmSale` admite un or
 
 La UI lee nuevamente el pedido al llevarlo al POS, carga sus datos sólo después de recalcular correctamente y nunca sustituye un carrito en curso. Conserva cliente, productos, cantidades y entrega; permite caja/lista y descuentos con el cálculo habitual. Vaciar cancela únicamente el borrador local. Confirmar no cambia el estado operativo del pedido. Las reglas de entrega y los pendientes de reservas/cobro contra entrega permanecen intactos.
 
+Implementación y validación en `feature/desarrollo`: [CI Windows #90](https://github.com/Gust4av033/GoDental/actions/runs/39498220393), código `b37bfd8`, con 163 xUnit, 372 comprobaciones SQL (125 MVP) y 327 WPF correctas. Incluye rollback después de vincular, compatibilidad completa, reenvío/consulta del GUID y dos solicitudes concurrentes que sólo generan una venta para el pedido. Detalle visual y límites de la evidencia en DEV-26.
+
 ### 2. Pedido y stock · recorrido operativo recomendado
 
 **Un pedido no reserva ni descuenta inventario.** Para la operación pequeña actual se recomienda:
