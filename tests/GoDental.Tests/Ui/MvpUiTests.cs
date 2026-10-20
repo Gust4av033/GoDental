@@ -339,7 +339,7 @@ public sealed class MvpUiTests
     public async Task PdfExportsConfirmedSnapshotToUserChosenDestination()
     {
         var c = new Context(); var files = new TestPdfFiles(); var renderer = DispatchProxy.Create<IReceiptRenderer, PdfPort>();
-        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, renderer, c.Session), files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
+        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, renderer, c.Session), files, files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
         await history.ReloadSalesCommand.ExecuteAsync(null); history.SelectedSale = history.Sales.Single(); await history.ReadSaleCommand.ExecuteAsync(null);
         Assert.True(history.IsSaleDetailOpen); var selected = history.SelectedSale;
         history.ReturnToSalesCommand.Execute(null); Assert.False(history.IsSaleDetailOpen); Assert.Same(selected, history.SelectedSale);
@@ -347,12 +347,56 @@ public sealed class MvpUiTests
         await history.ExportCommand.ExecuteAsync(null);
         Assert.Equal("GoDental-comprobante-interno-1.pdf", files.Name); Assert.Equal("%PDF-prueba", System.Text.Encoding.ASCII.GetString(files.Bytes!));
     }
-    private sealed class TestPdfFiles : IPdfFileService
+    private sealed class TestPdfFiles : IPdfFileService, IPdfPrintService
     {
         public byte[]? Bytes { get; private set; } public string? Name { get; private set; }
+        public ReceiptDocument? Printed { get; private set; }
         public Task<bool> SaveAsync(byte[] pdf, string suggestedName) { Bytes = pdf; Name = suggestedName; return Task.FromResult(true); }
+        public Task<bool> PrintAsync(ReceiptDocument document, string name) { Printed = document; return Task.FromResult(false); }
     }
-    public class PdfPort : DispatchProxy { protected override object? Invoke(MethodInfo? method, object?[]? args) => System.Text.Encoding.ASCII.GetBytes("%PDF-prueba"); }
+    [Fact]
+    public async Task ReceiptPreviewNavigatesAndSavesAndPrintsTheReviewedDocumentWithoutBusinessWrites()
+    {
+        var c = new Context(); var files = new TestPdfFiles();
+        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, DispatchProxy.Create<IReceiptRenderer, PdfPort>(), c.Session), files, files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
+        await history.PreviewSaleCommand.ExecuteAsync(1L);
+        Assert.True(history.IsReceiptPreviewOpen); var document = history.ReceiptPreview!;
+        Assert.Same(document.Pages[0], history.PreviewPage);
+        history.NextPreviewPageCommand.Execute(null); history.NextPreviewPageCommand.Execute(null);
+        Assert.Equal(2, history.PreviewPageNumber); Assert.Same(document.Pages[1], history.PreviewPage);
+        history.PreviousPreviewPageCommand.Execute(null); history.PreviousPreviewPageCommand.Execute(null); Assert.Equal(1, history.PreviewPageNumber);
+        for (var i = 0; i < 10; i++) history.ZoomInCommand.Execute(null); Assert.Equal(2, history.PreviewZoom);
+        for (var i = 0; i < 10; i++) history.ZoomOutCommand.Execute(null); Assert.Equal(.5m, history.PreviewZoom);
+        await history.ExportCommand.ExecuteAsync(null); Assert.Same(document.Pdf, files.Bytes);
+        await history.PrintReceiptCommand.ExecuteAsync(null); Assert.Same(document, files.Printed); Assert.Contains("canceló", history.StatusMessage);
+        Assert.Empty(c.Repository.Writes); Assert.True(history.IsReceiptPreviewOpen);
+        history.CloseReceiptPreviewCommand.Execute(null); Assert.False(history.IsReceiptPreviewOpen); Assert.True(history.IsSaleDetailOpen);
+        await history.PreviewReceiptCommand.ExecuteAsync(null); c.Session.Clear(); Assert.Null(history.ReceiptPreview); Assert.Null(history.PreviewPage);
+    }
+    [Fact]
+    public async Task ReceiptPreviewRejectsMissingPermissionAndDiscardsOutdatedSelectionOrSession()
+    {
+        var c = new Context(); var files = new TestPdfFiles();
+        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, DispatchProxy.Create<IReceiptRenderer, PdfPort>(), c.Session), files, files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
+        await history.OpenSaleCommand.ExecuteAsync(c.Repository.Sale.Sale);
+        var pending = new TaskCompletionSource<SaleSnapshot?>(); c.Repository.ReceiptReadTask = pending.Task;
+        var load = history.PreviewReceiptCommand.ExecuteAsync(null); history.SelectedSale = new() { Id = 2 }; pending.SetResult(c.Repository.Sale); await load;
+        Assert.Null(history.ReceiptPreview);
+        await history.OpenSaleCommand.ExecuteAsync(c.Repository.Sale.Sale);
+        pending = new(); c.Repository.ReceiptReadTask = pending.Task;
+        load = history.PreviewReceiptCommand.ExecuteAsync(null); c.Session.Clear(); pending.SetResult(c.Repository.Sale); await load;
+        Assert.Null(history.ReceiptPreview); Assert.Null(files.Bytes); Assert.Null(files.Printed);
+        c.Session.Begin(new(1, "lector", "Lector", 1, [], ["VENTAS.VER"], false));
+        await history.PreviewSaleCommand.ExecuteAsync(1L); Assert.Null(history.ReceiptPreview); Assert.Empty(c.Repository.Writes);
+    }
+    public class PdfPort : DispatchProxy
+    {
+        protected override object? Invoke(MethodInfo? method, object?[]? args)
+        {
+            var bytes = System.Text.Encoding.ASCII.GetBytes("%PDF-prueba");
+            return method?.Name == nameof(IReceiptRenderer.RenderPreview) ? new ReceiptDocument(bytes, [new byte[] { 1 }, new byte[] { 2 }]) : bytes;
+        }
+    }
     public class IdentityPort : DispatchProxy
     {
         protected override object? Invoke(MethodInfo? method, object?[]? args) => Task.FromResult(Result<UserIdentity>.Success(new(2, "administrador_prueba", "Administrador de prueba", 1, ["Administrador"], ["VENTAS.DESCUENTO_MAYOR_35"], false)));

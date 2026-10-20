@@ -11,12 +11,14 @@ using Microsoft.Extensions.Logging;
 namespace GoDental.Wpf.ViewModels.Operations;
 
 public interface IPdfFileService { Task<bool> SaveAsync(byte[] pdf, string suggestedName); }
+public interface IPdfPrintService { Task<bool> PrintAsync(ReceiptDocument document, string name); }
 
 public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
 {
     private readonly SalesService sales;
     private readonly SaleReceiptService receipts;
     private readonly IPdfFileService files;
+    private readonly IPdfPrintService printer;
     private readonly PosViewModel pos;
     private readonly INavigationService navigation;
     public ObservableCollection<SaleData> Sales { get; } = [];
@@ -32,6 +34,22 @@ public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
     [ObservableProperty] private bool isSaleDetailOpen;
     [ObservableProperty] private bool isQuotationDetailOpen;
     [ObservableProperty] private QuotationData? quotationRecord;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsReceiptPreviewOpen)), NotifyPropertyChangedFor(nameof(PreviewPage)), NotifyPropertyChangedFor(nameof(PreviewPageLabel))]
+    private ReceiptDocument? receiptPreview;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PreviewPage)), NotifyPropertyChangedFor(nameof(PreviewPageLabel))] private int previewPageNumber = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PreviewWidth)), NotifyPropertyChangedFor(nameof(PreviewHeight)), NotifyPropertyChangedFor(nameof(ZoomLabel))] private decimal previewZoom = .75m;
+    public bool IsReceiptPreviewOpen => ReceiptPreview is not null;
+    public byte[]? PreviewPage => ReceiptPreview?.Pages.ElementAtOrDefault(PreviewPageNumber - 1);
+    public string PreviewPageLabel => $"Página {PreviewPageNumber} de {ReceiptPreview?.Pages.Count ?? 0}";
+    public double PreviewWidth => (double)PreviewZoom * 816;
+    public double PreviewHeight => (double)PreviewZoom * 1056;
+    public string ZoomLabel => $"{PreviewZoom:P0}";
+    private void ClearPreview() { ReceiptPreview = null; PreviewPageNumber = 1; PreviewZoom = .75m; }
+    [RelayCommand] private void CloseReceiptPreview() { if (!IsBusy) ClearPreview(); }
+    [RelayCommand] private void NextPreviewPage() { if (PreviewPageNumber < ReceiptPreview?.Pages.Count) PreviewPageNumber++; }
+    [RelayCommand] private void PreviousPreviewPage() { if (PreviewPageNumber > 1) PreviewPageNumber--; }
+    [RelayCommand] private void ZoomIn() { if (PreviewZoom < 2) PreviewZoom += .25m; }
+    [RelayCommand] private void ZoomOut() { if (PreviewZoom > .5m) PreviewZoom -= .25m; }
     public string SalesPageLabel => $"{SalesTotal} ventas · Página {SalesPage}";
     public string QuotationsPageLabel => $"{QuotationsTotal} cotizaciones · Página {QuotationsPage}";
     public bool CanOpenSelectedSale => CanRead && IsNotBusy && SelectedSale is not null;
@@ -55,15 +73,16 @@ public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
     public bool CanExport => CanEdit && Has("VENTAS.REIMPRIMIR") && SaleDetail?.Sale.State == "CONFIRMADA";
     public bool CanConvert => CanEdit && sales.CanSell && (QuotationRecord ?? SelectedQuotation)?.State == "EMITIDA" && pos.Operation.CanStart;
     protected override void PermissionsChanged() { OnPropertyChanged(nameof(CanExport)); OnPropertyChanged(nameof(CanConvert)); OnPropertyChanged(nameof(CanOpenSelectedSale)); OnPropertyChanged(nameof(CanOpenSelectedQuotation)); }
-    partial void OnSelectedSaleChanged(SaleData? value) { SaleDetail = null; PermissionsChanged(); }
+    partial void OnSelectedSaleChanged(SaleData? value) { ClearPreview(); SaleDetail = null; PermissionsChanged(); }
     partial void OnSelectedQuotationChanged(QuotationData? value) { QuotationDetail = null; QuotationRecord = null; IsQuotationDetailOpen = false; PermissionsChanged(); }
     partial void OnQuotationRecordChanged(QuotationData? value) => PermissionsChanged();
     partial void OnSaleDetailChanged(SaleSnapshot? value) { IsSaleDetailOpen = value is not null; PermissionsChanged(); }
-    public CommercialHistoryViewModel(SalesService sales, SaleReceiptService receipts, IPdfFileService files, PosViewModel pos, INavigationService navigation, ISessionController session, MvpOperationService operations, ILogger<CommercialHistoryViewModel> logger) : base(session, operations, logger) { this.sales = sales; this.receipts = receipts; this.files = files; this.pos = pos; this.navigation = navigation; }
-    protected override void Reset() { IsSaleDetailOpen = IsQuotationDetailOpen = false; QuotationRecord = null; Sales.Clear(); Quotations.Clear(); SelectedSale = null; SelectedQuotation = null; SaleDetail = null; QuotationDetail = null; SalesPage = QuotationsPage = 1; SalesTotal = QuotationsTotal = 0; }
+    public CommercialHistoryViewModel(SalesService sales, SaleReceiptService receipts, IPdfFileService files, IPdfPrintService printer, PosViewModel pos, INavigationService navigation, ISessionController session, MvpOperationService operations, ILogger<CommercialHistoryViewModel> logger) : base(session, operations, logger) { this.sales = sales; this.receipts = receipts; this.files = files; this.printer = printer; this.pos = pos; this.navigation = navigation; }
+    protected override void Reset() { ClearPreview(); IsSaleDetailOpen = IsQuotationDetailOpen = false; QuotationRecord = null; Sales.Clear(); Quotations.Clear(); SelectedSale = null; SelectedQuotation = null; SaleDetail = null; QuotationDetail = null; SalesPage = QuotationsPage = 1; SalesTotal = QuotationsTotal = 0; }
     [RelayCommand] private Task ReloadSalesAsync() { SalesPage = 1; return ReadAsync(SalesCoreAsync); }
     private async Task SalesCoreAsync(long r)
     {
+        ClearPreview();
         var result = await sales.SearchAsync(new(SalesPage)); if (!Current(r)) return;
         Sales.Clear(); SelectedSale = null; foreach (var s in result.Items) Sales.Add(s); SalesTotal = result.Total;
         StatusMessage = SalesTotal == 0 ? "No hay ventas registradas." : $"{SalesTotal} ventas · Página {SalesPage}";
@@ -82,7 +101,7 @@ public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
     [RelayCommand] private Task ReadSaleAsync() => ReadAsync(async r =>
     {
         if (SelectedSale is null) return; var id = SelectedSale.Id;
-        var result = await sales.ReadAsync(id); if (!Current(r) || SelectedSale?.Id != id) return; SaleDetail = result; IsSaleDetailOpen = result is not null;
+        var result = await sales.ReadAsync(id); if (!Current(r) || SelectedSale?.Id != id) return; ClearPreview(); SaleDetail = result; IsSaleDetailOpen = result is not null;
         StatusMessage = result is null ? "La venta no está disponible." : "Detalle actualizado. El PDF es un comprobante interno, sin autorización fiscal DTE.";
     });
     [RelayCommand] private Task ReadQuotationAsync() => ReadAsync(async r =>
@@ -106,8 +125,29 @@ public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
     [RelayCommand] private Task ExportAsync() => ReadAsync(async r =>
     {
         if (!Has("VENTAS.REIMPRIMIR") || SaleDetail?.Sale.State != "CONFIRMADA") return; var id = SaleDetail.Sale.Id;
-        var pdf = await receipts.ExportAsync(id); if (!Current(r)) return;
+        var pdf = ReceiptPreview?.Pdf ?? await receipts.ExportAsync(id); if (!Current(r) || SaleDetail?.Sale.Id != id) return;
         var saved = await files.SaveAsync(pdf, $"GoDental-comprobante-interno-{id}.pdf"); if (!Current(r)) return;
         StatusMessage = saved ? "Comprobante interno PDF guardado." : "No se guardó el archivo.";
     });
+    [RelayCommand] private Task PreviewReceiptAsync() => ReadAsync(async r =>
+    {
+        if (!Has("VENTAS.REIMPRIMIR") || SaleDetail?.Sale.State != "CONFIRMADA") return;
+        var id = SaleDetail.Sale.Id;
+        var document = await receipts.PreviewAsync(id); if (!Current(r) || SaleDetail?.Sale.Id != id) return;
+        if (document.Pages.Count == 0) throw new ArgumentException("El comprobante no contiene páginas para mostrar.");
+        PreviewPageNumber = 1; PreviewZoom = .75m; ReceiptPreview = document;
+        StatusMessage = "Vista previa del comprobante. Revisa los datos y luego guarda el PDF o selecciona una impresora.";
+    });
+    [RelayCommand] private Task PrintReceiptAsync() => ReadAsync(async r =>
+    {
+        if (!Has("VENTAS.REIMPRIMIR") || ReceiptPreview is null || SaleDetail?.Sale.State != "CONFIRMADA") return;
+        var printed = await printer.PrintAsync(ReceiptPreview, $"GoDental · {SaleDetail.Sale.Number}"); if (!Current(r)) return;
+        StatusMessage = printed ? "Comprobante enviado a la cola de impresión." : "Se canceló la impresión.";
+    });
+    [RelayCommand] private async Task PreviewSaleAsync(long? saleId)
+    {
+        if (!Has("VENTAS.REIMPRIMIR") || saleId is null or <= 0) return;
+        await OpenSaleAsync(new() { Id = saleId.Value });
+        if (SaleDetail?.Sale.Id == saleId) await PreviewReceiptCommand.ExecuteAsync(null);
+    }
 }

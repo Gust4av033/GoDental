@@ -163,7 +163,8 @@ internal static class Program
             var posMvp = new PosViewModel(salesService, cashService, customerService, new OrderService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
             var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
-            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), new VisualPdfFiles(), posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
+            var pdfFiles = new VisualPdfFiles();
+            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
@@ -562,6 +563,54 @@ internal static class Program
                         nav.Navigate(page);
                         await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-{theme}.png"));
                         await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-compacto-{theme}.png"));
+                        if (page == SetupPage.Sales)
+                        {
+                            mvpRepository.ReceiptReadTask = Task.FromResult<SaleSnapshot?>(mvpRepository.Sale with { Delivery = mvpRepository.Order.Order });
+                            await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                            var document = historyMvp.ReceiptPreview!;
+                            Check(historyMvp.IsReceiptPreviewOpen && document.Pages.Count > 0, "Previsualizar genera PDF y páginas reales de la venta confirmada");
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"comprobante-vista-previa-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"comprobante-vista-previa-compacto-{theme}.png"));
+                            historyMvp.ZoomInCommand.Execute(null);
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"comprobante-zoom-{theme}.png"));
+                            historyMvp.NextPreviewPageCommand.Execute(null); historyMvp.PreviousPreviewPageCommand.Execute(null);
+                            Check(historyMvp.PreviewPageNumber == 1 && historyMvp.PreviewZoom == 1, "Los controles de página respetan límites y el zoom cambia sin regenerar la venta");
+                            await historyMvp.ExportCommand.ExecuteAsync(null); await historyMvp.PrintReceiptCommand.ExecuteAsync(null);
+                            Check(ReferenceEquals(pdfFiles.Saved, document.Pdf) && ReferenceEquals(pdfFiles.Printed, document), "Guardar e imprimir usan el documento previsualizado y cancelar conserva la vista");
+                            foreach (var size in new[] { new Size(816, 1056), new Size(794, 1123) })
+                            {
+                                var printable = new Rect(24, 24, size.Width - 48, size.Height - 48);
+                                var pages = PdfPrintService.BuildDocument(document, size, printable);
+                                var printedPage = pages.Pages[0].Child;
+                                printedPage.Measure(size); printedPage.Arrange(new Rect(size)); printedPage.UpdateLayout();
+                                var image = printedPage.Children.OfType<Image>().Single();
+                                var bounds = image.TransformToAncestor(printedPage).TransformBounds(new Rect(image.RenderSize));
+                                Check(pages.Pages.Count == document.Pages.Count && bounds.Left >= printable.Left - .01 && bounds.Right <= printable.Right + .01
+                                    && bounds.Top >= printable.Top - .01 && bounds.Bottom <= printable.Bottom + .01
+                                    && Math.Abs(image.Width / image.Height - 816d / 1056) < .001,
+                                    "La composición de impresión conserva todas las páginas y su proporción dentro del área imprimible");
+                            }
+                            historyMvp.CloseReceiptPreviewCommand.Execute(null);
+                            Check(!historyMvp.IsReceiptPreviewOpen && historyMvp.IsSaleDetailOpen, "Volver desde el comprobante conserva el detalle de venta");
+                            var originalSaleId = mvpRepository.Order.Order.SaleId;
+                            mvpRepository.Order.Order.SaleId = mvpRepository.Sale.Sale.Id;
+                            ordersMvp.Selected = null; await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                            nav.Navigate(SetupPage.Orders);
+                            var orderReceiptWindow = new MainWindow(shell) { Width = 1093, Height = 614 };
+                            var orderReceiptRoot = (FrameworkElement)orderReceiptWindow.Content;
+                            orderReceiptRoot.Measure(new Size(1093, 614)); orderReceiptRoot.Arrange(new Rect(0, 0, 1093, 614)); orderReceiptRoot.UpdateLayout();
+                            var receiptOrderView = FindChildren<OrdersView>(orderReceiptRoot).Single();
+                            FindChildren<TabControl>(receiptOrderView).Single().SelectedIndex = 1; orderReceiptRoot.UpdateLayout();
+                            var orderReceipt = FindChildren<Button>(receiptOrderView).Single(b => b.Content is string text && text == "Ver comprobante");
+                            Check(ReferenceEquals(orderReceipt.Command, historyMvp.PreviewSaleCommand) && orderReceipt.IsEnabled && (long?)orderReceipt.CommandParameter == mvpRepository.Sale.Sale.Id,
+                                "El pedido vinculado conecta Ver comprobante con la venta confirmada correspondiente");
+                            await ((IAsyncRelayCommand)orderReceipt.Command).ExecuteAsync(orderReceipt.CommandParameter);
+                            Check(shell.IsSales && historyMvp.IsReceiptPreviewOpen, "Ver comprobante desde el pedido abre la vista previa real");
+                            orderReceiptWindow.Close(); historyMvp.CloseReceiptPreviewCommand.Execute(null);
+                            mvpRepository.Order.Order.SaleId = originalSaleId;
+                            ordersMvp.Selected = null; await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                            await File.WriteAllBytesAsync(Path.Combine(output, $"comprobante-interno-{theme}.pdf"), document.Pdf);
+                        }
                         if (page == SetupPage.Pos)
                         {
                             var cartWindow = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
@@ -955,9 +1004,12 @@ internal static class Program
         public Func<MvpFormModel, Task>? Render { get; set; }
         public async Task<bool> ShowAsync(MvpFormModel form) { if (Render is not null) await Render(form); return false; }
     }
-    private sealed class VisualPdfFiles : IPdfFileService
+    private sealed class VisualPdfFiles : IPdfFileService, IPdfPrintService
     {
-        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) => Task.FromResult(false);
+        public byte[]? Saved { get; private set; }
+        public ReceiptDocument? Printed { get; private set; }
+        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) { Saved = pdf; return Task.FromResult(false); }
+        public Task<bool> PrintAsync(ReceiptDocument document, string name) { Printed = document; return Task.FromResult(false); }
     }
 
     private sealed class FakeSettingsWindowService : ISettingsWindowService
@@ -1087,12 +1139,20 @@ internal static class Program
                 var caption = commerceShell.IsCash ? (commerceShell.Cash.HasOpenShift ? "Cerrar caja" : "Abrir caja")
                     : commerceShell.IsCredit ? "Registrar abono"
                     : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Pasar al POS" : "Nuevo pedido")
-                    : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
+                    : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsReceiptPreviewOpen ? "Imprimir" : commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
                     : commerceShell.CommercialHistory.IsQuotationDetailOpen ? "Llevar al POS" : "Actualizar";
                 var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0 && IsLayoutVisible(b));
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
                     $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
+                if (commerceShell.IsSales && commerceShell.CommercialHistory.IsReceiptPreviewOpen)
+                {
+                    var preview = FindChildren<ReceiptPreviewView>(root).Single();
+                    Check(FindChildren<Image>(preview).Single().Source is not null, "La vista previa muestra la imagen real de la página, sin navegador externo");
+                    var save = FindChildren<Button>(preview).Single(b => b.Content is string text && text == "Guardar PDF");
+                    var saveBounds = save.TransformToAncestor(root).TransformBounds(new Rect(save.RenderSize));
+                    Check(save.ActualWidth == 152 && saveBounds.Right <= width && saveBounds.Bottom <= height - 32, "Guardar PDF e Imprimir permanecen visibles en la vista previa compacta");
+                }
             }
             if (root.DataContext is ShellViewModel { IsProducts: true } productShell && productShell.Products.CanManage)
             {

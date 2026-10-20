@@ -69,6 +69,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<UsersViewModel>();
                     services.AddSingleton<IMvpDialogService>(sp => (DialogService)sp.GetRequiredService<IDialogService>());
                     services.AddSingleton<IPdfFileService, PdfFileService>();
+                    services.AddSingleton<IPdfPrintService, PdfPrintService>();
                     services.AddSingleton<CashViewModel>();
                     services.AddSingleton<PosViewModel>();
                     services.AddSingleton<CreditViewModel>();

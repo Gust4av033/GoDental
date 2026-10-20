@@ -12,6 +12,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public MvpReceipt? FoundReceipt { get; set; }
     public Task<SaleQuote>? QuoteTask { get; set; }
     public Task<OrderSnapshot?>? OrderReadTask { get; set; }
+    public Task<SaleSnapshot?>? ReceiptReadTask { get; set; }
     public Func<SaleCart, SaleQuote> QuoteFactory { get; set; } = cart => new(cart with { Items = cart.Items.ToArray() }, cart.Items.Select(i => new CalculatedPrice(i.ProductId, "UI-TEST", "Producto de prueba", i.Quantity, 100, 90, 90, 100, 10, 13.45m, 123.45m, i.DiscountPercent, 1, null, [new(null, i.Quantity)])).ToArray(), 100, 10, 13.45m, 123.45m, 7, 35, new string('A', 64));
     public List<CashBoxData> Boxes { get; } = [new() { Id = 1, WarehouseId = 1, Code = "PRUEBA", Name = "Caja de prueba", Active = true }];
     public CashShiftData? Shift { get; set; } = new() { Id = 1, CashBoxId = 1, State = "ABIERTO", Opening = 50, Expected = 75, RowVersion = [1,2,3,4,5,6,7,8] };
@@ -36,7 +37,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<Result<MvpReceipt>> AuthorizeDiscountAsync(DiscountApproval request, int administratorId, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 20);
     public Task<QuotationData?> ReadQuotationAsync(long id, int userId, CancellationToken ct) => Task.FromResult<QuotationData?>(Quotations.FirstOrDefault(q => q.Id == id));
     public Task<MvpPage<QuotationData>> QuotationsAsync(MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<QuotationData>(Quotations, Quotations.Count));
-    public Task<SaleSnapshot?> ReadReceiptAsync(long id, int userId, CancellationToken ct) => Task.FromResult<SaleSnapshot?>(Sale);
+    public Task<SaleSnapshot?> ReadReceiptAsync(long id, int userId, CancellationToken ct) => ReceiptReadTask ?? Task.FromResult<SaleSnapshot?>(Sale);
     public Task<SaleSnapshot?> ReadSaleAsync(long id, int userId, CancellationToken ct) => Task.FromResult<SaleSnapshot?>(Sale);
     public Task<MvpPage<SaleData>> SalesAsync(MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<SaleData>([Sale.Sale], 1));
     public Task<IReadOnlyList<CashBoxData>> CashBoxesAsync(int userId, CancellationToken ct) => Task.FromResult<IReadOnlyList<CashBoxData>>(Boxes);

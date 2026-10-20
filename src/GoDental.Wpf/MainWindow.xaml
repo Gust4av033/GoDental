@@ -190,7 +190,7 @@
           <operations:CashView DataContext="{Binding Cash}" Visibility="{Binding DataContext.IsCash, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:PosView OpenReceiptCommand="{Binding DataContext.CommercialHistory.OpenSaleCommand, ElementName=PageHost}" DataContext="{Binding Pos}" Visibility="{Binding DataContext.IsPos, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:CreditView DataContext="{Binding Credit}" Visibility="{Binding DataContext.IsCredit, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
-          <operations:OrdersView DataContext="{Binding Orders}" Visibility="{Binding DataContext.IsOrders, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:OrdersView PreviewReceiptCommand="{Binding DataContext.CommercialHistory.PreviewSaleCommand, ElementName=PageHost}" DataContext="{Binding Orders}" Visibility="{Binding DataContext.IsOrders, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:SalesView DataContext="{Binding CommercialHistory}" Visibility="{Binding DataContext.IsSales, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:QuotationsView DataContext="{Binding CommercialHistory}" Visibility="{Binding DataContext.IsQuotations, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <settings:SettingsView DataContext="{Binding Connection}" Visibility="{Binding DataContext.IsConnection, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />

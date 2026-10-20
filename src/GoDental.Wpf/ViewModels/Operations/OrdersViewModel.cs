@@ -45,9 +45,10 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     public bool CanTransition => CanManage && Detail is not null && States.Any(s => OrderRules.CanTransition(Detail.Order.State, s));
     public bool CanLink => CanManage && Detail is not null && Detail.Order.SaleId is null && Detail.Order.State is not ("CANCELADO" or "ENTREGADO");
     public bool CanPassToPos => CanLink && customers.CanRead && pos.CanEdit;
+    public bool CanOpenReceipt => CanEdit && Has("VENTAS.REIMPRIMIR") && Detail?.Order.SaleId is > 0;
     partial void OnSelectedChanged(OrderData? value) { Detail = null; Events.Clear(); EventsPage = 1; }
     partial void OnDetailChanged(OrderSnapshot? value) { IsDetailOpen = value is not null; PermissionsChanged(); }
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink), nameof(CanPassToPos) }) OnPropertyChanged(n); }
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink), nameof(CanPassToPos), nameof(CanOpenReceipt) }) OnPropertyChanged(n); }
     public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, PosViewModel pos, INavigationService navigation, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger) : base(session, operations, logger)
     {
         this.orders = orders; this.customers = customers; this.products = products; this.pos = pos; this.navigation = navigation; this.dialogs = dialogs;

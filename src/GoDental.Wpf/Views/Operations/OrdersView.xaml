@@ -1,4 +1,4 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.OrdersView">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.OrdersView" x:Name="OrdersRoot">
   <UserControl.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
@@ -132,6 +132,7 @@
         </TabItem>
         <TabItem Header="Venta y cobro" Style="{StaticResource CommerceTab}">
           <StackPanel Margin="0,16,0,0">
+            <Button Content="Ver comprobante" Command="{Binding PreviewReceiptCommand, ElementName=OrdersRoot}" CommandParameter="{Binding Detail.Order.SaleId}" IsEnabled="{Binding CanOpenReceipt}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
             <StackPanel Margin="0,0,0,16">
               <TextBlock Text="Venta y cobro" Style="{StaticResource SectionHeading}"/>
               <TextBlock Text="El estado del pago procede de la venta vinculada y sus cuentas." Style="{StaticResource MutedText}"/>
