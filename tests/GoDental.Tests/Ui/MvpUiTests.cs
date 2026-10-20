@@ -300,11 +300,11 @@ public sealed class MvpUiTests
         var second = new TaskCompletionSource<CustomerSnapshot?>(); c.CustomersRepository.PendingRead = second;
         var other = c.CustomersRepository.Customer with { Id = 2, Name = "Otro cliente", Phone = "2222" };
         draft.Customer.Selected = other; var secondLoad = draft.AddressesCommand.ExecutionTask!;
-        Assert.Empty(draft.DeliveryAddress);
+        Assert.Empty(draft.DeliveryAddress); Assert.False(draft.CanEditDelivery);
         second.SetResult(new(other, new(), [], [new() { Id = 2, Address = "Dirección del segundo cliente" }])); await secondLoad;
         first.SetResult(new(c.CustomersRepository.Customer, new(), c.CustomersRepository.Contacts, c.CustomersRepository.Addresses)); await firstLoad;
         Assert.Equal("Otro cliente", draft.ContactName); Assert.Equal("2222", draft.Phone);
-        Assert.Equal("Dirección del segundo cliente", draft.DeliveryAddress); Assert.Equal(2, draft.Address!.Id);
+        Assert.Equal("Dirección del segundo cliente", draft.DeliveryAddress); Assert.Equal(2, draft.Address!.Id); Assert.True(draft.CanEditDelivery);
     }
     [Fact]
     public async Task OrderPrefillRequiresChoiceWhenSeveralAddressesArePrimary()

@@ -27,13 +27,14 @@ public sealed partial class OrderDraftModel : ObservableObject
     private bool applyingAddress;
     private long customerRead;
     private CustomerData? loadedCustomer;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsBusy))] private bool isLoadingCustomer;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsBusy)), NotifyPropertyChangedFor(nameof(CanEditDelivery))] private bool isLoadingCustomer;
     public bool IsBusy => IsLoadingCustomer || IsLoadingProducts;
+    public bool CanEditDelivery => !IsBusy;
     [ObservableProperty] private ProductData? product;
     [ObservableProperty] private CartLineModel? selectedLine;
     [ObservableProperty] private string search = "";
     [ObservableProperty] private string quantity = "1";
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsBusy))] private bool isLoadingProducts;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsBusy)), NotifyPropertyChangedFor(nameof(CanEditDelivery))] private bool isLoadingProducts;
     [ObservableProperty] private string statusMessage = "Selecciona cliente, dirección de entrega y productos del pedido.";
     private int page = 1, total;
     public OrderDraftModel(CustomerService customers, ProductService products, Func<long> revision)
