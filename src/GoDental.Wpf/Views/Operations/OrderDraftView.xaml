@@ -7,18 +7,55 @@
     </ResourceDictionary>
   </UserControl.Resources>
   <StackPanel>
+    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
     <TabControl>
       <TabItem Header="Cliente y dirección" Style="{StaticResource CommerceTab}">
         <StackPanel>
           <local:CustomerLookupView DataContext="{Binding Customer}"/>
           <WrapPanel Margin="0,12,0,4">
-            <Button Content="Cargar direcciones" Command="{Binding AddressesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="Recargar datos" Command="{Binding AddressesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
           </WrapPanel>
           <StackPanel Margin="0,0,16,12">
             <TextBlock Text="Dirección guardada (opcional)" Margin="0,0,0,6"/>
             <ComboBox ItemsSource="{Binding Addresses}" SelectedItem="{Binding Address}" DisplayMemberPath="Address" AutomationProperties.Name="Dirección guardada (opcional)"/>
           </StackPanel>
-          <TextBlock Text="Si eliges una dirección guardada se conservará su contenido al registrar. Si no, completa debajo una dirección manual." Style="{StaticResource MutedText}"/>
+          <TextBlock Text="Al seleccionar el cliente se cargan sus datos. Revísalos en Datos de entrega; no se modifica su ficha." Style="{StaticResource MutedText}"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Datos de entrega" Style="{StaticResource CommerceTab}">
+        <StackPanel Margin="0,16,0,0">
+          <TextBlock Text="Datos sugeridos del cliente; puedes corregirlos sólo para este pedido." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+          <UniformGrid Columns="2" Margin="0,0,-16,0">
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Contacto guardado (opcional)" Style="{StaticResource FieldLabel}"/>
+              <ComboBox ItemsSource="{Binding Contacts}" SelectedItem="{Binding Contact}" DisplayMemberPath="Name" AutomationProperties.Name="Contacto guardado (opcional)"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Contacto de entrega" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding ContactName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" AutomationProperties.Name="Contacto de entrega"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" MaxLength="30" AutomationProperties.Name="Teléfono"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Departamento" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding Department, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Departamento"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Municipio" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding Municipality, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Municipio"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Referencia" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding Reference, UpdateSourceTrigger=PropertyChanged}" MaxLength="300" AutomationProperties.Name="Referencia"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,16">
+              <TextBlock Text="Dirección de entrega" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AutomationProperties.Name="Dirección de entrega" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="66"/>
+            </StackPanel>
+          </UniformGrid>
+          <TextBlock Text="Editar la dirección la convierte en una dirección específica del pedido; la dirección guardada del cliente se conserva." Style="{StaticResource MutedText}"/>
         </StackPanel>
       </TabItem>
       <TabItem Header="Productos" Style="{StaticResource CommerceTab}">

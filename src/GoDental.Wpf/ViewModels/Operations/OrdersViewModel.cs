@@ -78,12 +78,12 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
         if (!CanCreate) return; var draft = new OrderDraftModel(customers, products, () => Session.Revision);
         await ShowAsync(new MvpFormModel("Nuevo pedido", "Registrar pedido", Operation, async f =>
         {
+            if (draft.IsBusy) throw new ArgumentException("Espera a que terminen de cargar los datos del pedido.");
             var customer = draft.Customer.Selected ?? throw new ArgumentException("Selecciona un cliente.");
-            var id = Guid.NewGuid(); var request = new PlaceOrder(id, customer.Id, f.Text("contact"), f.Text("phone"), f.Text("address"), f.Text("department"), f.Text("municipality"), f.Text("reference"), f.Date("scheduled"), f.Text("responsible"), null, f.Number("delivery"), draft.Items.Select(i => new OrderItem(i.ProductId, i.Quantity)).ToArray(), f.Text("reason"), draft.Address?.Id);
+            var id = Guid.NewGuid(); var request = new PlaceOrder(id, customer.Id, draft.ContactName.Trim(), draft.Phone.Trim(), draft.DeliveryAddress.Trim(), draft.Department.Trim(), draft.Municipality.Trim(), draft.Reference.Trim(), f.Date("scheduled"), f.Text("responsible"), null, f.Number("delivery"), draft.Items.Select(i => new OrderItem(i.ProductId, i.Quantity)).ToArray(), f.Text("reason"), draft.Address?.Id);
             await Operation.StartAsync(request, id, q => orders.PlaceAsync(q), receipt => ReadAsync(async r => { await LoadCoreAsync(r); Selected = Items.FirstOrDefault(o => o.Id == receipt.Id); if (Selected is not null) await DetailCoreAsync(receipt.Id, r); }));
-        }) { Body = draft, Description = "Selecciona cliente y productos. Completa debajo los datos de contacto, teléfono y dirección. El pedido no reserva stock ni representa un cobro." }
-            .Input("contact", "Contacto de entrega").Input("phone", "Teléfono").Input("address", "Dirección manual (si no seleccionaste una del cliente)")
-            .Input("department", "Departamento").Input("municipality", "Municipio").Input("reference", "Referencia de entrega").Input("responsible", "Responsable de entrega")
+        }) { Body = draft, Description = "Selecciona un cliente para precargar sus datos; revisa Datos de entrega y agrega los productos. El pedido no reserva stock ni representa un cobro." }
+            .Input("responsible", "Responsable de entrega")
             .Calendar("scheduled", "Fecha prevista").Input("delivery", "Cargo de entrega", "0").Input("reason", "Motivo"));
     }
     private async Task RefreshOrderAsync(long id, long revision)
