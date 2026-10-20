@@ -168,12 +168,12 @@
         </Border>
       </Grid>
     </StackPanel>
-    <StackPanel Style="{StaticResource CommerceDetail}" Tag="{Binding HasConfirmedSale}" MaxWidth="720" HorizontalAlignment="Center" Margin="0,12,0,0">
-      <Border Style="{StaticResource CommerceAvatar}" Width="56" Height="56" HorizontalAlignment="Center" Margin="0,0,0,16">
+    <StackPanel Style="{StaticResource CommerceDetail}" Tag="{Binding HasConfirmedSale}" MaxWidth="720" HorizontalAlignment="Center" Margin="0,4,0,0">
+      <Border Style="{StaticResource CommerceAvatar}" Width="48" Height="48" HorizontalAlignment="Center" Margin="0,0,0,8">
         <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SuccessBrush}" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Border>
       <TextBlock Text="Venta registrada correctamente" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" TextAlignment="Center"/>
-      <TextBlock Text="La venta y sus pagos quedaron confirmados." Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,8,0,20"/>
+      <TextBlock Text="La venta y sus pagos quedaron confirmados." Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,4,0,12"/>
       <Border Style="{StaticResource SoftPanel}">
         <UniformGrid Columns="2" Margin="0,0,-16,0">
           <ContentControl Style="{StaticResource CommerceField}" Tag="Comprobante interno" Content="{Binding ConfirmedSale.Sale.Number}"/>
@@ -184,7 +184,7 @@
           <ContentControl Style="{StaticResource CommerceField}" Tag="Cambio confirmado" Content="{Binding ConfirmedSale.Sale.Change, Converter={StaticResource UsdMoney}, FallbackValue=—}"/>
         </UniformGrid>
       </Border>
-      <WrapPanel HorizontalAlignment="Center" Margin="0,16,0,0">
+      <WrapPanel HorizontalAlignment="Center" Margin="0,12,0,0">
         <Button Content="Ver comprobante" Command="{Binding OpenReceiptCommand, ElementName=PosRoot}" CommandParameter="{Binding ConfirmedSale.Sale}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
         <Button Content="Nueva venta" Command="{Binding NewSaleCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanEdit}"/>
       </WrapPanel>
