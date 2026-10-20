@@ -66,6 +66,7 @@
     </StackPanel>
     <StackPanel Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVisibility}}">
       <DockPanel Margin="0,0,0,16">
+        <Button DockPanel.Dock="Right" Content="Guardar cantidades" Command="{Binding CaptureCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryActionButton}" Margin="8,0,0,0"/>
         <Button DockPanel.Dock="Right" Content="Actualizar detalle" Command="{Binding RefreshDetailCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding IsNotBusy}" Margin="16,0,0,0"/>
         <Button Content="Volver a conteos" Tag="" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left" IsEnabled="{Binding IsNotBusy}"/>
       </DockPanel>
@@ -110,10 +111,13 @@
       <TabControl>
         <TabItem Header="Captura" Style="{StaticResource InventoryTab}">
           <StackPanel Margin="0,20,0,0">
-            <StackPanel Margin="0,0,0,16">
-              <TextBlock Text="Captura de cantidades" Style="{StaticResource SectionHeading}"/>
-              <TextBlock Text="Una celda vacía está pendiente. Introducir 0 registra una cantidad física de cero." Style="{StaticResource MutedText}"/>
-            </StackPanel>
+            <DockPanel Margin="0,0,0,16">
+              <Button Content="Descartar captura" Command="{Binding DiscardCaptureCommand}" Style="{StaticResource ActionButton}" Margin="16,0,0,0" DockPanel.Dock="Right" IsEnabled="{Binding CanEdit}"/>
+              <StackPanel Margin="0">
+                <TextBlock Text="Captura de cantidades" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Una celda vacía está pendiente. Introducir 0 registra una cantidad física de cero." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
             <DataGrid ItemsSource="{Binding Lines}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single" Height="260" RowHeight="48">
               <DataGrid.Columns>
                 <DataGridTextColumn IsReadOnly="True" Header="SKU" Binding="{Binding Data.Sku}" Width="110" ElementStyle="{StaticResource InventoryCell}"/>
@@ -130,10 +134,6 @@
                 <DataGridTextColumn IsReadOnly="True" Header="Diferencia" Binding="{Binding Difference}" Width="110" ElementStyle="{StaticResource InventoryNumber}"/>
               </DataGrid.Columns>
             </DataGrid>
-            <WrapPanel HorizontalAlignment="Right" Margin="0,16,0,0" IsEnabled="{Binding CanEdit}">
-              <Button Content="Descartar captura" Command="{Binding DiscardCaptureCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
-              <Button Content="Guardar cantidades" Tag="" Command="{Binding CaptureCommand}" Style="{StaticResource PrimaryActionButton}"/>
-            </WrapPanel>
           </StackPanel>
         </TabItem>
         <TabItem Header="Cierre y cancelación" Style="{StaticResource InventoryTab}">

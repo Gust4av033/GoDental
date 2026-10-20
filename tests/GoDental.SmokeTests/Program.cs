@@ -867,7 +867,7 @@ internal static class Program
             if (root.DataContext is ShellViewModel { IsCounts: true } countShell)
             {
                 var countView = FindChildren<GoDental.Wpf.Views.Inventory.InventoryCountsView>(root).Single();
-                var caption = countShell.Counts.IsDetailOpen ? "Actualizar detalle" : "Abrir conteo";
+                var caption = countShell.Counts.IsDetailOpen ? "Guardar cantidades" : "Abrir conteo";
                 var action = FindChildren<Button>(countView).Single(b => b.Content is string text && text == caption);
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
