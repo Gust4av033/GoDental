@@ -12,10 +12,10 @@ public partial class ProductsView : UserControl
 
     private void OnProductDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is not ProductsViewModel model || !model.CanEdit || e.OriginalSource is not DependencyObject source) return;
+        if (DataContext is not ProductsViewModel model || !model.CanOpenInventory || e.OriginalSource is not DependencyObject source) return;
         while (source is not null && source is not DataGridRow)
             source = source is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
                 ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
-        if (source is DataGridRow) model.EditSelectedCommand.Execute(null);
+        if (source is DataGridRow) model.OpenInventoryCommand.Execute(null);
     }
 }

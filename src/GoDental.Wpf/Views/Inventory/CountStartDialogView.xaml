@@ -1,14 +1,31 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Inventory.CountStartDialogView">
-  <StackPanel xmlns:shared="clr-namespace:GoDental.Wpf.Views.Shared" IsEnabled="{Binding CanEdit}">
-    <TextBlock Text="Almacén"/>
-    <ComboBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Warehouse}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén del conteo" Margin="0,6,0,12"/>
-    <TextBlock Text="Selecciona hasta 500 productos con existencias establecidas. Se incluirán todos sus lotes en este almacén." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
-    <shared:ProductPickerView DataContext="{Binding Picker}"/>
-    <StackPanel Width="450" Margin="0,0,16,12">
-      <TextBlock Text="Motivo de apertura" Margin="0,0,0,6"/>
-      <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo de apertura"/>
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shared="clr-namespace:GoDental.Wpf.Views.Shared" x:Class="GoDental.Wpf.Views.Inventory.CountStartDialogView">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Inventory.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+  <StackPanel IsEnabled="{Binding CanEdit}">
+    <StackPanel Margin="0,0,0,16">
+      <TextBlock Text="Preparar conteo físico" Style="{StaticResource SectionHeading}"/>
+      <TextBlock Text="Selecciona el almacén y los productos que vas a verificar." Style="{StaticResource MutedText}"/>
     </StackPanel>
-    <CheckBox Content="Confirmo los productos y el almacén del conteo" IsChecked="{Binding Confirmed}" Margin="0,6,16,12"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
+    <StackPanel Margin="0,0,16,16">
+      <TextBlock Text="Almacén del conteo" Style="{StaticResource FieldLabel}"/>
+      <ComboBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Warehouse}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén del conteo"/>
+    </StackPanel>
+    <TextBlock Text="Puedes incluir hasta 500 productos con existencias establecidas. El conteo incorpora todos sus lotes en ese almacén." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+    <shared:ProductPickerView DataContext="{Binding Picker}"/>
+    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,16,0,0">
+      <StackPanel>
+        <StackPanel Margin="0,0,16,16">
+          <TextBlock Text="Motivo de apertura" Style="{StaticResource FieldLabel}"/>
+          <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo de apertura"/>
+        </StackPanel>
+        <CheckBox Content="Confirmo los productos y el almacén del conteo" IsChecked="{Binding Confirmed}" Margin="0,0,0,12"/>
+        <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
+      </StackPanel>
+    </Border>
   </StackPanel>
 </UserControl>

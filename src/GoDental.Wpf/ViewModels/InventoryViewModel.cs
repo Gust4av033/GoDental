@@ -18,6 +18,8 @@ public sealed partial class InventoryViewModel : ObservableObject
     private readonly IDialogService dialogs;
     public event EventHandler? InventoryChanged;
     private ProductData? product;
+    public ProductData? Product => product;
+    public StockData? SelectedStock => Stocks.FirstOrDefault(stock => stock.WarehouseId == Warehouse?.Id);
     private byte[]? version;
     public ObservableCollection<CatalogOption> Warehouses { get; } = [];
     public ObservableCollection<StockData> Stocks { get; } = [];
@@ -28,11 +30,11 @@ public sealed partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private string title = "Existencias y trazabilidad";
     [ObservableProperty] private bool isOpen;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsNotBusy)), NotifyPropertyChangedFor(nameof(CanWrite))] private bool isBusy;
-    [ObservableProperty] private string statusMessage = "Selecciona un producto para consultar sus existencias.";
+    [ObservableProperty] private string statusMessage = "";
     [ObservableProperty] private CatalogOption? warehouse;
     [ObservableProperty] private CatalogOption? destination;
     [ObservableProperty] private LotData? selectedLot;
-    [ObservableProperty] private string movementType = "AJUSTE";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsTransfer))] private string movementType = "AJUSTE";
     [ObservableProperty] private string quantity = "";
     [ObservableProperty] private string unitCost = "";
     [ObservableProperty] private string reason = "";
@@ -51,6 +53,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     public bool CanAdjust => service.CanAdjust;
     public bool CanSeeCosts => service.CanSeeCosts;
     public bool CanWrite => CanAdjust && !IsBusy && version is not null;
+    public bool IsTransfer => MovementType == "TRANSFERENCIA";
     public bool TracksLot => product?.TracksLot == true;
     public bool IsHistoryEmpty => Total == 0;
     public bool IsStocksEmpty => Stocks.Count == 0;
@@ -60,9 +63,10 @@ public sealed partial class InventoryViewModel : ObservableObject
     public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs)
     {
         this.service = service; this.session = session; this.logger = logger; this.dialogs = dialogs;
+        Stocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SelectedStock));
         session.Changed += (_, _) =>
         {
-            product = null; version = null; IsOpen = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Warehouses.Clear();
+            product = null; OnPropertyChanged(nameof(Product)); version = null; IsOpen = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Warehouses.Clear();
             Warehouse = null; SelectedLot = null; Total = 0; ResetForm();
             OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty));
             OnPropertyChanged(nameof(CanAdjust)); OnPropertyChanged(nameof(CanSeeCosts)); OnPropertyChanged(nameof(CanWrite));
@@ -83,7 +87,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     public async Task OpenAsync(ProductData selected)
     {
         if (IsBusy) return;
-        product = selected; Title = $"{selected.Name} · {selected.Sku}"; IsOpen = true; Page = 1;
+        product = selected; OnPropertyChanged(nameof(Product)); Title = $"{selected.Name} · {selected.Sku}"; IsOpen = true; Page = 1;
         From = null; Until = null; HistoryType = "Todos"; FilterSelectedLot = false;
         ResetForm(); OnPropertyChanged(nameof(TracksLot));
         await ExecuteAsync(async revision =>
@@ -121,7 +125,7 @@ public sealed partial class InventoryViewModel : ObservableObject
         version = Stocks.FirstOrDefault(s => s.WarehouseId == Warehouse.Id)?.RowVersion.ToArray();
         Confirmed = false; OnPropertyChanged(nameof(CanWrite));
         await ReadHistoryAsync(revision);
-        StatusMessage = "Existencias actualizadas. Los lotes están ordenados por vencimiento; selecciona el que vas a operar.";
+        StatusMessage = "";
     }
     private async Task ReadHistoryAsync(long revision)
     {

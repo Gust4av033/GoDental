@@ -1,15 +1,32 @@
-<UserControl x:Class="GoDental.Wpf.Views.Inventory.CategoryDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Inventory.CategoryDialogView">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Inventory.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
   <StackPanel>
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,0,0,12">
-      <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,16"/>
+    <StackPanel Margin="0,0,0,16">
+      <TextBlock Text="Categorías del catálogo" Style="{StaticResource SectionHeading}"/>
+      <TextBlock Text="Selecciona una categoría para actualizar su nombre o estado." Style="{StaticResource MutedText}"/>
+    </StackPanel>
+    <StackPanel Margin="0,0,16,16">
+      <TextBlock Text="Categoría a administrar" Style="{StaticResource FieldLabel}"/>
+      <ComboBox x:Name="CategoryInput" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" DisplayMemberPath="Name" AutomationProperties.Name="Categoría a administrar" IsEnabled="{Binding CanChangeSelection}"/>
+    </StackPanel>
+    <TextBlock Text="No hay categorías para administrar." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+    <Border Style="{StaticResource SoftPanel}">
+      <StackPanel>
+        <StackPanel Margin="0,0,16,16">
+          <TextBlock Text="Nombre de categoría" Style="{StaticResource FieldLabel}"/>
+          <TextBox x:Name="CategoryNameInput" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre de categoría" MaxLength="120" IsEnabled="{Binding CanEdit}"/>
+        </StackPanel>
+        <CheckBox Content="Categoría activa" IsChecked="{Binding Active}" IsEnabled="{Binding CanEdit}"/>
+        <TextBlock Text="Desactivar conserva la categoría y su historial. Las altas se realizan desde el formulario de producto." Style="{StaticResource MutedText}" Margin="0,12,0,0"/>
+      </StackPanel>
     </Border>
-    <TextBlock Text="Selecciona una categoría para cambiar su nombre o estado." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
-    <Label Content="Categoría" Target="{Binding ElementName=CategoryInput}"/>
-    <ComboBox x:Name="CategoryInput" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" DisplayMemberPath="Name" IsEnabled="{Binding CanChangeSelection}" AutomationProperties.Name="Categoría a administrar"/>
-    <TextBlock Text="No hay categorías para administrar." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
-    <Label Content="Nombre" Target="{Binding ElementName=CategoryNameInput}" Margin="0,12,0,0"/>
-    <TextBox x:Name="CategoryNameInput" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="120" AutomationProperties.Name="Nombre de categoría" IsEnabled="{Binding CanEdit}"/>
-    <CheckBox Content="Categoría activa" IsChecked="{Binding Active}" Margin="0,12,0,0" IsEnabled="{Binding CanEdit}"/>
-    <Button Content="Descartar cambios del formulario" Command="{Binding DiscardChangesCommand}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+    <Button Content="Descartar cambios" Command="{Binding DiscardChangesCommand}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left" Margin="0,16,0,0"/>
   </StackPanel>
 </UserControl>

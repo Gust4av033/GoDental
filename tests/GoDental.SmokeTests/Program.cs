@@ -349,7 +349,39 @@ internal static class Program
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
                 Check(products.ShowEmptyState && !products.ShowCatalogTable,
                     "El catálogo vacío muestra un estado visible en lugar de una tabla en blanco");
-                await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
+                productRepository.Rows = [
+                    new() { Id = 1, Sku = "UI-001", Name = "Resina para prueba de interfaz", CategoryId = 1, Category = "Restauración", UnitId = 1, Unit = "Unidad", Price = 125.50m, AvailableStock = 12, MinimumStock = 5, TracksLot = true, TracksExpiry = true, ExpiryAlertDays = 90, RowVersion = new byte[8] },
+                    new() { Id = 2, Sku = "UI-002", Name = "Adhesivo para prueba de interfaz", CategoryId = 1, Category = "Adhesivos", UnitId = 1, Unit = "Unidad", Price = 32.25m, AvailableStock = 3, MinimumStock = 5, RowVersion = new byte[8] },
+                    new() { Id = 3, Sku = "UI-003", Name = "Guantes para prueba de interfaz", CategoryId = 1, Category = "Protección", UnitId = 1, Unit = "Caja", Price = 8.50m, AvailableStock = 0, MinimumStock = 2, RowVersion = new byte[8] },
+                    new() { Id = 4, Sku = "UI-004", Name = "Producto inactivo de prueba", CategoryId = 1, Category = "General", UnitId = 1, Unit = "Unidad", Price = 10m, AvailableStock = 5, Active = false, RowVersion = new byte[8] }
+                ];
+                await products.ReloadCommand.ExecuteAsync(null);
+                var stockCaption = new GoDental.Wpf.Converters.ProductStockCaptionConverter();
+                Check(stockCaption.Convert(productRepository.Rows[0], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Con stock")
+                    && stockCaption.Convert(productRepository.Rows[1], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Stock bajo")
+                    && stockCaption.Convert(productRepository.Rows[2], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Agotado"), "El catálogo distingue niveles de disponible físico sin confundirlos con stock vendible");
+                Check(new GoDental.Wpf.Converters.InventoryCostConverter().Convert(2.123456m, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("$ 2.123456"), "Los costos conservan seis decimales en USD");
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"productos-lista-{theme}.png"));
+                    products.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"productos-filtros-{theme}.png"));
+                    products.ToggleFiltersCommand.Execute(null);
+                }
+                var linkedProducts = new ProductsView { DataContext = products };
+                linkedProducts.Measure(new Size(1000, 740)); linkedProducts.Arrange(new Rect(0, 0, 1000, 740)); linkedProducts.UpdateLayout();
+                var rowLink = FindChildren<Button>(linkedProducts).First(b => b.CommandParameter is ProductData);
+                var linkedProduct = (ProductData)rowLink.CommandParameter;
+                await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)rowLink.Command).ExecuteAsync(linkedProduct);
+                linkedProducts.UpdateLayout();
+                Check(ReferenceEquals(inventory.Product, linkedProduct) && inventory.IsOpen
+                    && FindChildren<InventoryView>(linkedProducts).Single().Visibility == Visibility.Visible,
+                    "El enlace de producto abre la ficha y muestra el inventario dentro del catálogo");
+                var detailEdit = FindChildren<Button>(FindChildren<InventoryView>(linkedProducts).Single()).Single(b => b.Content is string text && text == "Editar producto" && b.Command == products.EditSelectedCommand);
+                Check(detailEdit.IsEnabled && products.CanEditSelected, "La ficha conecta la edición del producto con su comando existente");
+                linkedProducts.DataContext = null;
+                await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",Category="General",Unit="Unidad",TracksLot=true,TracksExpiry=true});
                 Check(inventory.CanWrite && inventory.Stocks.Count==1,"Carga existencias y habilita operaciones con sesión autorizada");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-detalle.png"));
                 foreach (var theme in new[] { "Light", "Dark" })
@@ -357,6 +389,10 @@ internal static class Program
                     themes.Apply(theme);
                     using var movementModel = new InventoryMovementDialogModel(inventory);
                     await RenderDialogAsync(movementModel, new InventoryMovementDialogView { DataContext = inventory }, Path.Combine(output, $"movimiento-dialogo-{theme}.png"));
+                    var lotMovement = new InventoryMovementDialogView { DataContext = inventory };
+                    lotMovement.Measure(new Size(900, 700)); lotMovement.Arrange(new Rect(0, 0, 900, 700)); lotMovement.UpdateLayout();
+                    FindChildren<TabControl>(lotMovement).Single().SelectedIndex = 1;
+                    await RenderDialogAsync(movementModel, lotMovement, Path.Combine(output, $"movimiento-lote-{theme}.png"));
                 }
                 themes.Apply("Light");
                 inventory.Quantity = "5";
@@ -375,7 +411,7 @@ internal static class Program
                 foreach(var theme in new[]{"Light","Dark"})
                 {
                     themes.Apply(theme);
-                    for(var tab=0;tab<3;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
+                    for(var tab=0;tab<4;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
                 }
                 inventory.CloseCommand.Execute(null);
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-regreso.png"));
@@ -392,6 +428,16 @@ internal static class Program
                     themes.Apply(theme);
                     nav.Navigate(SetupPage.Counts);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-{theme}.png"));
+                    Check(shell.Counts.IsDetailOpen, "Abrir conteo separa la captura del listado");
+                    shell.Counts.ReturnToListCommand.Execute(null);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-lista-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"conteos-lista-compacta-{theme}.png"));
+                    await shell.Counts.OpenCommand.ExecuteAsync(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"conteos-detalle-compacto-{theme}.png"));
+                    var countView = new GoDental.Wpf.Views.Inventory.InventoryCountsView { DataContext = shell.Counts };
+                    countView.Measure(new Size(1000, 740)); countView.Arrange(new Rect(0, 0, 1000, 740)); countView.UpdateLayout();
+                    FindChildren<TabControl>(countView).Single().SelectedIndex = 1;
+                    await RenderWindowAsync(new Window { Content = countView, DataContext = shell.Counts, Width = 1000, Height = 740 }, Path.Combine(output, $"conteos-finalizacion-{theme}.png"));
                     nav.Navigate(SetupPage.Suppliers);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-{theme}.png"));
                     Check(shell.Suppliers.IsDetailOpen, "Abrir proveedor muestra su ficha separada del listado");
@@ -733,7 +779,7 @@ internal static class Program
         FindTabs(view)!.SelectedIndex=tab;
         await Dispatcher.CurrentDispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
         view.Measure(new Size(1080,760));view.Arrange(new Rect(0,0,1080,760));view.UpdateLayout();
-        if (theme == "Dark" && tab == 2)
+        if (theme == "Dark" && tab == 3)
         {
             var picker = Descendant<DatePicker>(view)!;
             var popup = (System.Windows.Controls.Primitives.Popup)picker.Template.FindName("PART_Popup", picker);
@@ -803,6 +849,24 @@ internal static class Program
                 var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
                 Check(bounds.Bottom <= height - 56 && bounds.Right <= width,
                     "El botón Cobrar permanece visible junto al catálogo y al carrito a 1366×768");
+            }
+            if (root.DataContext is ShellViewModel { IsProducts: true } productShell && productShell.Products.CanManage)
+            {
+                var productsView = FindChildren<ProductsView>(root).Single();
+                var caption = productShell.Products.Inventory?.IsOpen == true ? "Registrar movimiento" : "Nuevo producto";
+                var action = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción de Productos/Inventario cabe en {width}×{height} con tamaño uniforme");
+            }
+            if (root.DataContext is ShellViewModel { IsCounts: true } countShell)
+            {
+                var countView = FindChildren<GoDental.Wpf.Views.Inventory.InventoryCountsView>(root).Single();
+                var caption = countShell.Counts.IsDetailOpen ? "Actualizar detalle" : "Abrir conteo";
+                var action = FindChildren<Button>(countView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción principal de Conteos cabe en {width}×{height}");
             }
             if (root.DataContext is ShellViewModel { IsCustomers: true } customerShell)
             {

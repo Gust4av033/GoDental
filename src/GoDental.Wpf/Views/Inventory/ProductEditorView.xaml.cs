@@ -8,6 +8,6 @@ public partial class ProductEditorView : UserControl
     public ProductEditorView()
     {
         InitializeComponent();
-        Loaded += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => SkuInput.Focus()));
+        Loaded += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => ProductNameInput.Focus()));
     }
 }

@@ -37,6 +37,30 @@ public sealed partial class InventoryCountsViewModel : WorkflowViewModel
     [ObservableProperty] private string reason = "";
     [ObservableProperty] private bool confirmed;
     [ObservableProperty] private bool isEditing;
+    [ObservableProperty] private bool isDetailOpen;
+    public InventoryCountData? Header => header;
+    public int PendingLines => header is null ? 0 : header.TotalLines - header.CountedLines;
+    public bool CanStart => CanRead && IsNotBusy && !IsEditing;
+    partial void OnIsEditingChanged(bool value) => OnPropertyChanged(nameof(CanStart));
+    [RelayCommand] private void ReturnToList()
+    {
+        if (IsBusy) return;
+        if (Lines.Any(line => line.Dirty)) { StatusMessage = "Guarda o descarta las cantidades editadas antes de volver al listado."; return; }
+        IsDetailOpen = false;
+    }
+    [RelayCommand] private async Task RefreshDetailAsync()
+    {
+        if (IsBusy || header is null) return;
+        if (Lines.Any(line => line.Dirty)) { StatusMessage = "Guarda o descarta las cantidades editadas antes de recargar."; return; }
+        await RunAsync((revision, ct) => ReadCoreAsync(header.Id, revision, ct));
+    }
+    [RelayCommand] private void DiscardCapture()
+    {
+        if (!CanEdit) return;
+        foreach (var line in Lines) line.Quantity = line.Data.Counted ? line.Data.CountedQuantity.ToString(CultureInfo.InvariantCulture) : "";
+        Confirmed = false;
+        StatusMessage = "Captura sin guardar descartada. Se muestran las cantidades registradas.";
+    }
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel)), NotifyPropertyChangedFor(nameof(IsEmpty))] private int total;
     public bool CanRead => service.CanRead;
@@ -50,8 +74,8 @@ public sealed partial class InventoryCountsViewModel : WorkflowViewModel
     public InventoryCountsViewModel(InventoryCountService service, InventoryService inventory, ProductService products,
         ISessionController session, IWorkflowDialogService dialogs, ILogger<InventoryCountsViewModel> logger) : base(session, logger)
     { this.service = service; this.inventory = inventory; this.products = products; this.dialogs = dialogs; }
-    protected override void Reset() { header = null; Lines.Clear(); Items.Clear(); Warehouses.Clear(); Selected = null; Total = 0; Confirmed = false; Reason = ""; RefreshPermissions(); }
-    protected override void RefreshPermissions() { OnPropertyChanged(nameof(CanRead)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanClose)); OnPropertyChanged(nameof(DetailLabel)); OnPropertyChanged(nameof(RequiresRecount)); }
+    protected override void Reset() { IsDetailOpen = false; header = null; Lines.Clear(); Items.Clear(); Warehouses.Clear(); Selected = null; Total = 0; Confirmed = false; Reason = ""; RefreshPermissions(); }
+    protected override void RefreshPermissions() { OnPropertyChanged(nameof(CanStart)); OnPropertyChanged(nameof(Header)); OnPropertyChanged(nameof(PendingLines)); OnPropertyChanged(nameof(CanRead)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanClose)); OnPropertyChanged(nameof(DetailLabel)); OnPropertyChanged(nameof(RequiresRecount)); }
     [RelayCommand] private async Task ReloadAsync() { Page = 1; await RunAsync(async (r, ct) => { var ws = await inventory.WarehousesAsync(ct); if (!Current(r)) return; var id = Warehouse?.Id; Warehouses.Clear(); Warehouses.Add(new() { Id = 0, Name = "Todos los almacenes" }); foreach (var w in ws) Warehouses.Add(w); Warehouse = Warehouses.FirstOrDefault(w => w.Id == id) ?? Warehouses.First(); await SearchCoreAsync(r, ct); }); }
     [RelayCommand] private async Task SearchAsync() { Page = 1; await RunAsync(SearchCoreAsync); }
     [RelayCommand] private async Task NextAsync() { if (IsBusy || Page * 30 >= Total) return; Page++; await RunAsync(SearchCoreAsync); }
@@ -67,7 +91,7 @@ public sealed partial class InventoryCountsViewModel : WorkflowViewModel
     {
         header = null; Lines.Clear(); Confirmed = false; Reason = ""; RefreshPermissions();
         var snapshot = await service.ReadAsync(id, ct); if (!Current(r)) return;
-        header = snapshot?.Header; if (snapshot is not null) foreach (var line in snapshot.Lines) Lines.Add(new(line));
+        header = snapshot?.Header; IsDetailOpen = header is not null; if (snapshot is not null) foreach (var line in snapshot.Lines) Lines.Add(new(line));
         RefreshPermissions(); StatusMessage = snapshot is null ? "El conteo ya no está disponible." : "Detalle actualizado. Una celda vacía sigue pendiente; cero es una cantidad contada.";
     }
     [RelayCommand] private async Task StartAsync()
