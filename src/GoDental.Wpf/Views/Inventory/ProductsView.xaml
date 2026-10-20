@@ -17,7 +17,7 @@
       </StackPanel>
     </DockPanel>
     <TextBlock Text="Administra tu catálogo, precios de referencia y existencias disponibles." Style="{StaticResource MutedText}" Margin="0,0,0,16" />
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
+    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,0,0,16">
       <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite" />
     </Border>
     <ProgressBar IsIndeterminate="True" Height="3" Margin="0,0,0,12" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
@@ -51,14 +51,14 @@
           <CheckBox Content="Incluir productos inactivos" IsChecked="{Binding IncludeInactive}" VerticalAlignment="Center"/>
         </WrapPanel>
         <Button Content="Ver existencias, lotes y movimientos" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding CanOpenInventory}" HorizontalAlignment="Left" Margin="0,0,0,12" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}" />
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
           <StackPanel HorizontalAlignment="Center" MaxWidth="480">
             <TextBlock Text="Todavía no hay productos para mostrar" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
             <TextBlock Text="Prueba otros filtros, actualiza el catálogo o registra un producto nuevo." Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"/>
             <Button Tag="&#xE710;" Content="Nuevo producto" Command="{Binding NewProductCommand}" Style="{StaticResource PrimaryButton}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
           </StackPanel>
         </Border>
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowErrorState, Converter={StaticResource BoolToVisibility}}">
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowErrorState, Converter={StaticResource BoolToVisibility}}">
           <StackPanel HorizontalAlignment="Center" MaxWidth="480">
             <TextBlock Text="No se pudo cargar el catálogo" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
             <TextBlock Text="Revisa el mensaje anterior y vuelve a intentarlo." Style="{StaticResource MutedText}" TextAlignment="Center" TextWrapping="Wrap"/>

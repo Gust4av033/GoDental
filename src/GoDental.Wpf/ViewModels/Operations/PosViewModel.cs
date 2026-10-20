@@ -37,13 +37,15 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     private IReadOnlyList<PaymentMethodData> methods = [];
     public override bool CanRead => sales.CanRead && cash.CanRead;
     public bool CanChangeCart => CanEdit && QuotationId is null;
+    public bool CanAddProduct => CanChangeCart && Product is not null;
+    partial void OnProductChanged(PosProductData? value) => OnPropertyChanged(nameof(CanAddProduct));
     public bool CanChooseCustomer => CanChangeCart && customers.CanRead;
     public bool CanSell => CanEdit && sales.CanSell && Quote is not null;
     public bool CanQuote => CanEdit && sales.CanQuote && Quote is not null && QuotationId is null;
     public bool CanAuthorize => CanEdit && sales.CanSell && Quote is not null;
     public bool NeedsAuthorization => Quote?.Lines.Any(l => l.EffectiveDiscountPercent > Quote.AuthorizationThreshold) == true;
     public string QuoteLabel => Quote is null ? "Calcula para consultar precios, impuestos, descuentos y disponibilidad." : $"Total aceptado: {Quote.Total:N2} · Justificación > {Quote.JustificationThreshold}% · Autorización > {Quote.AuthorizationThreshold}%";
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanChangeCart), nameof(CanChooseCustomer), nameof(CanSell), nameof(CanQuote), nameof(CanAuthorize), nameof(NeedsAuthorization), nameof(QuoteLabel) }) OnPropertyChanged(n); }
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanChangeCart), nameof(CanAddProduct), nameof(CanChooseCustomer), nameof(CanSell), nameof(CanQuote), nameof(CanAuthorize), nameof(NeedsAuthorization), nameof(QuoteLabel) }) OnPropertyChanged(n); }
     partial void OnQuotationIdChanged(long? value) => PermissionsChanged();
     partial void OnQuoteChanged(SaleQuote? value) => PermissionsChanged();
     partial void OnBoxChanged(CashBoxData? value) { Invalidate(); Products.Clear(); Product = null; }

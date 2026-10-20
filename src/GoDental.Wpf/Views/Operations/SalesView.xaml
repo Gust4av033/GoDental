@@ -19,8 +19,8 @@
             <DataGridTextColumn Header="Número" Binding="{Binding Number}" Width="*"/>
             <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="155"/>
             <DataGridTemplateColumn Header="Estado" Width="130"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="100"/>
-            <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, StringFormat={}{0:N2}}" Width="110"/>
+            <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource UsdMoney}}" Width="100" ElementStyle="{StaticResource MoneyCellText}"/>
+            <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
           </DataGrid.Columns>
         </DataGrid>
         <WrapPanel Margin="0,12,0,4">
@@ -40,15 +40,15 @@
             <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="110"/>
             <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/>
             <DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="95"/>
-            <DataGridTextColumn Header="Precio" Binding="{Binding UnitPrice, StringFormat={}{0:N2}}" Width="100"/>
-            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="100"/>
+            <DataGridTextColumn Header="Precio" Binding="{Binding UnitPrice, Converter={StaticResource UsdMoney}}" Width="100" ElementStyle="{StaticResource MoneyCellText}"/>
+            <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource UsdMoney}}" Width="100" ElementStyle="{StaticResource MoneyCellText}"/>
           </DataGrid.Columns>
         </DataGrid>
         <TextBlock Text="Pagos registrados" Style="{StaticResource SectionHeading}" Margin="0,16,0,12"/>
         <DataGrid ItemsSource="{Binding SaleDetail.Payments}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" SelectionUnit="FullRow" Height="140" AutomationProperties.Name="SaleDetail.Payments">
           <DataGrid.Columns>
             <DataGridTextColumn Header="Forma" Binding="{Binding Method}" Width="*"/>
-            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="120"/>
+            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="120" ElementStyle="{StaticResource MoneyCellText}"/>
             <DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="200"/>
           </DataGrid.Columns>
         </DataGrid>

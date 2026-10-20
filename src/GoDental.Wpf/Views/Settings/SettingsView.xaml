@@ -24,7 +24,7 @@
                   <Button Content="Cancelar" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8" />
                 </WrapPanel>
                 <ProgressBar IsIndeterminate="True" Height="3" Foreground="{DynamicResource PrimaryBrush}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0" />
-                <Border Background="{DynamicResource TintBrush}" Padding="16" CornerRadius="6" Margin="0,12,0,0">
+                <Border Background="{DynamicResource TintBrush}" Padding="16" CornerRadius="{StaticResource CardRadius}" Margin="0,12,0,0">
                   <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" />
                 </Border>
               </StackPanel>

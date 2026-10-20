@@ -11,7 +11,7 @@
       </StackPanel>
     </DockPanel>
     <TextBlock Text="Cuentas individuales para administradores y vendedores." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
+    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,0,0,16">
       <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
     </Border>
     <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,12"/>
@@ -33,7 +33,7 @@
             <DataGridTextColumn Header="Bloqueado hasta" Binding="{Binding LockedUntil, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="170"/>
           </DataGrid.Columns>
         </DataGrid>
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="24" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
           <StackPanel HorizontalAlignment="Center" MaxWidth="440">
             <TextBlock Text="No hay usuarios para mostrar" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
             <TextBlock Text="Actualiza la lista o crea una cuenta si tienes permiso de administración." Style="{StaticResource MutedText}" TextAlignment="Center"/>

@@ -1,6 +1,6 @@
 <UserControl x:Class="GoDental.Wpf.Views.Inventory.InventoryMovementDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <StackPanel>
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,12"><TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/></Border>
+    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,0,0,12"><TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/></Border>
     <TextBlock Text="Corrección física documentada. Usa cantidad positiva para entradas y negativa para bajas o transferencias." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
     <StackPanel IsEnabled="{Binding CanWrite}">
       <WrapPanel>

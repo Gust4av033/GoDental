@@ -12,6 +12,15 @@
 
       <Button Content="Historial del cliente" Command="{Binding HistoryCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
     </WrapPanel>
+    <Border Style="{StaticResource CreditSelectionPanel}" Margin="0,0,0,16">
+      <StackPanel><DockPanel Margin="0,0,0,12"><Border DockPanel.Dock="Right" Style="{StaticResource StateBadge}" Tag="{Binding Selected.State}"><TextBlock Text="{Binding Selected.State}"/></Border><TextBlock Text="{Binding Selected.Customer}" Style="{StaticResource SectionHeading}"/></DockPanel>
+        <UniformGrid Columns="3">
+          <StackPanel><TextBlock Text="Importe original" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding Selected.Original, Converter={StaticResource UsdMoney}}" Style="{StaticResource SectionHeading}"/></StackPanel>
+          <StackPanel><TextBlock Text="Saldo de esta cuenta" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding Selected.Balance, Converter={StaticResource UsdMoney}}" Foreground="{DynamicResource DangerBrush}" FontSize="20" FontWeight="SemiBold"/></StackPanel>
+          <StackPanel><TextBlock Text="Vencimiento" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding Selected.Due, StringFormat=dd/MM/yyyy}" Style="{StaticResource SectionHeading}"/></StackPanel>
+        </UniformGrid>
+      </StackPanel>
+    </Border>
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
         <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" SelectionUnit="FullRow" Height="230" AutomationProperties.Name="Items" SelectedItem="{Binding Selected}">
@@ -20,7 +29,7 @@
             <DataGridTextColumn Header="Cliente" Binding="{Binding Customer}" Width="*"/>
             <DataGridTextColumn Header="Venta" Binding="{Binding Sale}" Width="120"/>
             <DataGridTextColumn Header="Vence" Binding="{Binding Due, StringFormat=dd/MM/yyyy}" Width="130"/>
-            <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="110"/>
+            <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
             <DataGridTemplateColumn Header="Estado" Width="110"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
@@ -38,7 +47,7 @@
             <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="150"/>
             <DataGridTextColumn Header="Recibo" Binding="{Binding Receipt}" Width="130"/>
             <DataGridTextColumn Header="Forma" Binding="{Binding Method}" Width="130"/>
-            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="100"/>
+            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="100" ElementStyle="{StaticResource MoneyCellText}"/>
             <DataGridTextColumn Header="Anulado" Binding="{Binding Voided}" Width="80"/>
           </DataGrid.Columns>
         </DataGrid>

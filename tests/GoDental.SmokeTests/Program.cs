@@ -515,7 +515,10 @@ internal static class Program
                 Check(input.Template.FindName("PART_ContentHost", input) is ScrollViewer && password.Template.FindName("PART_ContentHost", password) is ScrollViewer, "Los campos modernos conservan el host de texto y contraseña");
                 Check(selector.Template.FindName("PART_Popup", selector) is System.Windows.Controls.Primitives.Popup && selector.SelectedIndex == 0, "El desplegable moderno conserva popup y selección");
                 Check(FindChildren<TextBlock>(selector).Any(t => t.Text == "Caja de prueba"), "El desplegable muestra el nombre del objeto seleccionado, sin nombres internos de clases");
-                Check(action.ActualWidth >= 120 && action.ActualHeight == 36, "Las acciones compactas conservan espacio legible y altura uniforme de 36 DIP");
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36, "Las acciones comparten tamaño de 152 por 36 DIP");
+                Check(((Border)input.Template.FindName("InputSurface", input)).CornerRadius.TopLeft == 8, "Los campos siguen el radio de control de las referencias");
+                Check(((Style)appResource("StateBadge")).TargetType == typeof(Border) && ((CornerRadius)appResource("CardRadius")).TopLeft == 12, "Tarjetas y estados utilizan geometría compartida");
+                Check(new GoDental.Wpf.Converters.UsdMoneyConverter().Convert(1250m, typeof(string), null!, System.Globalization.CultureInfo.GetCultureInfo("es-SV")).Equals("$ 1,250.00"), "Los importes operativos se presentan en USD sin depender de la configuración regional");
                 password.Clear();
                 var customerForm = new CustomerEditorDialogModel(CustomerEditorKind.General, new(), null, null, null,
                     new([new() { Id = 1, Name = "Paciente" }, new() { Id = 2, Name = "Clínica" }], []), _ => Task.FromResult(false));
@@ -634,6 +637,15 @@ internal static class Program
             window.Show();
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             window.UpdateLayout();
+            if (model is MvpFormModel { Body: CheckoutModel checkout })
+            {
+                var methods = FindChildren<ListBox>(body).Single(box => ReferenceEquals(box.ItemsSource, checkout.Methods));
+                var previous = checkout.Method;
+                methods.SelectedItem = checkout.Methods.LastOrDefault();
+                Check(ReferenceEquals(checkout.Method, methods.SelectedItem), "Los mosaicos de cobro seleccionan el método real sin registrar pagos");
+                Check(checkout.Payments.Count == 0, "Seleccionar un método de cobro no agrega ni confirma un pago");
+                methods.SelectedItem = previous;
+            }
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window);
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -762,6 +774,13 @@ internal static class Program
             root.UpdateLayout();
             if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1280 && height >= 768)
             {
+                var pos = ((ShellViewModel)root.DataContext).Pos;
+                var catalog = FindChildren<ListBox>(root).FirstOrDefault(box => ReferenceEquals(box.ItemsSource, pos.Products));
+                if (catalog is { Items.Count: > 0 })
+                {
+                    catalog.SelectedIndex = 0;
+                    Check(ReferenceEquals(pos.Product, catalog.SelectedItem) && pos.CanAddProduct, "Las tarjetas del catálogo conservan selección y habilitan la acción de carrito");
+                }
                 var checkout = FindChildren<Button>(root).Single(button => button.Content is string caption && caption == "Cobrar");
                 var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
                 Check(bounds.Bottom <= height - 56 && bounds.Right <= width,

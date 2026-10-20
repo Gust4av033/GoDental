@@ -51,23 +51,23 @@
         <StackPanel Margin="16">
 <UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
             <TextBlock Text="Código" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Code}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Code}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="Nombre comercial" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.CommercialName}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.CommercialName}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="Teléfono" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Phone}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Phone}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="WhatsApp" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.WhatsApp}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.WhatsApp}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="Correo" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Email}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Email}" TextWrapping="Wrap"/></Border>
           </StackPanel></UniformGrid>
 
           <CheckBox Content="Cliente activo" IsChecked="{Binding Detail.Active, Mode=OneWay}" IsEnabled="False" Margin="0,0,0,12"/>
@@ -116,19 +116,19 @@
         <StackPanel Margin="16">
 <UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
             <TextBlock Text="NIT" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nit}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nit}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="NRC" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nrc}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nrc}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="DUI" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Dui}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Dui}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="Giro / Actividad económica" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.BusinessActivity}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.BusinessActivity}" TextWrapping="Wrap"/></Border>
           </StackPanel></UniformGrid>
 
           <Button Content="Editar ficha" Tag="&#xE70F;" HorizontalAlignment="Left" Command="{Binding EditCustomerCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanEdit}"/>
@@ -138,11 +138,11 @@
         <StackPanel Margin="16">
 <UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
             <TextBlock Text="Tipo de cliente" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Type}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Type}" TextWrapping="Wrap"/></Border>
           </StackPanel>
 <StackPanel Margin="0,0,20,16">
             <TextBlock Text="Lista de precios asignada" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.PriceList}" TextWrapping="Wrap"/></Border>
+            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.PriceList}" TextWrapping="Wrap"/></Border>
           </StackPanel></UniformGrid>
 
           <Button Content="Editar ficha" Tag="&#xE70F;" HorizontalAlignment="Left" Command="{Binding EditCustomerCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanEdit}"/>
@@ -195,8 +195,8 @@
               <DataGridTextColumn Header="Venta" Binding="{Binding Number}" Width="130"/>
               <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="180"/>
               <DataGridTemplateColumn Header="Estado" Width="140"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-              <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="110"/>
-              <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, StringFormat={}{0:N2}}" Width="110"/>
+              <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
+              <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
             </DataGrid.Columns>
           </DataGrid>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -223,8 +223,8 @@
               <DataGridTextColumn Header="Venta" Binding="{Binding Sale}" Width="120"/>
               <DataGridTextColumn Header="Emisión" Binding="{Binding Issued, StringFormat=dd/MM/yyyy}" Width="140"/>
               <DataGridTextColumn Header="Vence" Binding="{Binding Due, StringFormat=dd/MM/yyyy}" Width="140"/>
-              <DataGridTextColumn Header="Original" Binding="{Binding Original, StringFormat={}{0:N2}}" Width="90"/>
-              <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="90"/>
+              <DataGridTextColumn Header="Original" Binding="{Binding Original, Converter={StaticResource UsdMoney}}" Width="90" ElementStyle="{StaticResource MoneyCellText}"/>
+              <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, Converter={StaticResource UsdMoney}}" Width="90" ElementStyle="{StaticResource MoneyCellText}"/>
               <DataGridTemplateColumn Header="Estado" Width="110"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
             </DataGrid.Columns>
           </DataGrid>
@@ -239,7 +239,7 @@
               <DataGridTextColumn Header="Recibo" Binding="{Binding Receipt}" Width="130"/>
               <DataGridTextColumn Header="Cuenta" Binding="{Binding AccountId}" Width="70"/>
               <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="180"/>
-              <DataGridTextColumn Header="Monto" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="100"/>
+              <DataGridTextColumn Header="Monto" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="100" ElementStyle="{StaticResource MoneyCellText}"/>
               <DataGridTextColumn Header="Método" Binding="{Binding Method}" Width="110"/>
               <DataGridTextColumn Header="Anulado" Binding="{Binding Voided}" Width="75"/>
             </DataGrid.Columns>

@@ -32,7 +32,7 @@
           </StackPanel>
         </StackPanel>
         <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,16,0,0" />
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="16" Margin="0,20,0,0">
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="16" Margin="0,20,0,0">
           <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" LineHeight="21" AutomationProperties.LiveSetting="Polite" />
         </Border>
       </StackPanel>

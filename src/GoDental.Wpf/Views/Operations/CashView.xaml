@@ -21,13 +21,18 @@
         <DockPanel Margin="0,0,0,12">        <WrapPanel DockPanel.Dock="Right" Margin="12,0,0,0">
           <Button Content="Abrir caja" Command="{Binding OpenCommand}" Style="{StaticResource PrimaryActionButton}" Margin="0,0,8,0" IsEnabled="{Binding CanOpen}"/>
           <Button Content="Movimiento" Command="{Binding MoveCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0" IsEnabled="{Binding CanMove}"/>
-          <Button Content="Cerrar caja" Command="{Binding CloseCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0" IsEnabled="{Binding CanClose}"/>
-        </WrapPanel><TextBlock Text="{Binding ShiftLabel}" Style="{StaticResource SectionHeading}" VerticalAlignment="Center"/></DockPanel>
-        <UniformGrid Columns="3">
-          <Border Background="{DynamicResource TintBrush}" CornerRadius="4" Padding="12" Margin="0,0,8,0"><StackPanel><TextBlock Text="Fondo de apertura" Style="{StaticResource MutedText}" FontSize="11"/><TextBlock Text="{Binding Shift.Opening, StringFormat={}{0:N2}, TargetNullValue=—}" Style="{StaticResource MetricValue}"/></StackPanel></Border>
-          <Border Background="{DynamicResource TintBrush}" CornerRadius="4" Padding="12" Margin="0,0,8,0"><StackPanel><TextBlock Text="Efectivo esperado" Style="{StaticResource MutedText}" FontSize="11"/><TextBlock Text="{Binding Shift.Expected, StringFormat={}{0:N2}, TargetNullValue=—}" Style="{StaticResource MetricValue}"/></StackPanel></Border>
-          <Border Background="{DynamicResource TintBrush}" CornerRadius="4" Padding="12" Margin="0,0,8,0"><StackPanel><TextBlock Text="Diferencia al cierre" Style="{StaticResource MutedText}" FontSize="11"/><TextBlock Text="{Binding Shift.Difference, StringFormat={}{0:N2}, TargetNullValue=—}" Style="{StaticResource MetricValue}"/></StackPanel></Border>
-        </UniformGrid>
+          <Button Content="Cerrar caja" Command="{Binding CloseCommand}" Style="{StaticResource DestructiveActionButton}" Margin="0,0,8,0" IsEnabled="{Binding CanClose}"/>
+        </WrapPanel><StackPanel><TextBlock Text="{Binding ShiftLabel}" Style="{StaticResource SectionHeading}"/><Border Style="{StaticResource StateBadge}" Tag="{Binding Shift.State}" Margin="0,6,0,0"><TextBlock Text="{Binding Shift.State}" TextWrapping="NoWrap"/></Border></StackPanel></DockPanel>
+<UniformGrid Columns="3"><Border Style="{StaticResource MetricCard}" Margin="0,0,8,0"><StackPanel>
+    <DockPanel Margin="0,0,0,10"><Border Style="{StaticResource MetricIcon}" DockPanel.Dock="Left" Margin="0,0,10,0"><TextBlock Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border><TextBlock Text="Fondo de apertura" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0"/></DockPanel>
+    <TextBlock Text="{Binding Shift.Opening, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}"/>
+    </StackPanel></Border><Border Style="{StaticResource MetricCard}" Margin="0,0,8,0"><StackPanel>
+    <DockPanel Margin="0,0,0,10"><Border Style="{StaticResource MetricIcon}" DockPanel.Dock="Left" Margin="0,0,10,0"><TextBlock Text="&#xE8D4;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border><TextBlock Text="Efectivo esperado" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0"/></DockPanel>
+    <TextBlock Text="{Binding Shift.Expected, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}"/>
+    </StackPanel></Border><Border Style="{StaticResource MetricCard}" Margin="0,0,8,0"><StackPanel>
+    <DockPanel Margin="0,0,0,10"><Border Style="{StaticResource MetricIcon}" DockPanel.Dock="Left" Margin="0,0,10,0"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border><TextBlock Text="Diferencia al cierre" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0"/></DockPanel>
+    <TextBlock Text="{Binding Shift.Difference, Converter={StaticResource UsdMoney}}" Style="{StaticResource DifferenceValue}"/>
+    </StackPanel></Border></UniformGrid>
       </StackPanel>
     </Border>
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
@@ -36,8 +41,8 @@
         <DataGrid ItemsSource="{Binding Movements}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" SelectionUnit="FullRow" Height="170" AutomationProperties.Name="Movements">
           <DataGrid.Columns>
             <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="155"/>
-            <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="130"/>
-            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="120"/>
+            <DataGridTemplateColumn Header="Tipo" Width="130"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding Type}"><TextBlock Text="{Binding Type}" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+            <DataGridTextColumn Header="Importe" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="120" ElementStyle="{StaticResource MoneyCellText}"/>
             <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="*"/>
           </DataGrid.Columns>
         </DataGrid>
