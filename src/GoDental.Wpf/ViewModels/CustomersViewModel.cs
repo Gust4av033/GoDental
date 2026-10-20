@@ -32,6 +32,14 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] private bool isEditing;
     [ObservableProperty] private bool isDetailOpen;
+    [ObservableProperty] private bool areFiltersOpen;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(SalesEmptyMessage))] private bool hasLoadedSales;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(AccountsEmptyMessage))] private bool hasLoadedAccounts;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PaymentsEmptyMessage))] private bool hasLoadedPayments;
+    public string SalesEmptyMessage => HasLoadedSales ? "Este cliente no tiene ventas registradas." : "Pulsa Consultar ventas para cargar el historial.";
+    public string AccountsEmptyMessage => HasLoadedAccounts ? "Este cliente no tiene cuentas por cobrar." : "Pulsa Consultar cuentas para cargar el estado de cuenta.";
+    public string PaymentsEmptyMessage => HasLoadedPayments ? "Este cliente no tiene abonos registrados." : "Pulsa Consultar abonos para cargar los pagos.";
+    [RelayCommand] private void ToggleFilters() => AreFiltersOpen = !AreFiltersOpen;
     [RelayCommand] private void ReturnToList() => IsDetailOpen = false;
     [RelayCommand] private async Task RefreshDetailAsync()
     {
@@ -54,7 +62,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     public bool CanConfigureCredit => service.CanConfigureCredit && Detail is not null && IsNotBusy && !IsEditing;
     public bool CanReadHistory => service.CanReadHistory;
     public bool IsEmpty => Total == 0;
-    public string PageLabel => $"{Total} clientes · Página {Page}";
+    public string PageLabel => Total == 0 ? "0 clientes" : $"Mostrando {(Page - 1) * 30 + 1}–{Math.Min(Page * 30, Total)} de {Total} clientes · Página {Page}";
     public string SalesLabel => $"{SalesTotal} ventas · Página {SalesPage}";
     public string AccountsLabel => $"{AccountsTotal} cuentas · Página {AccountsPage}";
     public string PaymentsLabel => $"{PaymentsTotal} abonos · Página {PaymentsPage}";
@@ -66,8 +74,8 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     {
         OnPropertyChanged(nameof(CanRead)); OnPropertyChanged(nameof(CanCreate)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditChildren)); OnPropertyChanged(nameof(CanConfigureCredit)); OnPropertyChanged(nameof(CanReadHistory));
     }
-    private void ClearDetail() { Detail = null; Credit = null; Balance = null; Contacts.Clear(); Addresses.Clear(); Sales.Clear(); Accounts.Clear(); Payments.Clear(); SelectedContact = null; SelectedAddress = null; SalesPage = AccountsPage = PaymentsPage = 1; SalesTotal = AccountsTotal = PaymentsTotal = 0; }
-    protected override void Reset() { ClearDetail(); Items.Clear(); Types.Clear(); Type = null; Selected = null; Total = 0; catalogs = new([], []); }
+    private void ClearDetail() { HasLoadedSales = HasLoadedAccounts = HasLoadedPayments = false; Detail = null; Credit = null; Balance = null; Contacts.Clear(); Addresses.Clear(); Sales.Clear(); Accounts.Clear(); Payments.Clear(); SelectedContact = null; SelectedAddress = null; SalesPage = AccountsPage = PaymentsPage = 1; SalesTotal = AccountsTotal = PaymentsTotal = 0; }
+    protected override void Reset() { AreFiltersOpen = false; ClearDetail(); Items.Clear(); Types.Clear(); Type = null; Selected = null; Total = 0; catalogs = new([], []); }
     [RelayCommand] private async Task ReloadAsync()
     {
         Page = 1;
@@ -85,15 +93,22 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     {
         var result = await service.SearchAsync(new(Search, IncludeInactive, Type?.Id is > 0 ? checked((short)Type.Id) : null, Page), ct);
         if (!Current(r)) return; Items.Clear(); foreach (var c in result.Items) Items.Add(c); Total = result.Total;
-        StatusMessage = Total == 0 ? "No hay clientes con estos filtros." : "Listado actualizado.";
+        StatusMessage = "";
     }
     [RelayCommand] private async Task OpenAsync() { if (Selected is null) return; var id = Selected.Id; await RunAsync((r, ct) => ReadCoreAsync(id, r, ct)); }
+    // El enlace de fila recibe el cliente concreto y no depende de cuándo cambie SelectedItem.
+    [RelayCommand] private async Task OpenCustomerAsync(CustomerData? customer)
+    {
+        if (customer is null || IsBusy || !CanRead) return;
+        Selected = customer;
+        await RunAsync((r, ct) => ReadCoreAsync(customer.Id, r, ct));
+    }
     private async Task ReadCoreAsync(long id, long r, CancellationToken ct)
     {
         ClearDetail(); var value = await service.ReadAsync(id, ct); if (!Current(r)) return;
         Detail = value?.Customer; Credit = value?.Credit;
         if (value is not null) { foreach (var c in value.Contacts) Contacts.Add(c); foreach (var a in value.Addresses) Addresses.Add(a); }
-        StatusMessage = value is null ? "El cliente ya no está disponible." : "Ficha actualizada. Consulta los historiales para ver sus registros.";
+        StatusMessage = value is null ? "El cliente ya no está disponible." : "";
     }
     [RelayCommand] private Task NewAsync() => EditAsync(CustomerEditorKind.General, true);
     [RelayCommand] private Task EditCustomerAsync() => EditAsync(CustomerEditorKind.General, false);
@@ -148,7 +163,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     private async Task SalesCoreAsync(long r, CancellationToken ct)
     {
         if (!CanReadHistory || Detail is null) return; var result = await service.SalesAsync(new(Detail.Id, SalesPage), ct);
-        if (!Current(r)) return; Sales.Clear(); foreach (var s in result.Items) Sales.Add(s); SalesTotal = result.Total; StatusMessage = result.Total == 0 ? "Este cliente no tiene ventas registradas." : "Ventas consultadas.";
+        if (!Current(r)) return; Sales.Clear(); foreach (var s in result.Items) Sales.Add(s); SalesTotal = result.Total; HasLoadedSales = true; StatusMessage = result.Total == 0 ? "Este cliente no tiene ventas registradas." : "Ventas consultadas.";
     }
     [RelayCommand] private async Task LoadAccountsAsync() { AccountsPage = 1; await RunAsync(AccountsCoreAsync); }
     [RelayCommand] private async Task NextAccountsAsync() { if (IsBusy || AccountsPage * 30 >= AccountsTotal) return; AccountsPage++; await RunAsync(AccountsCoreAsync); }
@@ -156,7 +171,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     private async Task AccountsCoreAsync(long r, CancellationToken ct)
     {
         if (!CanReadHistory || Detail is null) return; var id = Detail.Id; var b = await service.BalanceAsync(id, ct); var result = await service.AccountsAsync(new(id, AccountsPage), ct);
-        if (!Current(r)) return; Balance = b; Accounts.Clear(); foreach (var a in result.Items) Accounts.Add(a); AccountsTotal = result.Total; StatusMessage = result.Total == 0 ? "Este cliente no tiene cuentas por cobrar registradas." : "Estado de cuenta consultado.";
+        if (!Current(r)) return; Balance = b; Accounts.Clear(); foreach (var a in result.Items) Accounts.Add(a); AccountsTotal = result.Total; HasLoadedAccounts = true; StatusMessage = result.Total == 0 ? "Este cliente no tiene cuentas por cobrar registradas." : "Estado de cuenta consultado.";
     }
     [RelayCommand] private async Task LoadPaymentsAsync() { PaymentsPage = 1; await RunAsync(PaymentsCoreAsync); }
     [RelayCommand] private async Task NextPaymentsAsync() { if (IsBusy || PaymentsPage * 30 >= PaymentsTotal) return; PaymentsPage++; await RunAsync(PaymentsCoreAsync); }
@@ -164,6 +179,6 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     private async Task PaymentsCoreAsync(long r, CancellationToken ct)
     {
         if (!CanReadHistory || Detail is null) return; var result = await service.PaymentsAsync(new(Detail.Id, PaymentsPage), ct);
-        if (!Current(r)) return; Payments.Clear(); foreach (var p in result.Items) Payments.Add(p); PaymentsTotal = result.Total; StatusMessage = result.Total == 0 ? "Este cliente no tiene abonos registrados." : "Historial de abonos consultado.";
+        if (!Current(r)) return; Payments.Clear(); foreach (var p in result.Items) Payments.Add(p); PaymentsTotal = result.Total; HasLoadedPayments = true; StatusMessage = result.Total == 0 ? "Este cliente no tiene abonos registrados." : "Historial de abonos consultado.";
     }
 }

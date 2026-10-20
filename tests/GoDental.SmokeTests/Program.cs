@@ -428,13 +428,29 @@ internal static class Program
                     Check(shell.Customers.IsDetailOpen, "Abrir cliente muestra su ficha separada del listado");
                     shell.Customers.ReturnToListCommand.Execute(null);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"clientes-lista-{theme}.png"));
-                    await shell.Customers.OpenCommand.ExecuteAsync(null);
+                    shell.Customers.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-filtros-{theme}.png"));
+                    shell.Customers.ToggleFiltersCommand.Execute(null);
+                    await shell.Customers.OpenCustomerCommand.ExecuteAsync(shell.Customers.Items.First());
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-125-{theme}.png"));
                     var view = new GoDental.Wpf.Views.Customers.CustomersView { DataContext = shell.Customers };
                     view.Measure(new Size(1000, 700)); view.Arrange(new Rect(0, 0, 1000, 700)); view.UpdateLayout();
                     var tabs = FindChildren<TabControl>(view).First();
                     Check(tabs.Items.Count == 8, "Ficha de cliente organizada en ocho pestañas");
-                    for (var i = 0; i < tabs.Items.Count; i++) { tabs.SelectedIndex = i; view.UpdateLayout(); Check(FindChildren<DataGrid>(view).All(g => g.IsReadOnly && !g.AutoGenerateColumns), $"Consulta de cliente explícita: {theme}, pestaña {i}"); }
+                    for (var i = 0; i < tabs.Items.Count; i++)
+                    {
+                        if (i == 5) await shell.Customers.LoadAccountsCommand.ExecuteAsync(null);
+                        if (i == 6) await shell.Customers.LoadSalesCommand.ExecuteAsync(null);
+                        if (i == 7) await shell.Customers.LoadPaymentsCommand.ExecuteAsync(null);
+                        tabs.SelectedIndex = i; view.UpdateLayout();
+                        Check(FindChildren<DataGrid>(view).All(g => g.IsReadOnly && !g.AutoGenerateColumns), $"Consulta de cliente explícita: {theme}, pestaña {i}");
+                        var scroller = new ScrollViewer { Content = view, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+                        var frame = new Border { Padding = new Thickness(24), Background = (System.Windows.Media.Brush)appResource("SurfaceBrush"), Child = scroller };
+                        await RenderWindowAsync(new Window { Content = frame, DataContext = shell.Customers, Width = 1000, Height = 740 }, Path.Combine(output, $"clientes-pestana-{i}-{theme}.png"));
+                        scroller.Content = null;
+                        frame.Child = null;
+                        Check(FindChildren<Button>(view).Where(b => b.Content is string text && text is "Editar cliente" or "Nuevo contacto" or "Nueva dirección" or "Configurar crédito").All(b => b.ActualWidth == 152 && b.ActualHeight == 36), "Las acciones de Clientes conservan un tamaño uniforme");
+                    }
                     foreach (var kind in Enum.GetValues<CustomerEditorKind>())
                     {
                         var form = new CustomerEditorDialogModel(kind, shell.Customers.Detail!, shell.Customers.Contacts.First(), shell.Customers.Addresses.First(), shell.Customers.Credit, new([new() { Id = 1, Name = "Clínica" }], []), _ => Task.FromResult(false));
@@ -524,6 +540,8 @@ internal static class Program
                     new([new() { Id = 1, Name = "Paciente" }, new() { Id = 2, Name = "Clínica" }], []), _ => Task.FromResult(false));
                 var customerEditor = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = customerForm };
                 customerEditor.Measure(new Size(1000, 700)); customerEditor.Arrange(new Rect(0, 0, 1000, 700)); customerEditor.UpdateLayout();
+                var customerEditorTabs = FindChildren<TabControl>(customerEditor).Single();
+                customerEditorTabs.SelectedIndex = 2; customerEditor.UpdateLayout();
                 var typeSelector = FindChildren<ComboBox>(customerEditor).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Tipo de cliente");
                 typeSelector.SelectedValue = 2;
                 typeSelector.GetBindingExpression(System.Windows.Controls.Primitives.Selector.SelectedValueProperty)!.UpdateSource();
@@ -785,6 +803,15 @@ internal static class Program
                 var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
                 Check(bounds.Bottom <= height - 56 && bounds.Right <= width,
                     "El botón Cobrar permanece visible junto al catálogo y al carrito a 1366×768");
+            }
+            if (root.DataContext is ShellViewModel { IsCustomers: true } customerShell)
+            {
+                var customersView = FindChildren<GoDental.Wpf.Views.Customers.CustomersView>(root).Single();
+                var caption = customerShell.Customers.IsDetailOpen ? "Editar cliente" : "Nuevo cliente";
+                var action = FindChildren<Button>(customersView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción principal de Clientes cabe en {width}×{height} con tamaño uniforme");
             }
             var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(root);
