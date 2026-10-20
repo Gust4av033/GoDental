@@ -15,6 +15,10 @@ using GoDental.Infrastructure.Security;
 using GoDental.Wpf.Navigation;
 using GoDental.Wpf.Themes;
 using GoDental.Wpf.ViewModels;
+using GoDental.Wpf.ViewModels.Operations;
+using GoDental.Wpf.Views.Operations;
+using GoDental.Infrastructure.Operations;
+using Microsoft.Extensions.Options;
 using GoDental.Wpf.Dialogs;
 using GoDental.Wpf.Views.Inventory;
 using GoDental.Wpf.Views.Auth;
@@ -132,10 +136,21 @@ internal static class Program
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
             var settingsHarness = new FakeSettingsWindowService();
+            var mvpRepository = new MvpUiRepository();
+            var mvpDialogs = new MvpVisualDialogs();
+            var operationService = new MvpOperationService(mvpRepository, session);
+            var cashService = new CashService(mvpRepository, session);
+            var salesService = new SalesService(mvpRepository, session, new FakeIdentityGateway());
+            var customerService = new CustomerService(new CustomerWorkflowRepository(), session);
+            var cashMvp = new CashViewModel(cashService, new InventoryService(new VisualInventoryRepository(), session), mvpDialogs, session, operationService, NullLogger<CashViewModel>.Instance);
+            var posMvp = new PosViewModel(salesService, cashService, customerService, mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
+            var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
+            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
+            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), new VisualPdfFiles(), posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance));
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp);
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
             shell.OpenSettingsCommand.Execute(null);
@@ -157,10 +172,12 @@ internal static class Program
                 nav.Navigate(SetupPage.Home);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "inicio-claro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-claro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-claro.png"));
                 vm.IsDark = true;
                 nav.Navigate(SetupPage.Connection);
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-oscuro.png"));
+                await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-oscuro.png"));
                 await RenderWindowAsync(new SettingsWindow(vm) { Width = 760, Height = 680 }, Path.Combine(output, "ajustes-ventana-oscuro.png"));
                 shell.IsSidebarCompact = true;
                 await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
@@ -414,6 +431,57 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
+                await cashMvp.ReloadCommand.ExecuteAsync(null);
+                await posMvp.ReloadCommand.ExecuteAsync(null);
+                posMvp.Items.Add(new(1, "UI-TEST", "Producto de prueba", 1, 0));
+                await posMvp.CalculateCommand.ExecuteAsync(null);
+                await creditMvp.ReloadCommand.ExecuteAsync(null); creditMvp.Selected = creditMvp.Items.First();
+                await creditMvp.HistoryCommand.ExecuteAsync(null);
+                await ordersMvp.ReloadCommand.ExecuteAsync(null); ordersMvp.Selected = ordersMvp.Items.First();
+                await ordersMvp.DetailCommand.ExecuteAsync(null);
+                var emitted = mvpRepository.QuoteFactory(new(1, 1, [new(1, 1)]));
+                mvpRepository.Quotations.Add(new() { Id = 10, Number = "COT-PRUEBA", State = "EMITIDA", Total = emitted.Total, SnapshotJson = System.Text.Json.JsonSerializer.Serialize(emitted) });
+                await historyMvp.ReloadSalesCommand.ExecuteAsync(null); historyMvp.SelectedSale = historyMvp.Sales.First(); await historyMvp.ReadSaleCommand.ExecuteAsync(null);
+                await historyMvp.ReloadQuotationsCommand.ExecuteAsync(null); historyMvp.SelectedQuotation = historyMvp.Quotations.First(); await historyMvp.ReadQuotationCommand.ExecuteAsync(null);
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations })
+                    {
+                        nav.Navigate(page);
+                        await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-{theme}.png"));
+                        await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-compacto-{theme}.png"));
+                    }
+                    mvpDialogs.Render = async form =>
+                    {
+                        var view = new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-dialogo-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
+                    };
+                    await cashMvp.MoveCommand.ExecuteAsync(null);
+                    await cashMvp.CloseCommand.ExecuteAsync(null);
+                    await posMvp.CheckoutCommand.ExecuteAsync(null);
+                    await posMvp.SaveQuotationCommand.ExecuteAsync(null);
+                    await posMvp.SelectCustomerCommand.ExecuteAsync(null);
+                    await creditMvp.PayCommand.ExecuteAsync(null);
+                    await ordersMvp.CreateCommand.ExecuteAsync(null);
+                    await ordersMvp.TransitionCommand.ExecuteAsync(null);
+                    await ordersMvp.LinkCommand.ExecuteAsync(null);
+                    mvpDialogs.Render = null;
+                }
+                Check(posMvp.Quote?.Total == emitted.Total && ordersMvp.Detail is not null && creditMvp.Payments.Count > 0, "MVP muestra cálculos, pedido y abonos de sus servicios");
+                var controlHost = new StackPanel();
+                var input = new TextBox { Text = "Prueba de edición", Width = 220 };
+                var password = new PasswordBox { Password = "Sólo-prueba", Width = 220 };
+                var selector = new ComboBox { ItemsSource = new[] { "Uno", "Dos" }, SelectedIndex = 1, Width = 220 };
+                var action = new Button { Style = (Style)appResource("ActionButton"), Content = "Registrar" };
+                controlHost.Children.Add(input); controlHost.Children.Add(password); controlHost.Children.Add(selector); controlHost.Children.Add(action);
+                controlHost.Measure(new Size(500, 300)); controlHost.Arrange(new Rect(0, 0, 500, 300)); controlHost.UpdateLayout();
+                Check(input.Template.FindName("PART_ContentHost", input) is ScrollViewer && password.Template.FindName("PART_ContentHost", password) is ScrollViewer, "Los campos modernos conservan el host de texto y contraseña");
+                Check(selector.Template.FindName("PART_Popup", selector) is System.Windows.Controls.Primitives.Popup && selector.SelectedIndex == 1, "El desplegable moderno conserva popup y selección");
+                Check(action.ActualWidth == 152 && action.ActualHeight == 40, "Las acciones tienen tamaño uniforme de 152 por 40 DIP");
+                password.Clear();
+                session.Clear();
                 var loginWindow = new LoginWindow(shell) { ShowActivated = false };
                 var workspaceWindow = new MainWindow(shell) { ShowActivated = false };
                 var coordinator = new WindowCoordinator(System.Windows.Application.Current, loginWindow, workspaceWindow, session, access);
@@ -495,6 +563,16 @@ internal static class Program
         public Task<bool> ShowCountStartAsync(CountStartDialogModel model) => Task.FromResult(false);
         public Task<bool> ShowSupplierEditorAsync(SupplierEditorDialogModel model) => Task.FromResult(false);
         public Task<bool> ShowInventoryMovementAsync(InventoryViewModel manager) => Task.FromResult(false);
+    }
+
+    private sealed class MvpVisualDialogs : IMvpDialogService
+    {
+        public Func<MvpFormModel, Task>? Render { get; set; }
+        public async Task<bool> ShowAsync(MvpFormModel form) { if (Render is not null) await Render(form); return false; }
+    }
+    private sealed class VisualPdfFiles : IPdfFileService
+    {
+        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) => Task.FromResult(false);
     }
 
     private sealed class FakeSettingsWindowService : ISettingsWindowService

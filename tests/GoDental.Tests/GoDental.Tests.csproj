@@ -46,4 +46,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/Operations/*.cs" Link="Ui/Operations/%(Filename)%(Extension)" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/MvpFormModel.cs" Link="Ui/MvpFormModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Navigation/NavigationService.cs" Link="Ui/NavigationService.cs" />
+  </ItemGroup>
 </Project>
