@@ -213,10 +213,10 @@ public sealed class MvpUiTests
         {
             var draft = Assert.IsType<OrderDraftModel>(form.Body); draft.Customer.Selected = c.CustomersRepository.Customer;
             draft.Address = c.CustomersRepository.Addresses.Single(); draft.Items.Add(new(1, "SKU", "Producto", 3, 0));
-            Set(form, "contact", "Contacto de prueba"); Set(form, "phone", "0000"); Set(form, "reason", "Pedido revisado"); await Save(form);
+            draft.ContactName = "Contacto de prueba"; draft.Phone = "0000"; Set(form, "reason", "Pedido revisado"); await Save(form);
         };
         await vm.CreateCommand.ExecuteAsync(null);
-        var request = Assert.IsType<PlaceOrder>(Assert.Single(c.Repository.Writes)); Assert.Equal(1, request.CustomerAddressId); Assert.Equal(1, request.CustomerId); Assert.Equal(3, request.Items.Single().Quantity);
+        var request = Assert.IsType<PlaceOrder>(Assert.Single(c.Repository.Writes)); Assert.Equal(1, request.CustomerAddressId); Assert.Equal(1, request.CustomerId); Assert.Equal(3, request.Items.Single().Quantity); Assert.Equal("Contacto de prueba", request.Contact); Assert.Equal("Dirección de prueba", request.Address);
     }
     [Fact]
     public async Task DiscountAuthorizationCanBeResolvedWithoutRetainingPassword()
@@ -278,6 +278,74 @@ public sealed class MvpUiTests
         Assert.True(operation.HasPending); Assert.Same(request, operation.Request); Assert.False(operation.CanStart);
         c.Repository.FoundReceipt = new(1, id); await operation.CheckCommand.ExecuteAsync(null); Assert.False(operation.HasPending);
     }
+    [Fact]
+    public async Task OrderCustomerSelectionPrefillsDeliveryAndManualEditDetachesSavedAddress()
+    {
+        var c = new Context(); var draft = new OrderDraftModel(c.Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), c.Session), () => c.Session.Revision);
+        draft.Customer.Selected = c.CustomersRepository.Customer;
+        await (draft.AddressesCommand.ExecutionTask ?? Task.CompletedTask);
+        Assert.Equal("Contacto de prueba", draft.ContactName); Assert.Equal("00000000", draft.Phone);
+        Assert.Equal("Dirección de prueba", draft.DeliveryAddress); Assert.Equal(1, draft.Address!.Id);
+        draft.DeliveryAddress = "Dirección sólo para este pedido";
+        Assert.Null(draft.Address); Assert.Equal("Dirección de prueba", c.CustomersRepository.Addresses.Single().Address);
+        draft.Customer.Selected = null;
+        Assert.Empty(draft.DeliveryAddress); Assert.Empty(draft.ContactName); Assert.Empty(draft.Phone);
+    }
+    [Fact]
+    public async Task OrderCustomerPrefillIgnoresEarlierReadAndClearsPreviousDataImmediately()
+    {
+        var c = new Context(); var draft = new OrderDraftModel(c.Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), c.Session), () => c.Session.Revision);
+        var first = new TaskCompletionSource<CustomerSnapshot?>(); c.CustomersRepository.PendingRead = first;
+        draft.Customer.Selected = c.CustomersRepository.Customer; var firstLoad = draft.AddressesCommand.ExecutionTask!;
+        var second = new TaskCompletionSource<CustomerSnapshot?>(); c.CustomersRepository.PendingRead = second;
+        var other = c.CustomersRepository.Customer with { Id = 2, Name = "Otro cliente", Phone = "2222" };
+        draft.Customer.Selected = other; var secondLoad = draft.AddressesCommand.ExecutionTask!;
+        Assert.Empty(draft.DeliveryAddress);
+        second.SetResult(new(other, new(), [], [new() { Id = 2, Address = "Dirección del segundo cliente" }])); await secondLoad;
+        first.SetResult(new(c.CustomersRepository.Customer, new(), c.CustomersRepository.Contacts, c.CustomersRepository.Addresses)); await firstLoad;
+        Assert.Equal("Otro cliente", draft.ContactName); Assert.Equal("2222", draft.Phone);
+        Assert.Equal("Dirección del segundo cliente", draft.DeliveryAddress); Assert.Equal(2, draft.Address!.Id);
+    }
+    [Fact]
+    public async Task OrderPrefillRequiresChoiceWhenSeveralAddressesArePrimary()
+    {
+        var c = new Context(); c.CustomersRepository.Addresses[0].Primary = true;
+        c.CustomersRepository.Addresses.Add(new() { Id = 2, Primary = true, Address = "Otra dirección" });
+        c.CustomersRepository.Addresses.Add(new() { Id = 3, Active = false, Address = "No disponible" });
+        var draft = new OrderDraftModel(c.Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), c.Session), () => c.Session.Revision);
+        draft.Customer.Selected = c.CustomersRepository.Customer; await (draft.AddressesCommand.ExecutionTask ?? Task.CompletedTask);
+        Assert.Equal(2, draft.Addresses.Count); Assert.Null(draft.Address); Assert.Empty(draft.DeliveryAddress);
+    }
+    [Fact]
+    public async Task InitialInventoryUsesExistingContractAndRefreshesAfterConfirmation()
+    {
+        var c = new Context(); var vm = new InitialInventoryViewModel(new(c.Repository, c.Session), c.Dialogs, c.Session, c.Operations, NullLogger<InitialInventoryViewModel>.Instance);
+        var refreshes = 0;
+        c.Dialogs.Action = async f => { Set(f, "quantity", "3"); Set(f, "cost", "1.123456"); Set(f, "lot", "INICIAL-1"); Set(f, "reason", "Inventario verificado"); f.Fields.Single(x => x.Key == "expires").Date = new DateTime(2030, 1, 1); await Save(f); };
+        await vm.OpenAsync(new() { Id = 4, Name = "Producto", TracksLot = true, TracksExpiry = true }, new() { Id = 2, Name = "Almacén" }, () => { refreshes++; return Task.CompletedTask; });
+        var request = Assert.IsType<InitialInventory>(Assert.Single(c.Repository.Writes));
+        Assert.Equal(4, request.ProductId); Assert.Equal(2, request.WarehouseId); Assert.Equal(3, request.Quantity); Assert.Equal(1.123456m, request.UnitCost);
+        Assert.Equal("INICIAL-1", request.LotNumber); Assert.Equal(new DateTime(2030, 1, 1), request.Expires); Assert.NotEqual(Guid.Empty, request.OperationId); Assert.Equal(1, refreshes);
+    }
+    [Fact]
+    public async Task InitialInventoryRetainsSameRequestAfterLostResponse()
+    {
+        var c = new Context(); var vm = new InitialInventoryViewModel(new(c.Repository, c.Session), c.Dialogs, c.Session, c.Operations, NullLogger<InitialInventoryViewModel>.Instance);
+        var refreshes = 0; c.Repository.LoseResponse = true;
+        c.Dialogs.Action = async f => { Set(f, "quantity", "1"); Set(f, "cost", "2"); Set(f, "reason", "Carga revisada"); await Save(f); };
+        await vm.OpenAsync(new() { Id = 1 }, new() { Id = 1 }, () => { refreshes++; return Task.CompletedTask; });
+        Assert.True(vm.Operation.HasPending); Assert.False(vm.CanInitialize); var original = vm.Operation.Request;
+        c.Repository.LoseResponse = false; await vm.Operation.RetryCommand.ExecuteAsync(null);
+        Assert.Equal(Assert.IsType<InitialInventory>(original), Assert.IsType<InitialInventory>(c.Repository.Writes[1])); Assert.Equal(1, refreshes); Assert.False(vm.Operation.HasPending);
+    }
+    [Fact]
+    public async Task InitialInventoryReaderCannotOpenWriteForm()
+    {
+        var c = new Context(); c.Session.Begin(new(1, "lector", "Lector", 1, [], ["INVENTARIO.VER"], false));
+        var vm = new InitialInventoryViewModel(new(c.Repository, c.Session), c.Dialogs, c.Session, c.Operations, NullLogger<InitialInventoryViewModel>.Instance);
+        await vm.OpenAsync(new() { Id = 1 }, new() { Id = 1 }, () => Task.CompletedTask);
+        Assert.Null(c.Dialogs.Last); Assert.Empty(c.Repository.Writes);
+    }
     private static Task Save(MvpFormModel form) { form.Confirmed = true; return ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null); }
     private static void Set(MvpFormModel f, string key, string value) => f.Fields.Single(x => x.Key == key).Value = value;
     private sealed class Context
@@ -286,7 +354,7 @@ public sealed class MvpUiTests
         public CustomerWorkflowRepository CustomersRepository { get; } = new();
         public MvpOperationService Operations { get; } public CashService Cash { get; } public SalesService Sales { get; } public CustomerService Customers { get; }
         public Context() { Login(); Operations = new(Repository, Session); Cash = new(Repository, Session); Sales = new(Repository, Session, DispatchProxy.Create<IIdentityGateway, IdentityPort>()); Customers = new(CustomersRepository, Session); }
-        public void Login() => Session.Begin(new(1, "prueba", "Prueba", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
+        public void Login() => Session.Begin(new(1, "prueba", "Prueba", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR"], false));
         public MvpOperationModel Operation() => new(Session, Operations, NullLogger.Instance);
         public CashViewModel CashVm() => new(Cash, new InventoryService(DispatchProxy.Create<IInventoryRepository, UnusedPort>(), Session), Dialogs, Session, Operations, NullLogger<CashViewModel>.Instance);
         public PosViewModel PosVm() => new(Sales, Cash, Customers, Dialogs, Session, Operations, NullLogger<PosViewModel>.Instance);

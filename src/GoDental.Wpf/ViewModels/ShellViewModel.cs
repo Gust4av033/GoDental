@@ -34,8 +34,16 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenCredit => Credit.CanRead;
     public bool CanOpenOrders => Orders.CanRead;
     public bool CanOpenSales => CommercialHistory.CanRead;
-    public bool HasPendingMvp => new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
-    public bool CanCloseWorkspace => !HasPendingMvp && new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.All(m => !m.IsBusy && !m.IsEditing) && Products.IsNotBusy && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
+    private IEnumerable<MvpWorkspaceViewModel> MvpWorkspaces
+    {
+        get
+        {
+            yield return Cash; yield return Pos; yield return Credit; yield return Orders; yield return CommercialHistory;
+            if (Products.Inventory?.InitialInventory is { } initial) yield return initial;
+        }
+    }
+    public bool HasPendingMvp => MvpWorkspaces.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
+    public bool CanCloseWorkspace => !HasPendingMvp && MvpWorkspaces.All(m => !m.IsBusy && !m.IsEditing) && Products.IsNotBusy && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
     public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
     public bool CanOpenCustomers => Customers.CanRead;
     public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
@@ -85,7 +93,7 @@ public sealed partial class ShellViewModel : ObservableObject
         Access = access; Products = products;
         Users = users; Counts = counts; Suppliers = suppliers; Customers = customers;
         Cash = cash; Pos = pos; Credit = credit; Orders = orders; CommercialHistory = commercialHistory;
-        foreach (var model in new MvpWorkspaceViewModel[] { cash, pos, credit, orders, commercialHistory })
+        foreach (var model in MvpWorkspaces)
         {
             model.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
             model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };

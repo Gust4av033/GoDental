@@ -55,6 +55,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
                     services.AddSingleton<ConnectionViewModel>();
                     services.AddSingleton<AccessViewModel>();
+                    services.AddSingleton<InitialInventoryViewModel>();
                     services.AddSingleton<InventoryViewModel>();
                     services.AddSingleton<InventoryCountsViewModel>();
                     services.AddSingleton<SuppliersViewModel>();

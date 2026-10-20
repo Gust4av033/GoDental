@@ -41,7 +41,7 @@ public sealed partial class ProductsViewModel : ObservableObject
     public bool CanEdit => CanManage && IsNotBusy && !dialogOpen;
     public bool CanEditSelected => CanEdit && SelectedProduct is not null;
     public bool CanOpenInventory => IsNotBusy && SelectedProduct is not null && Inventory is not null;
-    public bool IsNotBusy => !IsBusy && Inventory?.IsBusy != true && CategoryManager?.IsBusy != true;
+    public bool IsNotBusy => !IsBusy && Inventory?.IsNotBusy != false && CategoryManager?.IsBusy != true;
     public bool IsEmpty => Total == 0;
     public bool ShowEmptyState => IsEmpty && !IsBusy && !HasLoadError;
     public bool ShowErrorState => IsEmpty && !IsBusy && HasLoadError;

@@ -4,7 +4,7 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 
 // Synthetic data for tests and visual smoke only; never registered by the app.
-internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository
+internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository
 {
     public List<object> Writes { get; } = [];
     public bool LoseResponse { get; set; }
@@ -54,5 +54,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => Task.FromResult<OrderSnapshot?>(Order);
     public Task<MvpPage<OrderData>> OrdersAsync(string? state, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderData>([Order.Order], 1));
     public Task<MvpPage<OrderEventData>> OrderEventsAsync(long id, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderEventData>(Order.Events, Order.TotalEvents));
+    public Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 1);
+    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct) => throw new NotSupportedException();
     public Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct) => Task.FromResult(FoundReceipt);
 }

@@ -141,7 +141,12 @@ internal static class Program
             var nav = new NavigationService();
             var session = new UserSession();
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
-            var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService());
+            var mvpRepository = new MvpUiRepository();
+            var mvpDialogs = new MvpVisualDialogs();
+            var operationService = new MvpOperationService(mvpRepository, session);
+            var initialStock = new InitialInventoryViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<InitialInventoryViewModel>.Instance);
+            var visualInventory = new VisualInventoryRepository();
+            var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock);
             var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
             var productRepository = new FakeProductRepository();
             var productService = new ProductService(productRepository, session);
@@ -150,9 +155,6 @@ internal static class Program
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
             var settingsHarness = new FakeSettingsWindowService();
-            var mvpRepository = new MvpUiRepository();
-            var mvpDialogs = new MvpVisualDialogs();
-            var operationService = new MvpOperationService(mvpRepository, session);
             var cashService = new CashService(mvpRepository, session);
             var salesService = new SalesService(mvpRepository, session, new FakeIdentityGateway());
             var customerService = new CustomerService(new CustomerWorkflowRepository(), session);
@@ -525,7 +527,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -631,6 +633,12 @@ internal static class Program
                         "Volver al listado y reabrir conserva las fichas de crédito, pedidos, ventas y cotizaciones");
                     mvpDialogs.Render = async form =>
                     {
+                        if (form.Body is OrderDraftModel draft)
+                        {
+                            draft.Customer.Selected = new() { Id = 1, Name = "Cliente de prueba" };
+                            await (draft.AddressesCommand.ExecutionTask ?? Task.CompletedTask);
+                            Check(draft.ContactName == "Contacto de prueba" && draft.DeliveryAddress == "Dirección de prueba", "Seleccionar cliente precarga los datos del pedido sin copiar campos manualmente");
+                        }
                         var view = new MvpFormView(); view.Connect(form);
                         await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-dialogo-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
                     };
@@ -652,8 +660,36 @@ internal static class Program
                     await ordersMvp.CreateCommand.ExecuteAsync(null);
                     await ordersMvp.TransitionCommand.ExecuteAsync(null);
                     await ordersMvp.LinkCommand.ExecuteAsync(null);
+                    visualInventory.HasStock = false;
+                    await inventory.OpenAsync(new() { Id = 4, Name = "Producto sin saldo de prueba", Sku = "UI-INICIAL", TracksLot = true, TracksExpiry = true });
+                    nav.Navigate(SetupPage.Products);
+                    Check(inventory.CanInitialize && !inventory.CanWrite, "El producto sin saldo ofrece existencias iniciales en lugar de exigir una versión inexistente");
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"inventario-sin-saldo-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"inventario-sin-saldo-compacto-{theme}.png"));
+                    await inventory.OpenInitialInventoryCommand.ExecuteAsync(null);
+                    visualInventory.HasStock = true;
+                    await inventory.ReloadCommand.ExecuteAsync(null);
                     mvpDialogs.Render = null;
                 }
+                visualInventory.HasStock = false;
+                await inventory.ReloadCommand.ExecuteAsync(null);
+                mvpRepository.LoseResponse = true;
+                mvpDialogs.Render = async form =>
+                {
+                    foreach (var (key, value) in new[] { ("quantity", "10"), ("cost", "2.123456"), ("lot", "INICIAL-UI"), ("reason", "Carga inicial verificada") }) form.Fields.Single(f => f.Key == key).Value = value;
+                    form.Fields.Single(f => f.Key == "expires").Date = new DateTime(2030, 1, 1);
+                    form.Confirmed = true;
+                    await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null);
+                };
+                await inventory.OpenInitialInventoryCommand.ExecuteAsync(null);
+                Check(shell.HasPendingMvp && !shell.CanCloseWorkspace && !shell.CanSignOut && !inventory.IsNotBusy,
+                    "Una carga inicial incierta conserva su solicitud y bloquea cierre, sesión y nuevas operaciones de inventario");
+                var initialRequest = (InitialInventory)mvpRepository.Writes.Last();
+                visualInventory.HasStock = true; mvpRepository.LoseResponse = false;
+                await initialStock.Operation.RetryCommand.ExecuteAsync(null);
+                Check(mvpRepository.Writes.OfType<InitialInventory>().All(r => r.OperationId == initialRequest.OperationId) && inventory.CanWrite && !inventory.CanInitialize && !shell.HasPendingMvp,
+                    "Reenviar la misma carga conserva OperationId y refresca existencias sin ofrecer otra inicialización");
+                mvpDialogs.Render = null;
                 Check(posMvp.Quote?.Total == emitted.Total && ordersMvp.Detail is not null && creditMvp.Payments.Count > 0, "MVP muestra cálculos, pedido y abonos de sus servicios");
                 var controlHost = new StackPanel();
                 var input = new TextBox { Text = "Prueba de edición", Width = 220 };
@@ -789,6 +825,12 @@ internal static class Program
             window.Show();
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             window.UpdateLayout();
+            if (model is MvpFormModel { Body: OrderDraftModel draft })
+            {
+                FindChildren<TabControl>(body).Single().SelectedIndex = 1; window.UpdateLayout();
+                Check(FindChildren<TextBox>(body).Any(input => System.Windows.Automation.AutomationProperties.GetName(input) == "Contacto de entrega" && input.Text == draft.ContactName),
+                    "Datos de entrega muestra el contacto precargado en el campo editable");
+            }
             if (model is MvpFormModel { Body: CheckoutModel checkout })
             {
                 var methods = FindChildren<ListBox>(body).Single(box => ReferenceEquals(box.ItemsSource, checkout.Methods));
@@ -987,6 +1029,13 @@ internal static class Program
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
                     $"La acción de Productos/Inventario cabe en {width}×{height} con tamaño uniforme");
+                if (productShell.Products.Inventory?.CanOfferInitial == true)
+                {
+                    var initial = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == "Existencias iniciales");
+                    var initialBounds = initial.TransformToAncestor(root).TransformBounds(new Rect(initial.RenderSize));
+                    Check(initial.ActualWidth == 152 && initial.ActualHeight == 36 && initialBounds.Right <= width && initialBounds.Bottom <= height,
+                        $"Existencias iniciales queda visible con tamaño uniforme en {width}×{height}");
+                }
             }
             if (root.DataContext is ShellViewModel { IsCounts: true } countShell)
             {

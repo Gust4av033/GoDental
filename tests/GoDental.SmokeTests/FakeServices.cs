@@ -47,9 +47,10 @@ internal sealed class FakeUserRepository : IUserRepository
 // Datos controlados sólo para pruebas de enlaces/layout; nunca registrados en App.
 internal sealed class VisualInventoryRepository : IInventoryRepository
 {
+    public bool HasStock { get; set; } = true;
     public Task<IReadOnlyList<CatalogOption>> WarehousesAsync(int userId, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<CatalogOption>>([new(){Id=1,Name="Almacén de prueba"}]);
-    public Task<InventorySnapshot> ReadAsync(int p, int w, int u, CancellationToken ct = default) => Task.FromResult(new InventorySnapshot([new(){WarehouseId=1,Warehouse="Almacén de prueba",Quantity=10,Sellable=10,AverageCost=2,RowVersion=new byte[8]}],[new(){Id=1,Number="LOTE-PRUEBA",Expires=new DateTime(2027,1,1),Quantity=10,Active=true,Status="Vigente"}]));
-    public Task<MovementPage> MovementsAsync(MovementFilter f, int u, CancellationToken ct = default) => Task.FromResult(new MovementPage([new() { Id = 1, Date = new DateTimeOffset(2026, 10, 17, 9, 0, 0, TimeSpan.FromHours(-6)), Warehouse = "Almacén de prueba", Lot = "LOTE-PRUEBA", Type = "AJUSTE", Quantity = 10, Before = 0, After = 10, User = "Cuenta de prueba", Reference = "CONTEO #1", Reason = "Movimiento sintético para comprobar la vista" }],1));
+    public Task<InventorySnapshot> ReadAsync(int p, int w, int u, CancellationToken ct = default) => Task.FromResult(!HasStock ? new InventorySnapshot([], []) : new InventorySnapshot([new(){WarehouseId=1,Warehouse="Almacén de prueba",Quantity=10,Sellable=10,AverageCost=2,RowVersion=new byte[8]}],[new(){Id=1,Number="LOTE-PRUEBA",Expires=new DateTime(2027,1,1),Quantity=10,Active=true,Status="Vigente"}]));
+    public Task<MovementPage> MovementsAsync(MovementFilter f, int u, CancellationToken ct = default) => Task.FromResult(!HasStock ? new MovementPage([], 0) : new MovementPage([new() { Id = 1, Date = new DateTimeOffset(2026, 10, 17, 9, 0, 0, TimeSpan.FromHours(-6)), Warehouse = "Almacén de prueba", Lot = "LOTE-PRUEBA", Type = "AJUSTE", Quantity = 10, Before = 0, After = 10, User = "Cuenta de prueba", Reference = "CONTEO #1", Reason = "Movimiento sintético para comprobar la vista" }],1));
     public Task<Result<long>> AdjustAsync(InventoryAdjustment r,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<long>.Failure("TEST","Prueba visual sin escritura."));
     public Task<Result<long>> SetLotStateAsync(LotStateChange r,int u,int? w,CancellationToken ct=default) => Task.FromResult(Result<long>.Failure("TEST","Prueba visual sin escritura."));
 }
