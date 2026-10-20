@@ -29,7 +29,7 @@ public sealed class CustomerService(ICustomerRepository repository, IUserSession
         if (!(request.Customer?.Id == 0 ? CanCreate : CanEdit)) return Denied();
         if (CustomerValidator.Validate(request) is { } error) return Invalid(error);
         var c = request.Customer!;
-        return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Customer = c with { Code = c.Code.Trim(), Name = c.Name.Trim(), CommercialName = Optional(c.CommercialName), Nit = Optional(c.Nit), Nrc = Optional(c.Nrc), Dui = Optional(c.Dui), BusinessActivity = Optional(c.BusinessActivity), Phone = Optional(c.Phone), WhatsApp = Optional(c.WhatsApp), Email = Optional(c.Email), RowVersion = c.RowVersion.ToArray() } }, UserId, WorkstationId, ct);
+        return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Customer = c with { Code = c.Code?.Trim() ?? "", Name = c.Name.Trim(), CommercialName = Optional(c.CommercialName), Nit = Optional(c.Nit), Nrc = Optional(c.Nrc), Dui = Optional(c.Dui), BusinessActivity = Optional(c.BusinessActivity), Phone = Optional(c.Phone), WhatsApp = Optional(c.WhatsApp), Email = Optional(c.Email), RowVersion = c.RowVersion.ToArray() } }, UserId, WorkstationId, ct);
     }
     public Task<Result<long>> SaveContactAsync(CustomerContactChange request, CancellationToken ct = default)
     {

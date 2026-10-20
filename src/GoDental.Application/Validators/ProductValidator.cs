@@ -6,7 +6,7 @@ public static class ProductValidator
 {
     public static string? Validate(ProductData p)
     {
-        if (string.IsNullOrWhiteSpace(p.Sku) || p.Sku.Trim().Length > 60) return "Escribe un SKU de hasta 60 caracteres.";
+        if ((p.Id != 0 && string.IsNullOrWhiteSpace(p.Sku)) || p.Sku?.Trim().Length > 60) return "El SKU se asigna al crear; al editar conserva uno de hasta 60 caracteres.";
         if (string.IsNullOrWhiteSpace(p.Name) || p.Name.Trim().Length > 200) return "Escribe un nombre de hasta 200 caracteres.";
         if (p.Description?.Length > 1000) return "La descripción admite hasta 1000 caracteres.";
         if (p.CategoryId <= 0 || p.UnitId <= 0) return "Selecciona categoría y unidad de medida.";

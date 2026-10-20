@@ -140,3 +140,7 @@ Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.
 - Instrucciones para agentes/asistentes de programación: `AGENTS.md`.
+
+## Recorrido MVP en interfaz
+
+Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y comprobantes PDF internos tienen páginas propias conectadas a los servicios. [Alcance, recuperación de operaciones y comprobaciones de DEV-19](docs/DEV-19-UI-MVP.md).

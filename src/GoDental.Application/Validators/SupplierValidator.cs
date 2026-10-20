@@ -11,8 +11,8 @@ public static class SupplierValidator
         var s = request.Supplier;
         if (s is null || s.Id < 0 || (s.Id > 0 && s.RowVersion?.Length != 8) || (s.Id == 0 && s.RowVersion?.Length != 0))
             return "Recarga la ficha del proveedor antes de guardar.";
-        if (string.IsNullOrWhiteSpace(s.Code) || s.Code.Trim().Length > 30 || string.IsNullOrWhiteSpace(s.Name) || s.Name.Trim().Length > 200)
-            return "Código y nombre son obligatorios (máximo 30 y 200 caracteres).";
+        if ((s.Id != 0 && string.IsNullOrWhiteSpace(s.Code)) || s.Code?.Trim().Length > 30 || string.IsNullOrWhiteSpace(s.Name) || s.Name.Trim().Length > 200)
+            return "Revisa el código (30) y el nombre obligatorio (200 caracteres).";
         if (s.Country?.Trim().Length > 80 || s.Address?.Trim().Length > 400 || s.Phone?.Trim().Length > 40)
             return "Revisa país (80), dirección (400) y teléfono (40 caracteres).";
         if (EmailError(s.Email) is { } emailError) return emailError;

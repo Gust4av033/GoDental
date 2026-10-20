@@ -149,7 +149,7 @@ public sealed class CashService(ICashRepository repository, IUserSession session
         return repository.CashMovementsAsync(id, f, UserId, ct);
     }
 
-    public Task<Result<MvpReceipt>> SaveBoxAsync(CashBoxChange r, CancellationToken ct = default) => Write(Has("CAJA.VER", "AJUSTES.EDITAR"), r, () => repository.SaveBoxAsync(r with { Code=r.Code.Trim(), Name=r.Name.Trim(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
+    public Task<Result<MvpReceipt>> SaveBoxAsync(CashBoxChange r, CancellationToken ct = default) => Write(Has("CAJA.VER", "AJUSTES.EDITAR"), r, () => repository.SaveBoxAsync(r with { Code=r.Code?.Trim() ?? "", Name=r.Name.Trim(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
     public Task<Result<MvpReceipt>> OpenAsync(OpenCashShift r, CancellationToken ct = default) => Write(CanOpen, r, () => repository.OpenShiftAsync(r with { Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
     public Task<Result<MvpReceipt>> MoveAsync(CashMovement r, CancellationToken ct = default) => Write(CanMove, r, () => repository.MoveCashAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
     public Task<Result<MvpReceipt>> CloseAsync(CloseCashShift r, CancellationToken ct = default) => Write(CanClose, r, () => repository.CloseShiftAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));

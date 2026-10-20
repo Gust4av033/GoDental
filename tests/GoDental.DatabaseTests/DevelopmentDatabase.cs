@@ -40,7 +40,7 @@ internal static class DevelopmentDatabase
             Console.WriteLine("SQL " + Path.GetFileName(file));
         }
         var counts = await connection.QuerySingleAsync("SELECT (SELECT COUNT(*) FROM sys.tables) Tables,(SELECT COUNT(*) FROM sys.views) Views,(SELECT COUNT(*) FROM sys.procedures) Procedures");
-        if ((int)counts.Tables != 76 || (int)counts.Views != 8 || (int)counts.Procedures != 17) throw new InvalidOperationException("Objetos de baseline/migraciones incompletos.");
+        if ((int)counts.Tables != 76 || (int)counts.Views != 8 || (int)counts.Procedures != 18) throw new InvalidOperationException("Objetos de baseline/migraciones incompletos.");
     }
 }
 

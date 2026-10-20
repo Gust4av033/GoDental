@@ -87,10 +87,12 @@ public sealed class SqlSupplierRepository(IDbConnectionFactory factory) : ISuppl
             if (previous is not null && previous.Code != s.Code && await c.ExecuteScalarAsync<bool>(Cmd(
                 "SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cmp.OrdenesCompra WITH(HOLDLOCK) WHERE IdProveedor=@Id) THEN 1 ELSE 0 END);", s, tx, ct)))
                 return Result<int>.Failure("IN_USE", "El proveedor tiene órdenes; conserva su código para mantener trazabilidad.");
+            var inserting = s.Id == 0 && string.IsNullOrWhiteSpace(s.Code)
+                ? s with { Code = await GoDental.Infrastructure.Data.MasterCode.NextAsync(c, tx, "MAESTRO_PROVEEDOR", ct) } : s;
             var id = s.Id == 0 ? await c.ExecuteScalarAsync<int>(Cmd("""
                 INSERT INTO cmp.Proveedores(Codigo,Nombre,Pais,Direccion,Email,Telefono,SitioWeb,Activo)
                 OUTPUT INSERTED.IdProveedor VALUES(@Code,@Name,@Country,@Address,@Email,@Phone,@Website,@Active);
-                """, s, tx, ct)) : s.Id;
+                """, inserting, tx, ct)) : s.Id;
             if (s.Id != 0) await c.ExecuteAsync(Cmd("""
                 UPDATE cmp.Proveedores SET Codigo=@Code,Nombre=@Name,Pais=@Country,Direccion=@Address,Email=@Email,Telefono=@Phone,SitioWeb=@Website,Activo=@Active
                 WHERE IdProveedor=@Id;
@@ -184,6 +186,7 @@ public sealed class SqlSupplierRepository(IDbConnectionFactory factory) : ISuppl
             return result;
         }
         catch (SqlException ex) when (ex.Number == 53201) { return Result<int>.Failure("FORBIDDEN", ex.Message); }
+        catch (SqlException ex) when (ex.Number is 53501 or 53502) { return Result<int>.Failure("CODE_UNAVAILABLE", ex.Message); }
         catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Result<int>.Failure("DUPLICATE_CODE", "Ya existe un proveedor con ese código."); }
         catch (SqlException ex) when (ex.Number == 1205) { return Result<int>.Failure("CONCURRENCY_CONFLICT", "Otra operación utilizó estos datos. Recarga y revisa antes de repetir."); }
     }

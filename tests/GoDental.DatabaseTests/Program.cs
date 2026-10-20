@@ -13,6 +13,13 @@ using Microsoft.Data.SqlClient;
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-codes"))
+{
+    var codesDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(codesDatabase, Path.Combine(root, "database"));
+    await AutomaticCodeIntegration.RunAsync(new TestConnectionFactory(codesDatabase), root, codesDatabase);
+    return;
+}
 if (args.Contains("--run-mvp"))
 {
     var mvpDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
@@ -60,7 +67,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 
