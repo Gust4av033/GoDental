@@ -11,11 +11,12 @@ public sealed class SupplierTests
     private static SupplierChange NewSupplier() => new(new() { Code = "SUP-001", Name = "Proveedor prueba" }, "Alta comercial");
 
     [Fact]
-    public void SupplierRequiresCodeNameReasonAndVersionForExistingRecords()
+    public void SupplierAllowsAutomaticCodeAndRequiresNameReasonAndVersionForExistingRecords()
     {
         var request = NewSupplier();
         Assert.Null(SupplierValidator.Validate(request));
-        Assert.NotNull(SupplierValidator.Validate(request with { Supplier = request.Supplier with { Code = " " } }));
+        Assert.Null(SupplierValidator.Validate(request with { Supplier = request.Supplier with { Code = " " } }));
+        Assert.NotNull(SupplierValidator.Validate(request with { Supplier = request.Supplier with { Id = 1, RowVersion = new byte[8], Code = " " } }));
         Assert.NotNull(SupplierValidator.Validate(request with { Supplier = request.Supplier with { Name = new('a', 201) } }));
         Assert.NotNull(SupplierValidator.Validate(request with { Reason = " " }));
         Assert.NotNull(SupplierValidator.Validate(request with { Supplier = request.Supplier with { Id = 1 } }));
