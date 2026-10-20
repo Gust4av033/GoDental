@@ -60,8 +60,14 @@ public sealed partial class SqlMvpRepository
     public Task<Result<MvpReceipt>> LinkSaleAsync(LinkOrderSale r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "VINCULAR_PEDIDO_VENTA", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
+        await LinkOrderSaleCore(w, r, userId);
+        return r.OrderId;
+    }, ct);
+    private static void LinkableOrder(OrderData order) => Require(order.State is not ("CANCELADO" or "ENTREGADO") && order.SaleId is null, "INVALID_STATE", "El pedido ya tiene venta o está finalizado.");
+    private static async Task LinkOrderSaleCore(Work w, LinkOrderSale r, int userId)
+    {
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
-        Require(order.State is not ("CANCELADO" or "ENTREGADO") && order.SaleId is null, "INVALID_STATE", "El pedido ya tiene venta o está finalizado.");
+        LinkableOrder(order);
         var sale = await w.Maybe<SaleData>("SELECT IdVenta Id,IdCliente CustomerId,Estado State,CargoEntrega DeliveryCharge FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId;", r);
         Require(sale is not null && sale.State == "CONFIRMADA" && sale.CustomerId == order.CustomerId && sale.DeliveryCharge == order.DeliveryCharge, "VALIDATION", "La venta debe estar confirmada y corresponder al cliente y cargo de entrega.");
         Require(await w.Scalar<bool>("""
@@ -74,8 +80,7 @@ public sealed partial class SqlMvpRepository
             """, r), "VALIDATION", "La venta no corresponde a los productos y cantidades del pedido.");
         await w.Execute("UPDATE ven.PedidosMvp SET IdVenta=@SaleId WHERE IdPedido=@OrderId;", r);
         await OrderEvent(w, r.OrderId, userId, order.State, r.Reason);
-        return r.OrderId;
-    }, ct);
+    }
     public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], async w =>
     {
         var order = await w.Maybe<OrderData>($"SELECT {OrderColumns} FROM ven.PedidosMvp p LEFT JOIN ven.Ventas v ON v.IdVenta=p.IdVenta WHERE p.IdPedido=@id;", new { id });

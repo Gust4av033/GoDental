@@ -2,7 +2,7 @@
 
 Incremento autorizado para `feature/logica`. El objetivo es cerrar el recorrido entrada inicial → cliente → caja → presupuesto/precio → venta → cobro/crédito → comprobante → pedido/entrega → cierre. El refinamiento visual corresponde a `feature/ui`. No se considera validación de SQL una compilación ni se simulan respuestas fiscales.
 
-Las referencias a `feature/logica` y `feature/ui` describen el incremento histórico. La rama vigente es `feature/desarrollo`; las decisiones pendientes siguientes no representan funcionalidad implementada.
+Las referencias a `feature/logica` y `feature/ui` describen el incremento histórico. La rama vigente es `feature/desarrollo`; el bloque de pedidos distingue la conexión implementada al POS de las reservas y el cobro contra entrega pendientes.
 
 ## Decisiones y límites
 
@@ -22,13 +22,17 @@ Las referencias a `feature/logica` y `feature/ui` describen el incremento histó
 - Un pedido no reserva inventario ni representa un pago. Se enlaza a una venta confirmada del mismo cliente, productos/cantidades y cargo; pago pendiente se deriva de la venta/CxC, sin permitir marcar “pagado” manualmente. EN_RUTA y ENTREGADO requieren esa venta confirmada para que la salida tenga inventario y cobro/crédito registrados; se permite saldo financiado. El cambio posterior de dirección del cliente no altera el snapshot. Una venta sólo se enlaza a un pedido. Entregar registra fecha, usuario y observación, sin tracking/GPS obligatorio. Las líneas exigen productos y unidades compatibles con el POS del MVP.
 - Comprobante PDF operativo mediante QuestPDF, obtenido del snapshot de la venta confirmada, claramente interno y separado de DTE. Fiscal permite registrar FE/CCFE pendiente para una venta sin transmitir ni declarar aceptación; las credenciales, firma, esquemas y transporte reales siguen fuera de este MVP y de cualquier certificación productiva.
 
-## Decisiones pendientes · Pedidos → Ventas → Entregas
+## Decisiones vigentes · Pedidos → Ventas → Entregas
 
-### 1. Pasar al POS / Crear venta desde pedido · prioridad alta
+### 1. Pasar al POS / Crear venta desde pedido · implementación autorizada
 
-Actualmente se vincula una venta confirmada introduciendo su ID manualmente. El flujo habitual futuro debe ofrecer **Pasar al POS / Crear venta desde pedido**: cargar cliente, productos, cantidades y cargo de entrega, conservar la referencia al pedido y recalcular precios, promociones y descuentos con la lógica normal del POS. El usuario revisa el cálculo y cobra normalmente; tras confirmar la venta, ésta se vincula automáticamente al pedido.
+**Pasar al POS / Crear venta desde pedido** es el recorrido habitual implementado: carga cliente, productos, cantidades y cargo de entrega, conserva la referencia al pedido y recalcula precios, promociones y descuentos con la lógica normal del POS. El usuario revisa el cálculo y cobra normalmente; tras confirmar la venta, ésta queda vinculada automáticamente al pedido. El ID manual se conserva como opción secundaria.
 
-El enlace conserva las validaciones existentes de cliente, productos, cantidades y cargo de entrega, además de permisos, versiones y auditoría. `Vincular venta` manual queda como mecanismo secundario de recuperación/compatibilidad. Antes de implementar se debe definir la coordinación y recuperación de confirmación/enlace, conservando `OperationId` y evitando duplicar una venta si falla su vinculación. No se prescribe aquí una transacción ni un contrato nuevo.
+El enlace conserva las validaciones existentes de cliente, productos, cantidades y cargo de entrega, además de permisos, versiones y auditoría. `Vincular venta` manual queda como mecanismo secundario de recuperación/compatibilidad.
+
+Diseño autorizado antes de implementar (20/10/2026): `ConfirmSale` admite un origen opcional `SaleOrderOrigin(OrderId, ExpectedVersion)`, incompatible con `QuotationId`. Application valida y copia la versión; el POS conserva el origen al recalcular y reenviar. Infrastructure bloquea primero el pedido con `UPDLOCK,HOLDLOCK`, verifica versión, ausencia de venta y estado no finalizado; ejecuta la confirmación habitual y reutiliza la validación del enlace manual dentro de **la misma transacción**. Actualización de `IdVenta`, evento del pedido, inventario/lotes/Kardex, pagos/crédito/Caja, recibo por GUID y auditoría se confirman juntos o se revierten juntos. El recibo sigue identificando la venta. Dos GUID distintos no pueden confirmar dos ventas para el mismo pedido; reenviar el GUID original devuelve el mismo recibo incluso si avanzó la versión del pedido. No hay segunda escritura de enlace desde WPF ni migración nueva: se reutilizan las tablas de 012/013 y su índice único de venta vinculada.
+
+La UI lee nuevamente el pedido al llevarlo al POS, carga sus datos sólo después de recalcular correctamente y nunca sustituye un carrito en curso. Conserva cliente, productos, cantidades y entrega; permite caja/lista y descuentos con el cálculo habitual. Vaciar cancela únicamente el borrador local. Confirmar no cambia el estado operativo del pedido. Las reglas de entrega y los pendientes de reservas/cobro contra entrega permanecen intactos.
 
 ### 2. Pedido y stock · recorrido operativo recomendado
 

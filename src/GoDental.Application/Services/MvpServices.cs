@@ -68,7 +68,7 @@ public sealed class SalesService(ISalesRepository repository, IUserSession sessi
         return repository.QuoteAsync(MvpValidator.Freeze(cart), UserId, ct);
     }
 
-    public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, CancellationToken ct = default) => Write(CanSell, r, () => repository.ConfirmAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim() }, UserId, WorkstationId, ct));
+    public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, CancellationToken ct = default) => Write(CanSell, r, () => repository.ConfirmAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim(), Order = r.Order is { } o ? o with { ExpectedVersion = o.ExpectedVersion.ToArray() } : null }, UserId, WorkstationId, ct));
     public Task<Result<MvpReceipt>> SaveQuotationAsync(SaveQuotation r, CancellationToken ct = default) => Write(CanQuote, r, () => repository.SaveQuotationAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }, UserId, WorkstationId, ct));
     public async Task<Result<MvpReceipt>> AuthorizeDiscountAsync(DiscountApproval r, string administrator, string password, CancellationToken ct = default)
     {

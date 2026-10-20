@@ -212,6 +212,9 @@ public sealed partial class SqlMvpRepository
     public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CONFIRMAR_VENTA", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
+        // Bloquear el pedido antes de cualquier efecto comercial impide cobrarlo en dos equipos.
+        if (r.Order is { } origin)
+            LinkableOrder(await LockOrder(w, origin.OrderId, origin.ExpectedVersion));
         Require(workstationId is not null, "FORBIDDEN", "La sesión no tiene equipo de trabajo.");
         var methods = new List<(SalePayment Payment, PaymentMethodData Method)>();
         foreach (var p in r.Payments)
@@ -260,6 +263,8 @@ public sealed partial class SqlMvpRepository
             await TouchShift(w, r.ShiftId!.Value);
         if (r.QuotationId is not null)
             await w.Execute("UPDATE ven.Cotizaciones SET Estado=N'CONVERTIDA' WHERE IdCotizacion=@QuotationId;", r);
+        if (r.Order is { } order)
+            await LinkOrderSaleCore(w, new(r.OperationId, order.OrderId, order.ExpectedVersion, id, r.Reason), userId);
         return id;
     }, ct);
     public Task<QuotationData?> ReadQuotationAsync(long id, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.Maybe<QuotationData>("SELECT IdCotizacion Id,NumeroCotizacion Number,IdCliente CustomerId,Fecha Date,Total,ValidaHasta ValidUntil,Estado State,ISNULL(SnapshotMvp,N'') SnapshotJson,RowVersion FROM ven.Cotizaciones WHERE IdCotizacion=@id;", new { id }), ct);
