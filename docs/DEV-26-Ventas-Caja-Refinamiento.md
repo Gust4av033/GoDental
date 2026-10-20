@@ -21,9 +21,9 @@ Se inspeccionaron directamente las imágenes de `Imagenes/`, principalmente las 
 
 Los estados de carga, mensajes de error, vacíos, paginación, permisos y limpieza al cerrar sesión se conservan en los ViewModels. Las fichas son estados de navegación separados dentro del área de trabajo; los formularios de escritura son ventanas independientes con confirmación y descarte.
 
-## Pendientes prioritarios del recorrido Pedido → Venta → Entrega
+## Recorrido Pedido → Venta → Entrega y pendientes
 
-El refinamiento anterior conserva el enlace manual por ID; **Pasar al POS / Crear venta desde pedido aún no está implementado**. Es la mejora prioritaria: precargar cliente, productos, cantidades y cargo de entrega, conservar referencia al pedido, recalcular con las reglas normales del POS, cobrar y vincular automáticamente después de confirmar la venta. Se mantienen las validaciones de cliente/productos/cantidades/cargo; el enlace manual queda como recuperación/compatibilidad. DEV-17 define el alcance y la coordinación pendiente, sin inventar una transacción.
+El refinamiento inicial conservaba el enlace manual por ID. Con la autorización posterior se implementa **Pasar al POS / Crear venta desde pedido**: precarga cliente, productos, cantidades y cargo de entrega, conserva referencia al pedido y recalcula con las reglas normales del POS. Confirmar cobra y vincula automáticamente en una única transacción, con las validaciones existentes de cliente/productos/cantidades/cargo. La acción principal está en la ficha del pedido y mantiene 152×36 DIP; el enlace manual queda en una sección secundaria de Venta y cobro. El POS permite caja/lista y descuentos, protege los datos del pedido y no reemplaza carritos en curso. Contrato, bloqueo multi-PC y recuperación con un GUID en DEV-17; no requiere migración.
 
 **Recorrido recomendado: RECIBIDO → PREPARANDO → CONFIRMAR VENTA → LISTO → EN_RUTA → ENTREGADO.** Un pedido no reserva ni descuenta inventario; `RECIBIDO`, `PREPARANDO` y `LISTO` no implican reserva. Antes de considerarlo listo para salir debe tener venta confirmada asociada. La venta descuenta inventario, asigna lotes, genera Kardex y registra pago/crédito. Confirmar venta no es un estado nuevo; la validación actual sólo exige esa venta para `EN_RUTA` y `ENTREGADO`. No se cambia esa validación aquí. Una reserva ligera queda para una necesidad futura del negocio.
 
@@ -31,18 +31,18 @@ El refinamiento anterior conserva el enlace manual por ID; **Pasar al POS / Crea
 
 **Pedido = solicitud/preparación · Venta = operación comercial · Entrega = cumplimiento físico · Cobro contra entrega = condición operativa pendiente de diseño.**
 
-Las tres decisiones anteriores son documentales: no modifican `OrderRules`, `OrderService`, `SalesService` ni SQL. La autorización posterior del usuario amplía únicamente dos correcciones de interfaz, descritas a continuación.
+Las tres decisiones se registraron inicialmente como documentación. Después se autorizaron las dos correcciones de interfaz siguientes y, en una ampliación posterior, el recorrido Pedido → POS. Esta última amplía Application y el repositorio transaccional; no modifica `OrderRules`, estados ni reglas de reservas/cobro contra entrega.
 
 ### Correcciones autorizadas · datos del cliente y existencias iniciales
 
 - **Pedidos:** carga automática de la ficha al seleccionar cliente, contactos y direcciones activas de entrega; sugerencia de principal única/única opción, selección explícita si es ambiguo, y campos editables de contacto, teléfono y dirección en su propia pestaña. La dirección editada se envía como específica del pedido, sin actualizar la ficha. Cambiar cliente limpia datos y evita aplicar respuestas antiguas; los campos de entrega se bloquean durante la carga y el alta espera a que termine y utiliza el servicio/snapshot existentes.
 - **Inventario:** botón Existencias iniciales en la ficha para el almacén consultado sin saldo, con permiso de ajuste; formulario separado de cantidad, costo USD de hasta seis decimales, motivo y lote/fechas cuando corresponde. Usa `InventorySetupService.InitializeAsync`, con validación definitiva de ausencia de saldo/historial, Kardex y auditoría del servicio/SQL existentes. Se preserva `OperationId`, consulta/reenvío de la misma solicitud y bloqueo de cierre/sesión mientras el resultado es incierto. Al confirmar se refrescan el inventario y el catálogo. No se añade migración ni se implementa recepción de compras.
 
-Recorrido y límites en DEV-19. No se confunde esta ampliación de UI con implementar Pasar al POS, reservas o cobro contra entrega.
+Recorrido y límites en DEV-19. Estas dos correcciones preceden a la conexión posterior al POS. Reservas y cobro contra entrega siguen pendientes.
 
 ## Integridad y límites
 
-Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, `SaleReceiptService` y `MvpOperationService`. Se mantienen `OperationId`, solicitud retenida ante respuesta incierta, token de cálculo, autorización puntual, rowversion, auditoría y validación de servicios/SQL. No hay cambios de Application, Infrastructure, Domain ni migraciones en este incremento.
+Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, `SaleReceiptService` y `MvpOperationService`. Se mantienen `OperationId`, solicitud retenida ante respuesta incierta, token de cálculo, autorización puntual, rowversion, auditoría y validación de servicios/SQL. El refinamiento original no alteró capas interiores; la conexión posterior al POS amplía `ConfirmSale` y reutiliza el enlace compatible dentro de su transacción en Infrastructure. Domain y las migraciones no cambian.
 
 No falta un contrato para estos recorridos nominales. La resolución terminal negativa de operaciones inciertas continúa pendiente en DEV-15; la UI no libera una solicitud porque una búsqueda no devuelva recibo. No se añaden pagos por tarjeta, facturación DTE, PDF de cotización, fotos de productos ni gráficos/filtros sin contrato. Los símbolos del catálogo representan productos porque el DTO del POS no incluye fotografías.
 
@@ -63,3 +63,9 @@ Las referencias se inspeccionaron directamente. Las capturas nuevas se generan m
 ## Validación de las correcciones autorizadas
 
 Compilación Release local sin errores/advertencias y 154 pruebas xUnit correctas. Se agregan pruebas de precarga, edición sin cambiar la ficha, direcciones ambiguas y respuestas fuera de orden; carga inicial con costo de seis decimales y lote/vencimiento, permisos y reenvío con el mismo GUID. La ampliación del smoke comprueba los campos reales, ambas variantes visuales y la recuperación de una carga inicial en el espacio de trabajo. La primera validación Windows del código `ad14546` pasó en [CI](https://github.com/Gust4av033/GoDental/actions/runs/39493669622): **154 xUnit, 349 comprobaciones SQL y 304 WPF**, sin errores de compilación ni binding. El smoke confirma contacto precargado en el campo editable, acción de existencias iniciales visible a 1366×768 y 1093×614 en ambos temas, bloqueo del espacio de trabajo ante una carga incierta y reenvío con el mismo GUID que refresca el saldo. Capturas automáticas en [test-results-86](https://github.com/Gust4av033/GoDental/actions/runs/39493669622/artifacts/12295434323); no constituyen inspección manual del monitor ni pruebas en la base del usuario. El ajuste posterior de bloqueo de campos durante la precarga también compila y conserva las 154 pruebas locales correctas.
+
+## Validación de Pedido → POS
+
+Compilación Release local de toda la solución sin advertencias/errores y **163 pruebas xUnit correctas**. La ampliación cubre precarga/cálculo actual, permisos, pedido finalizado/con venta, carrito en curso, respuesta tardía tras cerrar sesión, versión renovada al recalcular, limpieza del origen y recuperación del mismo cobro/GUID. Cuando FEFO divide un producto entre lotes, el carrito conserva una entrada por producto y suma los importes devueltos por el servicio para mostrar todos sus lotes.
+
+Se amplían las pruebas SQL con incompatibilidades de cliente/productos/cantidades/cargo, rollback posterior al enlace, consulta/reenvío del GUID, ausencia de reserva y dos confirmaciones concurrentes del mismo pedido. El smoke WPF incorpora Pasar al POS, cobro de pedido y respuesta perdida/recuperación en ambos temas y tamaños. Ejecución SQL/WPF pendiente de resultado en Windows; el entorno local Linux sólo certifica compilación y xUnit. No se probó la base del usuario ni el recorrido manual entre sus dos equipos.

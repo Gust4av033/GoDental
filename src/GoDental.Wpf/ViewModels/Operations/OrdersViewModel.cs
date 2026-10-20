@@ -6,6 +6,7 @@ using GoDental.Application.DTOs;
 using GoDental.Application.Services;
 using GoDental.Domain.Rules;
 using GoDental.Wpf.Dialogs;
+using GoDental.Wpf.Navigation;
 using Microsoft.Extensions.Logging;
 
 namespace GoDental.Wpf.ViewModels.Operations;
@@ -16,6 +17,8 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     private readonly CustomerService customers;
     private readonly ProductService products;
     private readonly IMvpDialogService dialogs;
+    private readonly PosViewModel pos;
+    private readonly INavigationService navigation;
     public ObservableCollection<OrderData> Items { get; } = [];
     public ObservableCollection<OrderEventData> Events { get; } = [];
     public IReadOnlyList<string> States { get; } = ["TODOS", "RECIBIDO", "PREPARANDO", "LISTO", "EN_RUTA", "ENTREGADO", "INCIDENCIA", "CANCELADO"];
@@ -40,11 +43,27 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     public bool CanManage => CanEdit && orders.CanManage;
     public bool CanCreate => CanManage && customers.CanRead && products.CanRead;
     public bool CanTransition => CanManage && Detail is not null && States.Any(s => OrderRules.CanTransition(Detail.Order.State, s));
-    public bool CanLink => CanManage && Detail is not null && Detail.Order.SaleId is null;
+    public bool CanLink => CanManage && Detail is not null && Detail.Order.SaleId is null && Detail.Order.State is not ("CANCELADO" or "ENTREGADO");
+    public bool CanPassToPos => CanLink && customers.CanRead && pos.CanEdit;
     partial void OnSelectedChanged(OrderData? value) { Detail = null; Events.Clear(); EventsPage = 1; }
     partial void OnDetailChanged(OrderSnapshot? value) { IsDetailOpen = value is not null; PermissionsChanged(); }
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink) }) OnPropertyChanged(n); }
-    public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger) : base(session, operations, logger) { this.orders = orders; this.customers = customers; this.products = products; this.dialogs = dialogs; }
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink), nameof(CanPassToPos) }) OnPropertyChanged(n); }
+    public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, PosViewModel pos, INavigationService navigation, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger) : base(session, operations, logger)
+    {
+        this.orders = orders; this.customers = customers; this.products = products; this.pos = pos; this.navigation = navigation; this.dialogs = dialogs;
+        pos.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanPassToPos));
+    }
+    [RelayCommand] private async Task PassToPosAsync()
+    {
+        if (!CanPassToPos || Detail is null) return;
+        var id = Detail.Order.Id;
+        await ReadAsync(async r =>
+        {
+            var loaded = await pos.LoadOrderAsync(id); if (!Current(r)) return;
+            if (loaded) navigation.Navigate(SetupPage.Pos);
+            else StatusMessage = pos.StatusMessage;
+        });
+    }
     protected override void Reset() { IsDetailOpen = false; Items.Clear(); Events.Clear(); Selected = null; Detail = null; Page = EventsPage = 1; Total = EventsTotal = 0; }
     [RelayCommand] private Task ReloadAsync() { Page = 1; return ReadAsync(LoadCoreAsync); }
     private async Task LoadCoreAsync(long r)

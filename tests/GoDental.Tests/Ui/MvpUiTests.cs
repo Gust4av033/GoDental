@@ -149,6 +149,103 @@ public sealed class MvpUiTests
         Assert.Single(vm.Items); Assert.Null(vm.QuotationId); Assert.Contains("carrito", vm.StatusMessage);
     }
     [Fact]
+    public async Task OrderToPosRepricesKeepsOriginAndRetriesTheSameCombinedConfirmation()
+    {
+        var c = new Context(); var vm = c.PosVm();
+        c.Repository.Order.Order.DeliveryCharge = 5;
+        c.Repository.Order.Lines.Single().Quantity = 2;
+        Assert.True(await vm.LoadOrderAsync(1));
+        Assert.Equal(c.Repository.Order.Order.CustomerId, vm.Customer.Selected!.Id);
+        Assert.Equal(2, vm.Items.Single().Quantity); Assert.Equal(5, vm.Quote!.Cart.DeliveryCharge);
+        Assert.Equal(123.45m, vm.Quote.Total); Assert.False(vm.CanChangeCart); Assert.True(vm.CanAdjustPricing); Assert.False(vm.CanQuote);
+        var version = vm.OrderOrigin!.ExpectedVersion.ToArray();
+        c.Repository.LoseResponse = true;
+        c.Dialogs.Action = async f =>
+        {
+            var checkout = Assert.IsType<CheckoutModel>(f.Body);
+            checkout.Payments.Add(new() { MethodId = 1, Amount = checkout.Quote.Total }); checkout.CashTendered = "150";
+            Set(f, "reason", "Cobrar pedido"); await Save(f);
+        };
+        await vm.CheckoutCommand.ExecuteAsync(null);
+        var request = Assert.IsType<ConfirmSale>(Assert.Single(c.Repository.Writes));
+        Assert.Equal(1, request.Order!.OrderId); Assert.Equal(version, request.Order.ExpectedVersion); Assert.Null(request.QuotationId);
+        Assert.True(vm.Operation.HasPending); Assert.NotNull(vm.OrderOrigin); Assert.False(await vm.LoadOrderAsync(1));
+        c.Repository.LoseResponse = false; await vm.Operation.RetryCommand.ExecuteAsync(null);
+        Assert.Equal(request.OperationId, Assert.IsType<ConfirmSale>(c.Repository.Writes[1]).OperationId);
+        Assert.Equal(2, c.Repository.Writes.Count); Assert.False(vm.Operation.HasPending); Assert.True(vm.HasConfirmedSale);
+        Assert.Contains("vinculada", vm.StatusMessage); Assert.Equal(1, vm.OrderOrigin!.OrderId);
+        vm.NewSaleCommand.Execute(null); Assert.Null(vm.OrderOrigin); Assert.Null(vm.Customer.Selected); Assert.Equal("0", vm.DeliveryCharge);
+    }
+    [Theory]
+    [InlineData("CANCELADO", null)]
+    [InlineData("ENTREGADO", null)]
+    [InlineData("PREPARANDO", 1L)]
+    public async Task OrderToPosRejectsFinalizedOrAlreadyBilledOrders(string state, long? sale)
+    {
+        var c = new Context(); c.Repository.Order.Order.State = state; c.Repository.Order.Order.SaleId = sale;
+        var vm = c.PosVm(); Assert.False(await vm.LoadOrderAsync(1));
+        Assert.Empty(vm.Items); Assert.Null(vm.OrderOrigin); Assert.Null(vm.Quote); Assert.Empty(c.Repository.Writes);
+    }
+    [Fact]
+    public async Task OrderToPosPreservesExistingCartAndDoesNotApplyFailedOrLateLoads()
+    {
+        var c = new Context(); var vm = c.PosVm(); vm.Items.Add(new(1, "SKU", "En curso", 3, 0));
+        Assert.False(await vm.LoadOrderAsync(1)); Assert.Equal(3, vm.Items.Single().Quantity); Assert.Null(vm.OrderOrigin);
+        vm.Items.Clear(); c.Repository.QuoteFactory = _ => throw new ArgumentException("Sin stock disponible");
+        Assert.False(await vm.LoadOrderAsync(1)); Assert.Empty(vm.Items); Assert.Null(vm.OrderOrigin); Assert.Contains("stock", vm.StatusMessage);
+        var pending = new TaskCompletionSource<OrderSnapshot?>(); c.Repository.OrderReadTask = pending.Task;
+        var load = vm.LoadOrderAsync(1); c.Session.Clear(); pending.SetResult(c.Repository.Order);
+        Assert.False(await load); Assert.Empty(vm.Items); Assert.Null(vm.OrderOrigin);
+    }
+    [Fact]
+    public async Task OrderDiscountRecalculationRefreshesVersionAndClearOnlyDiscardsLocalDraft()
+    {
+        var c = new Context(); var vm = c.PosVm(); Assert.True(await vm.LoadOrderAsync(1));
+        vm.GlobalDiscount = "5"; Assert.Null(vm.Quote); Assert.Equal(1, vm.OrderOrigin!.OrderId);
+        c.Repository.Order.Order.RowVersion = [3,3,3,3,3,3,3,3];
+        await vm.CalculateCommand.ExecuteAsync(null);
+        Assert.Equal(5, vm.Quote!.Cart.GlobalDiscountPercent); Assert.Equal(c.Repository.Order.Order.RowVersion, vm.OrderOrigin!.ExpectedVersion);
+        c.Dialogs.Action = async f => await Save(f); await vm.ClearCartCommand.ExecuteAsync(null);
+        Assert.Null(vm.OrderOrigin); Assert.Empty(vm.Items); Assert.Null(vm.Customer.Selected); Assert.Empty(c.Repository.Writes);
+    }
+    [Fact]
+    public async Task OrderWithSplitLotsKeepsOneCartItemAndShowsAllReturnedAmounts()
+    {
+        var c = new Context(); var vm = c.PosVm(); c.Repository.Order.Lines.Single().Quantity = 2;
+        var factory = c.Repository.QuoteFactory;
+        c.Repository.QuoteFactory = cart =>
+        {
+            var result = factory(cart); var first = result.Lines.Single() with { Quantity = 1, Total = 12.34m, Lots = [new(1, 1)] };
+            return result with { Lines = [first, first with { Total = 23.45m, Lots = [new(2, 1)] }], Total = 35.79m };
+        };
+        Assert.True(await vm.LoadOrderAsync(1)); Assert.Single(vm.Items); Assert.Equal(2, vm.Items.Single().Quantity);
+        var row = Assert.Single(vm.CartRows); Assert.Equal(2, row.Quantity); Assert.Equal(35.79m, row.Calculation!.Total); Assert.Equal(2, row.Calculation.Lots.Count);
+    }
+    [Fact]
+    public async Task OrdersActionNavigatesToLoadedPosAndRespectsReadOnlyPermissions()
+    {
+        var c = new Context(); var pos = c.PosVm(); var navigation = new NavigationService();
+        var orders = new OrdersViewModel(new(c.Repository, c.Session), c.Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), c.Session), pos, navigation, c.Dialogs, c.Session, c.Operations, NullLogger<OrdersViewModel>.Instance);
+        await orders.OpenOrderCommand.ExecuteAsync(c.Repository.Order.Order);
+        await orders.PassToPosCommand.ExecuteAsync(null);
+        Assert.Equal(SetupPage.Pos, navigation.CurrentPage); Assert.Equal(1, pos.OrderOrigin!.OrderId);
+        c.Session.Begin(new(1, "prueba", "Prueba", 1, [], ["VENTAS.VER", "CAJA.VER", "CLIENTES.VER"], false));
+        await orders.OpenOrderCommand.ExecuteAsync(c.Repository.Order.Order); Assert.False(orders.CanPassToPos);
+        Assert.False(await pos.LoadOrderAsync(1)); Assert.Empty(pos.Items); Assert.Empty(c.Repository.Writes);
+    }
+    [Fact]
+    public async Task SaleOriginIsValidatedAndItsVersionCopiedAtApplicationBoundary()
+    {
+        var c = new Context(); var quote = c.Repository.QuoteFactory(new(1, 1, [new(1, 1)]));
+        var request = new ConfirmSale(Guid.NewGuid(), quote.Cart, quote.Token, [new(1, quote.Total)], 150, 1, "Pedido", Order: new(1, [1,2,3,4,5,6,7,8]));
+        Assert.Equal("VALIDATION", (await c.Sales.ConfirmAsync(request with { Order = new(0, request.Order!.ExpectedVersion) })).ErrorCode);
+        Assert.Equal("VALIDATION", (await c.Sales.ConfirmAsync(request with { Order = new(1, []) })).ErrorCode);
+        Assert.Equal("VALIDATION", (await c.Sales.ConfirmAsync(request with { QuotationId = 1 })).ErrorCode);
+        Assert.True((await c.Sales.ConfirmAsync(request)).IsSuccess);
+        var saved = Assert.IsType<ConfirmSale>(Assert.Single(c.Repository.Writes));
+        request.Order!.ExpectedVersion[0] = 99; Assert.Equal(1, saved.Order!.ExpectedVersion[0]);
+    }
+    [Fact]
     public async Task CreditPaymentKeepsAccountVersionAndRefreshesCustomerHistory()
     {
         var c = new Context(); var vm = new CreditViewModel(c.Cash, c.Sales, c.Customers, c.Dialogs, c.Session, c.Operations, NullLogger<CreditViewModel>.Instance);
@@ -357,8 +454,8 @@ public sealed class MvpUiTests
         public void Login() => Session.Begin(new(1, "prueba", "Prueba", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR"], false));
         public MvpOperationModel Operation() => new(Session, Operations, NullLogger.Instance);
         public CashViewModel CashVm() => new(Cash, new InventoryService(DispatchProxy.Create<IInventoryRepository, UnusedPort>(), Session), Dialogs, Session, Operations, NullLogger<CashViewModel>.Instance);
-        public PosViewModel PosVm() => new(Sales, Cash, Customers, Dialogs, Session, Operations, NullLogger<PosViewModel>.Instance);
-        public OrdersViewModel OrdersVm() => new(new OrderService(Repository, Session), Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), Session), Dialogs, Session, Operations, NullLogger<OrdersViewModel>.Instance);
+        public PosViewModel PosVm() => new(Sales, Cash, Customers, new OrderService(Repository, Session), Dialogs, Session, Operations, NullLogger<PosViewModel>.Instance);
+        public OrdersViewModel OrdersVm() => new(new OrderService(Repository, Session), Customers, new ProductService(DispatchProxy.Create<IProductRepository, UnusedPort>(), Session), PosVm(), new NavigationService(), Dialogs, Session, Operations, NullLogger<OrdersViewModel>.Instance);
     }
     private sealed class TestDialogs : IMvpDialogService
     {

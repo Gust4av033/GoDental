@@ -28,7 +28,7 @@
           <ColumnDefinition Width="270"/>
         </Grid.ColumnDefinitions>
         <StackPanel>
-          <Grid Margin="0,0,0,16" IsEnabled="{Binding CanChangeCart}">
+          <Grid Margin="0,0,0,16" IsEnabled="{Binding CanAdjustPricing}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="16"/>
@@ -47,6 +47,7 @@
             <TextBlock DockPanel.Dock="Right" Text="{Binding CartCountLabel}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
             <StackPanel>
               <TextBlock Text="{Binding Customer.Selected.Name, TargetNullValue=Venta sin cliente, FallbackValue=Venta sin cliente}" FontWeight="SemiBold"/>
+              <TextBlock Text="{Binding OrderLabel}" Style="{StaticResource MutedText}"/>
               <TextBlock Text="{Binding QuotationId, StringFormat=Cotización de origen: {0}}">
                 <TextBlock.Style>
                   <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
@@ -95,9 +96,9 @@
                   <Button Content="" Command="{Binding ClearCartCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Vaciar carrito" AutomationProperties.Name="Vaciar carrito" DockPanel.Dock="Right" IsEnabled="{Binding CanEdit}"/>
                   <TextBlock Text="Carrito de venta" Style="{StaticResource SectionHeading}"/>
                 </DockPanel>
-                <WrapPanel Margin="0,0,0,12" IsEnabled="{Binding CanChangeCart}">
-                  <Button Content="Editar línea" Command="{Binding EditItemCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
-                  <Button Content="Quitar línea" Command="{Binding RemoveItemCommand}" Style="{StaticResource ActionButton}"/>
+                <WrapPanel Margin="0,0,0,12">
+                  <Button Content="Editar línea" Command="{Binding EditItemCommand}" IsEnabled="{Binding CanAdjustPricing}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
+                  <Button Content="Quitar línea" Command="{Binding RemoveItemCommand}" IsEnabled="{Binding CanChangeCart}" Style="{StaticResource ActionButton}"/>
                 </WrapPanel>
                 <Grid>
                   <DataGrid ItemsSource="{Binding CartRows}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="235" AutomationProperties.Name="CartRows" SelectedValuePath="Input" SelectedValue="{Binding SelectedLine}">
@@ -112,7 +113,7 @@
                   </DataGrid>
                   <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding CartRows.Count}" Content="Tu carrito está vacío. Agrega productos desde el catálogo."/>
                 </Grid>
-                <Expander Header="Descuento global y entrega" IsEnabled="{Binding CanChangeCart}">
+                <Expander Header="Descuento global y entrega" IsEnabled="{Binding CanAdjustPricing}">
                   <UniformGrid Columns="2" Margin="0,12,0,0">
                     <StackPanel Margin="0,0,12,0">
                       <TextBlock Text="Descuento global (%)" Style="{StaticResource FieldLabel}"/>
@@ -120,7 +121,7 @@
                     </StackPanel>
                     <StackPanel>
                       <TextBlock Text="Cargo de entrega USD" Style="{StaticResource FieldLabel}"/>
-                      <TextBox Text="{Binding DeliveryCharge, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cargo de entrega"/>
+                      <TextBox Text="{Binding DeliveryCharge, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanChangeCart}" AutomationProperties.Name="Cargo de entrega"/>
                     </StackPanel>
                   </UniformGrid>
                 </Expander>

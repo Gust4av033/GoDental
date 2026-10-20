@@ -11,6 +11,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public string? RejectCode { get; set; }
     public MvpReceipt? FoundReceipt { get; set; }
     public Task<SaleQuote>? QuoteTask { get; set; }
+    public Task<OrderSnapshot?>? OrderReadTask { get; set; }
     public Func<SaleCart, SaleQuote> QuoteFactory { get; set; } = cart => new(cart with { Items = cart.Items.ToArray() }, cart.Items.Select(i => new CalculatedPrice(i.ProductId, "UI-TEST", "Producto de prueba", i.Quantity, 100, 90, 90, 100, 10, 13.45m, 123.45m, i.DiscountPercent, 1, null, [new(null, i.Quantity)])).ToArray(), 100, 10, 13.45m, 123.45m, 7, 35, new string('A', 64));
     public List<CashBoxData> Boxes { get; } = [new() { Id = 1, WarehouseId = 1, Code = "PRUEBA", Name = "Caja de prueba", Active = true }];
     public CashShiftData? Shift { get; set; } = new() { Id = 1, CashBoxId = 1, State = "ABIERTO", Opening = 50, Expected = 75, RowVersion = [1,2,3,4,5,6,7,8] };
@@ -51,7 +52,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<Result<MvpReceipt>> PlaceOrderAsync(PlaceOrder request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, Order.Order.Id);
     public Task<Result<MvpReceipt>> TransitionOrderAsync(OrderTransition request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, Order.Order.Id);
     public Task<Result<MvpReceipt>> LinkSaleAsync(LinkOrderSale request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, Order.Order.Id);
-    public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => Task.FromResult<OrderSnapshot?>(Order);
+    public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => OrderReadTask ?? Task.FromResult<OrderSnapshot?>(Order);
     public Task<MvpPage<OrderData>> OrdersAsync(string? state, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderData>([Order.Order], 1));
     public Task<MvpPage<OrderEventData>> OrderEventsAsync(long id, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderEventData>(Order.Events, Order.TotalEvents));
     public Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 1);

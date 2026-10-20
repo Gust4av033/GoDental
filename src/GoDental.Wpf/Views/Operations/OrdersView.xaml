@@ -76,8 +76,8 @@
     <StackPanel Style="{StaticResource CommerceDetail}" Tag="{Binding IsDetailOpen}">
       <DockPanel Margin="0,0,0,16">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="16,0,0,0">
-          <Button Content="Vincular venta" Command="{Binding LinkCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding CanLink}" Margin="0,0,8,0"/>
-          <Button Content="Cambiar estado" Command="{Binding TransitionCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanTransition}"/>
+          <Button Content="Cambiar estado" Command="{Binding TransitionCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding CanTransition}" Margin="0,0,8,0"/>
+          <Button Content="Pasar al POS" Command="{Binding PassToPosCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanPassToPos}"/>
         </StackPanel>
         <Button Content="Volver a pedidos" Tag="" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left"/>
       </DockPanel>
@@ -114,6 +114,13 @@
               <ContentControl Style="{StaticResource CommerceField}" Tag="Referencia" Content="{Binding Detail.Order.Reference}"/>
               <ContentControl Style="{StaticResource CommerceField}" Tag="Entrega registrada" Content="{Binding Detail.Order.Delivered}" ContentStringFormat="{}{0:dd/MM/yyyy HH:mm}"/>
             </UniformGrid>
+            <TextBlock Text="Confirma la venta antes de considerar el pedido listo para salir. LISTO no reserva inventario." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+            <Expander Header="Vincular una venta existente (recuperación)">
+              <StackPanel Margin="0,12,0,0">
+                <TextBlock Text="Usa este enlace manual sólo si la venta ya se confirmó por otro recorrido." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+                <Button Content="Vincular venta" Command="{Binding LinkCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding CanLink}" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Expander>
             <DataGrid ItemsSource="{Binding Detail.Lines}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="200" AutomationProperties.Name="Detail.Lines">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="120" ElementStyle="{StaticResource CommerceCell}"/>

@@ -6,6 +6,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using CommunityToolkit.Mvvm.Input;
 using GoDental.Application.DTOs;
 using GoDental.Application.Abstractions.Configuration;
 using GoDental.Application.Validators;
@@ -159,9 +160,9 @@ internal static class Program
             var salesService = new SalesService(mvpRepository, session, new FakeIdentityGateway());
             var customerService = new CustomerService(new CustomerWorkflowRepository(), session);
             var cashMvp = new CashViewModel(cashService, new InventoryService(new VisualInventoryRepository(), session), mvpDialogs, session, operationService, NullLogger<CashViewModel>.Instance);
-            var posMvp = new PosViewModel(salesService, cashService, customerService, mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
+            var posMvp = new PosViewModel(salesService, cashService, customerService, new OrderService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
             var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
-            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
+            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), new VisualPdfFiles(), posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
@@ -669,6 +670,44 @@ internal static class Program
                     await inventory.OpenInitialInventoryCommand.ExecuteAsync(null);
                     visualInventory.HasStock = true;
                     await inventory.ReloadCommand.ExecuteAsync(null);
+                    // Recorrido real de comandos Pedido → POS → cobro, con datos sintéticos.
+                    mvpDialogs.Render = async form => { form.Confirmed = true; await ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null); };
+                    await posMvp.ClearCartCommand.ExecuteAsync(null);
+                    nav.Navigate(SetupPage.Orders);
+                    await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                    var orderView = new OrdersView { DataContext = ordersMvp };
+                    orderView.Measure(new Size(1000, 620)); orderView.Arrange(new Rect(0, 0, 1000, 620)); orderView.UpdateLayout();
+                    var passToPos = FindChildren<Button>(orderView).Single(b => b.Content is string text && text == "Pasar al POS");
+                    Check(passToPos.IsEnabled && passToPos.ActualWidth == 152 && passToPos.ActualHeight == 36,
+                        "El pedido ofrece Pasar al POS como acción principal uniforme");
+                    await ((IAsyncRelayCommand)passToPos.Command).ExecuteAsync(passToPos.CommandParameter);
+                    Check(shell.IsPos && posMvp.OrderOrigin?.OrderId == 1 && posMvp.Customer.Selected?.Id == 1 && !posMvp.CanChangeCart && posMvp.CanSell,
+                        "Pasar al POS navega con cliente, productos, cálculo actual y origen protegido");
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-Pedido-POS-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Pedido-POS-compacto-{theme}.png"));
+                    var writesBeforeOrder = mvpRepository.Writes.Count;
+                    mvpRepository.LoseResponse = true;
+                    mvpDialogs.Render = async form =>
+                    {
+                        var checkout = (CheckoutModel)form.Body!;
+                        var view = new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-Pedido-cobro-{theme}.png"));
+                        checkout.Payments.Add(new() { MethodId = 1, Amount = checkout.Quote.Total }); checkout.CashTendered = "150";
+                        form.Fields.Single(f => f.Key == "reason").Value = "Cobrar pedido de prueba";
+                        form.Confirmed = true; await ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null);
+                    };
+                    await posMvp.CheckoutCommand.ExecuteAsync(null);
+                    var combined = (ConfirmSale)mvpRepository.Writes[writesBeforeOrder];
+                    Check(posMvp.Operation.HasPending && !shell.CanCloseWorkspace && combined.Order?.OrderId == 1,
+                        "Una respuesta perdida conserva el pedido y bloquea otra venta y el cierre");
+                    mvpRepository.LoseResponse = false; await posMvp.Operation.RetryCommand.ExecuteAsync(null);
+                    Check(posMvp.HasConfirmedSale && !posMvp.Operation.HasPending && mvpRepository.Writes.Count == writesBeforeOrder + 2
+                        && ((ConfirmSale)mvpRepository.Writes[^1]).OperationId == combined.OperationId && posMvp.StatusMessage.Contains("vinculada"),
+                        "Recuperar cobro usa el mismo GUID y una única escritura que confirma y vincula");
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Pedido-venta-confirmada-{theme}.png"));
+                    posMvp.NewSaleCommand.Execute(null);
+                    Check(posMvp.OrderOrigin is null && posMvp.Customer.Selected is null, "Nueva venta elimina el origen y los datos del pedido previo");
+                    posMvp.Items.Add(new(1, "UI-TEST", "Producto de prueba", 1, 0)); await posMvp.CalculateCommand.ExecuteAsync(null);
                     mvpDialogs.Render = null;
                 }
                 visualInventory.HasStock = false;
@@ -994,7 +1033,7 @@ internal static class Program
             {
                 var pos = ((ShellViewModel)root.DataContext).Pos;
                 var catalog = FindChildren<ListBox>(root).FirstOrDefault(box => ReferenceEquals(box.ItemsSource, pos.Products));
-                if (!pos.HasConfirmedSale && catalog is { Items.Count: > 0 })
+                if (pos.CanChangeCart && catalog is { Items.Count: > 0 })
                 {
                     catalog.SelectedIndex = 0;
                     Check(ReferenceEquals(pos.Product, catalog.SelectedItem) && pos.CanAddProduct, "Las tarjetas del catálogo conservan selección y habilitan la acción de carrito");
@@ -1013,7 +1052,7 @@ internal static class Program
             {
                 var caption = commerceShell.IsCash ? (commerceShell.Cash.HasOpenShift ? "Cerrar caja" : "Abrir caja")
                     : commerceShell.IsCredit ? "Registrar abono"
-                    : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Cambiar estado" : "Nuevo pedido")
+                    : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Pasar al POS" : "Nuevo pedido")
                     : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
                     : commerceShell.CommercialHistory.IsQuotationDetailOpen ? "Llevar al POS" : "Actualizar";
                 var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0 && IsLayoutVisible(b));
