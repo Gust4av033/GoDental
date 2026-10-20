@@ -22,6 +22,12 @@ public sealed partial class InventoryViewModel : ObservableObject
     private bool snapshotLoaded, initializedRefresh;
     public bool CanOfferInitial => InitialInventory is not null && CanAdjust && snapshotLoaded && product?.Active == true && SelectedStock is null;
     public bool CanInitialize => CanOfferInitial && IsNotBusy && InitialInventory!.CanInitialize;
+    public string InitialInventoryHint => !CanAdjust ? "Consulta de inventario. Necesitas permiso de ajuste para registrar unidades."
+        : product?.Active != true ? "Activa el producto antes de registrar sus existencias iniciales."
+        : Warehouse is null ? "Selecciona un almacén para consultar sus existencias."
+        : !snapshotLoaded ? "Pulsa Actualizar para consultar el almacén y habilitar la acción correspondiente."
+        : SelectedStock is null ? "Sin saldo registrado en este almacén. Usa Existencias iniciales para ingresar cantidad, costo y lote si corresponde."
+        : "Este almacén ya tiene un saldo registrado, aunque sea cero. Para agregar unidades usa Registrar movimiento → AJUSTE.";
     private ProductData? product;
     public ProductData? Product => product;
     public StockData? SelectedStock => Stocks.FirstOrDefault(stock => stock.WarehouseId == Warehouse?.Id);
@@ -74,7 +80,11 @@ public sealed partial class InventoryViewModel : ObservableObject
             OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(CanInitialize));
             if (initializedRefresh && IsNotBusy) { initializedRefresh = false; InventoryChanged?.Invoke(this, EventArgs.Empty); }
         };
-        PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IsBusy)) OnPropertyChanged(nameof(CanInitialize)); };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IsBusy)) OnPropertyChanged(nameof(CanInitialize));
+            if (e.PropertyName is nameof(CanOfferInitial) or nameof(CanAdjust) or nameof(Product)) OnPropertyChanged(nameof(InitialInventoryHint));
+        };
         Stocks.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(SelectedStock)); OnPropertyChanged(nameof(CanOfferInitial)); OnPropertyChanged(nameof(CanInitialize)); };
         session.Changed += (_, _) =>
         {

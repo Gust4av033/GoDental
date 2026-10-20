@@ -1068,12 +1068,14 @@ internal static class Program
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
                     $"La acción de Productos/Inventario cabe en {width}×{height} con tamaño uniforme");
-                if (productShell.Products.Inventory?.CanOfferInitial == true)
+                if (productShell.Products.Inventory?.CanAdjust == true)
                 {
                     var initial = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == "Existencias iniciales");
                     var initialBounds = initial.TransformToAncestor(root).TransformBounds(new Rect(initial.RenderSize));
-                    Check(initial.ActualWidth == 152 && initial.ActualHeight == 36 && initialBounds.Right <= width && initialBounds.Bottom <= height,
-                        $"Existencias iniciales queda visible con tamaño uniforme en {width}×{height}");
+                    Check(IsLayoutVisible(initial) && initial.ActualWidth == 152 && initial.ActualHeight == 36 && initialBounds.Right <= width && initialBounds.Bottom <= height
+                        && initial.IsEnabled == productShell.Products.Inventory.CanInitialize
+                        && !string.IsNullOrWhiteSpace(productShell.Products.Inventory.InitialInventoryHint),
+                        $"Existencias iniciales permanece visible y explica cuándo se puede usar en {width}×{height}");
                 }
             }
             if (root.DataContext is ShellViewModel { IsCounts: true } countShell)

@@ -10,7 +10,7 @@
     <DockPanel Margin="0,0,0,16">
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="16,0,0,0">
         <Button Content="Editar producto" Command="{Binding EditProductCommand, ElementName=InventoryRoot}" Visibility="{Binding CanEditProduct, ElementName=InventoryRoot, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
-        <Button Content="Existencias iniciales" Command="{Binding OpenInitialInventoryCommand}" IsEnabled="{Binding CanInitialize}" Visibility="{Binding CanOfferInitial, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryActionButton}" Margin="0,0,8,0"/>
+        <Button Content="Existencias iniciales" Command="{Binding OpenInitialInventoryCommand}" IsEnabled="{Binding CanInitialize}" Visibility="{Binding CanAdjust, Converter={StaticResource BoolToVisibility}}" ToolTip="{Binding InitialInventoryHint}" ToolTipService.ShowOnDisabled="True" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
         <Button Content="Registrar movimiento" Command="{Binding OpenMovementDialogCommand}" IsEnabled="{Binding CanWrite}" Visibility="{Binding CanAdjust, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryActionButton}"/>
       </StackPanel>
       <Button Content="Volver a productos" Tag="" Style="{StaticResource TextButton}" Command="{Binding CloseCommand}" IsEnabled="{Binding IsNotBusy}" HorizontalAlignment="Left"/>
@@ -41,6 +41,7 @@
         <ComboBox x:Name="WarehouseInput" ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Warehouse}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén de operación" MaxWidth="340" HorizontalAlignment="Left" MinWidth="220"/>
       </StackPanel>
     </DockPanel>
+    <TextBlock Text="{Binding InitialInventoryHint}" Style="{StaticResource MutedText}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
     <TabControl IsEnabled="{Binding IsNotBusy}">
       <TabItem Header="Ficha del producto" Style="{StaticResource InventoryTab}">
         <StackPanel Margin="0,20,0,0">
