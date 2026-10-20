@@ -1,26 +1,21 @@
 # DEV-08 · Organización de ramas
 
-Decisión del 19 de octubre de 2026. Sustituye la política de una única rama `feature/desarrollo`.
+Decisión del 19 de octubre de 2026: lógica y UI avanzan juntas en una sola rama de trabajo. Sustituye la división temporal entre `feature/ui` y `feature/logica`.
 
 ## Ramas vigentes
 
-- `feature/ui`: WPF, estilos, navegación, diálogos, ViewModels y pruebas de presentación.
-- `feature/logica`: Domain, Application, Infrastructure, persistencia, SQL y sus pruebas.
-- `main`: versión integrada y validada; no es una tercera rama de desarrollo.
+- `feature/desarrollo`: única rama activa para Domain, Application, Infrastructure, SQL, WPF y pruebas. Separar cada cambio por responsabilidad en commits pequeños.
+- `main`: versión integrada y validada mediante PR.
+- `feature/ui` y `feature/logica`: referencias históricas. Sus commits quedaron incorporados a `feature/desarrollo`; no crear trabajo nuevo en ellas ni borrarlas antes de comprobar PR y dependencias remotas.
 
-Base común: `0fc3504`, que contiene todos los commits de `origin/main` (`ee3a504`) y los incrementos posteriores de conteos, proveedores y clientes. El árbol local estaba limpio al comenzar. No se descartaron cambios ni se usó force push.
+La sincronización local se hizo con un merge de `origin/feature/ui` hacia `feature/desarrollo`, conservando todo el historial. `feature/ui` ya contenía los commits de `feature/logica`. El ajuste de parámetros comerciales se guardó en un commit separado antes del merge. No hubo conflictos ni se usó force push.
 
-## Sincronización y entrega
+## Flujo de trabajo
 
-1. Actualizar referencias antes de cada bloque e incorporar mediante merge los cambios compatibles de la otra rama. Revisar ambos lados de cualquier conflicto.
-2. Separar cambios y commits por responsabilidad; no llevar UI pendiente a lógica ni modificar contratos para hacer compilar una pantalla.
-3. Registrar necesidades de contratos en `DEV-15-Coordinacion-UI.md`, con entradas, salida, permisos, errores y estado.
-4. Compilar Release, ejecutar pruebas pertinentes y `scripts/verify.ps1` en Windows. Para SQL usar sólo bases aisladas de pruebas.
-5. Publicar la rama correspondiente y abrir PR hacia `main`; integrar sólo tras completar las comprobaciones y CI.
-6. Después de integrar un incremento validado, sincronizar ambas ramas con `main` mediante merge, conservando el historial.
+1. Empezar cada incremento con `git fetch origin`, revisar el estado local y actualizar `feature/desarrollo` desde su remoto. Si `main` recibió cambios, incorporarlos mediante merge, revisando conflictos.
+2. Implementar el caso de uso completo en las capas correspondientes: reglas en Domain/Application, persistencia en Infrastructure/SQL y presentación en WPF. Mantener los contratos y pruebas en el mismo incremento.
+3. Hacer commits pequeños y descriptivos. Evitar desarrollar por separado en `feature/ui` o `feature/logica`.
+4. Ejecutar `dotnet build GoDental.sln -c Release`, `dotnet test GoDental.sln -c Release` y las pruebas SQL/WPF pertinentes. Las pruebas SQL usan bases aisladas; no ejecutar migraciones de prueba en la base del usuario.
+5. Publicar `feature/desarrollo`, abrir PR hacia `main`, revisar el diff y esperar CI correcto antes de integrar. Después del merge, actualizar `feature/desarrollo` desde `main` sin reescribir historial publicado.
 
-## Archivo
-
-La punta anterior de `feature/desarrollo` se conserva en la etiqueta publicada `archive/2026-10-19/feature/desarrollo` (`0fc3504`). Las etiquetas de archivo del 18 de octubre permanecen vigentes. No crear ramas permanentes adicionales ni borrar referencias sin conservar el trabajo.
-
-La consulta de PR abiertos mediante `gh pr list` fue rechazada por la API GraphQL (Forbidden). Antes de retirar la rama remota anterior se debe comprobar en GitHub que no haya PR abiertos que dependan de ella; mientras tanto se conserva sólo como referencia heredada, sin desarrollo nuevo.
+La unión local de ramas y sus pruebas se registran en este repositorio. La publicación remota y el PR se realizan por separado tras revisión.

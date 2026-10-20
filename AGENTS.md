@@ -10,5 +10,5 @@
 - No incluir secretos, credenciales, backups, datos reales de clientes, PAN/CVV, certificados ni configuración local sensible.
 - Operaciones críticas deben contemplar transacción, concurrencia multi-PC, permisos y auditoría según SEC-01.
 - Toda View nueva debe respetar UX-01: recursos compartidos, Light/Dark, estados loading/empty/error, accesibilidad y 1366×768.
-- Mantener `feature/ui` para WPF, estilos, navegación, diálogos y pruebas de presentación; `feature/logica` para Domain, Application, Infrastructure, SQL y pruebas de negocio. `main` conserva la versión integrada y validada. Antes de cada bloque actualizar referencias y hacer merge de cambios compatibles de la otra rama, conservando el historial. Ver `docs/DEV-08-Ramas.md`.
+- Mantener `feature/desarrollo` como rama activa para lógica y UI; separar responsabilidades por capas y commits. `main` conserva la versión integrada y validada. Las ramas `feature/ui` y `feature/logica` quedan como referencias históricas; no continuar trabajo nuevo en ellas. Ver `docs/DEV-08-Ramas.md`.
 - Antes de integrar: `dotnet build GoDental.sln -c Release` y `dotnet test GoDental.sln -c Release`.
