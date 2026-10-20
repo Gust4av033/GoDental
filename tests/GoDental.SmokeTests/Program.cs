@@ -928,6 +928,10 @@ internal static class Program
                 {
                     catalog.SelectedIndex = 0;
                     Check(ReferenceEquals(pos.Product, catalog.SelectedItem) && pos.CanAddProduct, "Las tarjetas del catálogo conservan selección y habilitan la acción de carrito");
+                    var add = FindChildren<Button>(root).Single(button => button.Content is string text && text == "Agregar al carrito");
+                    var addBounds = add.TransformToAncestor(root).TransformBounds(new Rect(add.RenderSize));
+                    Check(add.ActualWidth == 152 && add.ActualHeight == 36 && addBounds.Bottom <= height - 32 && addBounds.Right <= width,
+                        $"Agregar al carrito permanece visible en {width}×{height}");
                 }
                 var caption = pos.HasConfirmedSale ? "Nueva venta" : "Cobrar";
                 var checkout = FindChildren<Button>(root).Single(button => button.Content is string text && text == caption);

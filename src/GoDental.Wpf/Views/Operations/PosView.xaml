@@ -22,107 +22,109 @@
           <TextBlock Text="Elige productos, revisa tu carrito y continúa al cobro." Style="{StaticResource MutedText}"/>
         </StackPanel>
       </DockPanel>
-      <Grid Margin="0,0,0,16" IsEnabled="{Binding CanChangeCart}">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="16"/>
-          <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel>
-          <TextBlock Text="Caja / almacén" Style="{StaticResource FieldLabel}"/>
-          <ComboBox ItemsSource="{Binding Boxes}" SelectedItem="{Binding Box}" DisplayMemberPath="Name" AutomationProperties.Name="Caja / almacén"/>
-        </StackPanel>
-        <StackPanel Grid.Column="2">
-          <TextBlock Text="Lista de precio" Style="{StaticResource FieldLabel}"/>
-          <ComboBox ItemsSource="{Binding PriceLists}" SelectedItem="{Binding PriceList}" DisplayMemberPath="Name" AutomationProperties.Name="Lista de precio"/>
-        </StackPanel>
-      </Grid>
-      <DockPanel Margin="0,0,0,12">
-        <TextBlock DockPanel.Dock="Right" Text="{Binding CartCountLabel}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
-        <StackPanel>
-          <TextBlock Text="{Binding Customer.Selected.Name, TargetNullValue=Venta sin cliente, FallbackValue=Venta sin cliente}" FontWeight="SemiBold"/>
-          <TextBlock Text="{Binding QuotationId, StringFormat=Cotización de origen: {0}}">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding QuotationId}" Value="{x:Null}">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-        </StackPanel>
-      </DockPanel>
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="270"/>
         </Grid.ColumnDefinitions>
-        <TabControl IsEnabled="{Binding CanEdit}">
-          <TabItem Header="Productos" Style="{StaticResource CommerceTab}">
-            <StackPanel Margin="0,16,0,0">
-              <DockPanel Margin="0,0,0,12">
-                <Button Content="" Command="{Binding ReloadCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Actualizar productos" AutomationProperties.Name="Actualizar productos" DockPanel.Dock="Right" Margin="8,0,0,0"/>
-                <Button Content="" Command="{Binding SearchCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Buscar productos" AutomationProperties.Name="Buscar productos" DockPanel.Dock="Right" Margin="8,0,0,0"/>
-                <TextBox x:Name="PosSearch" Style="{StaticResource SearchBox}" Tag="SKU, nombre o código de barras…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="SKU, nombre o código de barras">
-                  <TextBox.InputBindings>
-                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
-                  </TextBox.InputBindings>
-                </TextBox>
-              </DockPanel>
-              <Grid>
-                <ListBox ItemsSource="{Binding Products}" SelectedItem="{Binding Product}" Style="{StaticResource CatalogSelector}" ItemContainerStyle="{StaticResource CatalogTile}" ItemTemplate="{StaticResource PosProductCard}" Height="250" AutomationProperties.Name="Catálogo de productos del POS">
-                  <ListBox.InputBindings>
-                    <KeyBinding Key="Enter" Command="{Binding AddItemCommand}"/>
-                  </ListBox.InputBindings>
-                </ListBox>
-                <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Products.Count}" Content="No hay productos disponibles para esta búsqueda."/>
-              </Grid>
-              <DockPanel Margin="0,12,0,0">
-                <Button Content="Agregar al carrito" Command="{Binding AddItemCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanAddProduct}" DockPanel.Dock="Right"/>
-                <StackPanel Orientation="Horizontal">
-                  <Button Content="‹" Command="{Binding PreviousCommand}" Style="{StaticResource PaginationButton}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
-                  <Button Content="›" Command="{Binding NextCommand}" Style="{StaticResource PaginationButton}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
-                </StackPanel>
-              </DockPanel>
+        <StackPanel>
+          <Grid Margin="0,0,0,16" IsEnabled="{Binding CanChangeCart}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="16"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Caja / almacén" Style="{StaticResource FieldLabel}"/>
+              <ComboBox ItemsSource="{Binding Boxes}" SelectedItem="{Binding Box}" DisplayMemberPath="Name" AutomationProperties.Name="Caja / almacén"/>
             </StackPanel>
-          </TabItem>
-          <TabItem Header="Carrito y cálculo" Style="{StaticResource CommerceTab}">
-            <StackPanel Margin="0,16,0,0">
-              <DockPanel Margin="0,0,0,12">
-                <Button Content="" Command="{Binding ClearCartCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Vaciar carrito" AutomationProperties.Name="Vaciar carrito" DockPanel.Dock="Right" IsEnabled="{Binding CanEdit}"/>
-                <TextBlock Text="Carrito de venta" Style="{StaticResource SectionHeading}"/>
-              </DockPanel>
-              <DataGrid ItemsSource="{Binding CartRows}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="235" AutomationProperties.Name="CartRows" SelectedValuePath="Input" SelectedValue="{Binding SelectedLine}">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource CommerceCell}" MinWidth="180"/>
-                  <DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="75" ElementStyle="{StaticResource CommerceCell}"/>
-                  <DataGridTextColumn Header="Precio" Binding="{Binding Calculation.UnitPrice, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
-                  <DataGridTextColumn Header="Descuento" Binding="{Binding Calculation.Discount, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
-                  <DataGridTextColumn Header="Impuesto" Binding="{Binding Calculation.Tax, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
-                  <DataGridTextColumn Header="Total" Binding="{Binding Calculation.Total, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <WrapPanel Margin="0,12,0,12" IsEnabled="{Binding CanChangeCart}">
-                <Button Content="Editar línea" Command="{Binding EditItemCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
-                <Button Content="Quitar línea" Command="{Binding RemoveItemCommand}" Style="{StaticResource ActionButton}"/>
-              </WrapPanel>
-              <Expander Header="Descuento global y entrega" IsEnabled="{Binding CanChangeCart}">
-                <UniformGrid Columns="2" Margin="0,12,0,0">
-                  <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Descuento global (%)" Style="{StaticResource FieldLabel}"/>
-                    <TextBox Text="{Binding GlobalDiscount, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Descuento global (%)"/>
-                  </StackPanel>
-                  <StackPanel>
-                    <TextBlock Text="Cargo de entrega USD" Style="{StaticResource FieldLabel}"/>
-                    <TextBox Text="{Binding DeliveryCharge, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cargo de entrega"/>
-                  </StackPanel>
-                </UniformGrid>
-              </Expander>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="Lista de precio" Style="{StaticResource FieldLabel}"/>
+              <ComboBox ItemsSource="{Binding PriceLists}" SelectedItem="{Binding PriceList}" DisplayMemberPath="Name" AutomationProperties.Name="Lista de precio"/>
             </StackPanel>
-          </TabItem>
-        </TabControl>
+          </Grid>
+          <DockPanel Margin="0,0,0,12">
+            <TextBlock DockPanel.Dock="Right" Text="{Binding CartCountLabel}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+            <StackPanel>
+              <TextBlock Text="{Binding Customer.Selected.Name, TargetNullValue=Venta sin cliente, FallbackValue=Venta sin cliente}" FontWeight="SemiBold"/>
+              <TextBlock Text="{Binding QuotationId, StringFormat=Cotización de origen: {0}}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding QuotationId}" Value="{x:Null}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </StackPanel>
+          </DockPanel>
+          <TabControl IsEnabled="{Binding CanEdit}">
+            <TabItem Header="Productos" Style="{StaticResource CommerceTab}">
+              <StackPanel Margin="0,16,0,0">
+                <DockPanel Margin="0,0,0,12">
+                  <Button Content="" Command="{Binding ReloadCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Actualizar productos" AutomationProperties.Name="Actualizar productos" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                  <Button Content="" Command="{Binding SearchCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Buscar productos" AutomationProperties.Name="Buscar productos" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                  <TextBox x:Name="PosSearch" Style="{StaticResource SearchBox}" Tag="SKU, nombre o código de barras…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="SKU, nombre o código de barras">
+                    <TextBox.InputBindings>
+                      <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                    </TextBox.InputBindings>
+                  </TextBox>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,12">
+                  <Button Content="Agregar al carrito" Command="{Binding AddItemCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanAddProduct}" DockPanel.Dock="Right"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button Content="‹" Command="{Binding PreviousCommand}" Style="{StaticResource PaginationButton}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+                    <Button Content="›" Command="{Binding NextCommand}" Style="{StaticResource PaginationButton}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
+                  </StackPanel>
+                </DockPanel>
+                <Grid>
+                  <ListBox ItemsSource="{Binding Products}" SelectedItem="{Binding Product}" Style="{StaticResource CatalogSelector}" ItemContainerStyle="{StaticResource CatalogTile}" ItemTemplate="{StaticResource PosProductCard}" Height="250" AutomationProperties.Name="Catálogo de productos del POS">
+                    <ListBox.InputBindings>
+                      <KeyBinding Key="Enter" Command="{Binding AddItemCommand}"/>
+                    </ListBox.InputBindings>
+                  </ListBox>
+                  <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Products.Count}" Content="No hay productos disponibles para esta búsqueda."/>
+                </Grid>
+              </StackPanel>
+            </TabItem>
+            <TabItem Header="Carrito y cálculo" Style="{StaticResource CommerceTab}">
+              <StackPanel Margin="0,16,0,0">
+                <DockPanel Margin="0,0,0,12">
+                  <Button Content="" Command="{Binding ClearCartCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Vaciar carrito" AutomationProperties.Name="Vaciar carrito" DockPanel.Dock="Right" IsEnabled="{Binding CanEdit}"/>
+                  <TextBlock Text="Carrito de venta" Style="{StaticResource SectionHeading}"/>
+                </DockPanel>
+                <WrapPanel Margin="0,0,0,12" IsEnabled="{Binding CanChangeCart}">
+                  <Button Content="Editar línea" Command="{Binding EditItemCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
+                  <Button Content="Quitar línea" Command="{Binding RemoveItemCommand}" Style="{StaticResource ActionButton}"/>
+                </WrapPanel>
+                <DataGrid ItemsSource="{Binding CartRows}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="235" AutomationProperties.Name="CartRows" SelectedValuePath="Input" SelectedValue="{Binding SelectedLine}">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource CommerceCell}" MinWidth="180"/>
+                    <DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="75" ElementStyle="{StaticResource CommerceCell}"/>
+                    <DataGridTextColumn Header="Precio" Binding="{Binding Calculation.UnitPrice, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
+                    <DataGridTextColumn Header="Descuento" Binding="{Binding Calculation.Discount, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
+                    <DataGridTextColumn Header="Impuesto" Binding="{Binding Calculation.Tax, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
+                    <DataGridTextColumn Header="Total" Binding="{Binding Calculation.Total, Converter={StaticResource UsdMoney}, FallbackValue=—}" Width="100" ElementStyle="{StaticResource CommerceNumber}"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+                <Expander Header="Descuento global y entrega" IsEnabled="{Binding CanChangeCart}">
+                  <UniformGrid Columns="2" Margin="0,12,0,0">
+                    <StackPanel Margin="0,0,12,0">
+                      <TextBlock Text="Descuento global (%)" Style="{StaticResource FieldLabel}"/>
+                      <TextBox Text="{Binding GlobalDiscount, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Descuento global (%)"/>
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="Cargo de entrega USD" Style="{StaticResource FieldLabel}"/>
+                      <TextBox Text="{Binding DeliveryCharge, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cargo de entrega"/>
+                    </StackPanel>
+                  </UniformGrid>
+                </Expander>
+              </StackPanel>
+            </TabItem>
+          </TabControl>
+        </StackPanel>
         <Border Grid.Column="1" Style="{StaticResource CommerceSummary}" Margin="16,0,0,0" VerticalAlignment="Top" ToolTip="{Binding QuoteLabel}">
           <StackPanel>
             <TextBlock Text="Resumen de venta" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
