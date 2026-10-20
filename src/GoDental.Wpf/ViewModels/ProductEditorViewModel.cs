@@ -23,7 +23,8 @@ public sealed partial class ProductEditorViewModel : ObservableObject, IDialogMo
     public ObservableCollection<CatalogOption> Categories { get; } = [];
     public ObservableCollection<CatalogOption> Brands { get; } = [];
     public ObservableCollection<CatalogOption> Units { get; } = [];
-    [ObservableProperty] private string sku = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(SkuDisplay))] private string sku = "";
+    public string SkuDisplay => string.IsNullOrWhiteSpace(Sku) ? "Se asigna al guardar" : Sku;
     [ObservableProperty] private string name = "";
     [ObservableProperty] private string description = "";
     [ObservableProperty] private string price = "0.00";

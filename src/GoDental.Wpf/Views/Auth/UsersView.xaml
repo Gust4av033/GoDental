@@ -25,6 +25,7 @@
             </Style>
           </DataGrid.Style>
           <DataGrid.Columns>
+            <DataGridTextColumn Header="Código de empleado" Binding="{Binding EmployeeCode}" Width="155"/>
             <DataGridTextColumn Header="Usuario" Binding="{Binding UserName}" Width="140"/>
             <DataGridTextColumn Header="Nombre" Binding="{Binding DisplayName}" Width="*" MinWidth="180"/>
             <DataGridTextColumn Header="Roles" Binding="{Binding Roles}" Width="140"/>

@@ -7,6 +7,7 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
 {
     public CustomerEditorKind Kind { get; }
     public bool IsGeneral => Kind == CustomerEditorKind.General;
+    public string CodeDisplay => string.IsNullOrWhiteSpace(Customer.Code) ? "Se asigna al guardar" : Customer.Code;
     public bool IsContact => Kind == CustomerEditorKind.Contact;
     public bool IsAddress => Kind == CustomerEditorKind.Address;
     public bool IsCredit => Kind == CustomerEditorKind.Credit;
