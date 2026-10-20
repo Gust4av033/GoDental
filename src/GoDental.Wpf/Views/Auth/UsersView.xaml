@@ -3,11 +3,10 @@
     <DockPanel>
       <WrapPanel DockPanel.Dock="Right">
         <Button Content="Administrar seleccionado" Command="{Binding OpenManageCommand}" IsEnabled="{Binding CanManageSelected}" Visibility="{Binding CanManageSelected, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0"/>
-        <Button Content="+ Crear cuenta" Command="{Binding OpenCreateCommand}" IsEnabled="{Binding CanOpenDialog}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
-        <Button Content="Actualizar" Command="{Binding ReloadCommand}" IsEnabled="{Binding IsNotBusy}"/>
+        <Button Tag="&#xE710;" Content="Crear cuenta" Command="{Binding OpenCreateCommand}" IsEnabled="{Binding CanOpenDialog}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+        <Button Tag="&#xE72C;" Content="Actualizar" Command="{Binding ReloadCommand}" IsEnabled="{Binding IsNotBusy}"/>
       </WrapPanel>
       <StackPanel>
-        <TextBlock Text="SEGURIDAD" Style="{StaticResource PageEyebrow}"/>
         <TextBlock Text="Usuarios" Style="{StaticResource Heading}"/>
       </StackPanel>
     </DockPanel>
@@ -29,7 +28,7 @@
             <DataGridTextColumn Header="Usuario" Binding="{Binding UserName}" Width="140"/>
             <DataGridTextColumn Header="Nombre" Binding="{Binding DisplayName}" Width="*" MinWidth="180"/>
             <DataGridTextColumn Header="Roles" Binding="{Binding Roles}" Width="140"/>
-            <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Active}" Width="80"/>
+            <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
             <DataGridCheckBoxColumn Header="Cambio de clave" Binding="{Binding MustChangePassword}" Width="130"/>
             <DataGridTextColumn Header="Bloqueado hasta" Binding="{Binding LockedUntil, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="170"/>
           </DataGrid.Columns>

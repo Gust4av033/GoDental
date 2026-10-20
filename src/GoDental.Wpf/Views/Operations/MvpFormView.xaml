@@ -44,7 +44,7 @@
       <PasswordBox x:Name="Secret" MaxLength="128" AutomationProperties.Name="Contraseña de autorización administrativa"/>
     </StackPanel>
     <CheckBox Content="Revisé los datos y confirmo esta acción" IsChecked="{Binding Confirmed}" IsEnabled="{Binding CanEdit}" Margin="0,20,0,12" AutomationProperties.Name="Confirmar la operación"/>
-    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
     <local:OperationStatusView DataContext="{Binding Operation}"/>
   </StackPanel>
 </UserControl>

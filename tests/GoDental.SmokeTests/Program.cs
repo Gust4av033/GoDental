@@ -45,6 +45,7 @@ internal static class Program
             {
                 Source = new Uri($"/GoDental;component/Themes/{name}.xaml", UriKind.Relative)
             });
+        app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/GoDental;component/Resources/Icons.xaml", UriKind.Relative) });
         if (app.TryFindResource("BoolToVisibility") is not BooleanToVisibilityConverter)
             throw new InvalidOperationException("El convertidor de visibilidad debe estar disponible desde Controls.xaml.");
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
@@ -393,6 +394,10 @@ internal static class Program
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-{theme}.png"));
                     nav.Navigate(SetupPage.Suppliers);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-{theme}.png"));
+                    Check(shell.Suppliers.IsDetailOpen, "Abrir proveedor muestra su ficha separada del listado");
+                    shell.Suppliers.ReturnToListCommand.Execute(null);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-lista-{theme}.png"));
+                    await shell.Suppliers.OpenCommand.ExecuteAsync(null);
                     // Tamaño lógico equivalente al área de 1366×768 al 125 %.
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-125-{theme}.png"));
                     var suppliersView = new GoDental.Wpf.Views.Suppliers.SuppliersView { DataContext = shell.Suppliers };
@@ -420,6 +425,10 @@ internal static class Program
                 {
                     themes.Apply(theme); nav.Navigate(SetupPage.Customers);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"clientes-{theme}.png"));
+                    Check(shell.Customers.IsDetailOpen, "Abrir cliente muestra su ficha separada del listado");
+                    shell.Customers.ReturnToListCommand.Execute(null);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"clientes-lista-{theme}.png"));
+                    await shell.Customers.OpenCommand.ExecuteAsync(null);
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-125-{theme}.png"));
                     var view = new GoDental.Wpf.Views.Customers.CustomersView { DataContext = shell.Customers };
                     view.Measure(new Size(1000, 700)); view.Arrange(new Rect(0, 0, 1000, 700)); view.UpdateLayout();
@@ -470,6 +479,14 @@ internal static class Program
                         nav.Navigate(page);
                         await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-{theme}.png"));
                         await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-compacto-{theme}.png"));
+                        if (page == SetupPage.Pos)
+                        {
+                            var cartWindow = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
+                            var cartRoot = (FrameworkElement)cartWindow.Content;
+                            cartRoot.Measure(new Size(1366, 768)); cartRoot.Arrange(new Rect(0, 0, 1366, 768)); cartRoot.UpdateLayout();
+                            FindChildren<TabControl>(FindChildren<PosView>(cartRoot).Single()).First().SelectedIndex = 1;
+                            await RenderWindowAsync(cartWindow, Path.Combine(output, $"mvp-Carrito-{theme}.png"));
+                        }
                     }
                     mvpDialogs.Render = async form =>
                     {
@@ -491,13 +508,14 @@ internal static class Program
                 var controlHost = new StackPanel();
                 var input = new TextBox { Text = "Prueba de edición", Width = 220 };
                 var password = new PasswordBox { Password = "Sólo-prueba", Width = 220 };
-                var selector = new ComboBox { ItemsSource = new[] { "Uno", "Dos" }, SelectedIndex = 1, Width = 220 };
-                var action = new Button { Style = (Style)appResource("ActionButton"), Content = "Registrar" };
+                var selector = new ComboBox { ItemsSource = new[] { new CatalogOption { Id = 1, Name = "Caja de prueba" } }, DisplayMemberPath = "Name", SelectedIndex = 0, Width = 220 };
+                var action = new Button { Style = (Style)appResource("ActionButton"), Content = "Registrar", HorizontalAlignment = HorizontalAlignment.Left };
                 controlHost.Children.Add(input); controlHost.Children.Add(password); controlHost.Children.Add(selector); controlHost.Children.Add(action);
                 controlHost.Measure(new Size(500, 300)); controlHost.Arrange(new Rect(0, 0, 500, 300)); controlHost.UpdateLayout();
                 Check(input.Template.FindName("PART_ContentHost", input) is ScrollViewer && password.Template.FindName("PART_ContentHost", password) is ScrollViewer, "Los campos modernos conservan el host de texto y contraseña");
-                Check(selector.Template.FindName("PART_Popup", selector) is System.Windows.Controls.Primitives.Popup && selector.SelectedIndex == 1, "El desplegable moderno conserva popup y selección");
-                Check(action.ActualWidth == 152 && action.ActualHeight == 40, "Las acciones tienen tamaño uniforme de 152 por 40 DIP");
+                Check(selector.Template.FindName("PART_Popup", selector) is System.Windows.Controls.Primitives.Popup && selector.SelectedIndex == 0, "El desplegable moderno conserva popup y selección");
+                Check(FindChildren<TextBlock>(selector).Any(t => t.Text == "Caja de prueba"), "El desplegable muestra el nombre del objeto seleccionado, sin nombres internos de clases");
+                Check(action.ActualWidth >= 120 && action.ActualHeight == 36, "Las acciones compactas conservan espacio legible y altura uniforme de 36 DIP");
                 password.Clear();
                 session.Clear();
                 var loginWindow = new LoginWindow(shell) { ShowActivated = false };
@@ -729,7 +747,17 @@ internal static class Program
             root.Measure(new Size(width, height));
             root.Arrange(new Rect(0, 0, width, height));
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            root.InvalidateMeasure();
+            root.Measure(new Size(width, height));
+            root.Arrange(new Rect(0, 0, width, height));
             root.UpdateLayout();
+            if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1280 && height >= 768)
+            {
+                var checkout = FindChildren<Button>(root).Single(button => button.Content is string caption && caption == "Cobrar");
+                var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
+                Check(bounds.Bottom <= height - 56 && bounds.Right <= width,
+                    "El botón Cobrar permanece visible junto al catálogo y al carrito a 1366×768");
+            }
             var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(root);
             var encoder = new PngBitmapEncoder();

@@ -46,7 +46,7 @@ public sealed partial class ShellViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SidebarWidth))]
     [NotifyPropertyChangedFor(nameof(IsSidebarExpanded))]
     private bool isSidebarCompact;
-    public double SidebarWidth => IsSidebarCompact ? 64 : 208;
+    public double SidebarWidth => IsSidebarCompact ? 64 : 184;
     public bool IsSidebarExpanded => !IsSidebarCompact;
     public string TodayLabel => DateTime.Now.ToString("dddd, d 'de' MMMM 'de' yyyy", CultureInfo.GetCultureInfo("es-SV"));
     public string PageTitle => navigation.CurrentPage switch

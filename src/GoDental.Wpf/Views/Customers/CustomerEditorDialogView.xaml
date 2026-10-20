@@ -125,6 +125,6 @@
       <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
     </StackPanel>
     <CheckBox Content="He revisado los datos y el estado del registro" IsChecked="{Binding Confirmed}" Margin="0,6,16,12"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource MutedText}" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
 </UserControl>

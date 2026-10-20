@@ -1,4 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- El set de iconos definitivo se seleccionará una sola vez según UX-01. -->
+  <!-- Símbolo dental vectorial provisional; la identidad final sigue pendiente en UX-01. -->
+  <DrawingImage x:Key="DentalMark">
+    <DrawingImage.Drawing>
+      <GeometryDrawing Brush="{DynamicResource OnPrimaryBrush}" Geometry="M 12,5 C 6,1 2,4 3,11 C 3,15 5,27 8,28 C 11,29 10,18 13,18 C 16,18 15,29 18,28 C 21,27 23,15 23,10 C 24,4 20,1 15,5 C 14,6 13,6 12,5 Z"/>
+    </DrawingImage.Drawing>
+  </DrawingImage>
 </ResourceDictionary>

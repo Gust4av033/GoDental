@@ -31,6 +31,14 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     [ObservableProperty] private CatalogOption? type;
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] private bool isEditing;
+    [ObservableProperty] private bool isDetailOpen;
+    [RelayCommand] private void ReturnToList() => IsDetailOpen = false;
+    [RelayCommand] private async Task RefreshDetailAsync()
+    {
+        if (Detail is null) return;
+        var id = Detail.Id;
+        await RunAsync((revision, ct) => ReadCoreAsync(id, revision, ct));
+    }
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel)), NotifyPropertyChangedFor(nameof(IsEmpty))] private int total;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(SalesLabel))] private int salesPage = 1;
@@ -52,7 +60,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
     public string PaymentsLabel => $"{PaymentsTotal} abonos · Página {PaymentsPage}";
     protected override bool CanAccess => CanRead;
     public CustomersViewModel(CustomerService service, ISessionController session, ICustomerDialogService dialogs, ILogger<CustomersViewModel> logger) : base(session, logger) { this.service = service; this.dialogs = dialogs; }
-    partial void OnDetailChanged(CustomerData? value) => RefreshPermissions();
+    partial void OnDetailChanged(CustomerData? value) { IsDetailOpen = value is not null; RefreshPermissions(); }
     partial void OnIsEditingChanged(bool value) => RefreshPermissions();
     protected override void RefreshPermissions()
     {

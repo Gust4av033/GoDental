@@ -20,9 +20,9 @@
           <WrapPanel Margin="0,12,0,4">
             <StackPanel Width="300" Margin="0,0,16,12">
               <TextBlock Text="SKU o nombre" Margin="0,0,0,6"/>
-              <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="SKU o nombre"/>
+              <TextBox Style="{StaticResource SearchBox}" Tag="Buscar…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="SKU o nombre"/>
             </StackPanel>
-            <Button Content="Buscar" Command="{Binding SearchCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Tag="&#xE721;" Content="Buscar" Command="{Binding SearchCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
           </WrapPanel>
           <DataGrid ItemsSource="{Binding Products}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" SelectionUnit="FullRow" Height="160" AutomationProperties.Name="Products" SelectedItem="{Binding Product}">
             <DataGrid.Columns>
@@ -31,8 +31,8 @@
             </DataGrid.Columns>
           </DataGrid>
           <WrapPanel Margin="0,12,0,4">
-            <Button Content="Anterior" Command="{Binding PreviousCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
-            <Button Content="Siguiente" Command="{Binding NextCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,8,8"/>
+            <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" Margin="0,0,8,8"/>
           </WrapPanel>
           <WrapPanel Margin="0,12,0,4">
             <StackPanel Width="140" Margin="0,0,16,12">
@@ -52,6 +52,6 @@
         </StackPanel>
       </TabItem>
     </TabControl>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource MutedText}" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
 </UserControl>

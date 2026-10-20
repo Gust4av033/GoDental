@@ -16,6 +16,29 @@ public sealed class CustomerUiTests
     private static CustomersViewModel ViewModel(CustomerWorkflowRepository repo, UserSession session, CustomerTestDialogs dialogs) => new(new(repo, session), session, dialogs, NullLogger<CustomersViewModel>.Instance);
     private static async Task Open(CustomersViewModel vm) { await vm.ReloadCommand.ExecuteAsync(null); vm.Selected = vm.Items.First(); await vm.OpenCommand.ExecuteAsync(null); }
     [Fact]
+    public async Task ReturnToListPreservesCustomerAndFiltersAndSessionClearsDetail()
+    {
+        var session = Session("CLIENTES.VER");
+        var vm = ViewModel(new(), session, new());
+        await Open(vm);
+        var selected = vm.Selected;
+        vm.Search = "Cliente";
+        Assert.True(vm.IsDetailOpen);
+        vm.ReturnToListCommand.Execute(null);
+        Assert.False(vm.IsDetailOpen);
+        Assert.Same(selected, vm.Selected);
+        Assert.Equal("Cliente", vm.Search);
+        await vm.OpenCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        vm.Selected = null;
+        await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        Assert.NotNull(vm.Detail);
+        session.Clear();
+        Assert.False(vm.IsDetailOpen);
+        Assert.Null(vm.Detail);
+    }
+    [Fact]
     public async Task CreatePermissionDoesNotGrantEditOrCreditConfiguration()
     {
         var repo = new CustomerWorkflowRepository(); var service = new CustomerService(repo, Session("CLIENTES.VER", "CLIENTES.CREAR"));

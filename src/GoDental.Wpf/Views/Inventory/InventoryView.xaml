@@ -5,7 +5,7 @@
         <Button DockPanel.Dock="Right" Content="Volver al catálogo" Command="{Binding CloseCommand}" IsEnabled="{Binding IsNotBusy}" />
         <StackPanel><TextBlock Text="EXISTENCIAS Y TRAZABILIDAD" Style="{StaticResource MutedText}" FontSize="11" /><TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeading}" Margin="0,6,16,16" /></StackPanel>
       </DockPanel>
-      <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,0,0,16" AutomationProperties.LiveSetting="Polite" />
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,0,0,16" AutomationProperties.LiveSetting="Polite" />
       <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
       <Button Content="Registrar movimiento" Command="{Binding OpenMovementDialogCommand}" IsEnabled="{Binding CanWrite}" Visibility="{Binding CanAdjust, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,0,0,16"/>
       <StackPanel IsEnabled="{Binding IsNotBusy}">
@@ -42,7 +42,7 @@
                 <DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Id}"/><DataGridTextColumn Header="Fecha (SV)" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="145"/><DataGridTextColumn Header="Tipo" Binding="{Binding Type}"/><DataGridTextColumn Header="Lote" Binding="{Binding Lot}"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity, StringFormat={}{0:0.####}}"/><DataGridTextColumn Header="Anterior" Binding="{Binding Before, StringFormat={}{0:0.####}}"/><DataGridTextColumn Header="Posterior" Binding="{Binding After, StringFormat={}{0:0.####}}"/><DataGridTextColumn Header="Usuario" Binding="{Binding User}"/><DataGridTextColumn Header="Referencia" Binding="{Binding Reference}"/><DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="240"/></DataGrid.Columns>
               </DataGrid>
               <TextBlock Text="No hay movimientos con estos filtros." Visibility="{Binding IsHistoryEmpty, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource MutedText}" Margin="0,12,0,0"/>
-              <DockPanel Margin="0,12,0,0"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Command="{Binding PreviousCommand}" Margin="0,0,8,0"/><Button Content="Siguiente" Command="{Binding NextCommand}"/></WrapPanel><TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}"/></DockPanel>
+              <DockPanel Margin="0,12,0,0"><WrapPanel DockPanel.Dock="Right"><Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,8,0"/><Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}"/></WrapPanel><TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}"/></DockPanel>
             </StackPanel>
           </TabItem>
         </TabControl>
