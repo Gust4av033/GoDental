@@ -75,11 +75,14 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
                         """, product, tx, cancellationToken)) == 1)
                     return Result<int>.Failure("TRACEABILITY", "El producto ya tiene historial. Conserva la unidad y el control de lotes, vencimientos y series.");
             }
+            var insert = new DynamicParameters(product);
+            if (product.Id == 0 && string.IsNullOrWhiteSpace(product.Sku))
+                insert.Add("Sku", await GoDental.Infrastructure.Data.MasterCode.NextAsync(c, tx, "MAESTRO_PRODUCTO", cancellationToken));
             var id = product.Id == 0
                 ? await c.ExecuteScalarAsync<int>(Cmd("""
                     INSERT INTO inv.Productos(SKU,Nombre,Descripcion,IdCategoria,IdMarca,IdUnidadMedida,PrecioVentaReferencia,StockMinimo,StockMaximo,ControlaLote,ControlaVencimiento,ControlaSerie,DiasAlertaVencimiento,Activo)
                     OUTPUT INSERTED.IdProducto VALUES(@Sku,@Name,@Description,@CategoryId,@BrandId,@UnitId,@Price,@MinimumStock,@MaximumStock,@TracksLot,@TracksExpiry,@TracksSerial,@ExpiryAlertDays,@Active);
-                    """, product, tx, cancellationToken))
+                    """, insert, tx, cancellationToken))
                 : product.Id;
             if (product.Id != 0)
             {
@@ -98,6 +101,7 @@ public sealed class SqlProductRepository(IDbConnectionFactory factory) : IProduc
             await tx.CommitAsync(cancellationToken);
             return Result<int>.Success(id);
         }
+        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number is 53501 or 53502) { return Result<int>.Failure("CODE_UNAVAILABLE", ex.Message); }
         catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number is 2601 or 2627)
         { return Result<int>.Failure("DUPLICATE_SKU", "Ese SKU ya existe. Elige otro o edita el producto existente."); }
     }

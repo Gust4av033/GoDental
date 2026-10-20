@@ -6,7 +6,11 @@
         <Ellipse Width="470" Height="350" Fill="{DynamicResource AccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-160,0,0,-150" IsHitTestVisible="False"/>
         <Ellipse Width="330" Height="250" Fill="{DynamicResource BackgroundBrush}" Opacity="0.65" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-130,0,0,-158" IsHitTestVisible="False"/>
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="28" MaxWidth="300">
+          <Border Width="64" Height="64" CornerRadius="20" Background="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+            <TextBlock Text="G" FontSize="36" FontWeight="SemiBold" Foreground="{DynamicResource OnPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
           <TextBlock Text="GoDental" FontSize="38" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" TextAlignment="Center"/>
+          <TextBlock Text="TU OPERACIÓN, CONECTADA" Style="{StaticResource PageEyebrow}" TextAlignment="Center" Margin="0,16,0,0"/>
           <TextBlock Text="Gestión para tu depósito dental" Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,12,0,0"/>
         </StackPanel>
         <StackPanel VerticalAlignment="Bottom" Margin="28,0,28,24">

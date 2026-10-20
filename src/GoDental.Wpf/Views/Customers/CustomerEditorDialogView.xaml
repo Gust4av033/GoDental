@@ -2,8 +2,8 @@
   <StackPanel IsEnabled="{Binding CanEdit}">
     <WrapPanel Visibility="{Binding IsGeneral, Converter={StaticResource BoolToVisibility}}">
       <StackPanel Width="240" Margin="0,0,16,12">
-        <TextBlock Text="Código" Margin="0,0,0,6"/>
-        <TextBox Text="{Binding Customer.Code, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código"/>
+        <TextBlock Text="Código automático" Margin="0,0,0,6"/>
+        <TextBox Text="{Binding CodeDisplay, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="Código"/>
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Nombre / Razón social" Margin="0,0,0,6"/>
@@ -27,7 +27,7 @@
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Tipo de cliente"/>
-        <ComboBox ItemsSource="{Binding Types}" SelectedValue="{Binding Customer.TypeId}" SelectedValuePath="Id" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
+        <ComboBox ItemsSource="{Binding Types}" SelectedValue="{Binding SelectedTypeId}" SelectedValuePath="Id" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Lista de precios"/>
@@ -125,6 +125,6 @@
       <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
     </StackPanel>
     <CheckBox Content="He revisado los datos y el estado del registro" IsChecked="{Binding Confirmed}" Margin="0,6,16,12"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource MutedText}" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
 </UserControl>

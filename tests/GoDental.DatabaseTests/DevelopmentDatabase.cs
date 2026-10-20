@@ -25,7 +25,7 @@ internal static class DevelopmentDatabase
         {
             var marker = await connection.ExecuteScalarAsync<string>("SELECT CONVERT(nvarchar(100),value) FROM sys.extended_properties WHERE class=0 AND name=N'GoDental.Development'");
             if (marker is not ("GoDental-LocalTools" or "CreatedByCodex-2026-10-17")) throw new InvalidOperationException("La base existente no tiene un marcador reconocido de desarrollo.");
-            if (await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") != 72)
+            if (await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables WHERE object_id NOT IN(ISNULL(OBJECT_ID(N'sis.OperacionesMvp'),0),ISNULL(OBJECT_ID(N'ven.PedidosMvp'),0),ISNULL(OBJECT_ID(N'ven.PedidoLineasMvp'),0),ISNULL(OBJECT_ID(N'ven.PedidoEventosMvp'),0))") != 72)
                 throw new InvalidOperationException("La instalación existente está incompleta; requiere revisión manual.");
         }
         foreach (var file in Directory.GetFiles(scriptFolder, "0*.sql").Order())
@@ -37,7 +37,7 @@ internal static class DevelopmentDatabase
             Console.WriteLine("SQL " + Path.GetFileName(file));
         }
         var counts = await connection.QuerySingleAsync("SELECT (SELECT COUNT(*) FROM sys.tables) Tables,(SELECT COUNT(*) FROM sys.views) Views,(SELECT COUNT(*) FROM sys.procedures) Procedures");
-        if ((int)counts.Tables != 72 || (int)counts.Views != 8 || (int)counts.Procedures != 17) throw new InvalidOperationException("Objetos de baseline/migraciones incompletos.");
+        if ((int)counts.Tables != 76 || (int)counts.Views != 8 || (int)counts.Procedures != 18) throw new InvalidOperationException("Objetos de baseline/migraciones incompletos.");
     }
 
     public static async Task ReapplySeedAsync(string database, string scriptFolder)

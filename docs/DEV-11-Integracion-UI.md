@@ -1,6 +1,6 @@
 # DEV-11 · Conectar la siguiente UI a los servicios de lógica
 
-Entrega del 19/10/2026 en `feature/desarrollo`. Mantener únicamente esta rama y `main`; actualizar referencias y avanzar por fast-forward antes de editar. No crear otra rama permanente de UI ni duplicar reglas en WPF. Esta entrega no cambia archivos dentro de `src/GoDental.Wpf/`.
+Entrega del 19/10/2026 en `feature/desarrollo`. La organización vigente de DEV-08 sustituye la política original: continuar la interfaz en `feature/ui` e integrar contratos desde `feature/logica` mediante merge. No duplicar reglas en WPF. Esta entrega no cambia archivos dentro de `src/GoDental.Wpf/`.
 
 ## Preparación
 

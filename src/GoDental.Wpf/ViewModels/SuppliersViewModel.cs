@@ -25,6 +25,14 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] private bool isEditing;
+    [ObservableProperty] private bool isDetailOpen;
+    [RelayCommand] private void ReturnToList() => IsDetailOpen = false;
+    [RelayCommand] private async Task RefreshDetailAsync()
+    {
+        if (Detail is null) return;
+        var id = Detail.Id;
+        await RunAsync((revision, ct) => ReadCoreAsync(id, revision, ct));
+    }
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel)), NotifyPropertyChangedFor(nameof(IsEmpty))] private int total;
     public bool CanRead => service.CanRead;
@@ -37,7 +45,7 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
     public SuppliersViewModel(SupplierService service, ProductService products, ISessionController session,
         IWorkflowDialogService dialogs, ILogger<SuppliersViewModel> logger) : base(session, logger)
     { this.service = service; this.products = products; this.dialogs = dialogs; }
-    partial void OnDetailChanged(SupplierData? value) => RefreshPermissions();
+    partial void OnDetailChanged(SupplierData? value) { IsDetailOpen = value is not null; RefreshPermissions(); }
     partial void OnIsEditingChanged(bool value) => RefreshPermissions();
     protected override void RefreshPermissions() { OnPropertyChanged(nameof(CanRead)); OnPropertyChanged(nameof(CanManage)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditChildren)); }
     protected override void Reset() { Items.Clear(); Contacts.Clear(); References.Clear(); Detail = null; Selected = null; SelectedContact = null; SelectedProduct = null; Total = 0; }

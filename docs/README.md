@@ -40,3 +40,12 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 
 - [DEV-13 · Clientes](DEV-13-Clientes.md): ficha comercial, contactos, direcciones, crédito separado e historiales.
 - [DEV-14 · VS Code en Windows](DEV-14-VSCode-Windows.md): preparación del SDK, tareas y depuración WPF.
+
+- [DEV-15 · Coordinación UI y lógica](DEV-15-Coordinacion-UI.md)
+- [DEV-16 · Refinamiento de componentes UI](DEV-16-UI-Refinamiento.md)
+- [DEV-17 · Lógica del MVP operativo](DEV-17-MVP-Logica.md): ventas/POS, caja, crédito, cotizaciones, comprobante interno y pedidos/entrega; migraciones 012–013 y límites de validación.
+- [DEV-18 · Validación compartida](DEV-18-Validacion-Compartida.md): cierre de capturas y confirmación de descarte en el smoke de Windows.
+- [DEV-19 · Interfaces del recorrido MVP](DEV-19-UI-MVP.md)
+
+- [DEV-20 · Códigos automáticos y cierre](DEV-20-Codigos-Cierre.md): identificadores al guardar, código de personal y salida del proceso con el host detenido.
+- [DEV-21 · Fidelidad visual](DEV-21-UI-Fidelidad-visual.md): componentes, listados/fichas y distribución de POS/caja ajustados a las ocho capturas del usuario.

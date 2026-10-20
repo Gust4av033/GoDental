@@ -9,12 +9,64 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace GoDental.Tests.Ui;
 public sealed class CustomerUiTests
 {
+    [Fact]
+    public async Task NewCustomerHasAuditReasonAndSelectedCatalogTypeCanBeSaved()
+    {
+        CustomerChange? saved = null;
+        var form = new CustomerEditorDialogModel(CustomerEditorKind.General, new() { Name = "Clínica de prueba" }, null, null, null,
+            new([new() { Id = 1, Name = "Paciente" }, new() { Id = 2, Name = "Clínica" }], []), model =>
+            {
+                var editor = (CustomerEditorDialogModel)model;
+                saved = new(editor.BuildCustomer(), editor.Reason);
+                return Task.FromResult(CustomerValidator.Validate(saved) is null);
+            });
+        form.SelectedTypeId = 2;
+        form.Confirmed = true;
+        await ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null);
+        Assert.NotNull(saved);
+        Assert.Equal((short)2, saved.Customer.TypeId);
+        Assert.Equal("Alta de cliente", saved.Reason);
+        Assert.Null(CustomerValidator.Validate(saved));
+    }
+
+    [Fact]
+    public void EditingCustomerStillRequiresExplicitAuditReason()
+    {
+        var form = new CustomerEditorDialogModel(CustomerEditorKind.General,
+            new() { Id = 1, Code = "CLI-1", Name = "Clínica", TypeId = 1, RowVersion = new byte[8] }, null, null, null,
+            new([new() { Id = 1, Name = "Clínica" }], []), _ => Task.FromResult(false));
+        Assert.Empty(form.Reason);
+        Assert.NotNull(CustomerValidator.Validate(new CustomerChange(form.BuildCustomer(), form.Reason)));
+    }
     private static UserSession Session(params string[] permissions)
     {
         var session = new UserSession(); session.Begin(new(1, "prueba", "Prueba", 1, [], permissions, false)); return session;
     }
     private static CustomersViewModel ViewModel(CustomerWorkflowRepository repo, UserSession session, CustomerTestDialogs dialogs) => new(new(repo, session), session, dialogs, NullLogger<CustomersViewModel>.Instance);
     private static async Task Open(CustomersViewModel vm) { await vm.ReloadCommand.ExecuteAsync(null); vm.Selected = vm.Items.First(); await vm.OpenCommand.ExecuteAsync(null); }
+    [Fact]
+    public async Task ReturnToListPreservesCustomerAndFiltersAndSessionClearsDetail()
+    {
+        var session = Session("CLIENTES.VER");
+        var vm = ViewModel(new(), session, new());
+        await Open(vm);
+        var selected = vm.Selected;
+        vm.Search = "Cliente";
+        Assert.True(vm.IsDetailOpen);
+        vm.ReturnToListCommand.Execute(null);
+        Assert.False(vm.IsDetailOpen);
+        Assert.Same(selected, vm.Selected);
+        Assert.Equal("Cliente", vm.Search);
+        await vm.OpenCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        vm.Selected = null;
+        await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        Assert.NotNull(vm.Detail);
+        session.Clear();
+        Assert.False(vm.IsDetailOpen);
+        Assert.Null(vm.Detail);
+    }
     [Fact]
     public async Task CreatePermissionDoesNotGrantEditOrCreditConfiguration()
     {

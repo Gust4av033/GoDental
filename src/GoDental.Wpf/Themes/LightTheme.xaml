@@ -14,5 +14,10 @@
     <SolidColorBrush x:Key="SidebarMutedBrush" Color="{StaticResource LightSidebarMuted}" />
     <SolidColorBrush x:Key="SidebarSelectionBrush" Color="{StaticResource LightSidebarSelection}" />
     <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource LightBrandAccent}" />
+    <SolidColorBrush x:Key="SuccessTintBrush" Color="{StaticResource LightSuccessTint}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource LightWarning}" />
+    <SolidColorBrush x:Key="WarningTintBrush" Color="{StaticResource LightWarningTint}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource LightDanger}" />
+    <SolidColorBrush x:Key="DangerTintBrush" Color="{StaticResource LightDangerTint}" />
 </ResourceDictionary>
 

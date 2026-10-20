@@ -33,6 +33,30 @@ public sealed class WorkflowUiTests
         await vm.ReloadCommand.ExecuteAsync(null); vm.Selected = vm.Items[0]; await vm.OpenCommand.ExecuteAsync(null);
     }
 
+    [Fact]
+    public async Task ReturnToSupplierListPreservesSelectionAndSessionClearsDetail()
+    {
+        var session = Session();
+        var vm = Suppliers(new(), session, new());
+        await Open(vm);
+        var selected = vm.Selected;
+        vm.Search = "Proveedor";
+        Assert.True(vm.IsDetailOpen);
+        vm.ReturnToListCommand.Execute(null);
+        Assert.False(vm.IsDetailOpen);
+        Assert.Same(selected, vm.Selected);
+        Assert.Equal("Proveedor", vm.Search);
+        await vm.OpenCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        vm.Selected = null;
+        await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        Assert.NotNull(vm.Detail);
+        session.Clear();
+        Assert.False(vm.IsDetailOpen);
+        Assert.Null(vm.Detail);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

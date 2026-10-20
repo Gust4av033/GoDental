@@ -1,38 +1,26 @@
 # DEV-08 · Organización de ramas
 
-Decisión del 18 de octubre de 2026, solicitada por el usuario antes de continuar con la lógica.
+Decisión del 19 de octubre de 2026. Sustituye la política de una única rama `feature/desarrollo`.
 
-## Ramas activas
+## Ramas vigentes
 
-- `main`: versión comprobada e integrable, incluida la última interfaz de `feature/ui-dialogos-productos` (`dc35083`).
-- `feature/desarrollo`: única rama de trabajo; parte de la versión integrada en `main` y sirve para continuar la lógica y los ajustes de interfaz necesarios.
+- `feature/ui`: WPF, estilos, navegación, diálogos, ViewModels y pruebas de presentación.
+- `feature/logica`: Domain, Application, Infrastructure, persistencia, SQL y sus pruebas.
+- `main`: versión integrada y validada; no es una tercera rama de desarrollo.
 
-No se mantienen ramas permanentes de UI y lógica: los casos de uso y sus pantallas evolucionan juntos. ARQ-01 ya separa responsabilidades entre Domain, Application, Infrastructure y WPF. Los commits deben seguir siendo pequeños y enfocados.
+Base común: `0fc3504`, que contiene todos los commits de `origin/main` (`ee3a504`) y los incrementos posteriores de conteos, proveedores y clientes. El árbol local estaba limpio al comenzar. No se descartaron cambios ni se usó force push.
 
-## Integración y comprobaciones
+## Sincronización y entrega
 
-1. Trabajar en `feature/desarrollo`.
-2. Ejecutar `scripts/verify.ps1`; añadir `-SqlIntegration` cuando cambien persistencia, permisos o inventario.
-3. Abrir PR hacia `main`, revisar el diff y esperar CI correcto.
-4. Integrar con merge para conservar los commits. No eliminar `feature/desarrollo`.
-5. Actualizar referencias y avanzar `feature/desarrollo` a `origin/main` mediante fast-forward antes del siguiente incremento.
+1. Actualizar referencias antes de cada bloque e incorporar mediante merge los cambios compatibles de la otra rama. Revisar ambos lados de cualquier conflicto.
+2. Separar cambios y commits por responsabilidad; no llevar UI pendiente a lógica ni modificar contratos para hacer compilar una pantalla.
+3. Registrar necesidades de contratos en `DEV-15-Coordinacion-UI.md`, con entradas, salida, permisos, errores y estado.
+4. Compilar Release, ejecutar pruebas pertinentes y `scripts/verify.ps1` en Windows. Para SQL usar sólo bases aisladas de pruebas.
+5. Publicar la rama correspondiente y abrir PR hacia `main`; integrar sólo tras completar las comprobaciones y CI.
+6. Después de integrar un incremento validado, sincronizar ambas ramas con `main` mediante merge, conservando el historial.
 
-La consolidación de la interfaz se comprobó en Windows con `scripts/verify.ps1 -SqlIntegration`: compilación Release sin errores ni advertencias, 20 casos xUnit, 57 comprobaciones WPF sin errores de enlaces, 49 comprobaciones SQL de seguridad/catálogo y 40 de inventario. Las suites SQL usan bases aisladas `GoDental_Tests_<GUID>`; no modifican la base de desarrollo del usuario. Las capturas y resultados locales están en `TestResults/` (ignorados por Git). Esto no certifica producción ni hardware/DPI real en todos los equipos.
+## Archivo
 
-## Archivo y recuperación
+La punta anterior de `feature/desarrollo` se conserva en la etiqueta publicada `archive/2026-10-19/feature/desarrollo` (`0fc3504`). Las etiquetas de archivo del 18 de octubre permanecen vigentes. No crear ramas permanentes adicionales ni borrar referencias sin conservar el trabajo.
 
-Antes de borrar las ramas anteriores se conservan sus puntas como etiquetas `archive/2026-10-18/<nombre-original>`, publicadas en origin. Se guarda además un bundle Git local y un inventario de referencias en `work/branch-cleanup-2026-10-18/`, fuera del repositorio. El stash local preexistente se conserva.
-
-Se archivan las ramas `chore/*`, `feature/arranque-escritorio`, `feature/inventario-operativo`, `feature/ui-dialogos-productos` y las ocho propuestas `dependabot/*`. Las propuestas de dependencias no se integran automáticamente. Los PR anteriores de arranque e inventario quedan sustituidos por la consolidación, cuyo historial incluye sus commits; las propuestas de Dependabot se cierran conservando las etiquetas.
-
-Para consultar el trabajo anterior sin crear otra rama:
-
-```powershell
-git fetch origin --tags
-git show archive/2026-10-18/feature/ui-dialogos-productos
-git log archive/2026-10-18/chore/sql-v0.1 --oneline
-```
-
-Si alguna propuesta archivada vuelve a necesitarse, revisar su diff y aplicar los commits adecuados en `feature/desarrollo`; no reabrir ramas permanentes de UI o lógica.
-
-Los PR automáticos de versiones de Dependabot se pausan en ambos ecosistemas para evitar recrear ramas de mantenimiento. Se conservan las alertas de seguridad; las actualizaciones de seguridad habilitadas en GitHub pueden crear ramas excepcionales y deberán revisarse.
+La consulta de PR abiertos mediante `gh pr list` fue rechazada por la API GraphQL (Forbidden). Antes de retirar la rama remota anterior se debe comprobar en GitHub que no haya PR abiertos que dependan de ella; mientras tanto se conserva sólo como referencia heredada, sin desarrollo nuevo.
