@@ -42,6 +42,14 @@ Corrección posterior de descubrimiento solicitada por el usuario: el botón Exi
 
 Recorrido y límites en DEV-19. Estas dos correcciones preceden a la conexión posterior al POS. Reservas y cobro contra entrega siguen pendientes.
 
+## Corrección de confirmación del cobro · 20/10/2026
+
+La captura del usuario muestra un pago en efectivo agregado, pero la tabla desplazaba fuera de la vista el efectivo recibido, el motivo obligatorio, la casilla de revisión y el mensaje de rechazo. Agregar un pago no confirma la venta ni equivale a registrar el dinero recibido. El recorrido vigente exige pagos por el total exacto, efectivo recibido suficiente si hay efectivo, motivo, revisión explícita y turno abierto para ese efectivo; el servidor conserva la validación definitiva. La captura por sí sola no identifica cuál de esas validaciones falló.
+
+Se coloca la confirmación y el estado de los formularios MVP en `MvpFormFooterView`, presentado por `DialogWindow` fuera del desplazamiento del cuerpo, junto a Guardar/Volver. Incluye los errores y la recuperación con la misma solicitud/GUID. En cobro, Efectivo recibido se mueve junto al importe, antes de la tabla; el motivo se etiqueta como obligatorio y la descripción explica los pasos. No se modifica la confirmación comercial, la exigencia de revisión, las reglas de pagos/caja ni las transacciones/SQL. Los demás tipos de diálogo conservan su pie previo.
+
+El smoke amplía la comprobación de visibilidad de casilla/acción y su estabilidad al desplazar, mensaje de falta de confirmación visible junto al botón, orden del campo de efectivo y pie visible en 780×540 DIP, en ambos temas. Validación Windows de este ajuste pendiente de ejecución.
+
 ## Integridad y límites
 
 Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, `SaleReceiptService` y `MvpOperationService`. Se mantienen `OperationId`, solicitud retenida ante respuesta incierta, token de cálculo, autorización puntual, rowversion, auditoría y validación de servicios/SQL. El refinamiento original no alteró capas interiores; la conexión posterior al POS amplía `ConfirmSale` y reutiliza el enlace compatible dentro de su transacción en Infrastructure. Domain y las migraciones no cambian.

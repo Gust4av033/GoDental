@@ -1,0 +1,14 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.MvpFormFooterView">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+  <StackPanel Margin="0,0,0,8">
+    <CheckBox Content="Revisé los datos y confirmo esta acción" IsChecked="{Binding Confirmed}" IsEnabled="{Binding CanEdit}" Margin="0,0,0,8" AutomationProperties.Name="Confirmar la operación"/>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" AutomationProperties.Name="Resultado de la confirmación"/>
+    <local:OperationStatusView DataContext="{Binding Operation}"/>
+  </StackPanel>
+</UserControl>

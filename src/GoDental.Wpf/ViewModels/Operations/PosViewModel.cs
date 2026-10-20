@@ -164,7 +164,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
                 Items.Clear(); Invalidate(); QuotationId = null;
                 var snapshot = await sales.ReadAsync(receipt.Id); if (!Current(revision)) return; ConfirmedSale = snapshot; await SearchCoreAsync(revision); StatusMessage = origin is null ? "Venta confirmada. Consulta el comprobante en Ventas y PDF." : $"Venta confirmada y vinculada al pedido #{origin.OrderId}. Continúa su preparación/entrega en Pedidos.";
             }));
-        }) { Body = payment, Description = $"Total {accepted.Total:N2}. Los importes aplicados deben cubrir exactamente el total. Revisa el efectivo recibido y las referencias." }.Input("reason", "Motivo / justificación de descuentos"));
+        }) { Body = payment, Description = $"Total {accepted.Total:N2}. Agrega el pago, registra el efectivo recibido si corresponde y completa el motivo obligatorio. Revisa y marca la confirmación del pie de la ventana." }.Input("reason", "Motivo de la venta / justificación (obligatorio)"));
     }
     [RelayCommand] private async Task SaveQuotationAsync()
     {

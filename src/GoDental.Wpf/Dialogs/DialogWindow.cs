@@ -10,6 +10,7 @@ public sealed class DialogWindow : Window
 {
     private readonly IDialogModel model;
     private bool saved;
+    public UIElement? OperationFooter { get; }
 
     public DialogWindow(IDialogModel model, UIElement body)
     {
@@ -17,6 +18,7 @@ public sealed class DialogWindow : Window
         Title = model.Title;
         DataContext = model;
         Content = body;
+        if (model is MvpFormModel) OperationFooter = new Views.Operations.MvpFormFooterView { DataContext = model };
         Style = (Style)FindResource("DialogWindow");
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Width = Math.Min(920, SystemParameters.WorkArea.Width * 0.85);

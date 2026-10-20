@@ -256,15 +256,18 @@
               <Border Background="{DynamicResource TintBrush}" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                 <TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeading}" Margin="0" AutomationProperties.HeadingLevel="Level1"/>
               </Border>
-              <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,16">
+              <ScrollViewer x:Name="DialogBodyScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,16">
                 <ContentPresenter Content="{TemplateBinding Content}"/>
               </ScrollViewer>
               <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
-                <DockPanel LastChildFill="False">
-                  <Button DockPanel.Dock="Right" Content="{Binding PrimaryActionLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Visibility="{Binding ShowPrimaryAction, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryActionButton}" AutomationProperties.Name="{Binding PrimaryActionLabel}" Margin="8,0,0,0"/>
-                  <Button DockPanel.Dock="Right" Content="{Binding SecondaryActionLabel}" Command="{Binding CancelCommand}" Style="{StaticResource ActionButton}" AutomationProperties.Name="{Binding SecondaryActionLabel}"/>
-                  <ProgressBar Width="120" Height="4" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center"/>
-                </DockPanel>
+                <StackPanel>
+                  <ContentPresenter Content="{Binding OperationFooter, RelativeSource={RelativeSource TemplatedParent}}"/>
+                  <DockPanel LastChildFill="False">
+                    <Button DockPanel.Dock="Right" Content="{Binding PrimaryActionLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Visibility="{Binding ShowPrimaryAction, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryActionButton}" AutomationProperties.Name="{Binding PrimaryActionLabel}" Margin="8,0,0,0"/>
+                    <Button DockPanel.Dock="Right" Content="{Binding SecondaryActionLabel}" Command="{Binding CancelCommand}" Style="{StaticResource ActionButton}" AutomationProperties.Name="{Binding SecondaryActionLabel}"/>
+                    <ProgressBar Width="120" Height="4" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center"/>
+                  </DockPanel>
+                </StackPanel>
               </Border>
             </Grid>
           </Border>

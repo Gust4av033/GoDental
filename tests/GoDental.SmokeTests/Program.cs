@@ -864,6 +864,40 @@ internal static class Program
             window.Show();
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             window.UpdateLayout();
+            if (model is MvpFormModel operationForm)
+            {
+                var footer = FindChildren<MvpFormFooterView>(window).Single();
+                var confirmation = FindChildren<CheckBox>(footer).Single();
+                var scroll = (ScrollViewer)window.Template.FindName("DialogBodyScroll", window);
+                Rect Bounds(FrameworkElement element) => element.TransformToAncestor(window).TransformBounds(new Rect(element.RenderSize));
+                void CheckFooter()
+                {
+                    var action = FindChildren<Button>(window).Single(b => b.Content is string text && text == model.PrimaryActionLabel);
+                    Check(Bounds(confirmation).Top >= 0 && Bounds(confirmation).Bottom <= window.ActualHeight
+                        && action.ActualWidth == 152 && action.ActualHeight == 36 && Bounds(action).Bottom <= window.ActualHeight,
+                        "Confirmación y acción permanecen visibles en el pie fijo: " + model.Title);
+                    var original = Bounds(confirmation); scroll.ScrollToEnd(); window.UpdateLayout();
+                    Check(Bounds(confirmation) == original, "Desplazar el formulario no oculta la confirmación: " + model.Title);
+                    scroll.ScrollToTop(); window.UpdateLayout();
+                }
+                CheckFooter();
+                if (operationForm.Body is CheckoutModel)
+                {
+                    var confirmed = operationForm.Confirmed; var previousStatus = operationForm.StatusMessage;
+                    operationForm.Confirmed = false; await ((IAsyncRelayCommand)operationForm.SaveCommand).ExecuteAsync(null);
+                    window.UpdateLayout();
+                    var message = FindChildren<TextBlock>(footer).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "Resultado de la confirmación");
+                    Check(message.Text.Contains("Marca la confirmación") && Bounds(message).Bottom <= window.ActualHeight,
+                        "Confirmar sin marcar la casilla muestra el motivo junto al botón, sin buscarlo con scroll");
+                    operationForm.Confirmed = confirmed; operationForm.StatusMessage = previousStatus;
+                    var cash = FindChildren<TextBox>(body).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "Efectivo recibido");
+                    var payments = FindChildren<DataGrid>(body).Single();
+                    Check(Bounds(cash).Top < Bounds(payments).Top, "El efectivo recibido se pide antes de la tabla de pagos");
+                    var originalWidth = window.Width; var originalHeight = window.Height;
+                    window.Width = 780; window.Height = 540; window.UpdateLayout(); CheckFooter();
+                    window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
+                }
+            }
             if (model is MvpFormModel { Body: OrderDraftModel draft })
             {
                 FindChildren<TabControl>(body).Single().SelectedIndex = 1; window.UpdateLayout();
