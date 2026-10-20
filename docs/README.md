@@ -53,3 +53,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-23 · Referencias de Imagenes](DEV-23-UI-Referencias-Imagenes.md): revisión de conexiones y refinamiento compartido de POS/cobro, caja y crédito en `feature/desarrollo`.
 
 - [DEV-24 · Clientes](DEV-24-Clientes-Refinamiento.md): refinamiento del listado, ficha y formularios a partir de su referencia, con permisos e historiales reales.
+
+- [DEV-25 · Productos e Inventario](DEV-25-Productos-Inventario-Refinamiento.md): catálogo, categorías, ficha, existencias, lotes, Kardex, movimientos y conteos refinados sobre los servicios existentes.

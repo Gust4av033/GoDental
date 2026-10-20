@@ -153,3 +153,5 @@ Clientes, productos, proveedores y cajas reciben código al guardar; las cuentas
 Las ocho composiciones de `Imagenes/` guían el refinamiento compartido y las distribuciones de POS/cobro, caja y crédito: [DEV-23 · Referencias visuales](docs/DEV-23-UI-Referencias-Imagenes.md).
 
 El refinamiento específico de Clientes reorganiza su listado, ficha y ventanas de edición según la referencia: [DEV-24 · Clientes](docs/DEV-24-Clientes-Refinamiento.md).
+
+Productos e Inventario continúan ese patrón en el catálogo, categorías, existencias, lotes, Kardex, movimientos y conteos físicos: [DEV-25 · Productos e Inventario](docs/DEV-25-Productos-Inventario-Refinamiento.md).
