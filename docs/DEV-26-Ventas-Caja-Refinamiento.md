@@ -21,6 +21,25 @@ Se inspeccionaron directamente las imágenes de `Imagenes/`, principalmente las 
 
 Los estados de carga, mensajes de error, vacíos, paginación, permisos y limpieza al cerrar sesión se conservan en los ViewModels. Las fichas son estados de navegación separados dentro del área de trabajo; los formularios de escritura son ventanas independientes con confirmación y descarte.
 
+## Pendientes prioritarios del recorrido Pedido → Venta → Entrega
+
+El refinamiento anterior conserva el enlace manual por ID; **Pasar al POS / Crear venta desde pedido aún no está implementado**. Es la mejora prioritaria: precargar cliente, productos, cantidades y cargo de entrega, conservar referencia al pedido, recalcular con las reglas normales del POS, cobrar y vincular automáticamente después de confirmar la venta. Se mantienen las validaciones de cliente/productos/cantidades/cargo; el enlace manual queda como recuperación/compatibilidad. DEV-17 define el alcance y la coordinación pendiente, sin inventar una transacción.
+
+**Recorrido recomendado: RECIBIDO → PREPARANDO → CONFIRMAR VENTA → LISTO → EN_RUTA → ENTREGADO.** Un pedido no reserva ni descuenta inventario; `RECIBIDO`, `PREPARANDO` y `LISTO` no implican reserva. Antes de considerarlo listo para salir debe tener venta confirmada asociada. La venta descuenta inventario, asigna lotes, genera Kardex y registra pago/crédito. Confirmar venta no es un estado nuevo; la validación actual sólo exige esa venta para `EN_RUTA` y `ENTREGADO`. No se cambia esa validación aquí. Una reserva ligera queda para una necesidad futura del negocio.
+
+**Cobro contra entrega queda pendiente de diseño**, separado del crédito comercial: sin consumir límite, generar mora, alterar indicadores de crédito ni crear una CxC comercial ordinaria sólo por el reparto. Antes de implementar se deben decidir protección de stock en ruta, descuento definitivo, confirmación de venta, rechazo/fallo, registro del efectivo y efecto en Caja, y devolución de unidades disponibles. No se agrega método de pago ni comportamiento transaccional.
+
+**Pedido = solicitud/preparación · Venta = operación comercial · Entrega = cumplimiento físico · Cobro contra entrega = condición operativa pendiente de diseño.**
+
+Las tres decisiones anteriores son documentales: no modifican `OrderRules`, `OrderService`, `SalesService` ni SQL. La autorización posterior del usuario amplía únicamente dos correcciones de interfaz, descritas a continuación.
+
+### Correcciones autorizadas · datos del cliente y existencias iniciales
+
+- **Pedidos:** carga automática de la ficha al seleccionar cliente, contactos y direcciones activas de entrega; sugerencia de principal única/única opción, selección explícita si es ambiguo, y campos editables de contacto, teléfono y dirección en su propia pestaña. La dirección editada se envía como específica del pedido, sin actualizar la ficha. Cambiar cliente limpia datos y evita aplicar respuestas antiguas; los campos de entrega se bloquean durante la carga y el alta espera a que termine y utiliza el servicio/snapshot existentes.
+- **Inventario:** botón Existencias iniciales en la ficha para el almacén consultado sin saldo, con permiso de ajuste; formulario separado de cantidad, costo USD de hasta seis decimales, motivo y lote/fechas cuando corresponde. Usa `InventorySetupService.InitializeAsync`, con validación definitiva de ausencia de saldo/historial, Kardex y auditoría del servicio/SQL existentes. Se preserva `OperationId`, consulta/reenvío de la misma solicitud y bloqueo de cierre/sesión mientras el resultado es incierto. Al confirmar se refrescan el inventario y el catálogo. No se añade migración ni se implementa recepción de compras.
+
+Recorrido y límites en DEV-19. No se confunde esta ampliación de UI con implementar Pasar al POS, reservas o cobro contra entrega.
+
 ## Integridad y límites
 
 Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, `SaleReceiptService` y `MvpOperationService`. Se mantienen `OperationId`, solicitud retenida ante respuesta incierta, token de cálculo, autorización puntual, rowversion, auditoría y validación de servicios/SQL. No hay cambios de Application, Infrastructure, Domain ni migraciones en este incremento.
@@ -40,3 +59,7 @@ Resultado definitivo del código `0fa4b5e`: [CI Windows correcto](https://github
 Capturas y resultados en [test-results-83](https://github.com/Gust4av033/GoDental/actions/runs/39465053983/artifacts/12285200766).
 
 Las referencias se inspeccionaron directamente. Las capturas nuevas se generan mediante el smoke; no se presenta esta ejecución como inspección manual de esas imágenes, prueba del DPI físico del monitor ni recorrido manual en dos estaciones. Las suites SQL usan bases aisladas de CI.
+
+## Validación de las correcciones autorizadas
+
+Compilación Release local sin errores/advertencias y 154 pruebas xUnit correctas. Se agregan pruebas de precarga, edición sin cambiar la ficha, direcciones ambiguas y respuestas fuera de orden; carga inicial con costo de seis decimales y lote/vencimiento, permisos y reenvío con el mismo GUID. La ampliación del smoke comprueba los campos reales, ambas variantes visuales y la recuperación de una carga inicial en el espacio de trabajo. La primera validación Windows del código `ad14546` pasó en [CI](https://github.com/Gust4av033/GoDental/actions/runs/39493669622): **154 xUnit, 349 comprobaciones SQL y 304 WPF**, sin errores de compilación ni binding. El smoke confirma contacto precargado en el campo editable, acción de existencias iniciales visible a 1366×768 y 1093×614 en ambos temas, bloqueo del espacio de trabajo ante una carga incierta y reenvío con el mismo GUID que refresca el saldo. Capturas automáticas en [test-results-86](https://github.com/Gust4av033/GoDental/actions/runs/39493669622/artifacts/12295434323); no constituyen inspección manual del monitor ni pruebas en la base del usuario. El ajuste posterior de bloqueo de campos durante la precarga también compila y conserva las 154 pruebas locales correctas.

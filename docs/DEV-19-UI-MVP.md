@@ -2,6 +2,8 @@
 
 19 de octubre de 2026 · `feature/ui`, actualizada desde `origin/feature/ui` (`47101ac`) y compatible con `origin/feature/logica` (`bd6681b`). Consultados AGENTS, UX-01, DM-01, DB-01, ARQ-01, SEC-01, VEN-01A, DEV-15 y DEV-17.
 
+Antecedente histórico; el desarrollo vigente continúa en `feature/desarrollo`. DEV-26 registra la composición visual posterior. Las tres mejoras de negocio siguientes siguen pendientes; las correcciones de interfaz autorizadas se distinguen de ellas.
+
 ## Recorrido conectado
 
 - **Caja:** selector de caja, turno actual o consulta por ID, fondo de apertura, ingreso/retiro con motivo, movimientos paginados y arqueo/cierre con versión leída. Alta/edición de cajas en diálogo, con catálogo real de almacenes.
@@ -10,6 +12,21 @@
 - **Crédito:** cuentas/vencidos paginados, selección de cuenta y registro de abono en diálogo, con referencia, turno para efectivo y versión de CxC. Recarga saldo e historial de abonos del cliente después de confirmar. Caja y ficha de Clientes se vuelven a consultar al navegar a ellas.
 - **Pedidos:** listado y detalle en pestañas, alta con selección separada de cliente/dirección/productos y datos de entrega; enlace de venta por ID; transiciones permitidas por `OrderRules`, con versión/motivo e historial paginado. Estado de pago y saldo vienen del servicio.
 - **Ventas y PDF:** listado, detalle de líneas/pagos, efectivo/cambio y exportación mediante `SaleReceiptService` a un destino elegido. PDF interno, sin simular DTE ni enviar comunicaciones.
+
+## Mejoras pendientes del recorrido de pedidos
+
+- **Prioridad alta: Pasar al POS / Crear venta desde pedido.** Sustituir el ingreso habitual del ID manual por la precarga de cliente, productos, cantidades y cargo de entrega, conservando la referencia al pedido. El POS recalcula precios/promociones/descuentos y permite el cobro normal; una venta confirmada se vincula automáticamente al pedido con las validaciones de compatibilidad existentes. `Vincular venta` manual permanece como recuperación/compatibilidad. Coordinación, versiones, `OperationId` y recuperación del enlace deben definirse antes de implementar, según DEV-17.
+- **Regla operativa recomendada:** **RECIBIDO → PREPARANDO → CONFIRMAR VENTA → LISTO → EN_RUTA → ENTREGADO**. Confirmar venta es un paso, no otro estado. El pedido no reserva ni descuenta stock; `RECIBIDO`, `PREPARANDO` y `LISTO` no representan reservas. Antes de considerar listo el pedido para salir debe tener venta confirmada asociada; ésta aplica inventario, lotes, Kardex y pago/crédito. Hoy sólo `EN_RUTA` y `ENTREGADO` exigen esa venta mediante validación implementada. La recomendación no cambia todavía `OrderRules` ni WPF. Reservas ligeras: evolución futura si el negocio las necesita.
+- **Cobro contra entrega:** pendiente de diseño, no un método nuevo disponible ni crédito comercial automático. No debe consumir límite, generar mora, alterar indicadores de crédito ni crear CxC comercial ordinaria por unas horas de reparto. Antes de diseñar la pantalla deben resolverse protección de unidades en ruta, descuento definitivo de inventario, confirmación de venta, rechazo/fallo de entrega, registro del efectivo, efecto en Caja y devolución de disponibilidad. Ver DEV-17.
+
+### Correcciones de interfaz autorizadas · 20/10/2026
+
+El usuario amplió expresamente el alcance para resolver estos dos problemas, manteniendo las tres decisiones anteriores sólo documentales:
+
+- **Datos del cliente:** seleccionar un cliente consulta su ficha y precarga contacto/teléfono y dirección de entrega. Sugiere una opción principal única o la única disponible; con varias opciones ambiguas exige elegir, sin asumir exclusividad de «principal». Datos de entrega permite revisar/corregir los valores sólo para el pedido. Editar la dirección retira su ID guardado y envía la dirección específica; no modifica la ficha del cliente. Cambiar de cliente limpia los datos anteriores y descarta respuestas tardías. Los campos de entrega se bloquean durante la carga; el registro espera a que termine y conserva la validación/snapshot existentes del servicio.
+- **Existencias iniciales:** se conecta la UI a `InventorySetupService.InitializeAsync(InitialInventory)` ya implementado. Acceso: **Productos → ficha/inventario → almacén → Actualizar → Existencias iniciales**, cuando la consulta no devuelve saldo para ese almacén y se tiene permiso de ajuste. El formulario solicita cantidad física, costo unitario USD, motivo y lote/vencimiento según producto. SQL sigue exigiendo ausencia de saldo e historial y genera Kardex/auditoría. No se modifica stock desde el maestro ni se agrega SQL. La solicitud incierta conserva su GUID y bloquea nuevas operaciones, cierre y sesión hasta resolverla; al confirmar se recargan existencias y catálogo.
+
+La selección de cliente/dirección original no equivalía a precargar todos los campos, y el ajuste ordinario requería una versión de saldo que aún no existía. Se conectan los contratos existentes; no se implementan Pasar al POS, reservas ni cobro contra entrega. Validación ampliada en DEV-26.
 
 ## Presentación
 

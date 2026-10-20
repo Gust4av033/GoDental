@@ -24,6 +24,21 @@ El ciclo priorizado es existencias iniciales/ajustes → clientes → cotizació
 
 La suite SQL nueva ya pasó en CI Windows, junto con regresiones y smoke WPF (DEV-17). Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno ya están conectados en páginas propias (DEV-19), con CI Windows #50 correcto. Para cerrar el MVP queda la validación manual del recorrido en dos estaciones y la resolución negativa definitiva de operaciones inciertas indicada en DEV-15. Saldo inicial/códigos de barras y fiscal pendiente conservan UI pendiente fuera del bloque solicitado. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores se desarrollarán después con sus decisiones de negocio explícitas. La fase dos solicitada por el usuario es ese segundo ciclo de refinamiento/ampliación; no sustituye la numeración histórica de DM-01.
 
+## Prioridad vigente · Pedidos → Ventas → Entregas
+
+Pendientes de `feature/desarrollo`, definidos en [DEV-17](DEV-17-MVP-Logica.md), con recorrido de interfaz en [DEV-19](DEV-19-UI-MVP.md) y límites del refinamiento en [DEV-26](DEV-26-Ventas-Caja-Refinamiento.md). Las tres decisiones siguientes son documentales; no cambian las reglas ni habilitan todavía esos flujos.
+
+1. **Prioridad alta: Pasar al POS / Crear venta desde pedido.** Precargar cliente, productos, cantidades y cargo de entrega, conservar referencia al pedido, recalcular precios/promociones/descuentos en el POS y cobrar normalmente. Tras confirmar, vincular automáticamente la venta conservando las validaciones de cliente/productos/cantidades/cargo. Definir coordinación y recuperación con versiones/`OperationId`, sin duplicar ventas ante un fallo de enlace. El ID manual queda como recuperación/compatibilidad, no como recorrido habitual futuro.
+2. **Pedido y stock:** **un pedido no reserva ni descuenta inventario**. Para la operación pequeña actual se recomienda **RECIBIDO → PREPARANDO → CONFIRMAR VENTA → LISTO → EN_RUTA → ENTREGADO**. `RECIBIDO` y `PREPARANDO` no reservan; **LISTO tampoco significa reserva**. Antes de considerarlo listo para salir debe existir una venta confirmada asociada, que descuenta inventario, asigna lotes, genera Kardex y registra pago/crédito. Confirmar venta es un paso comercial, no un estado nuevo. Hoy la validación sólo exige esa venta para `EN_RUTA` y `ENTREGADO`; no se cambia `OrderRules`. No implementar reservas complejas; una reserva ligera queda como evolución futura si el negocio la necesita.
+3. **Cobro contra entrega: decisión pendiente de diseño.** No convertirlo automáticamente en crédito comercial: no debe consumir límite, generar mora, alterar indicadores de crédito ni crear CxC comercial ordinaria por unas horas de reparto. Definir protección de unidades en `EN_RUTA`, descuento definitivo del inventario, momento de confirmar venta, rechazo/fallo de entrega, registro de efectivo/efecto en Caja y devolución de unidades disponibles. No añadir todavía método de pago ni comportamiento transaccional; el flujo actual no lo habilita por sí solo.
+
+**Pedido = solicitud/preparación · Venta = operación comercial · Entrega = cumplimiento físico · Cobro contra entrega = condición operativa pendiente de diseño.**
+
+Correcciones de usabilidad autorizadas por separado e implementadas sobre servicios existentes (DEV-19/DEV-26):
+
+- **Datos del cliente al crear pedido:** precarga de contacto, teléfono y dirección, selección cuando hay varias opciones, revisión/corrección específica del pedido y protección ante respuestas antiguas. Se conserva su snapshot sin editar la ficha del cliente.
+- **Existencias iniciales:** UI conectada a `InventorySetupService.InitializeAsync`, con producto/almacén consultado sin saldo, permiso de ajuste, costo, motivo y trazabilidad; SQL valida también la ausencia de historial. Conserva la recuperación con GUID y refresca existencias. No equivale a editar stock mínimo ni a completar compras/recepciones.
+
 ## Reglas comerciales ya documentadas
 
 - Descuento efectivo combinado: hasta 7% según permiso; más de 7% hasta 35% con motivo y bitácora; más de 35% con autenticación de administrador y motivo.
