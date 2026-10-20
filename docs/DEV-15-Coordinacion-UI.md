@@ -1,6 +1,6 @@
 # DEV-15 · Coordinación UI y lógica
 
-Organización vigente: DEV-08. Presentación en `feature/ui`; contratos y persistencia en `feature/logica`.
+Organización vigente: DEV-08. Presentación, contratos y persistencia avanzan en `feature/desarrollo`, separados por capas y commits. `feature/ui` y `feature/logica` son referencias históricas.
 
 | Necesidad | Estado | Contrato y verificación |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Cada solicitud nueva lleva `OperationId` GUID y motivo. Crear el GUID una sola v
 
 `Result<MvpReceipt>` contiene `Id` y `OperationId`. Errores de negocio: `VALIDATION`, `FORBIDDEN`, `INVALID_STATE`, `INSUFFICIENT_STOCK`, `CONCURRENCY_CONFLICT`, `DUPLICATE`. Ante conflicto refrescar y pedir que se revise la información; después crear una solicitud nueva si el usuario confirma una operación distinta. Las consultas pueden lanzar `UnauthorizedAccessException` o `ArgumentException`; errores SQL/transporte desconocidos se diagnostican sin mostrar SQL/credenciales al usuario. Paginación `MvpFilter`: páginas desde 1, tamaño 1–100.
 
-Todos estos contratos están registrados en DI y sincronizados en ambas ramas. Requieren migraciones 012–013. [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837) aprobó Release, 116 casos xUnit, 329 comprobaciones SQL (102 del MVP) y 101 comprobaciones WPF existentes. La suite `--run-mvp` usa una base aislada y no modifica la base del usuario. Las pantallas de las funciones nuevas y su recorrido en dos estaciones siguen pendientes. Detalle de alcance y pruebas en DEV-17; corrección compartida del arnés visual en DEV-18.
+Todos estos contratos están registrados en DI e incorporados a la base de `feature/desarrollo`. Requieren migraciones 012–013. [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837) aprobó Release, 116 casos xUnit, 329 comprobaciones SQL (102 del MVP) y 101 comprobaciones WPF existentes. La suite `--run-mvp` usa una base aislada y no modifica la base del usuario. Las pantallas de las funciones nuevas y su recorrido en dos estaciones siguen pendientes. Detalle de alcance y pruebas en DEV-17; corrección compartida del arnés visual en DEV-18.
 
 Si vuelve a fallar la preparación del acceso, recoger el tipo de error del registro local sin credenciales y reproducir contra la base de pruebas antes de atribuirlo a lógica.
 
@@ -33,6 +33,10 @@ Caja, POS/cálculo/cobro, autorización puntual, cotizaciones/conversión, créd
 
 No falta ningún contrato para el recorrido nominal solicitado. Caja de POS se consulta con CAJA.VER; gestión de cajas requiere también INVENTARIO.VER para el catálogo de almacenes. Saldo inicial/códigos y fiscal pendiente conservan UI pendiente, fuera de este bloque.
 
-### Recuperación excepcional · contrato pendiente para feature/logica
+### Recuperación excepcional · contrato pendiente en feature/desarrollo
 
 `MvpOperationService.FindAsync` sólo distingue resultado confirmado o ausencia. Si una respuesta se pierde y un reenvío se rechaza antes de comprobar el registro (por ejemplo permisos revocados, autorización administrativa o timeout de applock), ese rechazo no demuestra que la solicitud original terminó. La UI conserva GUID/solicitud y no habilita otra escritura equivalente. Se necesita una operación de resolución de estado terminal negativo, bajo el mismo bloqueo transaccional por GUID: entrada OperationId/tipo/hash o solicitud completa, usuario actual; salida CONFIRMADA con recibo, EN_CURSO o RECHAZADA_DEFINITIVA, con error de negocio saneado. Debe comprobar propiedad/permisos y garantizar que una solicitud declarada rechazada ya no pueda confirmarse posteriormente. Sólo entonces la UI podrá liberar o archivar de forma segura una solicitud definitivamente rechazada. Estado: **pendiente**. No se reemplaza `FindAsync` ni se simula una respuesta negativa en UI.
+
+## Refinamiento con Imagenes · feature/desarrollo
+
+DEV-23 verifica las conexiones vigentes y adapta componentes compartidos, POS/cobro, caja y crédito a las ocho composiciones. No se cambian contratos, reglas, SQL ni recuperación de OperationId. Los estados de conexión se conservan; la edición de parámetros comerciales de DEV-22 sigue pendiente.

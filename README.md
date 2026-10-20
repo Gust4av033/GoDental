@@ -55,7 +55,7 @@ La continuación agrega [conteos físicos](docs/DEV-09-Conteos.md): apertura, ca
 
 También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría, y [clientes, direcciones, crédito e historiales](docs/DEV-13-Clientes.md).
 
-En `feature/logica`, el [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md) agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013. Sus pantallas están pendientes de conexión en `feature/ui`; [DEV-15](docs/DEV-15-Coordinacion-UI.md) documenta contratos y estado de validación. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
+El [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md) agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013. Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno ya tienen pantallas conectadas en `feature/desarrollo`; [DEV-15](docs/DEV-15-Coordinacion-UI.md) documenta contratos y estado de validación. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
 
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
@@ -136,7 +136,7 @@ Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV
 
 ## Desarrollo
 
-- Ramas activas: `main` (validada) y `feature/ui` y `feature/logica` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
+- Ramas vigentes: `feature/desarrollo` para lógica y UI, separadas por capas y commits; `main` para la versión integrada y validada. `feature/ui` y `feature/logica` son referencias históricas. [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
 - `main` debe mantenerse integrable.
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.
@@ -149,3 +149,5 @@ Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y comprobantes PDF int
 ## Altas con código automático y cierre
 
 Clientes, productos, proveedores y cajas reciben código al guardar; las cuentas del personal muestran código de empleado. Requiere la migración **014**. Los formularios conservan los códigos existentes y muestran los nuevos como consulta. Se corrigió el cierre para detener/liberar el host antes de apagar WPF; las pruebas incluyen procesos separados para acceso y ventana principal. [Detalles y comprobaciones](docs/DEV-20-Codigos-Cierre.md).
+
+Las ocho composiciones de `Imagenes/` guían el refinamiento compartido y las distribuciones de POS/cobro, caja y crédito: [DEV-23 · Referencias visuales](docs/DEV-23-UI-Referencias-Imagenes.md).

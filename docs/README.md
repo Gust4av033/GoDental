@@ -49,3 +49,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 
 - [DEV-20 · Códigos automáticos y cierre](DEV-20-Codigos-Cierre.md): identificadores al guardar, código de personal y salida del proceso con el host detenido.
 - [DEV-21 · Fidelidad visual](DEV-21-UI-Fidelidad-visual.md): componentes, listados/fichas y distribución de POS/caja ajustados a las ocho capturas del usuario.
+
+- [DEV-23 · Referencias de Imagenes](DEV-23-UI-Referencias-Imagenes.md): revisión de conexiones y refinamiento compartido de POS/cobro, caja y crédito en `feature/desarrollo`.
