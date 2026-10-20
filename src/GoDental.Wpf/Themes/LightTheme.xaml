@@ -19,5 +19,10 @@
     <SolidColorBrush x:Key="WarningTintBrush" Color="{StaticResource LightWarningTint}" />
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource LightDanger}" />
     <SolidColorBrush x:Key="DangerTintBrush" Color="{StaticResource LightDangerTint}" />
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="{StaticResource LightControlBorder}" />
+    <SolidColorBrush x:Key="RowSeparatorBrush" Color="{StaticResource LightRowSeparator}" />
+    <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource LightRowHover}" />
+    <SolidColorBrush x:Key="RowSelectionBrush" Color="{StaticResource LightRowSelection}" />
+    <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource LightShadow}"/>
 </ResourceDictionary>
 

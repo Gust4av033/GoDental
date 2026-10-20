@@ -38,5 +38,15 @@
     <Color x:Key="DarkWarningTint">#493B25</Color>
     <Color x:Key="DarkDanger">#FF9BB0</Color>
     <Color x:Key="DarkDangerTint">#492D3B</Color>
+    <Color x:Key="LightControlBorder">#D5E3F1</Color>
+    <Color x:Key="LightRowSeparator">#E8F0F8</Color>
+    <Color x:Key="LightRowHover">#F5FAFF</Color>
+    <Color x:Key="LightRowSelection">#E6F2FF</Color>
+    <Color x:Key="LightShadow">#0B3A6B</Color>
+    <Color x:Key="DarkControlBorder">#526881</Color>
+    <Color x:Key="DarkRowSeparator">#304359</Color>
+    <Color x:Key="DarkRowHover">#253B53</Color>
+    <Color x:Key="DarkRowSelection">#284A70</Color>
+    <Color x:Key="DarkShadow">#000000</Color>
 </ResourceDictionary>
 
