@@ -353,7 +353,7 @@ internal static class Program
                     new() { Id = 1, Sku = "UI-001", Name = "Resina para prueba de interfaz", CategoryId = 1, Category = "Restauración", UnitId = 1, Unit = "Unidad", Price = 125.50m, AvailableStock = 12, MinimumStock = 5, TracksLot = true, TracksExpiry = true, ExpiryAlertDays = 90, RowVersion = new byte[8] },
                     new() { Id = 2, Sku = "UI-002", Name = "Adhesivo para prueba de interfaz", CategoryId = 1, Category = "Adhesivos", UnitId = 1, Unit = "Unidad", Price = 32.25m, AvailableStock = 3, MinimumStock = 5, RowVersion = new byte[8] },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes para prueba de interfaz", CategoryId = 1, Category = "Protección", UnitId = 1, Unit = "Caja", Price = 8.50m, AvailableStock = 0, MinimumStock = 2, RowVersion = new byte[8] },
-                    new() { Id = 4, Sku = "UI-004", Name = "Producto inactivo de prueba", CategoryId = 1, Category = "General", UnitId = 1, Unit = "Unidad", Price = 10m, AvailableStock = 5, Active = false, RowVersion = new byte[8] }
+                    new() { Id = 4, Sku = "UI-004", Name = "Producto inactivo con nombre largo para comprobar que el catálogo conserva el ancho de sus columnas y permite consultar el nombre completo desde el tooltip", CategoryId = 1, Category = "General", UnitId = 1, Unit = "Unidad", Price = 10m, AvailableStock = 5, Active = false, RowVersion = new byte[8] }
                 ];
                 await products.ReloadCommand.ExecuteAsync(null);
                 var stockCaption = new GoDental.Wpf.Converters.ProductStockCaptionConverter();
@@ -371,6 +371,11 @@ internal static class Program
                 }
                 var linkedProducts = new ProductsView { DataContext = products };
                 linkedProducts.Measure(new Size(1000, 740)); linkedProducts.Arrange(new Rect(0, 0, 1000, 740)); linkedProducts.UpdateLayout();
+                var longName = productRepository.Rows[3].Name;
+                var longNameCell = FindChildren<DataGridCell>(linkedProducts).Single(cell => FindChildren<TextBlock>(cell).Any(text => text.Text == longName));
+                var longNameText = FindChildren<TextBlock>(longNameCell).Single(text => text.Text == longName);
+                Check(longNameText.ActualWidth <= longNameCell.ActualWidth && longNameText.TextTrimming == TextTrimming.CharacterEllipsis,
+                    "Los nombres largos de producto respetan el ancho de su columna");
                 var rowLink = FindChildren<Button>(linkedProducts).First(b => b.CommandParameter is ProductData);
                 var linkedProduct = (ProductData)rowLink.CommandParameter;
                 await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)rowLink.Command).ExecuteAsync(linkedProduct);
