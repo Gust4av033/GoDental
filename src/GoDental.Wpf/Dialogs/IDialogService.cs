@@ -2,7 +2,7 @@ using GoDental.Wpf.ViewModels;
 
 namespace GoDental.Wpf.Dialogs;
 
-public interface IDialogService
+public interface IDialogService : IWorkflowDialogService
 {
     Task<bool> ShowProductEditorAsync(ProductEditorViewModel editor);
     Task<bool> ShowCategoryManagerAsync(CategoriesViewModel manager);

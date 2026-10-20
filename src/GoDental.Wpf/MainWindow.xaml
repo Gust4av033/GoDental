@@ -1,100 +1,129 @@
-<Window x:Class="GoDental.Wpf.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:nav="clr-namespace:GoDental.Wpf.Navigation" xmlns:auth="clr-namespace:GoDental.Wpf.Views.Auth" xmlns:inventory="clr-namespace:GoDental.Wpf.Views.Inventory" xmlns:settings="clr-namespace:GoDental.Wpf.Views.Settings" Title="GoDental" Width="1280" Height="760" MinWidth="860" MinHeight="400" WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="14" Background="{DynamicResource BackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+<Window x:Class="GoDental.Wpf.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:nav="clr-namespace:GoDental.Wpf.Navigation" xmlns:auth="clr-namespace:GoDental.Wpf.Views.Auth" xmlns:inventory="clr-namespace:GoDental.Wpf.Views.Inventory" xmlns:customers="clr-namespace:GoDental.Wpf.Views.Customers" xmlns:suppliers="clr-namespace:GoDental.Wpf.Views.Suppliers" xmlns:operations="clr-namespace:GoDental.Wpf.Views.Operations" xmlns:settings="clr-namespace:GoDental.Wpf.Views.Settings" Title="GoDental" Width="1280" Height="760" MinWidth="860" MinHeight="400" WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="13" Background="{DynamicResource BackgroundBrush}" Foreground="{DynamicResource TextBrush}">
   <Grid Background="{DynamicResource BackgroundBrush}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="{Binding SidebarWidth}" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
-    <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="12,20,12,16">
+    <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="8,14,8,10">
       <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Margin="10,0,0,22" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Text="GoDental" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource SidebarTextBrush}" />
-          <TextBlock Text="GESTIÓN COMERCIAL" FontSize="10" Foreground="{DynamicResource BrandAccentBrush}" Margin="0,6,0,0" />
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,18">
+          <Border Width="30" Height="30" Background="{DynamicResource PrimaryBrush}" CornerRadius="6" VerticalAlignment="Center">
+            <Image Source="{StaticResource DentalMark}" Width="21" Height="21"/>
+          </Border>
+          <TextBlock Text="GoDental" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
         </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" Margin="10,24,4,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Text="ESPACIO DE TRABAJO" Foreground="{DynamicResource BrandAccentBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8" />
-          <TextBlock Text="Versión 0.3 · En desarrollo" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="12" />
-          <TextBlock Text="{Binding Access.IdentityLabel}" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="12" Margin="0,6,0,0" />
-        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="GoDental · v0.3" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="10" Margin="10,12,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
           <TextBlock Text="GENERAL" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
           <RadioButton ToolTip="Inicio" AutomationProperties.Name="Inicio" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsHome, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Home}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Inicio" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Inicio" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Clientes" AutomationProperties.Name="Clientes" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenCustomers, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsCustomers, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Customers}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Clientes" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
           </RadioButton>
           <TextBlock Text="INVENTARIO" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
           <RadioButton ToolTip="Productos" AutomationProperties.Name="Productos" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenProducts, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsProducts, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Products}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Productos" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Productos" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <Button ToolTip="Administrar categorías" AutomationProperties.Name="Administrar categorías" Command="{Binding Products.ManageCategoriesCommand}" Visibility="{Binding Products.CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding Products.CanEdit}" Style="{StaticResource SidebarActionButton}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20"/>
-              <TextBlock Text="Categorías..." Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20"/>
+              <TextBlock Text="Categorías" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
             </StackPanel>
           </Button>
+          <RadioButton ToolTip="Conteos" AutomationProperties.Name="Conteos" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenCounts, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsCounts, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Counts}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Conteos" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Proveedores" AutomationProperties.Name="Proveedores" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenSuppliers, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsSuppliers, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Suppliers}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Proveedores" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+<TextBlock Text="OPERACIÓN" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+          <RadioButton ToolTip="Caja" AutomationProperties.Name="Caja" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenCash, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsCash, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Cash}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Caja" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Punto de venta" AutomationProperties.Name="Punto de venta" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenPos, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsPos, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Pos}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE719;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Punto de venta" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Cotizaciones" AutomationProperties.Name="Cotizaciones" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenSales, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsQuotations, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Quotations}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Cotizaciones" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Crédito y abonos" AutomationProperties.Name="Crédito y abonos" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenCredit, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsCredit, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Credit}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8D4;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Crédito y abonos" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Pedidos y entregas" AutomationProperties.Name="Pedidos y entregas" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenOrders, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsOrders, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Orders}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Pedidos y entregas" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
+          <RadioButton ToolTip="Ventas y PDF" AutomationProperties.Name="Ventas y PDF" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenSales, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsSales, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Sales}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Ventas y PDF" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
           <TextBlock Text="SISTEMA" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
           <RadioButton ToolTip="Administrar usuarios" AutomationProperties.Name="Administrar usuarios" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenUsers, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsUsers, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Users}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Administrar usuarios" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Usuarios" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Mi cuenta" AutomationProperties.Name="Mi cuenta" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsAccess, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Access}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Mi cuenta" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Mi cuenta" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Preparación del sistema" AutomationProperties.Name="Preparación del sistema" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPreparation, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Preparation}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Preparación" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Preparación" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Ajustes" AutomationProperties.Name="Ajustes" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsConnection, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SidebarTextBrush}" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Ajustes" Foreground="{DynamicResource SidebarTextBrush}" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
+              <TextBlock Text="Ajustes" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
         </StackPanel>
+        </ScrollViewer>
       </DockPanel>
     </Border>
     <Grid Grid.Column="1">
       <Grid.RowDefinitions>
-        <RowDefinition Height="64" />
+        <RowDefinition Height="44" />
         <RowDefinition Height="*" />
-        <RowDefinition Height="36" />
+        <RowDefinition Height="30" />
       </Grid.RowDefinitions>
-      <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="24,10">
+      <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="16,4">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <Button Content="" FontFamily="Segoe MDL2 Assets" Command="{Binding ToggleSidebarCommand}" ToolTip="Expandir o contraer menú" AutomationProperties.Name="Expandir o contraer menú" Margin="0,0,16,0" Padding="10" Width="40" />
-          <TextBlock Grid.Column="1" Text="{Binding PageTitle}" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" />
+          <Button Content="" FontFamily="Segoe MDL2 Assets" Command="{Binding ToggleSidebarCommand}" ToolTip="Expandir o contraer menú" AutomationProperties.Name="Expandir o contraer menú" Margin="0,0,10,0" Padding="6" Width="32" MinHeight="30" />
+          <TextBlock Grid.Column="1" Text="{Binding PageTitle}" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource MutedBrush}" />
           <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <StackPanel VerticalAlignment="Center" Margin="0,0,20,0">
+            <Border Background="{DynamicResource SidebarSelectionBrush}" CornerRadius="14" Width="28" Height="28" Margin="0,0,8,0"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
               <TextBlock Text="{Binding Access.IdentityLabel}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="12" />
             </StackPanel>
-            <Label Content="Tema oscuro" Target="{Binding ElementName=ThemeSwitchHeader}" VerticalAlignment="Center" Margin="0,0,8,0" />
+
             <ToggleButton x:Name="ThemeSwitchHeader" Style="{StaticResource ThemeSwitch}" IsChecked="{Binding Connection.IsDark}" Command="{Binding Connection.SaveThemePreferenceCommand}" AutomationProperties.Name="Tema oscuro" AutomationProperties.HelpText="Pulsa Espacio para cambiar entre tema claro y oscuro" ToolTip="Cambiar tema claro u oscuro" />
           </StackPanel>
         </Grid>
       </Border>
-      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Margin="12,4,12,8" Padding="20,18">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid x:Name="PageHost" Margin="{StaticResource PagePadding}">
           <StackPanel Visibility="{Binding IsHome, Converter={StaticResource BoolToVisibility}}">
             <DockPanel Margin="0,0,0,22">
               <TextBlock DockPanel.Dock="Right" Text="{Binding TodayLabel}" Style="{StaticResource MutedText}" FontSize="12" VerticalAlignment="Bottom" Margin="16,0,0,0"/>
               <StackPanel>
-                <TextBlock Text="INICIO" Style="{StaticResource PageEyebrow}"/>
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="Hola, " Style="{StaticResource Heading}"/>
                   <TextBlock Text="{Binding Access.IdentityLabel}" Style="{StaticResource Heading}"/>
@@ -154,19 +183,29 @@
                 <TextBlock Text="02    Base de datos y seguridad" Style="{StaticResource SectionHeading}" />
                 <TextBlock Text="Disponible: primer administrador, inicio y cierre de sesión, cambio de contraseña, permisos y auditoría. La baseline se probó en una base local separada." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
                 <TextBlock Text="03    Inventario y operación" Style="{StaticResource SectionHeading}" />
-                <TextBlock Text="Disponible: productos y categorías; existencias por almacén, lotes y vencimientos; ajustes, bajas y transferencias con auditoría y Kardex. Siguiente: clientes, compras, ventas y caja." Style="{StaticResource MutedText}" />
+                <TextBlock Text="Disponible: productos, categorías, existencias, conteos, proveedores y clientes; caja, ventas, cotizaciones, crédito y pedidos. Cada operación conserva sus permisos y auditoría." Style="{StaticResource MutedText}" />
               </StackPanel>
             </Border>
           </StackPanel>
+          <operations:CashView DataContext="{Binding Cash}" Visibility="{Binding DataContext.IsCash, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:PosView DataContext="{Binding Pos}" Visibility="{Binding DataContext.IsPos, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:CreditView DataContext="{Binding Credit}" Visibility="{Binding DataContext.IsCredit, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:OrdersView DataContext="{Binding Orders}" Visibility="{Binding DataContext.IsOrders, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:SalesView DataContext="{Binding CommercialHistory}" Visibility="{Binding DataContext.IsSales, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
+          <operations:QuotationsView DataContext="{Binding CommercialHistory}" Visibility="{Binding DataContext.IsQuotations, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <settings:SettingsView DataContext="{Binding Connection}" Visibility="{Binding DataContext.IsConnection, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
           <auth:AccessView DataContext="{Binding Access}" Visibility="{Binding DataContext.IsAccess, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
           <inventory:ProductsView DataContext="{Binding Products}" Visibility="{Binding DataContext.IsProducts, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
+          <inventory:InventoryCountsView DataContext="{Binding Counts}" Visibility="{Binding DataContext.IsCounts, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
+          <customers:CustomersView DataContext="{Binding Customers}" Visibility="{Binding DataContext.IsCustomers, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
+          <suppliers:SuppliersView DataContext="{Binding Suppliers}" Visibility="{Binding DataContext.IsSuppliers, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
           <auth:UsersView DataContext="{Binding Users}" Visibility="{Binding DataContext.IsUsers, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
       </ScrollViewer>
-      <DockPanel Grid.Row="2" Margin="32,0,12,0">
+      </Border>
+      <DockPanel Grid.Row="2" Margin="16,0,12,0">
         <Button DockPanel.Dock="Right" Content="Cerrar sesión" Padding="10,2" MinHeight="28" Command="{Binding Access.SignOutCommand}" IsEnabled="{Binding CanSignOut}" Visibility="{Binding Access.IsAuthenticated, Converter={StaticResource BoolToVisibility}}" />
-        <TextBlock Text="GoDental · v0.3.0 · Inventario operativo" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+        <TextBlock Text="GoDental · Gestión dental" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
         <TextBlock Text="{Binding Connection.ThemePreferenceStatus}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="16,0,0,0" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
       </DockPanel>
     </Grid>

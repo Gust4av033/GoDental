@@ -1,5 +1,13 @@
 # Validación de baseline v0.1
 
+## Códigos automáticos y cierre · 19/10/2026 (El Salvador)
+
+[DEV-20](DEV-20-Codigos-Cierre.md) y [CI Windows #61](https://github.com/Gust4av033/GoDental/actions/runs/39349292934), código `9547d41`: Release sin errores/advertencias, 140 casos xUnit, 347 comprobaciones SQL y 125 WPF correctas. Incluye altas simultáneas, colisiones históricas, rollback y reaplicación de 014, códigos de personal y dos procesos que terminan al cerrar acceso/espacio de trabajo después de limpiar el host. Total SQL vigente: 76 tablas, 8 vistas y 18 procedimientos. No se aplicaron migraciones en el equipo del usuario.
+
+## MVP operativo · lógica · 19/10/2026
+
+Incremento y límites en [DEV-17](DEV-17-MVP-Logica.md). [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837), código `f51f75c`: Release sin errores/advertencias, **116 casos xUnit**, **329 comprobaciones SQL** (102 del nuevo MVP) y **101 comprobaciones WPF** correctas, sin errores de binding. Incluye generación real de PDF, concurrencia, rollback e instalación/reaplicación de 012–013 (76 tablas/8 vistas/17 procedimientos). El contenedor SQL Server no pudo descargarse en Linux; SQL se ejecutó en LocalDB aislado del runner Windows. DEV-18 documenta la corrección del cierre de capturas integrada en ambas ramas. No se instalaron cambios en la base del usuario; faltan conectar las nuevas pantallas y validar el recorrido real en dos estaciones para cerrar el MVP funcional completo.
+
 ## Solución .NET
 
 - La solución mantiene cuatro proyectos: Domain, Application, Infrastructure y WPF, más el proyecto de pruebas.
@@ -77,3 +85,21 @@ Esta sección actualiza el alcance de inventario según [DEV-03](DEV-03-Inventar
 - 28 comprobaciones WPF y capturas Light/Dark; sin errores de binding. Se corrigió una regresión de filtros reproducida con la vista enlazada, el contraste de fechas/categorías en oscuro y el foco del editor.
 - Instalador general actualizado a 001–010 y verificación opcional de ambas suites SQL.
 - La validación cubre movimientos de inventario de este incremento. Ventas, recepciones, caja, backups y dos laptops por LAN conservan su validación pendiente.
+
+## Conteos y proveedores · lógica · 19/10/2026
+
+- `scripts/verify.ps1 -SqlIntegration` completo en Windows con SQL Server local: Release sin errores ni advertencias; 40 casos xUnit y 57 comprobaciones WPF existentes correctas, sin errores de enlaces.
+- 194 comprobaciones SQL correctas en bases aisladas: 49 de seguridad/catálogo, 40 de inventario, 67 nuevas de conteos y 38 nuevas de proveedores. No se aplicaron migraciones ni datos de pruebas sobre `GoDental_Development` del usuario.
+- Conteos: captura/cierre concurrentes, protección de reservas hasta 0.0001, fotografía obsoleta incluso cuando el saldo vuelve a su valor anterior, lotes, costos históricos, permisos revocados y rollback atómico. Reaplicar 009–011 conserva cantidades, pendientes, versiones e historial.
+- Proveedores: código único/histórico, versión del agregado con contactos y relaciones, principal único activo, costos/moneda/MOQ, ocultación de costo tras revocar permiso, ausencia de movimientos de stock y rollback de auditoría.
+- Los servicios/repositorios nuevos se registran en DI. No hay cambios en las vistas ni ViewModels WPF; los contratos y la guía para conectarlos están en DEV-09, DEV-10 y DEV-11.
+- La migración 011 conserva 72 tablas/8 vistas y eleva a 17 los procedimientos. Debe instalarse en la base elegida antes de conectar las pantallas de conteos.
+- El CI incorpora las cuatro suites SQL sobre bases LocalDB aisladas del runner, además de xUnit y smoke WPF. Las pruebas concurrentes usan conexiones distintas al mismo SQL; no equivalen a una certificación real de dos PCs por LAN ni a despliegue productivo.
+- La primera ejecución completa de CI detectó que tres pruebas de sesión dependían de `localhost`. `IWorkstationConnectionOpener` permite que sólo el ejecutable de pruebas redirija ese transporte a LocalDB, manteniendo la fábrica real de sesión/contexto y todas sus comprobaciones; la aplicación continúa usando `SqlConnectionFactory` y rechazando perfiles LocalDB. El cambio de base se prueba ahora con otra base aislada, sin consultar la base de desarrollo del usuario.
+
+
+## Interfaz del recorrido MVP · 19/10/2026
+
+[CI Windows #50](https://github.com/Gust4av033/GoDental/actions/runs/39331437129), commit `10610a8` de `feature/ui`: Release sin errores ni advertencias, 139 pruebas xUnit, 329 comprobaciones SQL (40 inventario, 49 seguridad/catálogo, 67 conteos, 38 proveedores, 33 clientes y 102 MVP) y 123 comprobaciones WPF correctas, sin errores de binding. Se renderizan páginas independientes de Caja, POS, Cotizaciones, Crédito, Pedidos y Ventas/PDF, más sus diálogos en Light/Dark y tamaños compactos. Las pruebas unitarias nuevas cubren solicitudes congeladas, reenvío/consulta por OperationId, conflictos, cambio de sesión, cálculos comerciales del servicio, conversión, autorización sin conservar contraseña, abonos, pedidos y exportación.
+
+SQL usa exclusivamente bases aisladas LocalDB del runner. No se ejecutó `scripts/verify.ps1` en el equipo del usuario ni se modificó su base. Las capturas y pruebas automatizadas no sustituyen el recorrido manual entre dos estaciones, impresión/hardware y comprobación física del DPI. El contrato de resolución negativa definitiva tras una respuesta perdida está pendiente para lógica en DEV-15; la UI conserva la solicitud incierta para evitar duplicados. Detalle y alcance en DEV-19.

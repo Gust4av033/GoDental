@@ -12,16 +12,19 @@ public sealed class WindowCoordinator : IDisposable
     private readonly MainWindow workspace;
     private readonly ISessionController session;
     private readonly AccessViewModel access;
+    private readonly Func<Task> stopHost;
+    private Window? activeWindow;
     private bool shuttingDown;
 
     public WindowCoordinator(System.Windows.Application application, LoginWindow login, MainWindow workspace,
-        ISessionController session, AccessViewModel access)
+        ISessionController session, AccessViewModel access, Func<Task>? stopHost = null)
     {
         this.application = application;
         this.login = login;
         this.workspace = workspace;
         this.session = session;
         this.access = access;
+        this.stopHost = stopHost ?? (() => Task.CompletedTask);
         login.Closed += OnWindowClosed;
         workspace.Closed += OnWindowClosed;
         session.Changed += OnSessionChanged;
@@ -45,6 +48,7 @@ public sealed class WindowCoordinator : IDisposable
 
     private void OnSessionChanged(object? sender, EventArgs e)
     {
+        if (shuttingDown) return;
         ShowCurrentWindow();
         if (!session.IsAuthenticated)
             application.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(PrepareAccessIfNeeded));
@@ -52,14 +56,17 @@ public sealed class WindowCoordinator : IDisposable
 
     private void ShowCurrentWindow()
     {
+        if (shuttingDown || application.Dispatcher.HasShutdownStarted) return;
         if (session.IsAuthenticated)
         {
+            activeWindow = workspace;
             application.MainWindow = workspace;
             workspace.Show();
             login.Hide();
         }
         else
         {
+            activeWindow = login;
             application.MainWindow = login;
             login.Show();
             workspace.Hide();
@@ -68,15 +75,19 @@ public sealed class WindowCoordinator : IDisposable
 
     private void PrepareAccessIfNeeded()
     {
-        if (!session.IsAuthenticated && !access.IsReady && !access.MustChangePassword && !access.IsBusy)
+        if (!shuttingDown && !session.IsAuthenticated && !access.IsReady && !access.MustChangePassword && !access.IsBusy)
             access.PrepareCommand.Execute(null);
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    private async void OnWindowClosed(object? sender, EventArgs e)
     {
-        if (shuttingDown || !ReferenceEquals(application.MainWindow, sender)) return;
+        if (shuttingDown || !ReferenceEquals(activeWindow, sender)) return;
         shuttingDown = true;
-        application.Shutdown();
+        session.Changed -= OnSessionChanged;
+        access.PrepareCommand.Cancel();
+        try { await stopHost(); }
+        catch (Exception ex) { System.Diagnostics.Trace.TraceError("No se completó la limpieza al salir: {0}", ex.GetType().Name); }
+        finally { application.Shutdown(); }
     }
 
     public void Dispose()

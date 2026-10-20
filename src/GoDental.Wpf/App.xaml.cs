@@ -10,6 +10,7 @@ using GoDental.Wpf.Dialogs;
 using GoDental.Wpf.Navigation;
 using GoDental.Wpf.Themes;
 using GoDental.Wpf.ViewModels;
+using GoDental.Wpf.ViewModels.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -55,15 +56,29 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<ConnectionViewModel>();
                     services.AddSingleton<AccessViewModel>();
                     services.AddSingleton<InventoryViewModel>();
+                    services.AddSingleton<InventoryCountsViewModel>();
+                    services.AddSingleton<SuppliersViewModel>();
+                    services.AddSingleton<CustomersViewModel>();
                     services.AddSingleton<CategoriesViewModel>();
                     services.AddSingleton<IDialogService, DialogService>();
+                    services.AddSingleton<ICustomerDialogService>(sp => (DialogService)sp.GetRequiredService<IDialogService>());
+                    services.AddSingleton<IWorkflowDialogService>(sp => sp.GetRequiredService<IDialogService>());
                     services.AddSingleton<ProductEditorFactory>();
                     services.AddSingleton<ProductsViewModel>();
                     services.AddSingleton<UsersViewModel>();
+                    services.AddSingleton<IMvpDialogService>(sp => (DialogService)sp.GetRequiredService<IDialogService>());
+                    services.AddSingleton<IPdfFileService, PdfFileService>();
+                    services.AddSingleton<CashViewModel>();
+                    services.AddSingleton<PosViewModel>();
+                    services.AddSingleton<CreditViewModel>();
+                    services.AddSingleton<OrdersViewModel>();
+                    services.AddSingleton<CommercialHistoryViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<LoginWindow>();
-                    services.AddSingleton<WindowCoordinator>();
+                    services.AddSingleton(sp => new WindowCoordinator(this, sp.GetRequiredService<LoginWindow>(),
+                        sp.GetRequiredService<MainWindow>(), sp.GetRequiredService<GoDental.Application.Abstractions.Security.ISessionController>(),
+                        sp.GetRequiredService<AccessViewModel>(), StopHostAsync));
                 })
                 .UseDefaultServiceProvider(options => { options.ValidateOnBuild = true; options.ValidateScopes = true; })
                 .Build();
@@ -99,16 +114,24 @@ public partial class App : System.Windows.Application
     private void OnFatalException(object sender, UnhandledExceptionEventArgs e) =>
         _host?.Services.GetService<ILogger<App>>()?.LogCritical("Error fatal: {ErrorType}.", e.ExceptionObject.GetType().Name);
 
-    protected override async void OnExit(ExitEventArgs e)
+    private async Task StopHostAsync()
+    {
+        var host = _host;
+        if (host is null) return;
+        _host = null;
+        host.Services.GetRequiredService<ConnectionViewModel>().CheckConnectionCommand.Cancel();
+        await HostShutdown.StopAsync(host);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
     {
         DispatcherUnhandledException -= OnDispatcherException;
         TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
         AppDomain.CurrentDomain.UnhandledException -= OnFatalException;
         if (_host is not null)
         {
-            _host.Services.GetRequiredService<ConnectionViewModel>().CheckConnectionCommand.Cancel();
-            try { await _host.StopAsync(TimeSpan.FromSeconds(5)); }
-            finally { _host.Dispose(); }
+            _host.Dispose();
+            _host = null;
         }
 
         base.OnExit(e);

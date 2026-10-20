@@ -9,6 +9,12 @@ public partial class LoginWindow : Window
     {
         InitializeComponent();
         DataContext = shell;
+        Closing += (_, e) =>
+        {
+            if (!shell.Access.IsSubmitting) return;
+            e.Cancel = true;
+            MessageBox.Show(this, "Espera a que termine la operación de acceso antes de cerrar GoDental.", "GoDental", MessageBoxButton.OK, MessageBoxImage.Information);
+        };
         MinWidth = Math.Min(MinWidth, SystemParameters.WorkArea.Width * 0.95);
         MinHeight = Math.Min(MinHeight, SystemParameters.WorkArea.Height * 0.94);
         Width = Math.Min(Width, SystemParameters.WorkArea.Width * 0.95);

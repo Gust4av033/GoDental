@@ -11,9 +11,48 @@ using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
+try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
+catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-codes"))
+{
+    var codesDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(codesDatabase, Path.Combine(root, "database"));
+    await AutomaticCodeIntegration.RunAsync(new TestConnectionFactory(codesDatabase), root, codesDatabase);
+    return;
+}
+if (args.Contains("--run-mvp"))
+{
+    var mvpDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(mvpDatabase, Path.Combine(root, "database"));
+    await MvpIntegration.RunAsync(new TestConnectionFactory(mvpDatabase), root, mvpDatabase);
+    return;
+}
+if (args.Contains("--run-customers"))
+{
+    var customerDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(customerDatabase, Path.Combine(root, "database"));
+    await CustomerIntegration.RunAsync(new TestConnectionFactory(customerDatabase));
+    Console.WriteLine("Base aislada retenida: " + customerDatabase);
+    return;
+}
+if (args.Contains("--run-suppliers"))
+{
+    var supplierDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(supplierDatabase, Path.Combine(root, "database"));
+    await SupplierIntegration.RunAsync(new TestConnectionFactory(supplierDatabase));
+    Console.WriteLine("Base aislada retenida: " + supplierDatabase);
+    return;
+}
+if (args.Contains("--run-counts"))
+{
+    var countDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(countDatabase, Path.Combine(root, "database"));
+    await InventoryCountIntegration.RunAsync(new TestConnectionFactory(countDatabase), root);
+    Console.WriteLine("Base aislada retenida: " + countDatabase);
+    return;
+}
 if (args.Contains("--run-inventory"))
 {
-    if (args.Contains("--localdb")) DevelopmentDatabase.TestServer = @"(localdb)\MSSQLLocalDB";
     var inventoryDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
     await DevelopmentDatabase.InstallAsync(inventoryDatabase, Path.Combine(root, "database"));
     await InventoryIntegration.RunAsync(new TestConnectionFactory(inventoryDatabase));
@@ -28,7 +67,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine("Uso: --install-development o --run-integration [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 
@@ -54,6 +93,30 @@ Check(attempts.Count(a => a.IsSuccess) == 1, "Dos inicializaciones concurrentes 
 var identity = attempts.Single(a => a.IsSuccess).Value!;
 Check(identity.Permissions.Contains(ProductService.ManagePermission), "El administrador recibe permisos efectivos del seed");
 await using var c = await factory.OpenConnectionAsync();
+await c.ExecuteAsync("""
+    UPDATE sis.Configuracion
+    SET Valor = CASE Clave
+        WHEN N'Descuento.VendedorMaximo' THEN N'9.00'
+        WHEN N'Descuento.RequiereJustificacionSobre' THEN N'9.00'
+        WHEN N'Descuento.RequiereAutorizacionSobre' THEN N'42.00'
+        WHEN N'Credito.DiasDefault' THEN N'21'
+        ELSE N'false' END,
+        ModificadoPor = @id,
+        FechaModificacion = '2020-01-01T00:00:00+00:00'
+    WHERE Clave IN (N'Descuento.VendedorMaximo', N'Descuento.RequiereJustificacionSobre',
+                    N'Descuento.RequiereAutorizacionSobre', N'Credito.DiasDefault', N'Precios.PrecedenciaDefinida');
+    """, new { id = identity.Id });
+await DevelopmentDatabase.ReapplySeedAsync(database, Path.Combine(root, "database"));
+Check(await c.ExecuteScalarAsync<int>("""
+    SELECT COUNT(*) FROM sis.Configuracion
+    WHERE (Clave=N'Descuento.VendedorMaximo' AND Valor=N'9.00' OR
+           Clave=N'Descuento.RequiereJustificacionSobre' AND Valor=N'9.00' OR
+           Clave=N'Descuento.RequiereAutorizacionSobre' AND Valor=N'42.00' OR
+           Clave=N'Credito.DiasDefault' AND Valor=N'21')
+      AND ModificadoPor=@id AND FechaModificacion='2020-01-01T00:00:00+00:00';
+    """, new { id = identity.Id }) == 4, "Reaplicar el seed conserva parámetros editables y su auditoría");
+Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Configuracion WHERE Clave=N'Precios.PrecedenciaDefinida' AND Valor=N'true' AND ModificadoPor IS NULL") == 1,
+    "Reaplicar el seed restaura parámetros no editables");
 Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.Usuarios") == 1 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.UsuarioRoles") == 1, "Inicialización atómica de usuario y rol");
 var storedHash = await c.ExecuteScalarAsync<string>("SELECT PasswordHash FROM seg.Usuarios");
 Check(storedHash != password && hasher.Verify(password, storedHash!), "SQL conserva sólo hash PBKDF2 verificable");
@@ -135,10 +198,14 @@ try { await userRepository.CreateAsync("rollback_user", "Prueba rollback", selle
 catch (SqlException) { failedUserAudit = true; }
 Check(failedUserAudit && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.Usuarios") == userCount, "Revierte usuario, rol y preferencias cuando falla su auditoría");
 var profileStore = new TestProfileStore(new("localhost", database, "Light", true));
-var boundFactory = new WorkstationConnectionFactory(new SqlConnectionFactory(Microsoft.Extensions.Options.Options.Create(new DatabaseOptions())), profileStore, session);
+IWorkstationConnectionOpener profileOpener = args.Contains("--localdb") ? new IsolatedTestProfileOpener()
+    : new SqlConnectionFactory(Microsoft.Extensions.Options.Options.Create(new DatabaseOptions()));
+var boundFactory = new WorkstationConnectionFactory(profileOpener, profileStore, session);
 await using (var boundConnection = await boundFactory.OpenConnectionAsync())
     Check(await boundConnection.ExecuteScalarAsync<int>("SELECT TRY_CONVERT(int,SESSION_CONTEXT(N'IdUsuario'))") == identity.Id, "Cada conexión SQL recibe el contexto de usuario");
-profileStore.Profile = new("localhost", "GoDental_Development", "Light", true);
+var otherDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+await DevelopmentDatabase.InstallAsync(otherDatabase, Path.Combine(root, "database"));
+profileStore.Profile = new("localhost", otherDatabase, "Light", true);
 var otherDatabaseDenied = false;
 try { await using var other = await boundFactory.OpenConnectionAsync(); } catch (InvalidOperationException) { otherDatabaseDenied = true; }
 Check(otherDatabaseDenied, "La sesión no puede reutilizarse al cambiar de base de datos");
@@ -174,5 +241,19 @@ internal sealed class TestProfileStore(WorkstationSettings profile) : IWorkstati
     public WorkstationSettings Profile { get; set; } = profile;
     public Task<WorkstationSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(Profile);
     public Task SaveAsync(WorkstationSettings value, CancellationToken ct = default) { Profile = value; return Task.CompletedTask; }
+}
+
+// Sólo en el ejecutable de pruebas: cambia el transporte al LocalDB aislado del runner.
+// La fábrica de sesión, el contexto SQL y sus comprobaciones siguen siendo los de producción.
+internal sealed class IsolatedTestProfileOpener : IWorkstationConnectionOpener
+{
+    public Task<DbConnection> OpenAsync(WorkstationSettings settings, CancellationToken ct = default)
+    {
+        if (GoDental.Application.Validators.WorkstationSettingsValidator.Validate(settings) is { } error)
+            throw new ArgumentException(error, nameof(settings));
+        if (!System.Text.RegularExpressions.Regex.IsMatch(settings.Database, @"^GoDental_Tests_[A-Za-z0-9]+$"))
+            throw new ArgumentException("El adaptador sólo abre bases aisladas de pruebas.", nameof(settings));
+        return new TestConnectionFactory(settings.Database).OpenConnectionAsync(ct);
+    }
 }
 

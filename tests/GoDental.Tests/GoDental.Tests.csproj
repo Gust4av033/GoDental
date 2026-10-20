@@ -7,7 +7,25 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/WorkflowViewModel.cs" Link="Ui/WorkflowViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/InventoryCountsViewModel.cs" Link="Ui/InventoryCountsViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/SuppliersViewModel.cs" Link="Ui/SuppliersViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/ProductPickerViewModel.cs" Link="Ui/ProductPickerViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/IDialogModel.cs" Link="Ui/IDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/IWorkflowDialogService.cs" Link="Ui/IWorkflowDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/OperationDialogModel.cs" Link="Ui/OperationDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/CountStartDialogModel.cs" Link="Ui/CountStartDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/SupplierEditorDialogModel.cs" Link="Ui/SupplierEditorDialogModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/CustomersViewModel.cs" Link="Ui/CustomersViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/ICustomerDialogService.cs" Link="Ui/ICustomerDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/CustomerEditorDialogModel.cs" Link="Ui/CustomerEditorDialogModel.cs" />
+    <Compile Include="../Shared/CustomerWorkflowRepository.cs" Link="Ui/CustomerWorkflowRepository.cs" />
+    <Compile Include="../Shared/WorkflowRepositories.cs" Link="Ui/WorkflowRepositories.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="../GoDental.DatabaseTests/DevelopmentServerOptions.cs" Link="Tools/DevelopmentServerOptions.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,5 +45,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/Operations/*.cs" Link="Ui/Operations/%(Filename)%(Extension)" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/MvpFormModel.cs" Link="Ui/MvpFormModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Navigation/NavigationService.cs" Link="Ui/NavigationService.cs" />
   </ItemGroup>
 </Project>

@@ -39,27 +39,30 @@ public sealed partial class AccessViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task PrepareAsync()
+    private async Task PrepareAsync(CancellationToken ct)
     {
         if (IsBusy || IsAuthenticated) return;
         IsBusy = true; IsReady = false; MustChangePassword = false; pendingIdentity = null;
         try
         {
-            IsBootstrap = await gateway.NeedsAdministratorAsync(); IsReady = true;
+            IsBootstrap = await gateway.NeedsAdministratorAsync(ct); IsReady = true;
             StatusMessage = IsBootstrap
                 ? "Elige tu usuario y una contraseña de al menos 10 caracteres. Esta cuenta administrará GoDental."
                 : "Ingresa tus credenciales de GoDental.";
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex) { Fail(ex); }
         finally { IsBusy = false; }
     }
+
+    [ObservableProperty] private bool isSubmitting;
 
     // Las contraseñas se reciben sólo durante el envío; no son propiedades persistentes del ViewModel.
     public async Task SubmitAsync(string password, string confirmation, string currentPassword)
     {
         if (IsBusy || !IsReady || IsAuthenticated) return;
         if (NeedsConfirmation && password != confirmation) { StatusMessage = "Las contraseñas no coinciden."; return; }
-        IsBusy = true;
+        IsBusy = true; IsSubmitting = true;
         try
         {
             if (MustChangePassword && pendingIdentity is not null)
@@ -82,7 +85,7 @@ public sealed partial class AccessViewModel : ObservableObject
             session.Begin(result.Value); StatusMessage = "Sesión iniciada.";
         }
         catch (Exception ex) { Fail(ex); }
-        finally { IsBusy = false; }
+        finally { IsSubmitting = false; IsBusy = false; }
     }
 
     [RelayCommand]

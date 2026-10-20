@@ -7,4 +7,11 @@
   <ItemGroup>
     <ProjectReference Include="../../src/GoDental.Wpf/GoDental.Wpf.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/CustomerWorkflowRepository.cs" Link="CustomerWorkflowRepository.cs" />
+    <Compile Include="../Shared/WorkflowRepositories.cs" Link="WorkflowRepositories.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
+  </ItemGroup>
 </Project>

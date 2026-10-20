@@ -51,6 +51,12 @@ Reglas principales:
 
 La versión 0.3 incluye usuarios y catálogo de la [v0.2](docs/DEV-02-Seguridad-Catalogo.md), más existencias, lotes/vencimientos, ajustes, bajas, transferencias y Kardex con auditoría. También incorpora filtros y mantenimiento de categorías. [Alcance y guía de inventario](docs/DEV-03-Inventario-operativo.md).
 
+La continuación agrega [conteos físicos](docs/DEV-09-Conteos.md): apertura, captura, cierre con ajustes y cancelación auditados. Su pantalla y la de proveedores están conectadas según [DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). Requiere la migración 011.
+
+También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría, y [clientes, direcciones, crédito e historiales](docs/DEV-13-Clientes.md).
+
+En `feature/logica`, el [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md) agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013. Sus pantallas están pendientes de conexión en `feature/ui`; [DEV-15](docs/DEV-15-Coordinacion-UI.md) documenta contratos y estado de validación. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
+
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
 En este equipo se preparó `GoDental_Development`, vacía de usuarios y productos reales. En la ventana de acceso, elige tu primer administrador. Para otro equipo de desarrollo con SQL local puedes ejecutar:
@@ -74,9 +80,13 @@ La herramienta limita el destino a una base local de desarrollo marcada. Nunca i
 008_ViewsProcedures.sql
 009_Seguridad_Parametros.sql
 010_Inventario_Operativo.sql
+011_Conteos_Inventario.sql
+012_MVP_Operativo.sql
+013_Pedidos_MVP.sql
+014_Codigos_Automaticos.sql
 ```
 
-La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. La migración 010 añade dos procedimientos de inventario (14 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
+La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos; 012–013 añaden cuatro tablas de operaciones/pedidos (76 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
 
 Para una instalación local puede usarse `scripts/install-database.ps1` si `sqlcmd` está disponible. La primera ejecución debe hacerse contra una instancia de **desarrollo**, nunca directamente contra producción.
 
@@ -114,10 +124,28 @@ Nunca subir connection strings reales, contraseñas, tokens, certificados, `.bak
 
 La documentación fuente vive en `docs/` y es la referencia para decisiones funcionales/técnicas. `VEN-01A` complementa `VEN-01` y prevalece sobre sus propuestas provisionales en materia de precedencia de precios. Si el código necesita contradecir una regla documentada, primero se versiona la decisión; no se introduce una excepción silenciosa.
 
+## Conteos y proveedores
+
+Las interfaces de conteos físicos y proveedores consumen los servicios existentes: apertura/captura/cierre/cancelación de conteos y fichas/contactos/referencias comerciales de proveedores. [Alcance y validación de DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). La ejecución visual y la suite SQL de este incremento requieren validación en Windows antes de integrar. El usuario autorizó continuar con Clientes manteniendo pendiente esa validación.
+
+## Clientes y VS Code
+
+El módulo Clientes incorpora ficha, contactos, direcciones fiscales/de entrega, condiciones comerciales y configuración separada de crédito. Las consultas de ventas, cuentas y abonos leen las tablas existentes según permisos. [Alcance y comprobaciones de DEV-13](docs/DEV-13-Clientes.md).
+
+Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV-14](docs/DEV-14-VSCode-Windows.md). El repositorio incluye tareas de compilación/pruebas y configuración de F5.
+
 ## Desarrollo
 
-- Ramas activas: `main` (validada) y `feature/desarrollo` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
+- Ramas activas: `main` (validada) y `feature/ui` y `feature/logica` (UI y lógica por capas). [Flujo y recuperación de ramas anteriores](docs/DEV-08-Ramas.md).
 - `main` debe mantenerse integrable.
 - Ejecutar `.\scripts\verify.ps1` antes de integrar cambios relevantes.
 - Convenciones adicionales: `CONTRIBUTING.md`.
 - Instrucciones para agentes/asistentes de programación: `AGENTS.md`.
+
+## Recorrido MVP en interfaz
+
+Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y comprobantes PDF internos tienen páginas propias conectadas a los servicios. [Alcance, recuperación de operaciones y comprobaciones de DEV-19](docs/DEV-19-UI-MVP.md).
+
+## Altas con código automático y cierre
+
+Clientes, productos, proveedores y cajas reciben código al guardar; las cuentas del personal muestran código de empleado. Requiere la migración **014**. Los formularios conservan los códigos existentes y muestran los nuevos como consulta. Se corrigió el cierre para detener/liberar el host antes de apagar WPF; las pruebas incluyen procesos separados para acceso y ventana principal. [Detalles y comprobaciones](docs/DEV-20-Codigos-Cierre.md).
