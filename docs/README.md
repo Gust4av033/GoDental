@@ -55,3 +55,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-24 · Clientes](DEV-24-Clientes-Refinamiento.md): refinamiento del listado, ficha y formularios a partir de su referencia, con permisos e historiales reales.
 
 - [DEV-25 · Productos e Inventario](DEV-25-Productos-Inventario-Refinamiento.md): catálogo, categorías, ficha, existencias, lotes, Kardex, movimientos y conteos refinados sobre los servicios existentes.
+
+- [DEV-26 · Ventas, Caja, Crédito y Pedidos](DEV-26-Ventas-Caja-Refinamiento.md): POS, cobro, cotizaciones, comprobantes, turnos, abonos y entregas refinados sobre sus servicios, con listados y fichas separados.

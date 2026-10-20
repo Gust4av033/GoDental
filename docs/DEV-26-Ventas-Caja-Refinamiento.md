@@ -1,0 +1,42 @@
+# DEV-26 · Refinamiento de Ventas, Caja, Crédito y Pedidos
+
+20/10/2026 · Incremento sobre `632556e` en `feature/desarrollo`. Commits separados por módulo; se conservan Clientes y Productos/Inventario. Consultados AGENTS, DM-01, DB-01, ARQ-01, VEN-01, UX-01, DEV-15, DEV-17 y DEV-19.
+
+## Referencias y composición
+
+Se inspeccionaron directamente las imágenes de `Imagenes/`, principalmente las composiciones `221146` (POS, cobro, venta confirmada y cotizaciones), `221138` (caja, cierre, cuentas y abonos) y `221124` (patrón de listado/ficha comercial). Se extiende ese lenguaje a pedidos y comprobantes con los datos que realmente ofrecen sus servicios.
+
+`Themes/Commerce.xaml` reúne los recursos de estas vistas: enlaces de fila contenidos en su columna, símbolos e iniciales, campos de consulta, pestañas, estados y vacíos. Usa los colores dinámicos existentes para claro/oscuro. Las acciones conservan 152×36 DIP y las herramientas de icono 36×36 DIP. Los formularios usan los cuadros de texto, desplegables y calendario compartidos.
+
+## Pantallas y conexiones
+
+- **POS:** catálogo en tarjetas, búsqueda por SKU/nombre/código de barras, selección de cliente, caja/almacén y lista de precios. Catálogo y carrito tienen pestañas independientes; el resumen queda a la derecha con subtotal, descuento, impuesto, entrega y total. Agregar y editar quedan en las barras superiores de sus tablas; el carrito vacío muestra una guía para añadir productos. El carrito tiene una sola tabla que une cada línea editable con su `CalculatedPrice` del servicio, sin recalcular importes. Modificar el borrador retira el cálculo y la autorización anteriores. La edición de cantidad/descuento, el vaciado, la selección de cliente y el cobro se abren en sus propias ventanas.
+- **Cobro:** métodos reales disponibles en mosaicos, importes y referencias, tabla de pagos y efectivo recibido. El resumen conserva el cálculo aceptado. El cambio procede de la venta confirmada; seleccionar un método por sí solo no agrega ni confirma un pago. La contraseña administrativa continúa fuera del grupo de edición bloqueado para permitir los reenvíos autorizados del mismo intento.
+- **Venta confirmada:** pantalla dedicada con número, cliente histórico, fecha, total, pendiente y cambio del snapshot. Ver comprobante abre la venta real en Ventas y PDF. Nueva venta limpia cliente, descuentos, cargo de entrega, lista seleccionada y borrador, sin escribir otra venta. Cargar una cotización tras una venta confirmada también abandona esa pantalla de resultado.
+- **Cotizaciones:** listado paginado separado de la ficha; el número abre el detalle y Volver conserva la selección. La ficha contiene productos y resumen del cálculo emitido, con fecha, estado y vigencia. Llevar al POS reutiliza la conversión existente, que recalcula con los servicios y conserva el ID de origen.
+- **Ventas y PDF:** listado paginado con cliente histórico, fecha, estado, total y pendiente; ficha independiente con productos, pagos y resumen. El nombre histórico se toma de `CustomerSnapshot.Name`, con respaldo para snapshots antiguos. Guardar PDF conserva el selector de destino y la generación de comprobante interno existente.
+- **Caja:** selección de caja y consulta de turno, acciones de apertura/movimiento/cierre en cabecera, resumen de apertura/esperado/contado/diferencia y pestaña de movimientos paginados. Abrir se presenta cuando no hay turno abierto; Cerrar cuando lo hay, respetando sus permisos. Turnos anteriores y administración de cajas se ubican en desplegables secundarios. Los importes del arqueo son los devueltos por el servicio.
+- **Crédito y abonos:** listado de cuentas con filtro de vencidas; ficha separada con importe original, saldo de la cuenta y vencimiento. Cuenta y saldos del cliente e historial de abonos tienen pestañas distintas. El historial se identifica como del cliente e incluye la cuenta de cada abono, porque el contrato devuelve todos los abonos de ese cliente. Registrar abono mantiene su ventana, formas de pago, referencia, caja y validación de versión.
+- **Pedidos y entregas:** listado por estado y ficha independiente; pestañas de entrega/productos, venta/cobro e historial. Crear, vincular venta y cambiar estado conservan sus ventanas y servicios existentes. Los estados de entrega disponibles proceden de las reglas implementadas y el pago se consulta desde la venta. Volver y reabrir las fichas funciona incluso cuando el servicio devuelve la misma instancia de snapshot.
+
+Los estados de carga, mensajes de error, vacíos, paginación, permisos y limpieza al cerrar sesión se conservan en los ViewModels. Las fichas son estados de navegación separados dentro del área de trabajo; los formularios de escritura son ventanas independientes con confirmación y descarte.
+
+## Integridad y límites
+
+Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, `SaleReceiptService` y `MvpOperationService`. Se mantienen `OperationId`, solicitud retenida ante respuesta incierta, token de cálculo, autorización puntual, rowversion, auditoría y validación de servicios/SQL. No hay cambios de Application, Infrastructure, Domain ni migraciones en este incremento.
+
+No falta un contrato para estos recorridos nominales. La resolución terminal negativa de operaciones inciertas continúa pendiente en DEV-15; la UI no libera una solicitud porque una búsqueda no devuelva recibo. No se añaden pagos por tarjeta, facturación DTE, PDF de cotización, fotos de productos ni gráficos/filtros sin contrato. Los símbolos del catálogo representan productos porque el DTO del POS no incluye fotografías.
+
+**Proveedores queda para el siguiente bloque de refinamiento.** Su módulo existente conserva el recorrido conectado previo; no se incluye como módulo refinado en este incremento.
+
+## Validación
+
+Compilación Release local con `EnableWindowsTargeting=true`, cero errores y advertencias. **148 pruebas xUnit correctas**, incluyendo nueva venta sin datos heredados, cálculo exacto en el carrito, conversión posterior a una confirmación, reapertura de fichas, limpieza de sesión y exportación del snapshot al destino elegido.
+
+El smoke se amplía para capturar listados y fichas por separado, pestañas de caja/crédito/pedidos/ventas/cotizaciones, catálogo poblado con fixtures, carrito vacío y poblado, confirmación, botón Nueva venta y enlace al comprobante aunque la venta aún no figure en el listado. Comprueba acciones de tamaño uniforme visibles en 1366×768 y 1093×614 DIP, reapertura, nombre histórico y formularios de apertura/movimiento/cierre/cobro/abono/pedidos en ambos temas. Los datos de prueba se usan únicamente en el arnés.
+
+Resultado definitivo del código `0fa4b5e`: [CI Windows correcto](https://github.com/Gust4av033/GoDental/actions/runs/39465053983), con compilación Release sin errores/advertencias, **148 xUnit**, **349 comprobaciones SQL** (incluidas las 102 del MVP) y **286 comprobaciones WPF**, sin errores de binding. Cobrar queda a 502 DIP y Nueva venta a 577 DIP del borde superior del espacio renderizado, dentro de 1366×768 y 1093×614 DIP en ambos temas. El smoke confirma los comandos reales de selección/edición del carrito, el acceso al comprobante aun sin la venta en el listado, el inicio de una nueva venta sin otra escritura y la reapertura de las cuatro fichas. Las ventanas de operación se renderizan sin guardar datos.
+
+Capturas y resultados en [test-results-83](https://github.com/Gust4av033/GoDental/actions/runs/39465053983/artifacts/12285200766).
+
+Las referencias se inspeccionaron directamente. Las capturas nuevas se generan mediante el smoke; no se presenta esta ejecución como inspección manual de esas imágenes, prueba del DPI físico del monitor ni recorrido manual en dos estaciones. Las suites SQL usan bases aisladas de CI.

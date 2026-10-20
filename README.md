@@ -155,3 +155,5 @@ Las ocho composiciones de `Imagenes/` guían el refinamiento compartido y las di
 El refinamiento específico de Clientes reorganiza su listado, ficha y ventanas de edición según la referencia: [DEV-24 · Clientes](docs/DEV-24-Clientes-Refinamiento.md).
 
 Productos e Inventario continúan ese patrón en el catálogo, categorías, existencias, lotes, Kardex, movimientos y conteos físicos: [DEV-25 · Productos e Inventario](docs/DEV-25-Productos-Inventario-Refinamiento.md).
+
+Ventas, Caja, Crédito y Pedidos continúan con listados y fichas separados, ventanas de operación y confirmación de venta conectada al comprobante: [DEV-26 · Refinamiento comercial](docs/DEV-26-Ventas-Caja-Refinamiento.md).
