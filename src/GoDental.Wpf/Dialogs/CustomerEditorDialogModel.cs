@@ -20,6 +20,8 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
     public IReadOnlyList<CatalogOption> PriceLists { get; }
     public IReadOnlyList<string> AddressTypes { get; } = ["FISCAL", "ENTREGA", "OTRA"];
     public int PriceListId { get; set; }
+    // SelectedValue entrega el Id del catálogo como int; el DTO utiliza smallint.
+    public int SelectedTypeId { get => Customer.TypeId; set => Customer.TypeId = checked((short)value); }
     public string Limit { get; set; }
     public string Days { get; set; }
     public string NoticeDays { get; set; }
@@ -28,6 +30,7 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
         Func<OperationDialogModel, Task<bool>> save) : base(save)
     {
         Kind = kind; Customer = customer with { RowVersion = customer.RowVersion.ToArray() };
+        if (kind == CustomerEditorKind.General && customer.Id == 0) Reason = "Alta de cliente";
         Contact = (contact ?? new()) with { }; Address = (address ?? new()) with { }; Credit = (credit ?? new()) with { };
         var types = catalogs.Types.ToList();
         if (Customer.TypeId > 0 && types.All(t => t.Id != Customer.TypeId)) types.Add(new() { Id = Customer.TypeId, Name = Customer.Type });

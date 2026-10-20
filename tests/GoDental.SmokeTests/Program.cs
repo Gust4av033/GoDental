@@ -517,6 +517,15 @@ internal static class Program
                 Check(FindChildren<TextBlock>(selector).Any(t => t.Text == "Caja de prueba"), "El desplegable muestra el nombre del objeto seleccionado, sin nombres internos de clases");
                 Check(action.ActualWidth >= 120 && action.ActualHeight == 36, "Las acciones compactas conservan espacio legible y altura uniforme de 36 DIP");
                 password.Clear();
+                var customerForm = new CustomerEditorDialogModel(CustomerEditorKind.General, new(), null, null, null,
+                    new([new() { Id = 1, Name = "Paciente" }, new() { Id = 2, Name = "Clínica" }], []), _ => Task.FromResult(false));
+                var customerEditor = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = customerForm };
+                customerEditor.Measure(new Size(1000, 700)); customerEditor.Arrange(new Rect(0, 0, 1000, 700)); customerEditor.UpdateLayout();
+                var typeSelector = FindChildren<ComboBox>(customerEditor).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Tipo de cliente");
+                typeSelector.SelectedValue = 2;
+                typeSelector.GetBindingExpression(System.Windows.Controls.Primitives.Selector.SelectedValueProperty)!.UpdateSource();
+                Check(!Validation.GetHasError(typeSelector) && customerForm.BuildCustomer().TypeId == 2,
+                    "Cambiar el tipo de cliente no produce error de conversión ni borde rojo");
                 session.Clear();
                 var loginWindow = new LoginWindow(shell) { ShowActivated = false };
                 var workspaceWindow = new MainWindow(shell) { ShowActivated = false };

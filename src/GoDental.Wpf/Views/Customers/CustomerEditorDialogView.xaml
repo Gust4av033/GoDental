@@ -27,7 +27,7 @@
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Tipo de cliente"/>
-        <ComboBox ItemsSource="{Binding Types}" SelectedValue="{Binding Customer.TypeId}" SelectedValuePath="Id" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
+        <ComboBox ItemsSource="{Binding Types}" SelectedValue="{Binding SelectedTypeId}" SelectedValuePath="Id" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Lista de precios"/>

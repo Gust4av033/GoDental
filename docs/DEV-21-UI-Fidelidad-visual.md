@@ -25,3 +25,5 @@ El smoke cubre Light/Dark, ventanas de 1366×768 y 1093×614 DIP, fichas/listado
 No se cambian SQL, contratos, reglas, permisos ni gestión de solicitudes financieras pendientes. La validación correspondiente es `scripts/verify.ps1`; este incremento no requiere instalar migraciones.
 
 Resultado en Windows: compilación Release sin advertencias ni errores, **142 casos xUnit** y **134 comprobaciones WPF** correctas, sin errores de binding. Se revisaron las capturas de catálogo/carrito, clientes, proveedores, caja y cobro en ambos temas. Se corrigió además el segundo pase de medida del arnés al cambiar de pestaña para que las columnas virtualizadas aparezcan completas en las capturas.
+
+Corrección puntual de alta de clientes: el selector adapta el Id `int` del catálogo al `short` del DTO para evitar el error de conversión. Las altas generales proponen «Alta de cliente» como motivo, editable, conservando la auditoría; las ediciones siguen exigiendo un motivo explícito. Se mantiene la confirmación del usuario. Release correcto, 144 pruebas y 135 comprobaciones WPF, incluida la selección real de otro tipo de cliente sin error de validación.
