@@ -19,7 +19,7 @@
                   <CheckBox Content="Desarrollo local: aceptar certificado autofirmado" IsChecked="{Binding LocalDevelopment}" Margin="0,0,0,16" ToolTip="Sólo en este equipo y bases GoDental_ separadas. La conexión continúa cifrada." />
                 </StackPanel>
                 <WrapPanel>
-                  <Button Content="Comprobar conexión" Style="{StaticResource PrimaryButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8" />
+                  <Button Content="Comprobar conexión" Style="{StaticResource PrimaryActionButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8" />
                   <Button Tag="&#xE74E;" Content="Guardar configuración" Command="{Binding SaveCommand}" Margin="0,0,12,8" />
                   <Button Content="Cancelar" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8" />
                 </WrapPanel>

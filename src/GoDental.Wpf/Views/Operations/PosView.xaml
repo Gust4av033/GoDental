@@ -12,7 +12,7 @@
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanChangeCart}"><TextBlock Text="Caja / almacén" Style="{StaticResource MutedText}" Margin="0,0,0,4"/><ComboBox ItemsSource="{Binding Boxes}" SelectedItem="{Binding Box}" DisplayMemberPath="Name" AutomationProperties.Name="Caja / almacén"/></StackPanel>
         <StackPanel Grid.Column="1" Margin="0,0,12,0" IsEnabled="{Binding CanChangeCart}"><TextBlock Text="Lista de precio" Style="{StaticResource MutedText}" Margin="0,0,0,4"/><ComboBox ItemsSource="{Binding PriceLists}" SelectedItem="{Binding PriceList}" DisplayMemberPath="Name" AutomationProperties.Name="Lista de precio"/></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="Cliente" Style="{StaticResource MutedText}" Margin="0,0,0,4"/><Button Content="Seleccionar cliente" Tag="&#xE77B;" Command="{Binding SelectCustomerCommand}" IsEnabled="{Binding CanChooseCustomer}" Style="{StaticResource PrimaryButton}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="Cliente" Style="{StaticResource MutedText}" Margin="0,0,0,4"/><Button Content="Seleccionar cliente" Tag="&#xE77B;" Command="{Binding SelectCustomerCommand}" IsEnabled="{Binding CanChooseCustomer}" Style="{StaticResource PrimaryActionButton}"/></StackPanel>
       </Grid>
     </Border>
     <DockPanel Margin="0,0,0,12">

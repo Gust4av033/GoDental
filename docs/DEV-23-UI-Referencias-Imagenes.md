@@ -23,3 +23,5 @@ La comprobación física con F5/DPI requiere Windows; no se presenta una compila
 ## Validación
 
 Base y primer pase de tokens: compilación Release cruzada con `EnableWindowsTargeting=true`, sin errores ni advertencias. 144 pruebas xUnit correctas en Linux. El smoke se amplía para verificar selección real de producto y método, ausencia de pagos al elegir método, radio de controles, geometría compartida, importes USD y tamaño uniforme de acciones. Pendiente registrar el resultado Windows de este incremento.
+
+Primer pase publicado (`7da44d5`): [CI Windows](https://github.com/Gust4av033/GoDental/actions/runs/39448944164) correcto en compilación, xUnit, todas las suites SQL y smoke WPF. Se completa la uniformidad de acciones de alta/edición en Productos, Clientes, Proveedores, Usuarios y Ajustes; Acceso conserva su botón de ancho completo. Los badges sin estado no muestran una píldora vacía.

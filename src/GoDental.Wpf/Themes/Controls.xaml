@@ -464,6 +464,7 @@
     <Setter Property="TextElement.FontWeight" Value="SemiBold"/><Setter Property="TextElement.FontSize" Value="11"/>
     <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
     <Style.Triggers>
+      <Trigger Property="Tag" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
       <Trigger Property="Tag" Value="ABIERTO"><Setter Property="Background" Value="{DynamicResource SuccessTintBrush}"/><Setter Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}"/></Trigger>
       <Trigger Property="Tag" Value="INGRESO"><Setter Property="Background" Value="{DynamicResource SuccessTintBrush}"/><Setter Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}"/></Trigger>
       <Trigger Property="Tag" Value="PAGADA"><Setter Property="Background" Value="{DynamicResource SuccessTintBrush}"/><Setter Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}"/></Trigger>

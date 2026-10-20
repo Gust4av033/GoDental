@@ -2,7 +2,7 @@
   <StackPanel>
     <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
-    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo proveedor" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryButton}" Tag="&#xE710;" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}"/><TextBlock Text="Proveedores" Style="{StaticResource Heading}"/></DockPanel>
+    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo proveedor" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryActionButton}" Tag="&#xE710;" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}"/><TextBlock Text="Proveedores" Style="{StaticResource Heading}"/></DockPanel>
     <TextBlock Text="Contactos y referencias comerciales en una sola ficha." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
     <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -48,7 +48,7 @@
 <StackPanel Margin="0,0,20,16"><TextBlock Text="Correo electrónico" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Email}" Margin="0,4,0,0"/></StackPanel>
 <StackPanel Margin="0,0,20,16"><TextBlock Text="Teléfono" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Phone}" Margin="0,4,0,0"/></StackPanel>
 <StackPanel Margin="0,0,20,16"><TextBlock Text="Sitio web" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Website}" Margin="0,4,0,0"/></StackPanel>
-      </UniformGrid><Button Content="Editar proveedor" Tag="&#xE70F;" Command="{Binding EditSupplierCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/></StackPanel></TabItem>
+      </UniformGrid><Button Content="Editar proveedor" Tag="&#xE70F;" Command="{Binding EditSupplierCommand}" Style="{StaticResource PrimaryActionButton}" HorizontalAlignment="Left" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/></StackPanel></TabItem>
       <TabItem Header="Contactos">
         <StackPanel Margin="16">
           <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="200" Margin="0,0,0,12" SelectionMode="Single">

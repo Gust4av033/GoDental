@@ -2,7 +2,7 @@
   <StackPanel>
     <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
-    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo cliente" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryButton}" Tag="&#xE710;" IsEnabled="{Binding CanCreate}"/><TextBlock Text="Clientes" Style="{StaticResource Heading}"/></DockPanel>
+    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo cliente" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryActionButton}" Tag="&#xE710;" IsEnabled="{Binding CanCreate}"/><TextBlock Text="Clientes" Style="{StaticResource Heading}"/></DockPanel>
     <TextBlock Text="Información comercial, contactos y direcciones para tu operación." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
     <WrapPanel IsEnabled="{Binding IsNotBusy}">

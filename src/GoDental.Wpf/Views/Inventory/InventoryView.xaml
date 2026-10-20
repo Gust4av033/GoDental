@@ -7,7 +7,7 @@
       </DockPanel>
       <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,0,0,16" AutomationProperties.LiveSetting="Polite" />
       <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-      <Button Content="Registrar movimiento" Command="{Binding OpenMovementDialogCommand}" IsEnabled="{Binding CanWrite}" Visibility="{Binding CanAdjust, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+      <Button Content="Registrar movimiento" Command="{Binding OpenMovementDialogCommand}" IsEnabled="{Binding CanWrite}" Visibility="{Binding CanAdjust, Converter={StaticResource BoolToVisibility}}" Style="{StaticResource PrimaryActionButton}" HorizontalAlignment="Left" Margin="0,0,0,16"/>
       <StackPanel IsEnabled="{Binding IsNotBusy}">
         <WrapPanel Margin="0,0,0,16">
           <StackPanel Width="250" Margin="0,0,12,0"><Label Content="Almacén de operación" Target="{Binding ElementName=WarehouseInput}"/><ComboBox x:Name="WarehouseInput" ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Warehouse}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén de operación" /></StackPanel>
