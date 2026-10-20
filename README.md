@@ -151,3 +151,5 @@ Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y comprobantes PDF int
 Clientes, productos, proveedores y cajas reciben código al guardar; las cuentas del personal muestran código de empleado. Requiere la migración **014**. Los formularios conservan los códigos existentes y muestran los nuevos como consulta. Se corrigió el cierre para detener/liberar el host antes de apagar WPF; las pruebas incluyen procesos separados para acceso y ventana principal. [Detalles y comprobaciones](docs/DEV-20-Codigos-Cierre.md).
 
 Las ocho composiciones de `Imagenes/` guían el refinamiento compartido y las distribuciones de POS/cobro, caja y crédito: [DEV-23 · Referencias visuales](docs/DEV-23-UI-Referencias-Imagenes.md).
+
+El refinamiento específico de Clientes reorganiza su listado, ficha y ventanas de edición según la referencia: [DEV-24 · Clientes](docs/DEV-24-Clientes-Refinamiento.md).
