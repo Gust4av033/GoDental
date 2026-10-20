@@ -526,12 +526,25 @@ internal static class Program
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
                 session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
+                mvpRepository.Products.AddRange([
+                    new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
+                    new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
+                    new() { Id = 4, Sku = "UI-004", Name = "Instrumental de prueba con nombre largo para comprobar el ajuste en la tarjeta", Price = 85, Available = 4 },
+                    new() { Id = 5, Sku = "UI-005", Name = "Adhesivo de prueba", Price = 28, Available = 0 }
+                ]);
+                var customerName = new GoDental.Wpf.Converters.SaleCustomerNameConverter();
+                var historicalCustomer = new SaleData { CustomerId = 1, CustomerSnapshot = "{\"Name\":\"Cliente histórico de prueba\"}" };
+                Check(customerName.Convert(historicalCustomer, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Cliente histórico de prueba"),
+                    "El nombre de la venta procede del snapshot histórico");
+                historicalCustomer.CustomerSnapshot = "{";
+                Check(customerName.Convert(historicalCustomer, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Cliente registrado"),
+                    "Un snapshot antiguo inválido conserva una identidad de respaldo sin romper el listado");
                 await cashMvp.ReloadCommand.ExecuteAsync(null);
                 await posMvp.ReloadCommand.ExecuteAsync(null);
                 posMvp.Items.Add(new(1, "UI-TEST", "Producto de prueba", 1, 0));
                 await posMvp.CalculateCommand.ExecuteAsync(null);
                 await creditMvp.ReloadCommand.ExecuteAsync(null); creditMvp.Selected = creditMvp.Items.First();
-                await creditMvp.HistoryCommand.ExecuteAsync(null);
+                await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
                 await ordersMvp.ReloadCommand.ExecuteAsync(null); ordersMvp.Selected = ordersMvp.Items.First();
                 await ordersMvp.DetailCommand.ExecuteAsync(null);
                 var emitted = mvpRepository.QuoteFactory(new(1, 1, [new(1, 1)]));
@@ -552,14 +565,65 @@ internal static class Program
                             var cartRoot = (FrameworkElement)cartWindow.Content;
                             cartRoot.Measure(new Size(1366, 768)); cartRoot.Arrange(new Rect(0, 0, 1366, 768)); cartRoot.UpdateLayout();
                             FindChildren<TabControl>(FindChildren<PosView>(cartRoot).Single()).First().SelectedIndex = 1;
+                            cartRoot.UpdateLayout();
+                            var cartGrid = FindChildren<DataGrid>(cartRoot).Single(grid => ReferenceEquals(grid.ItemsSource, posMvp.CartRows));
+                            cartGrid.SelectedIndex = 0;
+                            Check(ReferenceEquals(posMvp.SelectedLine, posMvp.Items[0]) && ReferenceEquals(posMvp.CartRows[0].Calculation, posMvp.Quote!.Lines[0]),
+                                "El carrito conserva selección de la línea editable y presenta el cálculo devuelto por el servicio");
                             await RenderWindowAsync(cartWindow, Path.Combine(output, $"mvp-Carrito-{theme}.png"));
+                            posMvp.ConfirmedSale = mvpRepository.Sale;
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-Venta-confirmada-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Venta-confirmada-compacto-{theme}.png"));
+                            var confirmedView = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
+                            var confirmedRoot = (FrameworkElement)confirmedView.Content;
+                            confirmedRoot.Measure(new Size(1366, 768)); confirmedRoot.Arrange(new Rect(0, 0, 1366, 768)); confirmedRoot.UpdateLayout();
+                            var receipt = FindChildren<Button>(FindChildren<PosView>(confirmedRoot).Single()).Single(b => b.Content is string text && text == "Ver comprobante");
+                            Check(ReferenceEquals(receipt.Command, historyMvp.OpenSaleCommand) && ReferenceEquals(receipt.CommandParameter, mvpRepository.Sale.Sale),
+                                "La confirmación conecta el comprobante real con Ventas y PDF");
+                            await historyMvp.OpenSaleCommand.ExecuteAsync(receipt.CommandParameter);
+                            Check(shell.IsSales && historyMvp.IsSaleDetailOpen && historyMvp.SaleDetail?.Sale.Id == mvpRepository.Sale.Sale.Id,
+                                "Ver comprobante navega al detalle confirmado sin crear otra venta");
+                            confirmedView.Close(); posMvp.ConfirmedSale = null;
+                        }
+                        else
+                        {
+                            var viewType = page switch
+                            {
+                                SetupPage.Cash => typeof(CashView), SetupPage.Credit => typeof(CreditView),
+                                SetupPage.Orders => typeof(OrdersView), SetupPage.Sales => typeof(SalesView), _ => typeof(QuotationsView)
+                            };
+                            await RenderCommerceTabsAsync(shell, viewType, page.ToString(), theme, output);
+                            if (page == SetupPage.Credit) creditMvp.ReturnToListCommand.Execute(null);
+                            if (page == SetupPage.Orders) ordersMvp.ReturnToListCommand.Execute(null);
+                            if (page == SetupPage.Sales) historyMvp.ReturnToSalesCommand.Execute(null);
+                            if (page == SetupPage.Quotations) historyMvp.ReturnToQuotationsCommand.Execute(null);
+                            if (page != SetupPage.Cash)
+                            {
+                                await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-listado-{theme}.png"));
+                                await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-listado-compacto-{theme}.png"));
+                            }
+                            if (page == SetupPage.Credit) await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
+                            if (page == SetupPage.Orders) await ordersMvp.OpenOrderCommand.ExecuteAsync(ordersMvp.Selected);
+                            if (page == SetupPage.Sales) await historyMvp.OpenSaleCommand.ExecuteAsync(historyMvp.SelectedSale);
+                            if (page == SetupPage.Quotations) await historyMvp.OpenQuotationCommand.ExecuteAsync(historyMvp.SelectedQuotation);
                         }
                     }
+                    Check(creditMvp.IsDetailOpen && ordersMvp.IsDetailOpen && historyMvp.IsSaleDetailOpen && historyMvp.IsQuotationDetailOpen,
+                        "Volver al listado y reabrir conserva las fichas de crédito, pedidos, ventas y cotizaciones");
                     mvpDialogs.Render = async form =>
                     {
                         var view = new MvpFormView(); view.Connect(form);
                         await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-dialogo-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
                     };
+                    var openShift = cashMvp.Shift;
+                    cashMvp.Shift = null;
+                    nav.Navigate(SetupPage.Cash);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Caja-sin-turno-{theme}.png"));
+                    await cashMvp.OpenCommand.ExecuteAsync(null);
+                    cashMvp.Shift = new() { Id = 9, CashBoxId = 1, State = "CERRADO", Opening = 50m, Expected = 75m, Counted = 70m, Difference = -5m, Opened = DateTimeOffset.Now.AddHours(-8), Closed = DateTimeOffset.Now };
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Caja-cerrada-{theme}.png"));
+                    Check(!cashMvp.HasOpenShift && !cashMvp.CanClose && !cashMvp.CanMove, "Un turno cerrado no permite movimientos ni otro cierre");
+                    cashMvp.Shift = openShift;
                     await cashMvp.MoveCommand.ExecuteAsync(null);
                     await cashMvp.CloseCommand.ExecuteAsync(null);
                     await posMvp.CheckoutCommand.ExecuteAsync(null);
@@ -768,6 +832,21 @@ internal static class Program
         public void Show() => OpenCount++;
     }
 
+    private static async Task RenderCommerceTabsAsync(ShellViewModel shell, Type viewType, string page, string theme, string output)
+    {
+        var count = 1;
+        for (var index = 0; index < count; index++)
+        {
+            var window = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
+            var root = (FrameworkElement)window.Content;
+            root.Measure(new Size(1366, 768)); root.Arrange(new Rect(0, 0, 1366, 768)); root.UpdateLayout();
+            var view = FindChildren<UserControl>(root).Single(control => control.GetType() == viewType);
+            var tabs = FindChildren<TabControl>(view).Single();
+            count = tabs.Items.Count; tabs.SelectedIndex = index;
+            await RenderWindowAsync(window, Path.Combine(output, $"mvp-{page}-pestana-{index}-{theme}.png"));
+        }
+    }
+
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
     {
         var view=new GoDental.Wpf.Views.Inventory.InventoryView {DataContext=model};
@@ -841,19 +920,32 @@ internal static class Program
             root.Measure(new Size(width, height));
             root.Arrange(new Rect(0, 0, width, height));
             root.UpdateLayout();
-            if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1280 && height >= 768)
+            if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1093 && height >= 614)
             {
                 var pos = ((ShellViewModel)root.DataContext).Pos;
                 var catalog = FindChildren<ListBox>(root).FirstOrDefault(box => ReferenceEquals(box.ItemsSource, pos.Products));
-                if (catalog is { Items.Count: > 0 })
+                if (!pos.HasConfirmedSale && catalog is { Items.Count: > 0 })
                 {
                     catalog.SelectedIndex = 0;
                     Check(ReferenceEquals(pos.Product, catalog.SelectedItem) && pos.CanAddProduct, "Las tarjetas del catálogo conservan selección y habilitan la acción de carrito");
                 }
-                var checkout = FindChildren<Button>(root).Single(button => button.Content is string caption && caption == "Cobrar");
+                var caption = pos.HasConfirmedSale ? "Nueva venta" : "Cobrar";
+                var checkout = FindChildren<Button>(root).Single(button => button.Content is string text && text == caption);
                 var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
-                Check(bounds.Bottom <= height - 56 && bounds.Right <= width,
-                    "El botón Cobrar permanece visible junto al catálogo y al carrito a 1366×768");
+                Check(checkout.ActualWidth == 152 && checkout.ActualHeight == 36 && bounds.Bottom <= height - 32 && bounds.Right <= width,
+                    $"La acción {caption} permanece visible con tamaño uniforme en {width}×{height}; borde inferior {bounds.Bottom:0}");
+            }
+            if (root.DataContext is ShellViewModel commerceShell && (commerceShell.IsCash || commerceShell.IsCredit || commerceShell.IsOrders || commerceShell.IsSales || commerceShell.IsQuotations))
+            {
+                var caption = commerceShell.IsCash ? (commerceShell.Cash.HasOpenShift ? "Cerrar caja" : "Abrir caja")
+                    : commerceShell.IsCredit ? "Registrar abono"
+                    : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Cambiar estado" : "Nuevo pedido")
+                    : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
+                    : commerceShell.CommercialHistory.IsQuotationDetailOpen ? "Llevar al POS" : "Actualizar";
+                var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                    $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
             }
             if (root.DataContext is ShellViewModel { IsProducts: true } productShell && productShell.Products.CanManage)
             {

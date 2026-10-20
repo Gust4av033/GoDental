@@ -90,6 +90,7 @@ public sealed class MvpUiTests
         var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null);
         vm.Items.Add(new(1, "SKU", "Prueba", 1, 0)); await vm.CalculateCommand.ExecuteAsync(null); var quote = vm.Quote!;
         Assert.Equal(123.45m, quote.Total);
+        Assert.Same(quote.Lines.Single(), vm.CartRows.Single().Calculation);
         c.Dialogs.Action = async f =>
         {
             var checkout = Assert.IsType<CheckoutModel>(f.Body); checkout.Payments.Add(new() { MethodId = 1, Method = "Efectivo", Amount = quote.Total }); checkout.CashTendered = "150"; Set(f, "reason", "Venta revisada"); await Save(f);
@@ -98,10 +99,30 @@ public sealed class MvpUiTests
         var request = Assert.IsType<ConfirmSale>(Assert.Single(c.Repository.Writes)); Assert.Equal(JsonSerializer.Serialize(quote.Cart), JsonSerializer.Serialize(request.Cart)); Assert.Equal(quote.Token, request.QuoteToken); Assert.Equal(150, request.CashTendered); Assert.Equal(quote.Total, request.Payments.Single().Amount); Assert.Empty(vm.Items); Assert.NotNull(vm.ConfirmedSale);
     }
     [Fact]
+    public async Task NewSaleClearsPriorCustomerAndChargesWithoutAnotherWrite()
+    {
+        var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null);
+        vm.Customer.Selected = c.CustomersRepository.Customer; vm.GlobalDiscount = "5"; vm.DeliveryCharge = "3";
+        vm.Items.Add(new(1, "SKU", "Prueba", 1, 0)); await vm.CalculateCommand.ExecuteAsync(null);
+        c.Dialogs.Action = async form =>
+        {
+            var checkout = Assert.IsType<CheckoutModel>(form.Body);
+            checkout.Payments.Add(new() { MethodId = 1, Amount = checkout.Quote.Total }); checkout.CashTendered = "150";
+            Set(form, "reason", "Venta revisada"); await Save(form);
+        };
+        await vm.CheckoutCommand.ExecuteAsync(null);
+        Assert.True(vm.HasConfirmedSale);
+        vm.NewSaleCommand.Execute(null);
+        Assert.False(vm.HasConfirmedSale); Assert.Null(vm.Customer.Selected);
+        Assert.Equal("0", vm.GlobalDiscount); Assert.Equal("0", vm.DeliveryCharge);
+        Assert.Empty(vm.CartRows); Assert.Null(vm.Quote); Assert.Single(c.Repository.Writes);
+    }
+
+    [Fact]
     public async Task PosDraftChangesInvalidateQuoteAndAuthorization()
     {
         var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null); vm.Items.Add(new(1, "SKU", "Prueba", 1, 0)); await vm.CalculateCommand.ExecuteAsync(null);
-        vm.AuthorizationId = 10; vm.GlobalDiscount = "5"; Assert.Null(vm.Quote); Assert.Null(vm.AuthorizationId); Assert.False(vm.CanSell);
+        vm.AuthorizationId = 10; vm.GlobalDiscount = "5"; Assert.Null(vm.Quote); Assert.Null(vm.AuthorizationId); Assert.False(vm.CanSell); Assert.Null(vm.CartRows.Single().Calculation);
     }
     [Fact]
     public async Task PosDoesNotApplyQuoteCompletedAfterLogout()
@@ -116,7 +137,9 @@ public sealed class MvpUiTests
         var c = new Context(); var vm = c.PosVm(); await vm.ReloadCommand.ExecuteAsync(null);
         var prior = c.Repository.QuoteFactory(new(1, 1, [new(1, 2)])) with { Total = 1 };
         c.Repository.Quotations.Add(new() { Id = 10, SnapshotJson = JsonSerializer.Serialize(prior) });
+        vm.ConfirmedSale = c.Repository.Sale; Assert.False(vm.CanChooseCustomer);
         await vm.LoadQuotationAsync(10);
+        Assert.False(vm.HasConfirmedSale);
         Assert.Equal(10, vm.QuotationId); Assert.Equal(123.45m, vm.Quote!.Total); Assert.Equal(2, vm.Items.Single().Quantity); Assert.Null(vm.AuthorizationId);
     }
     [Fact]
@@ -129,10 +152,10 @@ public sealed class MvpUiTests
     public async Task CreditPaymentKeepsAccountVersionAndRefreshesCustomerHistory()
     {
         var c = new Context(); var vm = new CreditViewModel(c.Cash, c.Sales, c.Customers, c.Dialogs, c.Session, c.Operations, NullLogger<CreditViewModel>.Instance);
-        await vm.ReloadCommand.ExecuteAsync(null); vm.Selected = vm.Items.Single(); var version = vm.Selected.RowVersion.ToArray();
+        await vm.ReloadCommand.ExecuteAsync(null); await vm.OpenAccountCommand.ExecuteAsync(vm.Items.Single()); Assert.True(vm.IsDetailOpen); var version = vm.Selected!.RowVersion.ToArray();
         c.Dialogs.Action = async f => { Set(f, "amount", "5"); Set(f, "reason", "Abono revisado"); await Save(f); };
         await vm.PayCommand.ExecuteAsync(null);
-        var request = Assert.IsType<AccountPayment>(Assert.Single(c.Repository.Writes)); Assert.Equal(version, request.ExpectedVersion); Assert.Equal(1, request.ShiftId); Assert.Single(vm.Payments); Assert.NotNull(vm.Balance);
+        var request = Assert.IsType<AccountPayment>(Assert.Single(c.Repository.Writes)); Assert.Equal(version, request.ExpectedVersion); Assert.Equal(1, request.ShiftId); Assert.Single(vm.Payments); Assert.NotNull(vm.Balance); Assert.True(vm.IsDetailOpen);
     }
     [Fact]
     public async Task OrderTransitionsOfferOnlyAllowedStatesAndRetainVersion()
@@ -142,6 +165,21 @@ public sealed class MvpUiTests
         await vm.TransitionCommand.ExecuteAsync(null);
         var request = Assert.IsType<OrderTransition>(Assert.Single(c.Repository.Writes)); Assert.Equal("PREPARANDO", request.State); Assert.Equal(c.Repository.Order.Order.RowVersion, request.ExpectedVersion);
     }
+    [Fact]
+    public async Task OrderListAndDetailNavigationPreservesFilterAndClearsOnLogout()
+    {
+        var c = new Context(); var vm = c.OrdersVm();
+        await vm.ReloadCommand.ExecuteAsync(null);
+        await vm.OpenOrderCommand.ExecuteAsync(vm.Items.Single());
+        Assert.True(vm.IsDetailOpen);
+        vm.State = "RECIBIDO";
+        vm.ReturnToListCommand.Execute(null);
+        Assert.False(vm.IsDetailOpen); Assert.Equal("RECIBIDO", vm.State); Assert.NotNull(vm.Selected);
+        await vm.OpenOrderCommand.ExecuteAsync(vm.Selected);
+        Assert.True(vm.IsDetailOpen);
+        c.Session.Clear(); Assert.False(vm.IsDetailOpen); Assert.Null(vm.Detail); Assert.Empty(vm.Events);
+    }
+
     [Fact]
     public async Task ReadOnlySessionCannotOpenWriteDialogs()
     {
@@ -205,7 +243,11 @@ public sealed class MvpUiTests
     {
         var c = new Context(); var files = new TestPdfFiles(); var renderer = DispatchProxy.Create<IReceiptRenderer, PdfPort>();
         var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, renderer, c.Session), files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
-        await history.ReloadSalesCommand.ExecuteAsync(null); history.SelectedSale = history.Sales.Single(); await history.ReadSaleCommand.ExecuteAsync(null); await history.ExportCommand.ExecuteAsync(null);
+        await history.ReloadSalesCommand.ExecuteAsync(null); history.SelectedSale = history.Sales.Single(); await history.ReadSaleCommand.ExecuteAsync(null);
+        Assert.True(history.IsSaleDetailOpen); var selected = history.SelectedSale;
+        history.ReturnToSalesCommand.Execute(null); Assert.False(history.IsSaleDetailOpen); Assert.Same(selected, history.SelectedSale);
+        await history.OpenSaleCommand.ExecuteAsync(selected); Assert.True(history.IsSaleDetailOpen);
+        await history.ExportCommand.ExecuteAsync(null);
         Assert.Equal("GoDental-comprobante-interno-1.pdf", files.Name); Assert.Equal("%PDF-prueba", System.Text.Encoding.ASCII.GetString(files.Bytes!));
     }
     private sealed class TestPdfFiles : IPdfFileService
