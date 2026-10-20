@@ -1,10 +1,13 @@
 using GoDental.Application.Abstractions.Persistence;
 using GoDental.Application.Abstractions.Security;
+using GoDental.Application.DTOs;
 
 namespace GoDental.Application.Services;
 public sealed class SaleReceiptService(ISalesRepository repository, IReceiptRenderer renderer, IUserSession session) : MvpServiceAccess(session)
 {
-    public async Task<byte[]> ExportAsync(long saleId, CancellationToken ct = default)
+    public Task<byte[]> ExportAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, renderer.Render, ct);
+    public Task<ReceiptDocument> PreviewAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, renderer.RenderPreview, ct);
+    private async Task<T> GenerateAsync<T>(long saleId, Func<SaleSnapshot, T> render, CancellationToken ct)
     {
         Read("VENTAS.VER", "VENTAS.REIMPRIMIR");
         Id(saleId);
@@ -19,7 +22,7 @@ public sealed class SaleReceiptService(ISalesRepository repository, IReceiptRend
         }
 
         CheckSession();
-        var pdf = await Task.Run(() => renderer.Render(snapshot), ct);
+        var pdf = await Task.Run(() => render(snapshot), ct);
         CheckSession();
         return pdf;
     }

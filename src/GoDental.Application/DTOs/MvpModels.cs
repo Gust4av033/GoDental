@@ -114,7 +114,8 @@ public sealed class SalePaymentData
     public decimal Amount { get; set; }
     public string? Reference { get; set; }
 }
-public sealed record SaleSnapshot(SaleData Sale, IReadOnlyList<SaleLineData> Lines, IReadOnlyList<SalePaymentData> Payments);
+public sealed record SaleSnapshot(SaleData Sale, IReadOnlyList<SaleLineData> Lines, IReadOnlyList<SalePaymentData> Payments, OrderData? Delivery = null);
+public sealed record ReceiptDocument(byte[] Pdf, IReadOnlyList<byte[]> Pages);
 public sealed class QuotationData
 {
     public long Id { get; set; }

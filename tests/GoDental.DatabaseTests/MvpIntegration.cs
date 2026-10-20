@@ -204,6 +204,8 @@ internal static class MvpIntegration
         Check((await orders.ReadAsync(orderId))!.Order.Address == "Dirección original", "Pedido conserva snapshot de entrega");
         Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "ENTREGADO", "Salto inválido"))).IsSuccess, "Pedido recibido no pasa directamente a entregado");
         Saved(await orders.LinkSaleAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, saleId, "Vincular venta correspondiente")));
+        Check((await sales.ReadAsync(saleId))!.Delivery is { Id: var linkedOrder, Address: "Dirección original" } && linkedOrder == orderId,
+            "Comprobante lee la entrega del pedido sin sustituirla por la dirección actual del cliente");
         Check((await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "PREPARANDO", "Versión obsoleta"))).ErrorCode == "CONCURRENCY_CONFLICT", "Vincular venta invalida versión anterior del pedido");
         foreach (var state in new[] { "PREPARANDO", "LISTO", "EN_RUTA", "ENTREGADO" })
         {
@@ -281,6 +283,8 @@ internal static class MvpIntegration
         fromOrder = (await orders.ReadAsync(fromOrderId))!;
         Check(fromOrder.Order.SaleId == automaticSaleId && fromOrder.Order.State == "PREPARANDO" && fromOrder.Order.PaymentState == "PAGADO" && fromOrder.TotalEvents == 3,
             "Cobrar pedido vincula venta automáticamente sin cambiar su estado de preparación");
+        Check((await repository.ReadReceiptAsync(automaticSaleId, identity.Id, default))!.Delivery?.Id == fromOrderId,
+            "Comprobante con permiso de reimpresión incluye el pedido asociado automáticamente");
         var afterAutomaticSale = await CommercialState();
         Check(Saved(await sales.ConfirmAsync(fromOrderRequest)) == automaticSaleId && await CommercialState() == afterAutomaticSale,
             "Recuperar respuesta perdida devuelve venta enlazada original aunque su versión avanzó");

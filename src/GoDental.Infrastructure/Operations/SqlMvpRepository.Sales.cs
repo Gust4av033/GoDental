@@ -279,6 +279,7 @@ public sealed partial class SqlMvpRepository
             return null;
         var lines = await w.List<SaleLineData>("SELECT IdDetalle Id,IdProducto ProductId,IdLote LotId,SkuSnapshot Sku,DescripcionSnapshot Name,Cantidad Quantity,PrecioUnitario UnitPrice,DescuentoMonto Discount,ImpuestoMonto Tax,TotalLinea Total,CalculoPrecioMvp PricingTrace FROM ven.VentaDetalle WHERE IdVenta=@id ORDER BY IdDetalle;", new { id });
         var payments = await w.List<SalePaymentData>("SELECT p.IdMetodoPago MethodId,m.Nombre Method,p.Monto Amount,p.Referencia Reference FROM ven.VentaPagos p JOIN cat.MetodosPago m ON m.IdMetodoPago=p.IdMetodoPago WHERE p.IdVenta=@id AND p.Estado=N'CONFIRMADO' ORDER BY p.IdPago;", new { id });
-        return new SaleSnapshot(sale, lines, payments);
+        var delivery = await w.Maybe<OrderData>($"SELECT {OrderColumns} FROM ven.PedidosMvp p LEFT JOIN ven.Ventas v ON v.IdVenta=p.IdVenta WHERE p.IdVenta=@id;", new { id });
+        return new SaleSnapshot(sale, lines, payments, delivery);
     }, ct);
 }
