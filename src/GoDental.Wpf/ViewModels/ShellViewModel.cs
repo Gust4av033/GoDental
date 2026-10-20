@@ -35,7 +35,7 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenOrders => Orders.CanRead;
     public bool CanOpenSales => CommercialHistory.CanRead;
     public bool HasPendingMvp => new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
-    public bool CanCloseWorkspace => !HasPendingMvp && new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.All(m => !m.IsBusy && !m.IsEditing);
+    public bool CanCloseWorkspace => !HasPendingMvp && new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.All(m => !m.IsBusy && !m.IsEditing) && Products.IsNotBusy && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
     public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
     public bool CanOpenCustomers => Customers.CanRead;
     public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
@@ -90,12 +90,12 @@ public sealed partial class ShellViewModel : ObservableObject
             model.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
             model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         }
-        customers.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
-        counts.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
-        suppliers.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
-        users.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
-        products.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
-        access.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanSignOut));
+        customers.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        counts.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        suppliers.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        users.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        products.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        access.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         session.Changed += (_, _) =>
         {
             OnPropertyChanged(nameof(CanOpenProducts)); OnPropertyChanged(nameof(CanSignOut));
