@@ -33,14 +33,28 @@ internal static class DevelopmentDatabase
             // La baseline se conserva: sólo se cambia el destino en la copia en memoria.
             // Sobre una base completa existente se ejecutan únicamente migraciones posteriores a 008.
             if (exists is not null && string.CompareOrdinal(Path.GetFileName(file)[..3], "008") <= 0) continue;
-            var script = File.ReadAllText(file).Replace("N'GoDental'", $"N'{database}'").Replace("[GoDental]", $"[{database}]");
-            script = Regex.Replace(script, @"\bUSE\s+GoDental\s*;", $"USE [{database}];", RegexOptions.IgnoreCase);
-            foreach (var batch in Regex.Split(script, @"^\s*GO\s*(?:--[^\r\n]*)?$", RegexOptions.Multiline | RegexOptions.IgnoreCase))
-                if (!string.IsNullOrWhiteSpace(batch)) await connection.ExecuteAsync(batch, commandTimeout: 120);
+            await ExecuteScriptAsync(connection, file, database);
             Console.WriteLine("SQL " + Path.GetFileName(file));
         }
         var counts = await connection.QuerySingleAsync("SELECT (SELECT COUNT(*) FROM sys.tables) Tables,(SELECT COUNT(*) FROM sys.views) Views,(SELECT COUNT(*) FROM sys.procedures) Procedures");
         if ((int)counts.Tables != 72 || (int)counts.Views != 8 || (int)counts.Procedures != 17) throw new InvalidOperationException("Objetos de baseline/migraciones incompletos.");
+    }
+
+    public static async Task ReapplySeedAsync(string database, string scriptFolder)
+    {
+        if (!Regex.IsMatch(database, @"^GoDental_Tests_[A-Za-z0-9]+$")) throw new ArgumentException("La prueba sólo puede resembrar una base aislada.");
+        await using var connection = new SqlConnection(ConnectionString(database)); await connection.OpenAsync();
+        var marker = await connection.ExecuteScalarAsync<string>("SELECT CONVERT(nvarchar(100),value) FROM sys.extended_properties WHERE class=0 AND name=N'GoDental.Development'");
+        if (marker != "GoDental-LocalTools") throw new InvalidOperationException("La base de pruebas no tiene el marcador esperado.");
+        await ExecuteScriptAsync(connection, Path.Combine(scriptFolder, "007_Seed.sql"), database);
+    }
+
+    private static async Task ExecuteScriptAsync(SqlConnection connection, string file, string database)
+    {
+        var script = File.ReadAllText(file).Replace("N'GoDental'", $"N'{database}'").Replace("[GoDental]", $"[{database}]");
+        script = Regex.Replace(script, @"\bUSE\s+GoDental\s*;", $"USE [{database}];", RegexOptions.IgnoreCase);
+        foreach (var batch in Regex.Split(script, @"^\s*GO\s*(?:--[^\r\n]*)?$", RegexOptions.Multiline | RegexOptions.IgnoreCase))
+            if (!string.IsNullOrWhiteSpace(batch)) await connection.ExecuteAsync(batch, commandTimeout: 120);
     }
 }
 

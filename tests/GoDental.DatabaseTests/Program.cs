@@ -79,6 +79,30 @@ Check(attempts.Count(a => a.IsSuccess) == 1, "Dos inicializaciones concurrentes 
 var identity = attempts.Single(a => a.IsSuccess).Value!;
 Check(identity.Permissions.Contains(ProductService.ManagePermission), "El administrador recibe permisos efectivos del seed");
 await using var c = await factory.OpenConnectionAsync();
+await c.ExecuteAsync("""
+    UPDATE sis.Configuracion
+    SET Valor = CASE Clave
+        WHEN N'Descuento.VendedorMaximo' THEN N'9.00'
+        WHEN N'Descuento.RequiereJustificacionSobre' THEN N'9.00'
+        WHEN N'Descuento.RequiereAutorizacionSobre' THEN N'42.00'
+        WHEN N'Credito.DiasDefault' THEN N'21'
+        ELSE N'false' END,
+        ModificadoPor = @id,
+        FechaModificacion = '2020-01-01T00:00:00+00:00'
+    WHERE Clave IN (N'Descuento.VendedorMaximo', N'Descuento.RequiereJustificacionSobre',
+                    N'Descuento.RequiereAutorizacionSobre', N'Credito.DiasDefault', N'Precios.PrecedenciaDefinida');
+    """, new { id = identity.Id });
+await DevelopmentDatabase.ReapplySeedAsync(database, Path.Combine(root, "database"));
+Check(await c.ExecuteScalarAsync<int>("""
+    SELECT COUNT(*) FROM sis.Configuracion
+    WHERE (Clave=N'Descuento.VendedorMaximo' AND Valor=N'9.00' OR
+           Clave=N'Descuento.RequiereJustificacionSobre' AND Valor=N'9.00' OR
+           Clave=N'Descuento.RequiereAutorizacionSobre' AND Valor=N'42.00' OR
+           Clave=N'Credito.DiasDefault' AND Valor=N'21')
+      AND ModificadoPor=@id AND FechaModificacion='2020-01-01T00:00:00+00:00';
+    """, new { id = identity.Id }) == 4, "Reaplicar el seed conserva parámetros editables y su auditoría");
+Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Configuracion WHERE Clave=N'Precios.PrecedenciaDefinida' AND Valor=N'true' AND ModificadoPor IS NULL") == 1,
+    "Reaplicar el seed restaura parámetros no editables");
 Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.Usuarios") == 1 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM seg.UsuarioRoles") == 1, "Inicialización atómica de usuario y rol");
 var storedHash = await c.ExecuteScalarAsync<string>("SELECT PasswordHash FROM seg.Usuarios");
 Check(storedHash != password && hasher.Verify(password, storedHash!), "SQL conserva sólo hash PBKDF2 verificable");

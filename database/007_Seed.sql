@@ -12,6 +12,7 @@
 
    Notas:
    - Script idempotente: puede ejecutarse más de una vez sin duplicar semillas.
+   - Los parámetros marcados EditableUI conservan su valor y autor de modificación.
    - NO crea usuarios con contraseñas por defecto. El primer administrador debe
      crearse desde el bootstrap seguro de la aplicación / procedimiento dedicado.
    - NO registra PCs: los equipos se registrarán con identificador real desde C#.
@@ -504,12 +505,12 @@ BEGIN TRY
         (N'UI.TemaDefault',                        N'SYSTEM',             N'STRING',  N'Tema inicial; cada usuario puede preferir LIGHT/DARK/SYSTEM.',              1);
 
     UPDATE c
-       SET c.Valor = s.Valor,
+       SET c.Valor = CASE WHEN s.EditableUI = 1 THEN c.Valor ELSE s.Valor END,
            c.TipoDato = s.TipoDato,
            c.Descripcion = s.Descripcion,
            c.EditableUI = s.EditableUI,
-           c.ModificadoPor = NULL,
-           c.FechaModificacion = SYSDATETIMEOFFSET()
+           c.ModificadoPor = CASE WHEN s.EditableUI = 1 THEN c.ModificadoPor ELSE NULL END,
+           c.FechaModificacion = CASE WHEN s.EditableUI = 1 THEN c.FechaModificacion ELSE SYSDATETIMEOFFSET() END
     FROM sis.Configuracion c
     INNER JOIN @Configuracion s ON s.Clave = c.Clave;
 
@@ -608,13 +609,23 @@ IF (SELECT COUNT(*) FROM cat.MetodosPago WHERE Codigo IN
     (N'EFECTIVO', N'TRANSFERENCIA', N'QR', N'DEPOSITO', N'TARJETA', N'CREDITO') AND Activo = 1) <> 6
     INSERT INTO @Errores VALUES (N'No quedaron completos los 6 métodos de pago base.');
 
-IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Descuento.VendedorMaximo' AND Valor = N'7.00')
+IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Descuento.VendedorMaximo' AND TRY_CONVERT(DECIMAL(9,4), Valor) BETWEEN 0 AND 100)
     INSERT INTO @Errores VALUES (N'Falta configuración de descuento máximo del vendedor.');
 
-IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Devolucion.PlazoHoras' AND Valor = N'24')
+IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Descuento.RequiereJustificacionSobre' AND TRY_CONVERT(DECIMAL(9,4), Valor) BETWEEN 0 AND 100)
+    INSERT INTO @Errores VALUES (N'Falta un umbral válido de justificación de descuento.');
+
+IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Descuento.RequiereAutorizacionSobre' AND TRY_CONVERT(DECIMAL(9,4), Valor) BETWEEN 0 AND 100)
+    INSERT INTO @Errores VALUES (N'Falta un umbral válido de autorización de descuento.');
+
+IF (SELECT TRY_CONVERT(DECIMAL(9,4), Valor) FROM sis.Configuracion WHERE Clave = N'Descuento.RequiereJustificacionSobre')
+   > (SELECT TRY_CONVERT(DECIMAL(9,4), Valor) FROM sis.Configuracion WHERE Clave = N'Descuento.RequiereAutorizacionSobre')
+    INSERT INTO @Errores VALUES (N'El umbral de justificación no puede superar el de autorización.');
+
+IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Devolucion.PlazoHoras' AND TRY_CONVERT(INT, Valor) > 0)
     INSERT INTO @Errores VALUES (N'Falta configuración de devolución a 24 horas.');
 
-IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Credito.DiasDefault' AND Valor = N'15')
+IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Credito.DiasDefault' AND TRY_CONVERT(INT, Valor) > 0)
     INSERT INTO @Errores VALUES (N'Falta configuración de crédito a 15 días.');
 
 IF NOT EXISTS (SELECT 1 FROM sis.Configuracion WHERE Clave = N'Precios.PrecedenciaDefinida' AND Valor = N'true')

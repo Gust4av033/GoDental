@@ -24,6 +24,7 @@ Los scripts incluyen validaciones de dependencias y finalización para detectar 
 
 - `001`–`006`: **72 tablas**, coincidentes con el diccionario DB-01 v0.1.
 - `007`: roles, permisos, catálogos, configuración, almacén/caja inicial y secuencias. Es idempotente y **no crea un Administrador con contraseña por defecto**.
+- Al repetir `007`, los valores de `sis.Configuracion` marcados `EditableUI=1` conservan su valor, usuario y fecha de modificación. Los parámetros no editables siguen la semilla normativa. Esto evita perder cambios comerciales al resembrar.
 - `008`: **8 vistas** y **12 procedimientos almacenados** para consultas y operaciones transaccionales/concurrentes.
 - No se utilizan triggers.
 - Se emplean PK/FK/CHECK, índices, `ROWVERSION` y bloqueos/transacciones explícitos donde corresponde.
