@@ -22,4 +22,10 @@ La vista previa no guarda archivos temporales ni requiere navegador, visor PDF e
 
 ## Validación
 
-Pendiente: PDF real de una y varias páginas, datos faltantes/textos largos, snapshots y pedido vinculado, permisos/cambio de sesión, guardado de los mismos bytes, navegación/zoom y smoke WPF en ambos temas/tamaños. Inspeccionar localmente un PDF sintético renderizado; no usar datos reales del usuario en artefactos.
+Compilación Release local sin errores/advertencias y 172 pruebas xUnit correctas. Se generan documentos reales de una y cuatro páginas con datos sintéticos, textos largos y JSON histórico vacío/incorrecto; se comprueban permisos, selección/sesión obsoletas, límites de página/zoom, guardado de los mismos bytes y cancelación de impresión sin escrituras comerciales.
+
+Se inspeccionaron localmente imágenes del PDF sintético de una página y de la última página del documento largo. La extracción con PyMuPDF confirmó teléfono del emisor, contacto/pedido, encabezado en todas las páginas, los 45 SKU sin pérdida, total final, leyenda interna y texto dentro de los límites Carta. Los ejemplos de prueba no contienen datos reales de clientes.
+
+[CI Windows #94 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39509926320), código `2300811`: **172 xUnit, 374 comprobaciones SQL (127 MVP) y 425 WPF**, sin errores de compilación ni binding. SQL confirma que el comprobante conserva el domicilio del pedido aunque cambie la ficha del cliente y que obtiene el pedido asociado automáticamente. WPF verifica imagen real, zoom, guardado/impresión del documento revisado, retorno al detalle y acceso desde pedido, con acciones visibles de 152×36 DIP en 1366×768 y 1093×614, en Light/Dark. Se verifica la composición para Carta y A4 dentro de su área imprimible sin deformar páginas.
+
+Capturas WPF y PDF sintéticos en [test-results-94](https://github.com/Gust4av033/GoDental/actions/runs/39509926320/artifacts/12305156625). Las capturas de CI no se presentan como inspección manual de esas imágenes ni certificación del DPI físico. La cola/impresora real y el recorrido en la base del usuario quedan para comprobación manual; las pruebas no enviaron trabajos ni datos externos.
