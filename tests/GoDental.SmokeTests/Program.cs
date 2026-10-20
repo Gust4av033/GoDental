@@ -25,14 +25,20 @@ using GoDental.Wpf.Views.Auth;
 using GoDental.Wpf.Views.Settings;
 using GoDental.Wpf;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using GoDental.Application.Abstractions.Security;
 
 internal static class Program
 {
     private static int passed;
+    private static string? shutdownProbe;
+    private static bool shutdownVerified;
 
     [STAThread]
     private static void Main(string[] args)
     {
+        shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace");
         var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -44,11 +50,16 @@ internal static class Program
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
         Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
         {
-            try { await RunAsync(args.FirstOrDefault()); }
+            try { await RunAsync(args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal))); }
             catch (Exception ex) { Console.Error.WriteLine(ex); Environment.ExitCode = 1; }
-            finally { Dispatcher.CurrentDispatcher.InvokeShutdown(); }
+            finally { if (shutdownProbe is null || Environment.ExitCode != 0) Dispatcher.CurrentDispatcher.InvokeShutdown(); }
         });
         Dispatcher.Run();
+        if (shutdownProbe is not null)
+        {
+            if (!shutdownVerified) Environment.ExitCode = 1;
+            else Console.WriteLine("SHUTDOWN_OK");
+        }
     }
 
     private static void Check(bool condition, string message)
@@ -151,6 +162,11 @@ internal static class Program
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
                 new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp);
+            if (shutdownProbe is not null)
+            {
+                await StartShutdownProbeAsync(shell, session);
+                return;
+            }
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
             shell.OpenSettingsCommand.Execute(null);
@@ -513,8 +529,69 @@ internal static class Program
             }
             finally { PresentationTraceSources.DataBindingSource.Listeners.Remove(bindingErrors); }
             Console.WriteLine($"{passed} comprobaciones correctas.");
+            await VerifyShutdownProcessesAsync();
         }
         finally { Directory.Delete(temporaryFolder, recursive: true); }
+    }
+
+    private static async Task StartShutdownProbeAsync(ShellViewModel shell, ISessionController session)
+    {
+        var app = System.Windows.Application.Current;
+        var login = new LoginWindow(shell);
+        var workspace = new MainWindow(shell);
+        var service = new ShutdownProbeService(session);
+        var host = Host.CreateDefaultBuilder().ConfigureServices(s => s.AddSingleton<IHostedService>(_ => service)).Build();
+        await host.StartAsync();
+        var coordinator = new WindowCoordinator(app, login, workspace, session, shell.Access, () => HostShutdown.StopAsync(host));
+        app.Exit += (_, _) =>
+        {
+            shutdownVerified = service.Stopped && service.Disposed && !login.IsVisible && !workspace.IsVisible;
+            coordinator.Dispose();
+        };
+        coordinator.Start();
+        if (shutdownProbe == "--shutdown-workspace")
+            session.Begin(new(1, "probe", "Cuenta de prueba", 1, [], [ProductService.ReadPermission], false));
+        await app.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        var active = shutdownProbe == "--shutdown-workspace" ? (Window)workspace : login;
+        Check(active.IsVisible, "La ventana de la prueba de cierre está visible");
+        // El seguimiento del coordinador debe resistir un MainWindow obsoleto.
+        app.MainWindow = ReferenceEquals(active, workspace) ? login : workspace;
+        active.Close();
+    }
+
+    private sealed class ShutdownProbeService(ISessionController session) : IHostedService, IDisposable
+    {
+        public bool Stopped { get; private set; }
+        public bool Disposed { get; private set; }
+        public Task StartAsync(CancellationToken ct) => Task.CompletedTask;
+        public async Task StopAsync(CancellationToken ct)
+        {
+            await Task.Delay(30, ct);
+            session.Clear(); // No debe reaparecer otra ventana durante la salida.
+            Stopped = true;
+        }
+        public void Dispose() => Disposed = true;
+    }
+
+    private static async Task VerifyShutdownProcessesAsync()
+    {
+        foreach (var mode in new[] { "--shutdown-login", "--shutdown-workspace" })
+        {
+            var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+            start.ArgumentList.Add(typeof(Program).Assembly.Location);
+            start.ArgumentList.Add(mode);
+            using var process = Process.Start(start) ?? throw new InvalidOperationException("No se inició la prueba de cierre.");
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            try { await process.WaitForExitAsync(timeout.Token); }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                throw new InvalidOperationException("El proceso siguió vivo después de cerrar: " + mode);
+            }
+            Check(process.ExitCode == 0 && (await output).Contains("SHUTDOWN_OK"), "Cerrar con X termina proceso, host y ventanas: " + mode + " " + await error);
+        }
     }
 
     private static Task RenderDialogAsync(ProductEditorViewModel editor, string path) =>

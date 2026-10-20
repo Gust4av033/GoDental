@@ -9,8 +9,8 @@
         <Grid Margin="0,16,0,8">
           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
           <StackPanel>
-            <Label Content="SKU *" Target="{Binding ElementName=SkuInput}"/>
-            <TextBox x:Name="SkuInput" Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}" MaxLength="60" AutomationProperties.Name="SKU"/>
+            <Label Content="SKU automático" Target="{Binding ElementName=SkuInput}"/>
+            <TextBox x:Name="SkuInput" Text="{Binding SkuDisplay, Mode=OneWay}" IsReadOnly="True" MaxLength="60" AutomationProperties.Name="SKU"/>
             <Label Content="Nombre *" Target="{Binding ElementName=ProductNameInput}" Margin="0,10,0,0"/>
             <TextBox x:Name="ProductNameInput" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nombre del producto"/>
             <Label Content="Categoría *" Target="{Binding ElementName=CategoryInput}" Margin="0,10,0,0"/>

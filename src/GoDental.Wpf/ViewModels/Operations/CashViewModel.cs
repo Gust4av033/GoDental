@@ -105,9 +105,9 @@ public sealed partial class CashViewModel : MvpWorkspaceViewModel
             var b = editing ? Box : null;
             await ShowAsync(new MvpFormModel(editing ? "Editar caja" : "Nueva caja", "Guardar", Operation, async f =>
             {
-                var id = Guid.NewGuid(); var request = new CashBoxChange(id, b?.Id ?? 0, f.Text("code"), f.Text("name"), f.Choice<CatalogOption>("warehouse").Id, f.Choice<string>("active") == "ACTIVA", f.Text("reason"));
+                var id = Guid.NewGuid(); var request = new CashBoxChange(id, b?.Id ?? 0, b?.Code ?? "", f.Text("name"), f.Choice<CatalogOption>("warehouse").Id, f.Choice<string>("active") == "ACTIVA", f.Text("reason"));
                 await Operation.StartAsync(request, id, q => cash.SaveBoxAsync(q), _ => ReloadCoreAsync(Session.Revision));
-            }).Input("code", "Código", b?.Code ?? "").Input("name", "Nombre", b?.Name ?? "").Select("warehouse", "Almacén", warehouses, warehouses.FirstOrDefault(w => w.Id == b?.WarehouseId)).Select("active", "Estado", new[] { "ACTIVA", "INACTIVA" }, b?.Active == false ? "INACTIVA" : "ACTIVA", "").Input("reason", "Motivo"));
+            }) { Description = b is null ? "El código de caja se asigna automáticamente al guardar." : $"Código de caja: {b.Code}" }.Input("name", "Nombre", b?.Name ?? "").Select("warehouse", "Almacén", warehouses, warehouses.FirstOrDefault(w => w.Id == b?.WarehouseId)).Select("active", "Estado", new[] { "ACTIVA", "INACTIVA" }, b?.Active == false ? "INACTIVA" : "ACTIVA", "").Input("reason", "Motivo"));
         });
     }
 }

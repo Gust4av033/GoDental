@@ -10,6 +10,7 @@ public sealed class SupplierEditorDialogModel : OperationDialogModel
 {
     public SupplierEditorKind Kind { get; }
     public bool IsSupplier => Kind == SupplierEditorKind.Supplier;
+    public string CodeDisplay => string.IsNullOrWhiteSpace(Supplier.Code) ? "Se asigna al guardar" : Supplier.Code;
     public bool IsContact => Kind == SupplierEditorKind.Contact;
     public bool IsProduct => Kind == SupplierEditorKind.Product;
     public override string Title => Kind switch { SupplierEditorKind.Supplier => "Ficha del proveedor", SupplierEditorKind.Contact => "Contacto del proveedor", _ => "Referencia comercial del producto" };

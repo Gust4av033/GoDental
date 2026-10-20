@@ -2,8 +2,8 @@
   <StackPanel IsEnabled="{Binding CanEdit}">
     <WrapPanel Visibility="{Binding IsGeneral, Converter={StaticResource BoolToVisibility}}">
       <StackPanel Width="240" Margin="0,0,16,12">
-        <TextBlock Text="Código" Margin="0,0,0,6"/>
-        <TextBox Text="{Binding Customer.Code, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código"/>
+        <TextBlock Text="Código automático" Margin="0,0,0,6"/>
+        <TextBox Text="{Binding CodeDisplay, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="Código"/>
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Nombre / Razón social" Margin="0,0,0,6"/>

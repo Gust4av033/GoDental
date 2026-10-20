@@ -2,8 +2,8 @@
   <StackPanel xmlns:shared="clr-namespace:GoDental.Wpf.Views.Shared" IsEnabled="{Binding CanEdit}">
     <WrapPanel Visibility="{Binding IsSupplier, Converter={StaticResource BoolToVisibility}}">
       <StackPanel Width="240" Margin="0,0,16,12">
-        <TextBlock Text="Código" Margin="0,0,0,6"/>
-        <TextBox Text="{Binding Supplier.Code, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código"/>
+        <TextBlock Text="Código automático" Margin="0,0,0,6"/>
+        <TextBox Text="{Binding CodeDisplay, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="Código"/>
       </StackPanel>
       <StackPanel Width="240" Margin="0,0,16,12">
         <TextBlock Text="Nombre" Margin="0,0,0,6"/>
