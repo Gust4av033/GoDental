@@ -1,10 +1,13 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource LightBackground}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource LightSurface}" />
+    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource LightHeader}" />
+    <SolidColorBrush x:Key="ShellBrush" Color="{StaticResource LightShell}" />
     <SolidColorBrush x:Key="TextBrush" Color="{StaticResource LightText}" />
     <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource LightMuted}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource LightBorder}" />
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource LightPrimary}" />
+    <SolidColorBrush x:Key="PrimarySoftBrush" Color="{StaticResource LightPrimarySoft}" />
     <SolidColorBrush x:Key="TintBrush" Color="{StaticResource LightTint}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource LightSuccess}" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource LightAccent}" />
