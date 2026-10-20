@@ -1,5 +1,9 @@
 # Validación de baseline v0.1
 
+## Códigos automáticos y cierre · 19/10/2026 (El Salvador)
+
+[DEV-20](DEV-20-Codigos-Cierre.md) y [CI Windows #61](https://github.com/Gust4av033/GoDental/actions/runs/39349292934), código `9547d41`: Release sin errores/advertencias, 140 casos xUnit, 347 comprobaciones SQL y 125 WPF correctas. Incluye altas simultáneas, colisiones históricas, rollback y reaplicación de 014, códigos de personal y dos procesos que terminan al cerrar acceso/espacio de trabajo después de limpiar el host. Total SQL vigente: 76 tablas, 8 vistas y 18 procedimientos. No se aplicaron migraciones en el equipo del usuario.
+
 ## MVP operativo · lógica · 19/10/2026
 
 Incremento y límites en [DEV-17](DEV-17-MVP-Logica.md). [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837), código `f51f75c`: Release sin errores/advertencias, **116 casos xUnit**, **329 comprobaciones SQL** (102 del nuevo MVP) y **101 comprobaciones WPF** correctas, sin errores de binding. Incluye generación real de PDF, concurrencia, rollback e instalación/reaplicación de 012–013 (76 tablas/8 vistas/17 procedimientos). El contenedor SQL Server no pudo descargarse en Linux; SQL se ejecutó en LocalDB aislado del runner Windows. DEV-18 documenta la corrección del cierre de capturas integrada en ambas ramas. No se instalaron cambios en la base del usuario; faltan conectar las nuevas pantallas y validar el recorrido real en dos estaciones para cerrar el MVP funcional completo.

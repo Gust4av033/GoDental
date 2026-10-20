@@ -19,6 +19,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 11. `011_Conteos_Inventario.sql`
 12. `012_MVP_Operativo.sql`
 13. `013_Pedidos_MVP.sql`
+14. `014_Codigos_Automaticos.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -40,7 +41,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–013.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–014.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -65,3 +66,9 @@ La herramienta `tests/GoDental.DatabaseTests --install-development` crea sólo `
 Las dos nuevas migraciones se verificaron en CI Windows/LocalDB: 102 comprobaciones de `--run-mvp`, incluida reaplicación conservando historial; ver DEV-17. La suite está incorporada a CI y a la verificación local. La base del usuario y el recorrido con las nuevas pantallas/dos estaciones mantienen su validación separada.
 
 Una vez que esta baseline haya sido aplicada sobre una base compartida o productiva, no se deben reescribir scripts históricos para introducir cambios de esquema. Las modificaciones posteriores deberán versionarse mediante nuevos scripts/migraciones incrementales y quedar documentadas.
+
+## Migración 014 · Códigos automáticos
+
+`014_Codigos_Automaticos.sql` agrega códigos automáticos de clientes, productos, proveedores y cajas, y `CodigoEmpleado` derivado del ID de las cuentas del personal. El procedimiento específico usa los correlativos existentes dentro de la transacción del alta y evita colisiones históricas. No renumera registros previos ni modifica accesos/contraseñas. Total vigente: **76 tablas, 8 vistas y 18 procedimientos**. Contratos, formato y validación: [DEV-20](../docs/DEV-20-Codigos-Cierre.md).
+
+La suite aislada `--run-codes` comprueba concurrencia, colisiones, auditoría, rollback, agotamiento y reaplicación. El instalador de desarrollo incorpora automáticamente 014 al ejecutar `--install-development` sobre una base local marcada; no actualiza bases sin ese marcador.

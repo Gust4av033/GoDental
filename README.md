@@ -83,6 +83,7 @@ La herramienta limita el destino a una base local de desarrollo marcada. Nunca i
 011_Conteos_Inventario.sql
 012_MVP_Operativo.sql
 013_Pedidos_MVP.sql
+014_Codigos_Automaticos.sql
 ```
 
 La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos; 012–013 añaden cuatro tablas de operaciones/pedidos (76 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
@@ -144,3 +145,7 @@ Para compilar y depurar desde una computadora Windows con VS Code, consulta [DEV
 ## Recorrido MVP en interfaz
 
 Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y comprobantes PDF internos tienen páginas propias conectadas a los servicios. [Alcance, recuperación de operaciones y comprobaciones de DEV-19](docs/DEV-19-UI-MVP.md).
+
+## Altas con código automático y cierre
+
+Clientes, productos, proveedores y cajas reciben código al guardar; las cuentas del personal muestran código de empleado. Requiere la migración **014**. Los formularios conservan los códigos existentes y muestran los nuevos como consulta. Se corrigió el cierre para detener/liberar el host antes de apagar WPF; las pruebas incluyen procesos separados para acceso y ventana principal. [Detalles y comprobaciones](docs/DEV-20-Codigos-Cierre.md).
