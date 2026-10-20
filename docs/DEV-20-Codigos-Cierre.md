@@ -17,3 +17,17 @@ El resto de registros ya dispone de ID o correlativo asignado por SQL; no se añ
 El coordinador identifica su ventana activa explícitamente, bloquea cambios de ventana durante la salida y detiene el host antes de apagar el dispatcher. La limpieza normal se espera antes de `Application.Shutdown`; `OnExit` conserva una liberación síncrona de respaldo, sin `async void` pendiente durante la destrucción de WPF. Se mantienen las protecciones de operaciones financieras pendientes y se revisan las escrituras de catálogo que también deben impedir el cierre durante su ejecución.
 
 La verificación cubre altas simultáneas, colisiones con códigos históricos, rollback de secuencia/auditoría, códigos de personal, campos automáticos y salida del proceso en Windows. No se instalan migraciones en la base del usuario desde este entorno.
+
+## Resultado verificado
+
+[CI Windows #61](https://github.com/Gust4av033/GoDental/actions/runs/39349292934), código `9547d41`: Release con 0 advertencias/errores; **140 casos xUnit**, **347 comprobaciones SQL** (18 nuevas de códigos) y **125 comprobaciones WPF** correctas, sin errores de binding. Incluye dos procesos hijos que usan `Application.Run`, el coordinador y el cierre real de un Generic Host: uno cierra acceso y otro el espacio de trabajo. Ambos salen por sí mismos, después de detener/liberar el host y cerrar las ventanas; el cambio de sesión durante la limpieza no reabre acceso. El timeout del arnés detecta y falla un proceso que quede vivo.
+
+Las pruebas SQL se ejecutan en bases aisladas del runner. Los commits posteriores a esa revisión sólo registran documentación. Ambos flujos de código se sincronizan mediante merge entre `feature/logica` y `feature/ui`.
+
+Para actualizar la base local marcada de desarrollo, con GoDental cerrado y desde la raíz del repositorio en PowerShell:
+
+```powershell
+dotnet run --project tests/GoDental.DatabaseTests -c Release -- --install-development --server '.\SQLEXPRESS' .
+```
+
+El comando conserva datos y sólo aplica migraciones posteriores a la baseline. Si la base no tiene el marcador reconocido se detiene para no tratar una base ajena como desarrollo. No hay credenciales nuevas ni cambio de cuentas de Windows/SQL.
