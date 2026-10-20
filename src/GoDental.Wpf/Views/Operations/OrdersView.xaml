@@ -112,7 +112,7 @@
               <ContentControl Style="{StaticResource CommerceField}" Tag="Departamento" Content="{Binding Detail.Order.Department}"/>
               <ContentControl Style="{StaticResource CommerceField}" Tag="Municipio" Content="{Binding Detail.Order.Municipality}"/>
               <ContentControl Style="{StaticResource CommerceField}" Tag="Referencia" Content="{Binding Detail.Order.Reference}"/>
-              <ContentControl Style="{StaticResource CommerceField}" Tag="Entrega registrada" Content="{Binding Detail.Order.Delivered}"/>
+              <ContentControl Style="{StaticResource CommerceField}" Tag="Entrega registrada" Content="{Binding Detail.Order.Delivered}" ContentStringFormat="{}{0:dd/MM/yyyy HH:mm}"/>
             </UniformGrid>
             <DataGrid ItemsSource="{Binding Detail.Lines}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="200" AutomationProperties.Name="Detail.Lines">
               <DataGrid.Columns>

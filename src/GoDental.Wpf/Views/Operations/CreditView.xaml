@@ -166,7 +166,9 @@
                   </DataGridTemplateColumn>
                 </DataGrid.Columns>
               </DataGrid>
-              <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Payments.Count}" Content="El cliente no tiene abonos registrados."/>
+              <Grid Visibility="{Binding HasLoadedHistory, Converter={StaticResource BoolToVisibility}}">
+                <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Payments.Count}" Content="El cliente no tiene abonos registrados."/>
+              </Grid>
             </Grid>
             <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">

@@ -580,9 +580,12 @@ internal static class Program
                             var receipt = FindChildren<Button>(FindChildren<PosView>(confirmedRoot).Single()).Single(b => b.Content is string text && text == "Ver comprobante");
                             Check(ReferenceEquals(receipt.Command, historyMvp.OpenSaleCommand) && ReferenceEquals(receipt.CommandParameter, mvpRepository.Sale.Sale),
                                 "La confirmación conecta el comprobante real con Ventas y PDF");
+                            var listedSales = historyMvp.Sales.ToArray();
+                            historyMvp.Sales.Clear(); historyMvp.SelectedSale = null;
                             await historyMvp.OpenSaleCommand.ExecuteAsync(receipt.CommandParameter);
                             Check(shell.IsSales && historyMvp.IsSaleDetailOpen && historyMvp.SaleDetail?.Sale.Id == mvpRepository.Sale.Sale.Id,
-                                "Ver comprobante navega al detalle confirmado sin crear otra venta");
+                                "Ver comprobante abre la venta confirmada aunque todavía no figure en el listado");
+                            foreach (var sale in listedSales) historyMvp.Sales.Add(sale);
                             confirmedView.Close(); posMvp.ConfirmedSale = null;
                         }
                         else
