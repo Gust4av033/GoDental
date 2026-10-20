@@ -8,7 +8,7 @@ public static class CustomerValidator
     {
         var c = request.Customer;
         if (c is null || c.Id < 0 || (c.Id > 0 && c.RowVersion?.Length != 8) || (c.Id == 0 && c.RowVersion?.Length != 0)) return "Recarga la ficha antes de guardar.";
-        if (string.IsNullOrWhiteSpace(c.Code) || c.Code.Trim().Length > 30 || string.IsNullOrWhiteSpace(c.Name) || c.Name.Trim().Length > 200 || c.TypeId <= 0 || c.PriceListId is <= 0) return "Revisa código (30), nombre (200), tipo de cliente y lista de precios.";
+        if ((c.Id != 0 && string.IsNullOrWhiteSpace(c.Code)) || c.Code?.Trim().Length > 30 || string.IsNullOrWhiteSpace(c.Name) || c.Name.Trim().Length > 200 || c.TypeId <= 0 || c.PriceListId is <= 0) return "Revisa código (30), nombre (200), tipo de cliente y lista de precios.";
         if (c.CommercialName?.Trim().Length > 200 || c.Nit?.Trim().Length > 30 || c.Nrc?.Trim().Length > 30 || c.Dui?.Trim().Length > 20 || c.BusinessActivity?.Trim().Length > 250) return "Revisa las longitudes del nombre comercial y datos fiscales.";
         if (c.Phone?.Trim().Length > 30 || c.WhatsApp?.Trim().Length > 30) return "Teléfono y WhatsApp admiten hasta 30 caracteres.";
         return Email(c.Email) ?? Reason(request.Reason);

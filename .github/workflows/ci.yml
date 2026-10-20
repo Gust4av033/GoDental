@@ -64,6 +64,9 @@ jobs:
       - name: Ventas, caja, crédito y entregas sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-mvp --localdb .
 
+      - name: Códigos automáticos sobre SQL Server aislado
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-codes --localdb .
+
       - name: Smoke WPF y vistas
         run: dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- TestResults/UiPreviews
 

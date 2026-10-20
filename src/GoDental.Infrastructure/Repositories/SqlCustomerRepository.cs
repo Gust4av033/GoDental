@@ -83,10 +83,12 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
                   OR EXISTS(SELECT 1 FROM ven.Cotizaciones WITH(HOLDLOCK) WHERE IdCliente=@Id)
                   OR EXISTS(SELECT 1 FROM ven.CuentasPorCobrar WITH(HOLDLOCK) WHERE IdCliente=@Id) THEN 1 ELSE 0 END);
                 """, s, tx, ct))) return Result<long>.Failure("IN_USE", "Conserva el código del cliente porque tiene historial comercial.");
+            var inserting = s.Id == 0 && string.IsNullOrWhiteSpace(s.Code)
+                ? s with { Code = await GoDental.Infrastructure.Data.MasterCode.NextAsync(c, tx, "MAESTRO_CLIENTE", ct) } : s;
             var id = s.Id == 0 ? await c.ExecuteScalarAsync<long>(Cmd("""
                 INSERT INTO cli.Clientes(Codigo,IdTipoCliente,NombreRazonSocial,NombreComercial,NIT,NRC,DUI,Giro,Telefono,WhatsApp,Email,IdListaPrecio,Activo)
                 OUTPUT INSERTED.IdCliente VALUES(@Code,@TypeId,@Name,@CommercialName,@Nit,@Nrc,@Dui,@BusinessActivity,@Phone,@WhatsApp,@Email,@PriceListId,@Active);
-                """, s, tx, ct)) : s.Id;
+                """, inserting, tx, ct)) : s.Id;
             if (s.Id != 0) await c.ExecuteAsync(Cmd("""
                 UPDATE cli.Clientes SET Codigo=@Code,IdTipoCliente=@TypeId,NombreRazonSocial=@Name,NombreComercial=@CommercialName,NIT=@Nit,NRC=@Nrc,DUI=@Dui,Giro=@BusinessActivity,Telefono=@Phone,WhatsApp=@WhatsApp,Email=@Email,IdListaPrecio=@PriceListId,Activo=@Active WHERE IdCliente=@Id;
                 """, s, tx, ct));
@@ -156,6 +158,7 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
             var result = await write(c, tx, previous); if (result.IsSuccess) await tx.CommitAsync(ct); return result;
         }
         catch (SqlException ex) when (ex.Number == 53301) { return Result<long>.Failure("FORBIDDEN", ex.Message); }
+        catch (SqlException ex) when (ex.Number is 53501 or 53502) { return Result<long>.Failure("CODE_UNAVAILABLE", ex.Message); }
         catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Result<long>.Failure("DUPLICATE_IDENTITY", "Ya existe un cliente con ese código, NIT o NRC."); }
         catch (SqlException ex) when (ex.Number == 1205) { return Result<long>.Failure("CONCURRENCY_CONFLICT", "Otra operación utilizó los datos. Recarga antes de guardar."); }
     }

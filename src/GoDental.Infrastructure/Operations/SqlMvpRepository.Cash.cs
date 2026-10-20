@@ -14,8 +14,10 @@ public sealed partial class SqlMvpRepository
     {
         Check(r);
         Require(await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.Almacenes WITH(HOLDLOCK) WHERE IdAlmacen=@WarehouseId AND Activo=1) THEN 1 ELSE 0 END);", r), "VALIDATION", "Almacén no disponible.");
+        var code = r.Id == 0 && string.IsNullOrWhiteSpace(r.Code)
+            ? await GoDental.Infrastructure.Data.MasterCode.NextAsync(w.Connection, w.Transaction, "MAESTRO_CAJA", ct) : r.Code;
         if (r.Id == 0)
-            return await w.Scalar<long>("INSERT INTO ven.Cajas(Codigo,Nombre,IdAlmacen,Activo) OUTPUT INSERTED.IdCaja VALUES(@Code,@Name,@WarehouseId,@Active);", r);
+            return await w.Scalar<long>("INSERT INTO ven.Cajas(Codigo,Nombre,IdAlmacen,Activo) OUTPUT INSERTED.IdCaja VALUES(@Code,@Name,@WarehouseId,@Active);", new { Code=code, r.Name, r.WarehouseId, r.Active });
         var previous = await w.Maybe<CashBoxData>("SELECT IdCaja Id,Codigo Code,Nombre Name,IdAlmacen WarehouseId,Activo Active FROM ven.Cajas WITH(UPDLOCK,HOLDLOCK) WHERE IdCaja=@Id;", r);
         Require(previous is not null, "INVALID_STATE", "La caja no existe.");
         var inUse = await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.TurnosCaja WITH(HOLDLOCK) WHERE IdCaja=@Id) OR EXISTS(SELECT 1 FROM ven.Ventas WITH(HOLDLOCK) WHERE IdCaja=@Id) THEN 1 ELSE 0 END);", r);

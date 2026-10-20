@@ -105,6 +105,7 @@ public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISa
             await tx.CommitAsync(ct);
             return Result<MvpReceipt>.Success(new(id, operationId));
         }
+        catch (SqlException ex) when (ex.Number is 53501 or 53502) { return Result<MvpReceipt>.Failure("CODE_UNAVAILABLE", ex.Message); }
         catch (RuleFailure ex)
         {
             return Result<MvpReceipt>.Failure(ex.Code, ex.Message);

@@ -11,7 +11,7 @@ public sealed class SqlUserRepository(IDbConnectionFactory factory) : IUserRepos
     {
         await using var c = await factory.OpenConnectionAsync(ct);
         return (await c.QueryAsync<UserSummary>(new CommandDefinition("""
-            SELECT TOP(500) u.IdUsuario Id,u.Usuario UserName,u.NombreCompleto DisplayName,u.Activo Active,u.DebeCambiarClave MustChangePassword,
+            SELECT TOP(500) u.IdUsuario Id,u.CodigoEmpleado EmployeeCode,u.Usuario UserName,u.NombreCompleto DisplayName,u.Activo Active,u.DebeCambiarClave MustChangePassword,
             u.UltimoAcceso LastAccess,u.BloqueadoHasta LockedUntil,u.RowVersion,
             ISNULL((SELECT STRING_AGG(r.Nombre,N', ') FROM seg.UsuarioRoles ur JOIN seg.Roles r ON r.IdRol=ur.IdRol AND r.Activo=1 WHERE ur.IdUsuario=u.IdUsuario),N'') Roles
             FROM seg.Usuarios u ORDER BY u.NombreCompleto,u.IdUsuario;

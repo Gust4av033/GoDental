@@ -36,7 +36,7 @@ public sealed class SupplierService(ISupplierRepository repository, IUserSession
         if (SupplierValidator.Validate(request) is { } error) return Invalid(error);
         var s = request.Supplier;
         return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Supplier = s with
-            { Code = s.Code.Trim(), Name = s.Name.Trim(), Country = Optional(s.Country), Address = Optional(s.Address),
+            { Code = s.Code?.Trim() ?? "", Name = s.Name.Trim(), Country = Optional(s.Country), Address = Optional(s.Address),
                 Email = Optional(s.Email), Phone = Optional(s.Phone), Website = Optional(s.Website) } }, UserId, WorkstationId, ct);
     }
     public Task<Result<int>> SaveContactAsync(SupplierContactChange request, CancellationToken ct = default)
