@@ -54,7 +54,9 @@ internal static class Program
             catch (Exception ex) { Console.Error.WriteLine(ex); Environment.ExitCode = 1; }
             finally { if (shutdownProbe is null || Environment.ExitCode != 0) Dispatcher.CurrentDispatcher.InvokeShutdown(); }
         });
-        Dispatcher.Run();
+        // La prueba de salida necesita el mismo dueño del dispatcher que App.Main.
+        if (shutdownProbe is not null) app.Run();
+        else Dispatcher.Run();
         if (shutdownProbe is not null)
         {
             if (!shutdownVerified) Environment.ExitCode = 1;
@@ -528,8 +530,8 @@ internal static class Program
                 Console.WriteLine("Vistas renderizadas: " + output);
             }
             finally { PresentationTraceSources.DataBindingSource.Listeners.Remove(bindingErrors); }
-            Console.WriteLine($"{passed} comprobaciones correctas.");
             await VerifyShutdownProcessesAsync();
+            Console.WriteLine($"{passed} comprobaciones correctas.");
         }
         finally { Directory.Delete(temporaryFolder, recursive: true); }
     }
