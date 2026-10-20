@@ -571,6 +571,7 @@ internal static class Program
                             Check(ReferenceEquals(posMvp.SelectedLine, posMvp.Items[0]) && ReferenceEquals(posMvp.CartRows[0].Calculation, posMvp.Quote!.Lines[0]),
                                 "El carrito conserva selección de la línea editable y presenta el cálculo devuelto por el servicio");
                             await RenderWindowAsync(cartWindow, Path.Combine(output, $"mvp-Carrito-{theme}.png"));
+                            var cartInputs = posMvp.Items.ToArray();
                             posMvp.ConfirmedSale = mvpRepository.Sale;
                             await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-Venta-confirmada-{theme}.png"));
                             await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Venta-confirmada-compacto-{theme}.png"));
@@ -586,7 +587,22 @@ internal static class Program
                             Check(shell.IsSales && historyMvp.IsSaleDetailOpen && historyMvp.SaleDetail?.Sale.Id == mvpRepository.Sale.Sale.Id,
                                 "Ver comprobante abre la venta confirmada aunque todavía no figure en el listado");
                             foreach (var sale in listedSales) historyMvp.Sales.Add(sale);
-                            confirmedView.Close(); posMvp.ConfirmedSale = null;
+                            nav.Navigate(SetupPage.Pos);
+                            var newSale = FindChildren<Button>(FindChildren<PosView>(confirmedRoot).Single()).Single(b => b.Content is string text && text == "Nueva venta");
+                            var previousWrites = mvpRepository.Writes.Count;
+                            newSale.Command!.Execute(newSale.CommandParameter);
+                            Check(!posMvp.HasConfirmedSale && posMvp.CartRows.Count == 0 && posMvp.Quote is null && mvpRepository.Writes.Count == previousWrites,
+                                "Nueva venta inicia un carrito vacío desde su botón sin registrar otra operación");
+                            confirmedView.Close();
+                            var emptyWindow = new MainWindow(shell) { Width = 1093, Height = 614, ShowActivated = false };
+                            var emptyRoot = (FrameworkElement)emptyWindow.Content;
+                            emptyRoot.Measure(new Size(1093, 614)); emptyRoot.Arrange(new Rect(0, 0, 1093, 614)); emptyRoot.UpdateLayout();
+                            FindChildren<TabControl>(FindChildren<PosView>(emptyRoot).Single()).First().SelectedIndex = 1; emptyRoot.UpdateLayout();
+                            Check(FindChildren<ContentControl>(emptyRoot).Any(control => control.Content is string text && text.StartsWith("Tu carrito está vacío") && IsLayoutVisible(control)),
+                                "El carrito vacío muestra una guía visible para agregar productos");
+                            await RenderWindowAsync(emptyWindow, Path.Combine(output, $"mvp-Carrito-vacio-{theme}.png"));
+                            foreach (var inputLine in cartInputs) posMvp.Items.Add(inputLine);
+                            await posMvp.CalculateCommand.ExecuteAsync(null);
                         }
                         else
                         {
@@ -900,6 +916,15 @@ internal static class Program
         }
     }
 
+    // El árbol se renderiza fuera de Window: IsVisible sería falso para todos.
+    // ActualWidth puede conservar medidas de un panel que después se colapsó.
+    private static bool IsLayoutVisible(DependencyObject element)
+    {
+        for (DependencyObject? current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (current is UIElement { Visibility: not Visibility.Visible }) return false;
+        return true;
+    }
+
     private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
         RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);
 
@@ -949,7 +974,7 @@ internal static class Program
                     : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Cambiar estado" : "Nuevo pedido")
                     : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
                     : commerceShell.CommercialHistory.IsQuotationDetailOpen ? "Llevar al POS" : "Actualizar";
-                var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0);
+                var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0 && IsLayoutVisible(b));
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
                     $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
