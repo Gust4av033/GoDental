@@ -20,6 +20,17 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     public ObservableCollection<CashBoxData> Boxes { get; } = [];
     public ObservableCollection<PosProductData> Products { get; } = [];
     public ObservableCollection<CartLineModel> Items { get; } = [];
+    public ObservableCollection<PosCartRow> CartRows { get; } = [];
+    public string CartCountLabel => $"{Items.Count} líneas en el carrito";
+    public bool HasConfirmedSale => ConfirmedSale is not null;
+    private void RefreshCartRows()
+    {
+        var selected = SelectedLine;
+        CartRows.Clear();
+        foreach (var item in Items) CartRows.Add(new(item, Quote?.Lines.FirstOrDefault(line => line.ProductId == item.ProductId)));
+        SelectedLine = Items.Contains(selected!) ? selected : null;
+        OnPropertyChanged(nameof(CartCountLabel));
+    }
     public ObservableCollection<CatalogOption> PriceLists { get; } = [];
     [ObservableProperty] private CatalogOption? priceList;
     [ObservableProperty] private CashBoxData? box;
@@ -29,14 +40,14 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     [ObservableProperty] private string globalDiscount = "0";
     [ObservableProperty] private string deliveryCharge = "0";
     [ObservableProperty] private SaleQuote? quote;
-    [ObservableProperty] private SaleSnapshot? confirmedSale;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasConfirmedSale))] private SaleSnapshot? confirmedSale;
     [ObservableProperty] private long? quotationId;
     [ObservableProperty] private long? authorizationId;
     [ObservableProperty] private int page = 1;
     [ObservableProperty] private int total;
     private IReadOnlyList<PaymentMethodData> methods = [];
     public override bool CanRead => sales.CanRead && cash.CanRead;
-    public bool CanChangeCart => CanEdit && QuotationId is null;
+    public bool CanChangeCart => CanEdit && QuotationId is null && !HasConfirmedSale;
     public bool CanAddProduct => CanChangeCart && Product is not null;
     partial void OnProductChanged(PosProductData? value) => OnPropertyChanged(nameof(CanAddProduct));
     public bool CanChooseCustomer => CanChangeCart && customers.CanRead;
@@ -47,7 +58,8 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     public string QuoteLabel => Quote is null ? "Calcula para consultar precios, impuestos, descuentos y disponibilidad." : $"Total aceptado: {Quote.Total:N2} · Justificación > {Quote.JustificationThreshold}% · Autorización > {Quote.AuthorizationThreshold}%";
     protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanChangeCart), nameof(CanAddProduct), nameof(CanChooseCustomer), nameof(CanSell), nameof(CanQuote), nameof(CanAuthorize), nameof(NeedsAuthorization), nameof(QuoteLabel) }) OnPropertyChanged(n); }
     partial void OnQuotationIdChanged(long? value) => PermissionsChanged();
-    partial void OnQuoteChanged(SaleQuote? value) => PermissionsChanged();
+    partial void OnConfirmedSaleChanged(SaleSnapshot? value) => PermissionsChanged();
+    partial void OnQuoteChanged(SaleQuote? value) { RefreshCartRows(); PermissionsChanged(); }
     partial void OnBoxChanged(CashBoxData? value) { Invalidate(); Products.Clear(); Product = null; }
     partial void OnPriceListChanged(CatalogOption? value) => Invalidate();
     partial void OnGlobalDiscountChanged(string value) => Invalidate();
@@ -55,6 +67,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
     public PosViewModel(SalesService sales, CashService cash, CustomerService customers, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<PosViewModel> logger) : base(session, operations, logger)
     {
         this.sales = sales; this.cash = cash; this.customers = customers; this.dialogs = dialogs; Customer = new(customers, () => Session.Revision);
+        Items.CollectionChanged += (_, _) => RefreshCartRows();
         Customer.SelectionChanged += (_, _) => Invalidate();
         Operation.Rejected += (_, _) => Invalidate();
     }
@@ -162,13 +175,28 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
         var box = Boxes.FirstOrDefault(b => b.Id == snapshot.Cart.CashBoxId) ?? throw new ArgumentException("Actualiza las cajas y selecciona una caja válida para la cotización.");
         var customer = snapshot.Cart.CustomerId is { } customerId ? await customers.ReadAsync(customerId) : null;
         var result = await sales.QuoteAsync(snapshot.Cart); if (!Current(r)) return;
-        Box = box; Customer.Selected = customer?.Customer; GlobalDiscount = snapshot.Cart.GlobalDiscountPercent.ToString(); DeliveryCharge = snapshot.Cart.DeliveryCharge.ToString(); PriceList = PriceLists.FirstOrDefault(l => l.Id == (snapshot.Cart.PriceListId ?? 0));
+        ConfirmedSale = null; Box = box; Customer.Selected = customer?.Customer; GlobalDiscount = snapshot.Cart.GlobalDiscountPercent.ToString(); DeliveryCharge = snapshot.Cart.DeliveryCharge.ToString(); PriceList = PriceLists.FirstOrDefault(l => l.Id == (snapshot.Cart.PriceListId ?? 0));
         Items.Clear(); foreach (var l in result.Lines) { var input = result.Cart.Items.Single(i => i.ProductId == l.ProductId); Items.Add(new(l.ProductId, l.Sku, l.Name, input.Quantity, input.DiscountPercent, input.LotId)); }
         QuotationId = id; Quote = result; StatusMessage = "Cotización recalculada. Revisa y acepta los precios actuales al confirmar la venta; requiere nueva autorización si corresponde.";
     });
+    [RelayCommand] private void NewSale()
+    {
+        if (!CanEdit || ConfirmedSale is null) return;
+        Items.Clear(); SelectedLine = null; Invalidate(); QuotationId = null; ConfirmedSale = null;
+        Customer.Reset(); PriceList = PriceLists.FirstOrDefault(list => list.Id == 0);
+        GlobalDiscount = DeliveryCharge = "0";
+        StatusMessage = "Nueva venta lista.";
+    }
     [RelayCommand] private async Task ClearCartAsync()
     {
         if (!CanEdit) return;
         await ShowAsync(new MvpFormModel("Vaciar carrito", "Vaciar", Operation, f => { Items.Clear(); Invalidate(); QuotationId = null; ConfirmedSale = null; f.Complete(); return Task.CompletedTask; }) { Description = "Se eliminarán las líneas del carrito actual." });
     }
+}
+
+// Presentación del carrito: importa los valores del cálculo aceptado, sin recalcularlos.
+public sealed record PosCartRow(CartLineModel Input, CalculatedPrice? Calculation)
+{
+    public string Name => Calculation?.Name ?? Input.Name;
+    public decimal Quantity => Calculation?.Quantity ?? Input.Quantity;
 }

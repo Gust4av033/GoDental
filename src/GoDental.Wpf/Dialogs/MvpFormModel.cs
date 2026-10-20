@@ -15,6 +15,7 @@ public sealed partial class MvpField : ObservableObject
     public bool IsChoice => Kind == "choice";
     public bool IsDate => Kind == "date";
     public string Kind { get; }
+    public bool IsMultiline => Key is "reason" or "address";
     public string DisplayMember { get; init; } = "Name";
     public IEnumerable<object> Choices { get; init; } = [];
     [ObservableProperty] private string value = "";
