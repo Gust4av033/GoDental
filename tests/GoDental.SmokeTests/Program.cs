@@ -1068,7 +1068,7 @@ internal static class Program
                 var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
                 Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
                     $"La acción de Productos/Inventario cabe en {width}×{height} con tamaño uniforme");
-                if (productShell.Products.Inventory?.CanAdjust == true)
+                if (productShell.Products.Inventory is { IsOpen: true, CanAdjust: true })
                 {
                     var initial = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == "Existencias iniciales");
                     var initialBounds = initial.TransformToAncestor(root).TransformBounds(new Rect(initial.RenderSize));
