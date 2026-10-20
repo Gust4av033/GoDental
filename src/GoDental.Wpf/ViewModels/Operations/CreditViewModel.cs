@@ -19,23 +19,42 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
     public ObservableCollection<CustomerPaymentData> Payments { get; } = [];
     [ObservableProperty] private CreditAccountData? selected;
     [ObservableProperty] private bool overdueOnly;
-    [ObservableProperty] private int page = 1;
-    [ObservableProperty] private int total;
-    [ObservableProperty] private int historyPage = 1;
-    [ObservableProperty] private int historyTotal;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int total;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HistoryPageLabel))] private int historyPage = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HistoryPageLabel))] private int historyTotal;
     [ObservableProperty] private CustomerBalanceData? balance;
     private long? historyCustomer;
+    [ObservableProperty] private bool isDetailOpen;
+    [ObservableProperty] private bool hasLoadedHistory;
+    public string PageLabel => $"{Total} cuentas · Página {Page}";
+    public string HistoryPageLabel => $"{HistoryTotal} abonos del cliente · Página {HistoryPage}";
+    [RelayCommand] private void ReturnToList() { if (!IsBusy) IsDetailOpen = false; }
+    [RelayCommand] private async Task OpenAccountAsync(CreditAccountData? account)
+    {
+        if (!CanRead || IsBusy || account is null) return;
+        Selected = account; IsDetailOpen = true;
+        await HistoryCommand.ExecuteAsync(null);
+    }
+    [RelayCommand] private Task OpenSelectedAsync() => OpenAccountAsync(Selected);
+    [RelayCommand] private Task RefreshAccountAsync() => ReadAsync(async revision =>
+    {
+        await LoadCoreAsync(revision);
+        if (!Current(revision)) return;
+        historyCustomer = Selected?.CustomerId; HistoryPage = 1;
+        await HistoryCoreAsync(revision);
+    });
     public override bool CanRead => Has("CLIENTES.VER", "VENTAS.VER");
     public bool CanPay => CanEdit && Has("CAJA.VER", "CAJA.MOVIMIENTO") && Selected?.Balance > 0;
-    partial void OnSelectedChanged(CreditAccountData? value) { Payments.Clear(); Balance = null; historyCustomer = null; PermissionsChanged(); }
+    partial void OnSelectedChanged(CreditAccountData? value) { Payments.Clear(); Balance = null; historyCustomer = null; HasLoadedHistory = false; if (value is null) IsDetailOpen = false; PermissionsChanged(); }
     protected override void PermissionsChanged() => OnPropertyChanged(nameof(CanPay));
     public CreditViewModel(CashService cash, SalesService sales, CustomerService customers, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<CreditViewModel> logger) : base(session, operations, logger) { this.cash = cash; this.sales = sales; this.customers = customers; this.dialogs = dialogs; }
-    protected override void Reset() { Items.Clear(); Payments.Clear(); Selected = null; Page = HistoryPage = 1; Total = HistoryTotal = 0; Balance = null; }
+    protected override void Reset() { IsDetailOpen = false; HasLoadedHistory = false; Items.Clear(); Payments.Clear(); Selected = null; Page = HistoryPage = 1; Total = HistoryTotal = 0; Balance = null; }
     [RelayCommand] private Task ReloadAsync() { Page = 1; return ReadAsync(LoadCoreAsync); }
     private async Task LoadCoreAsync(long r)
     {
         var result = await cash.AccountsAsync(OverdueOnly, new(Page)); if (!Current(r)) return;
-        var id = Selected?.Id; Items.Clear(); foreach (var a in result.Items) Items.Add(a); Selected = Items.FirstOrDefault(a => a.Id == id); Total = result.Total;
+        var wasDetailOpen = IsDetailOpen; var id = Selected?.Id; Items.Clear(); foreach (var a in result.Items) Items.Add(a); Selected = Items.FirstOrDefault(a => a.Id == id); Total = result.Total; IsDetailOpen = wasDetailOpen && Selected is not null;
         StatusMessage = Total == 0 ? "No hay cuentas para este filtro." : $"{Total} cuentas · Página {Page}. Selecciona una cuenta para registrar un abono.";
     }
     [RelayCommand] private async Task NextAsync() { if (IsBusy || Page * 30 >= Total) return; Page++; await ReadAsync(LoadCoreAsync); }
@@ -45,7 +64,7 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
     {
         if (historyCustomer is not { } id) return;
         var result = await customers.PaymentsAsync(new(id, HistoryPage)); var balance = await customers.BalanceAsync(id); if (!Current(r) || Selected?.CustomerId != id) return;
-        Payments.Clear(); foreach (var p in result.Items) Payments.Add(p); HistoryTotal = result.Total; Balance = balance;
+        Payments.Clear(); foreach (var p in result.Items) Payments.Add(p); HistoryTotal = result.Total; Balance = balance; HasLoadedHistory = true;
         StatusMessage = result.Total == 0 ? "Este cliente no tiene abonos registrados." : $"{HistoryTotal} abonos del cliente · Página {HistoryPage}";
     }
     [RelayCommand] private async Task NextHistoryAsync() { if (IsBusy || HistoryPage * 30 >= HistoryTotal) return; HistoryPage++; await ReadAsync(HistoryCoreAsync); }
