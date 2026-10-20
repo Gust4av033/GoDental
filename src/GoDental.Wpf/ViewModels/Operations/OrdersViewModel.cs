@@ -22,20 +22,30 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     [ObservableProperty] private string state = "TODOS";
     [ObservableProperty] private OrderData? selected;
     [ObservableProperty] private OrderSnapshot? detail;
-    [ObservableProperty] private int page = 1;
-    [ObservableProperty] private int total;
-    [ObservableProperty] private int eventsPage = 1;
-    [ObservableProperty] private int eventsTotal;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int total;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(EventsPageLabel))] private int eventsPage = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(EventsPageLabel))] private int eventsTotal;
+    [ObservableProperty] private bool isDetailOpen;
+    public string PageLabel => $"{Total} pedidos · Página {Page}";
+    public string EventsPageLabel => $"{EventsTotal} eventos · Página {EventsPage}";
+    [RelayCommand] private void ReturnToList() { if (!IsBusy) IsDetailOpen = false; }
+    [RelayCommand] private async Task OpenOrderAsync(OrderData? order)
+    {
+        if (!CanRead || IsBusy || order is null) return;
+        Selected = order;
+        await DetailCommand.ExecuteAsync(null);
+    }
     public override bool CanRead => orders.CanRead;
     public bool CanManage => CanEdit && orders.CanManage;
     public bool CanCreate => CanManage && customers.CanRead && products.CanRead;
     public bool CanTransition => CanManage && Detail is not null && States.Any(s => OrderRules.CanTransition(Detail.Order.State, s));
     public bool CanLink => CanManage && Detail is not null && Detail.Order.SaleId is null;
     partial void OnSelectedChanged(OrderData? value) { Detail = null; Events.Clear(); EventsPage = 1; }
-    partial void OnDetailChanged(OrderSnapshot? value) => PermissionsChanged();
+    partial void OnDetailChanged(OrderSnapshot? value) { IsDetailOpen = value is not null; PermissionsChanged(); }
     protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink) }) OnPropertyChanged(n); }
     public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger) : base(session, operations, logger) { this.orders = orders; this.customers = customers; this.products = products; this.dialogs = dialogs; }
-    protected override void Reset() { Items.Clear(); Events.Clear(); Selected = null; Detail = null; Page = EventsPage = 1; Total = EventsTotal = 0; }
+    protected override void Reset() { IsDetailOpen = false; Items.Clear(); Events.Clear(); Selected = null; Detail = null; Page = EventsPage = 1; Total = EventsTotal = 0; }
     [RelayCommand] private Task ReloadAsync() { Page = 1; return ReadAsync(LoadCoreAsync); }
     private async Task LoadCoreAsync(long r)
     {
@@ -49,7 +59,7 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     private async Task DetailCoreAsync(long id, long r)
     {
         var result = await orders.ReadAsync(id); if (!Current(r) || Selected?.Id != id) return;
-        Detail = result; Events.Clear(); EventsPage = 1; EventsTotal = result?.TotalEvents ?? 0;
+        Detail = result; IsDetailOpen = result is not null; Events.Clear(); EventsPage = 1; EventsTotal = result?.TotalEvents ?? 0;
         foreach (var e in result?.Events ?? []) Events.Add(e);
         StatusMessage = result is null ? "El pedido no está disponible." : $"Pedido {id} · {EventsTotal} eventos · Página 1";
     }
@@ -71,7 +81,7 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
             var customer = draft.Customer.Selected ?? throw new ArgumentException("Selecciona un cliente.");
             var id = Guid.NewGuid(); var request = new PlaceOrder(id, customer.Id, f.Text("contact"), f.Text("phone"), f.Text("address"), f.Text("department"), f.Text("municipality"), f.Text("reference"), f.Date("scheduled"), f.Text("responsible"), null, f.Number("delivery"), draft.Items.Select(i => new OrderItem(i.ProductId, i.Quantity)).ToArray(), f.Text("reason"), draft.Address?.Id);
             await Operation.StartAsync(request, id, q => orders.PlaceAsync(q), receipt => ReadAsync(async r => { await LoadCoreAsync(r); Selected = Items.FirstOrDefault(o => o.Id == receipt.Id); if (Selected is not null) await DetailCoreAsync(receipt.Id, r); }));
-        }) { Body = draft, Description = "Selecciona cliente y productos. En Datos de entrega completa contacto, teléfono y dirección. El pedido no reserva stock ni representa un cobro." }
+        }) { Body = draft, Description = "Selecciona cliente y productos. Completa debajo los datos de contacto, teléfono y dirección. El pedido no reserva stock ni representa un cobro." }
             .Input("contact", "Contacto de entrega").Input("phone", "Teléfono").Input("address", "Dirección manual (si no seleccionaste una del cliente)")
             .Input("department", "Departamento").Input("municipality", "Municipio").Input("reference", "Referencia de entrega").Input("responsible", "Responsable de entrega")
             .Calendar("scheduled", "Fecha prevista").Input("delivery", "Cargo de entrega", "0").Input("reason", "Motivo"));
