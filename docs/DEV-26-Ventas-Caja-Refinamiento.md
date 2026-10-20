@@ -48,7 +48,7 @@ La captura del usuario muestra un pago en efectivo agregado, pero la tabla despl
 
 Se coloca la confirmación y el estado de los formularios MVP en `MvpFormFooterView`, presentado por `DialogWindow` fuera del desplazamiento del cuerpo, junto a Guardar/Volver. Incluye los errores y la recuperación con la misma solicitud/GUID. En cobro, Efectivo recibido se mueve junto al importe, antes de la tabla; el motivo se etiqueta como obligatorio y la descripción explica los pasos. No se modifica la confirmación comercial, la exigencia de revisión, las reglas de pagos/caja ni las transacciones/SQL. Los demás tipos de diálogo conservan su pie previo.
 
-El smoke amplía la comprobación de visibilidad de casilla/acción y su estabilidad al desplazar, mensaje de falta de confirmación visible junto al botón, orden del campo de efectivo y pie visible en 780×540 DIP, en ambos temas. Validación Windows de este ajuste pendiente de ejecución.
+El smoke amplía la comprobación de visibilidad de casilla/acción y su estabilidad al desplazar, mensaje de falta de confirmación visible junto al botón, orden del campo de efectivo y pie visible en 780×540 DIP, en ambos temas. [CI Windows del código `e12ddb0`](https://github.com/Gust4av033/GoDental/actions/runs/39502778536) correcto: compilación Release sin errores/advertencias, **163 xUnit, 372 comprobaciones SQL y 391 WPF**, sin errores de binding. Las pruebas comprueban el mensaje al pulsar Confirmar sin marcar la casilla, sin enviar una venta; no certifican la causa concreta del rechazo en la base del usuario ni una inspección manual de su monitor.
 
 ## Integridad y límites
 
