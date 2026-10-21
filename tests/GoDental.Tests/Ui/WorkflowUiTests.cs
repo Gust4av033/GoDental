@@ -58,6 +58,31 @@ public sealed class WorkflowUiTests
     }
 
     [Fact]
+    public async Task SupplierRowOpensWithoutPreviousSelectionAndRequiresReadPermission()
+    {
+        var session = Session("COMPRAS.VER");
+        var vm = Suppliers(new(), session, new());
+        await vm.ReloadCommand.ExecuteAsync(null);
+        var row = vm.Items.Single();
+        Assert.Null(vm.Selected);
+        await vm.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Same(row, vm.Selected);
+        Assert.Equal(row.Id, vm.Detail!.Id);
+        Assert.True(vm.IsDetailOpen);
+        session.Clear();
+        await vm.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Null(vm.Detail);
+        Assert.Null(vm.Selected);
+
+        var deniedSession = Session("INVENTARIO.VER");
+        var denied = Suppliers(new() { DenyRead = true }, deniedSession, new());
+        await denied.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Null(denied.Selected);
+        Assert.Null(denied.Detail);
+        Assert.True(deniedSession.IsAuthenticated);
+    }
+
+    [Fact]
     public async Task CountNavigationPreservesCaptureUntilSavedOrExplicitlyDiscarded()
     {
         var session = Session();

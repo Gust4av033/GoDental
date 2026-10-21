@@ -310,6 +310,10 @@ internal static class Program
                     var manageView = new UserManageDialogView { DataContext = users };
                     using (var manageModel = new UserDialogModel(users, false, manageView.ReadPasswords, manageView.ClearPasswords, manageView.HasPasswords))
                         await RenderDialogAsync(manageModel, manageView, Path.Combine(output, $"administrar-usuario-dialogo-{theme}.png"));
+                    var passwordView = new UserManageDialogView { DataContext = users };
+                    ((TabControl)passwordView.FindName("AccountSections")).SelectedIndex = 1;
+                    using (var passwordModel = new UserDialogModel(users, false, passwordView.ReadPasswords, passwordView.ClearPasswords, passwordView.HasPasswords))
+                        await RenderDialogAsync(passwordModel, passwordView, Path.Combine(output, $"usuario-restablecer-clave-{theme}.png"));
                 }
                 categories.Selected = categories.Items.First();
                 categories.Name = "General actualizada";
@@ -447,7 +451,12 @@ internal static class Program
                 inventory.CloseCommand.Execute(null);
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-regreso.png"));
                 await users.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Users);
-                await RenderAsync(shell, 1366, 1000, Path.Combine(output, "usuarios.png"));
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"usuarios-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"usuarios-compacto-{theme}.png"));
+                }
                 await shell.Counts.ReloadCommand.ExecuteAsync(null);
                 shell.Counts.Selected = shell.Counts.Items.First(); await shell.Counts.OpenCommand.ExecuteAsync(null);
                 await shell.Suppliers.ReloadCommand.ExecuteAsync(null);
@@ -474,7 +483,13 @@ internal static class Program
                     Check(shell.Suppliers.IsDetailOpen, "Abrir proveedor muestra su ficha separada del listado");
                     shell.Suppliers.ReturnToListCommand.Execute(null);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-lista-{theme}.png"));
-                    await shell.Suppliers.OpenCommand.ExecuteAsync(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-lista-compacta-{theme}.png"));
+                    shell.Suppliers.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-filtros-{theme}.png"));
+                    shell.Suppliers.ToggleFiltersCommand.Execute(null);
+                    await shell.Suppliers.OpenSupplierCommand.ExecuteAsync(shell.Suppliers.Items.First());
+                    await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores", theme, output);
+                    await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores-compacto", theme, output, 1093, 614);
                     // Tamaño lógico equivalente al área de 1366×768 al 125 %.
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-125-{theme}.png"));
                     var suppliersView = new GoDental.Wpf.Views.Suppliers.SuppliersView { DataContext = shell.Suppliers };
@@ -491,7 +506,16 @@ internal static class Program
                     {
                         var editor = new SupplierEditorDialogModel(kind, shell.Suppliers.Detail!, shell.Suppliers.Contacts.First(), shell.Suppliers.References.First(), new(productService), [new() { Id = 1, Name = "USD" }], _ => Task.FromResult(false));
                         await RenderDialogAsync(editor, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor }, Path.Combine(output, $"proveedor-{kind}-{theme}.png"));
+                        if (kind == SupplierEditorKind.Supplier)
+                        {
+                            var contactView = new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor };
+                            ((TabControl)contactView.FindName("SupplierSections")).SelectedIndex = 1;
+                            await RenderDialogAsync(editor, contactView, Path.Combine(output, $"proveedor-contacto-estado-{theme}.png"));
+                        }
                     }
+                    var newReference = new SupplierEditorDialogModel(SupplierEditorKind.Product, shell.Suppliers.Detail!, null, null, new(productService), [new() { Id = 1, Name = "USD" }], _ => Task.FromResult(false));
+                    await newReference.Picker.SearchCommand.ExecuteAsync(null);
+                    await RenderDialogAsync(newReference, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = newReference }, Path.Combine(output, $"proveedor-nuevo-producto-{theme}.png"));
                 }
                 await shell.Customers.ReloadCommand.ExecuteAsync(null);
                 shell.Customers.Selected = shell.Customers.Items.First(); await shell.Customers.OpenCommand.ExecuteAsync(null);
@@ -545,6 +569,7 @@ internal static class Program
                     "El lector de compras puede consultar sin acciones de escritura");
                 nav.Navigate(SetupPage.Suppliers);
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "proveedores-solo-lectura.png"));
+                await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores-lector", "Light", output);
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
                 await products.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Products);
                 Check(products.CanView && !products.CanManage && !shell.CanOpenUsers && !shell.CanOpenCounts && !shell.CanOpenSuppliers && shell.Suppliers.References.Count == 0 && !shell.CanOpenCustomers && shell.Customers.Addresses.Count == 0, "El vendedor sólo ve acciones autorizadas");
@@ -969,6 +994,37 @@ internal static class Program
                     window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
                 }
             }
+            if (model is SupplierEditorDialogModel or UserDialogModel)
+            {
+                void CheckDirectoryDialog()
+                {
+                    if (model.ShowPrimaryAction)
+                    {
+                        var action = FindChildren<Button>(window).Single(button => button.Content is string text && text == model.PrimaryActionLabel);
+                        var bounds = action.TransformToAncestor(window).TransformBounds(new Rect(action.RenderSize));
+                        Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Right <= window.ActualWidth && bounds.Bottom <= window.ActualHeight,
+                            $"La acción de {model.Title} permanece visible en {window.ActualWidth:0}×{window.ActualHeight:0}");
+                    }
+                    var reason = FindChildren<TextBox>(body).FirstOrDefault(input => System.Windows.Automation.AutomationProperties.GetName(input).StartsWith("Motivo del cambio", StringComparison.Ordinal));
+                    if (reason is not null)
+                    {
+                        var bounds = reason.TransformToAncestor(window).TransformBounds(new Rect(reason.RenderSize));
+                        Check(bounds.Left >= 0 && bounds.Right <= window.ActualWidth && reason.AcceptsReturn, "El motivo se adapta al ancho del formulario y permite varias líneas");
+                    }
+                }
+                CheckDirectoryDialog();
+                var originalWidth = window.Width; var originalHeight = window.Height;
+                window.Width = 780; window.Height = 540; window.UpdateLayout(); CheckDirectoryDialog();
+                window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
+                if (model is SupplierEditorDialogModel { IsNewProduct: true })
+                    Check(FindChildren<GoDental.Wpf.Views.Shared.ProductPickerView>(body).Single().IsVisible,
+                        "Vincular un producto nuevo muestra el buscador real del catálogo");
+                if (body is UserManageDialogView)
+                {
+                    var action = FindChildren<Button>(body).Single(button => IsLayoutVisible(button) && button.Content is "Cambiar estado" or "Restablecer clave");
+                    Check(action.ActualWidth == 152 && action.ActualHeight == 36, "Las acciones de administración de cuentas tienen tamaño uniforme");
+                }
+            }
             if (model is MvpFormModel { Body: OrderDraftModel draft })
             {
                 FindChildren<TabControl>(body).Single().SelectedIndex = 1; window.UpdateLayout();
@@ -1040,14 +1096,14 @@ internal static class Program
         public void Show() => OpenCount++;
     }
 
-    private static async Task RenderCommerceTabsAsync(ShellViewModel shell, Type viewType, string page, string theme, string output)
+    private static async Task RenderCommerceTabsAsync(ShellViewModel shell, Type viewType, string page, string theme, string output, double width = 1366, double height = 768)
     {
         var count = 1;
         for (var index = 0; index < count; index++)
         {
-            var window = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
+            var window = new MainWindow(shell) { Width = width, Height = height, ShowActivated = false };
             var root = (FrameworkElement)window.Content;
-            root.Measure(new Size(1366, 768)); root.Arrange(new Rect(0, 0, 1366, 768)); root.UpdateLayout();
+            root.Measure(new Size(width, height)); root.Arrange(new Rect(0, 0, width, height)); root.UpdateLayout();
             var view = FindChildren<UserControl>(root).Single(control => control.GetType() == viewType);
             var tabs = FindChildren<TabControl>(view).Single();
             count = tabs.Items.Count; tabs.SelectedIndex = index;
@@ -1221,6 +1277,34 @@ internal static class Program
                         && !string.IsNullOrWhiteSpace(productShell.Products.Inventory.InitialInventoryHint),
                         $"Existencias iniciales permanece visible y explica cuándo se puede usar en {width}×{height}");
                 }
+            }
+            if (root.DataContext is ShellViewModel { IsSuppliers: true } supplierShell)
+            {
+                var view = FindChildren<GoDental.Wpf.Views.Suppliers.SuppliersView>(root).Single();
+                if (supplierShell.Suppliers.CanManage)
+                {
+                    var caption = supplierShell.Suppliers.IsDetailOpen ? "Editar proveedor" : "Nuevo proveedor";
+                    var action = FindChildren<Button>(view).Single(button => button.Content is string text && text == caption);
+                    var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                    Check(IsLayoutVisible(action) && action.ActualWidth == 152 && action.ActualHeight == 36
+                        && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                        $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
+                }
+                var productGrid = FindChildren<DataGrid>(view).FirstOrDefault(grid => ReferenceEquals(grid.ItemsSource, supplierShell.Suppliers.References) && IsLayoutVisible(grid));
+                if (productGrid is not null && productGrid.Items.Count > 0 && !supplierShell.Suppliers.CanManage)
+                    Check(FindChildren<TextBlock>(productGrid).Any(text => text.Text == "Restringido" && IsLayoutVisible(text))
+                        && !FindChildren<TextBlock>(productGrid).Any(text => text.Text == "1.123456" && IsLayoutVisible(text)),
+                        "Un lector de Proveedores ve el costo restringido, sin exponer su importe");
+                Check(!FindChildren<TextBlock>(view).Any(text => IsLayoutVisible(text) && text.Text is "True" or "False"), "Proveedores presenta Sí/No y estados legibles");
+            }
+            if (root.DataContext is ShellViewModel { IsUsers: true } userShell && userShell.Users.CanManage)
+            {
+                var view = FindChildren<UsersView>(root).Single();
+                var create = FindChildren<Button>(view).Single(button => button.Content is string text && text == "Crear cuenta");
+                var bounds = create.TransformToAncestor(root).TransformBounds(new Rect(create.RenderSize));
+                Check(create.ActualWidth == 152 && create.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                    $"Crear cuenta mantiene tamaño y posición visible en {width}×{height}");
+                Check(!FindChildren<TextBlock>(view).Any(text => IsLayoutVisible(text) && text.Text is "True" or "False"), "Usuarios muestra el cambio de clave como Sí/No");
             }
             if (root.DataContext is ShellViewModel { IsCounts: true } countShell)
             {

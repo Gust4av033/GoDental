@@ -56,7 +56,7 @@ Se reutilizan `SalesService`, `CashService`, `CustomerService`, `OrderService`, 
 
 No falta un contrato para estos recorridos nominales. La resolución terminal negativa de operaciones inciertas continúa pendiente en DEV-15; la UI no libera una solicitud porque una búsqueda no devuelva recibo. No se añaden pagos por tarjeta, facturación DTE, PDF de cotización, fotos de productos ni gráficos/filtros sin contrato. Los símbolos del catálogo representan productos porque el DTO del POS no incluye fotografías.
 
-**Proveedores queda para el siguiente bloque de refinamiento.** Su módulo existente conserva el recorrido conectado previo; no se incluye como módulo refinado en este incremento.
+**Proveedores se excluyó de este incremento comercial.** Su refinamiento posterior, junto a la revisión de las pantallas restantes, se documenta en [DEV-29](DEV-29-Proveedores-Usuarios-Refinamiento.md).
 
 ## Validación
 

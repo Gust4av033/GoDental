@@ -26,7 +26,7 @@ GoDental debe sentirse como un ERP/POS dental moderno, limpio y rápido, con ide
 9. Compras/importaciones.
 10. Dashboard, reportes, ajustes, comercial y fiscal conforme existan datos/servicios reales.
 
-La identidad final (colores aprobados y logo) y el hardware de impresión permanecen pendientes para v0.2. Las referencias visuales del usuario guían el estilo provisional de esta fase: superficies claras, acento azul, navegación compacta y tarjetas. Los tokens se documentan en `../DEV-07-UI-referencia-visual.md`; las funciones sin datos permanecen pendientes.
+La marca proporcionada por el usuario se incorpora en DEV-28; el hardware real de impresión sigue pendiente de validación. Las referencias visuales del usuario guían el estilo provisional de esta fase: superficies claras, acento azul, navegación compacta y tarjetas. Los tokens se documentan en `../DEV-07-UI-referencia-visual.md`; las funciones sin datos permanecen pendientes.
 
 # GUÍA VISUAL · De las capturas de referencia al código WPF
 
@@ -37,9 +37,9 @@ Las medidas son **estimadas** a partir de capturas de baja resolución. Se ajust
 ## 0. Reglas de uso
 
 - Precedencia: documentos funcionales (DM-01, DB-01, VEN-01, SEC-01, FIS-01…) > esta guía > pantallas actuales.
-- Solo se tocan tokens y estilos compartidos (`Themes/`). Ningún hex ni radio dentro de las vistas. Light y Dark deben seguir funcionando.
+- Los tokens y estilos se definen en `Themes/`; los refinamientos autorizados por módulo también actualizan la composición de las vistas y sus enlaces MVVM. Ningún hex ni radio nuevo dentro de las vistas. Light y Dark deben seguir funcionando.
 - No se crean módulos, columnas, métricas ni datos que no existan en los servicios (DEV-07 y DEV-21).
-- **No copiar de las imágenes:** monedas S/ y MXN (usar USD, formato `$ 1,250.00`); DNI/RUC/IGV/RFC; Lima/CDMX; los módulos Pacientes, Citas, Agenda, Tratamientos, Comercial/Online, Fiscal/DTE y Reportes (aún no existen); gráficas con cifras inventadas; el logotipo (se mantiene el símbolo provisional).
+- **No copiar de las imágenes:** monedas S/ y MXN (usar USD, formato `$ 1,250.00`); DNI/RUC/IGV/RFC; Lima/CDMX; los módulos Pacientes, Citas, Agenda, Tratamientos, Comercial/Online, Fiscal/DTE y Reportes (aún no existen); gráficas con cifras inventadas; los logotipos de las capturas (se usa la marca original de GoDental proporcionada por el usuario, DEV-28).
 - Un paso = un commit pequeño. Después de cada paso: F5, revisar Light y Dark a 1366×768 y ejecutar `scripts\verify.ps1` antes de integrar.
 
 ## 1. Tokens (primer commit; es lo que más acerca la app a las capturas)

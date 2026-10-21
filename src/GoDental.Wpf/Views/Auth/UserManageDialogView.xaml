@@ -1,19 +1,37 @@
 <UserControl x:Class="GoDental.Wpf.Views.Auth.UserManageDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Directory.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
   <StackPanel>
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,0,0,12"><TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite"/></Border>
-    <TextBlock Text="{Binding SelectedUser.DisplayName, TargetNullValue=Selecciona una cuenta del listado.}" Style="{StaticResource SectionHeading}"/>
-    <TextBlock Text="Los cambios de estado y contraseña quedan auditados." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+    <DockPanel Margin="0,0,0,20">
+      <Border DockPanel.Dock="Left" Style="{StaticResource DirectoryIdentity}" Margin="0,0,12,0"><TextBlock Text="{Binding SelectedUser.DisplayName, Converter={StaticResource CommerceInitials}}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+      <StackPanel><WrapPanel><TextBlock Text="{Binding SelectedUser.DisplayName, TargetNullValue=Selecciona una cuenta.}" Style="{StaticResource SectionHeading}" Margin="0,0,12,4"/><ContentControl Content="{Binding SelectedUser.Active}" ContentTemplate="{StaticResource ActiveBadge}"/></WrapPanel><TextBlock Text="{Binding SelectedUser.UserName}" Style="{StaticResource MutedText}"/></StackPanel>
+    </DockPanel>
     <StackPanel IsEnabled="{Binding CanEdit}">
-      <Label Content="Motivo del cambio" Target="{Binding ElementName=ReasonInput}"/>
-      <TextBox x:Name="ReasonInput" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AutomationProperties.Name="Motivo del cambio de usuario"/>
-      <Button Content="Activar / desactivar seleccionado" Command="{Binding ToggleActiveCommand}" HorizontalAlignment="Left" Margin="0,12,0,16"/>
-      <Grid>
-        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <StackPanel><Label Content="Nueva contraseña temporal" Target="{Binding ElementName=ResetPassword}"/><PasswordBox x:Name="ResetPassword" MaxLength="128" AutomationProperties.Name="Nueva contraseña temporal"/></StackPanel>
-        <StackPanel Grid.Column="2"><Label Content="Repite la contraseña temporal" Target="{Binding ElementName=ResetConfirmation}"/><PasswordBox x:Name="ResetConfirmation" MaxLength="128" AutomationProperties.Name="Confirmación de nueva contraseña temporal"/></StackPanel>
-      </Grid>
-      <Button Content="Restablecer contraseña y desbloquear" Click="ResetClicked" HorizontalAlignment="Left" Margin="0,16,0,0"/>
-      <TextBlock Text="Tu propia contraseña se cambia desde Acceso de usuarios. No puedes desactivar tu cuenta." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+      <TabControl x:Name="AccountSections">
+        <TabItem Header="Estado de la cuenta" Style="{StaticResource CommerceTab}">
+          <StackPanel Style="{StaticResource DirectorySection}">
+            <UniformGrid Columns="2" Margin="0,0,-16,0"><ContentControl Style="{StaticResource DirectoryField}" Tag="Código de empleado" Content="{Binding SelectedUser.EmployeeCode}"/><ContentControl Style="{StaticResource DirectoryField}" Tag="Roles asignados" Content="{Binding SelectedUser.Roles}"/></UniformGrid>
+            <TextBlock Text="Activa o desactiva el acceso de esta persona. Los cambios quedan auditados." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+            <Button Content="Cambiar estado" Command="{Binding ToggleActiveCommand}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left"/>
+            <TextBlock Text="No puedes desactivar tu propia cuenta." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Contraseña temporal" Style="{StaticResource CommerceTab}">
+          <StackPanel Style="{StaticResource DirectorySection}">
+            <TextBlock Text="Restablecer contraseña y desbloquear" Style="{StaticResource SectionHeading}"/>
+            <TextBlock Text="El usuario deberá cambiar la contraseña temporal en su siguiente ingreso." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+            <Grid Margin="0,0,0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <StackPanel><Label Content="Nueva contraseña temporal" Target="{Binding ElementName=ResetPassword}"/><PasswordBox x:Name="ResetPassword" MaxLength="128" AutomationProperties.Name="Nueva contraseña temporal"/></StackPanel>
+              <StackPanel Grid.Column="2"><Label Content="Repite la contraseña" Target="{Binding ElementName=ResetConfirmation}"/><PasswordBox x:Name="ResetConfirmation" MaxLength="128" AutomationProperties.Name="Confirmación de nueva contraseña temporal"/></StackPanel>
+            </Grid>
+            <Button Content="Restablecer clave" Click="ResetClicked" Style="{StaticResource PrimaryActionButton}" HorizontalAlignment="Left"/>
+            <TextBlock Text="Tu propia contraseña se cambia desde Mi cuenta." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+      <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,20,0,0">
+        <StackPanel><Label Content="Motivo del cambio" Target="{Binding ElementName=ReasonInput}"/><TextBox x:Name="ReasonInput" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="66" AutomationProperties.Name="Motivo del cambio de usuario"/></StackPanel>
+      </Border>
     </StackPanel>
+    <Border Style="{StaticResource DirectoryNote}"><TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/></Border>
   </StackPanel>
 </UserControl>

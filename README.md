@@ -159,3 +159,5 @@ Productos e Inventario continúan ese patrón en el catálogo, categorías, exis
 Ventas, Caja, Crédito y Pedidos continúan con listados y fichas separados, ventanas de operación y confirmación de venta conectada al comprobante: [DEV-26 · Refinamiento comercial](docs/DEV-26-Ventas-Caja-Refinamiento.md).
 
 El acceso y Ajustes usan la marca original de GoDental y las referencias visuales del proyecto; Preparación deja de aparecer en el menú. El comprobante incluye el logo, sin SKU ni hora: [DEV-28 · Marca, acceso y ajustes](docs/DEV-28-Marca-Acceso-Ajustes.md).
+
+Proveedores actualiza listado, ficha, contactos y productos relacionados; la revisión también refina Usuarios y sus ventanas de administración: [DEV-29 · Proveedores y revisión de UI](docs/DEV-29-Proveedores-Usuarios-Refinamiento.md).
