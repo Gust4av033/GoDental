@@ -22,6 +22,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 14. `014_Codigos_Automaticos.sql`
 15. `015_Resolucion_Operaciones.sql`
 16. `016_Parametros_Comerciales.sql`
+17. `017_Compras_Recepciones.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -83,3 +84,7 @@ Aplicar después de 014 y actualizar todas las estaciones antes de volver a oper
 ## Parámetros comerciales · 016
 
 DEV-32 agrega `RowVersion` a `sis.Configuracion`; conserva las 76 tablas, 8 vistas y 18 procedimientos. Cambia únicamente etiquetas de los tres permisos de descuento para describir sus tramos configurables, conservando códigos y concesiones. Aplicar después de 015 y actualizar todas las estaciones. La pestaña Comercial requiere `AJUSTES.EDITAR`; no ejecutar de nuevo 001–008 sobre una base con datos para actualizarla.
+
+## Compras y recepciones · 017
+
+DEV-33 amplía el estado de OC con RECIBIDA_PARCIAL y agrega snapshots SKU/nombre al detalle de OC, versión/cambio real/costo completo a la recepción y fabricación a sus líneas. La migración conserva datos y deriva el estado de OC históricas con cantidades recibidas; una reejecución no cambia versiones ya coherentes. Recepciones históricas aplicadas permanecen aplicadas y no se presume confirmado un costo sin evidencia. Total: 76 tablas, 8 vistas, 18 procedimientos. La ruta nueva usa transacciones Dapper y el ledger; no invoca el procedimiento histórico de recepción sin sus validaciones adicionales.

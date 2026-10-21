@@ -1,5 +1,11 @@
 # Validación de baseline v0.1
 
+## Compras y recepciones · etapa 2.1A · 21/10/2026
+
+[DEV-33](DEV-33-Compras-Recepciones.md), código `c9a7ae5`, [CI Windows #116 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39684813213): Release sin advertencias/errores, **218 xUnit**, **477 comprobaciones SQL** y **625 WPF**, sin errores de binding. Agrega 39 comprobaciones SQL de OC/recepción, concurrencia, costo/FX, lotes, rollback y recuperación, con UI conectada y formularios en ambos temas. Localmente pasaron Release y test de solución (218) con Windows targeting.
+
+Requiere **017 después de 016**, actualizando todas las estaciones. La BD del usuario no se modificó desde este entorno. Compras directas con costo completo queda implementado; importaciones/prorrateo y tratamiento de costo incompleto corresponden a 2.1B. [DEV-34](DEV-34-Impresion-Formatos.md) registra la impresión configurable solicitada, aún sin implementación. Piloto entre PCs e impresora/lector/DPI físicos siguen pendientes.
+
 ## Complementos MVP · etapa 2.0B · 21/10/2026
 
 [DEV-32](DEV-32-Complementos-MVP.md), código `f34b1a3`, [CI Windows #110 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39678804036): Release sin advertencias/errores, **202 xUnit**, **438 comprobaciones SQL** y **593 WPF**, sin errores de binding. Agrega 39 comprobaciones SQL de parámetros/códigos/tarjeta y las pantallas/formularios en ambos temas. El fondo del logo sigue el tema y su rotulación mantiene contraste en Dark. Localmente pasaron Release y test de solución (202) con Windows targeting.

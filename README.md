@@ -4,7 +4,7 @@ GoDental es una aplicación de escritorio para la operación comercial de un dep
 
 ## Estado actual y siguiente etapa
 
-La revisión del **21/10/2026** en [DEV-30](docs/DEV-30-Revision-Fase-2.md) distingue los recorridos implementados de los complementos y módulos pendientes respecto de DM-01. El núcleo operativo está conectado; compras/recepciones/importaciones, devoluciones, dashboard/reportes y las integraciones conservan trabajo pendiente. La segunda etapa implementa recuperación de operaciones (DEV-31) y parámetros comerciales, códigos de barras y tarjeta manual (DEV-32); el orden y criterios de aceptación están en ese documento.
+La revisión del **21/10/2026** en [DEV-30](docs/DEV-30-Revision-Fase-2.md) distingue los recorridos implementados de los complementos y módulos pendientes respecto de DM-01. El núcleo operativo está conectado; DEV-33 agrega compras directas y recepciones con costo completo. Importaciones, devoluciones, dashboard/reportes y las integraciones conservan trabajo pendiente. La segunda etapa implementa recuperación de operaciones (DEV-31) y parámetros comerciales, códigos de barras y tarjeta manual (DEV-32); el orden y criterios de aceptación están en ese documento.
 
 Rama activa: **`feature/desarrollo`**. CI Windows #98 del código `28ffc5f`: Release sin errores/advertencias, **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas. La validación del piloto en dos estaciones, respaldo/restauración y despliegue sigue pendiente.
 
@@ -92,6 +92,7 @@ La herramienta limita el destino a una base local de desarrollo marcada. Nunca i
 014_Codigos_Automaticos.sql
 015_Resolucion_Operaciones.sql
 016_Parametros_Comerciales.sql
+017_Compras_Recepciones.sql
 ```
 
 La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos; 012–013 añaden cuatro tablas de operaciones/pedidos (76 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
@@ -179,3 +180,7 @@ Validación de 2.0A: [CI Windows #106](https://github.com/Gust4av033/GoDental/ac
 ## Complementos comerciales del MVP
 
 [DEV-32](docs/DEV-32-Complementos-MVP.md) conecta la pestaña **Ajustes → Comercial**, **Ficha del producto → Códigos de barras** y **Tarjeta** manual en cobros/abonos. Requiere 016 después de 015; actualizar todas las estaciones. Tarjeta registra un comprobante externo ya aprobado y exige referencia; no se conecta con un procesador ni afecta efectivo. Las etiquetas físicas, series y conciliación bancaria siguen pendientes. El fondo del logo acompaña el tema y la rotulación mantiene contraste en Dark.
+
+## Compras y recepciones · 2.1A
+
+[DEV-33](docs/DEV-33-Compras-Recepciones.md) conecta el menú Compras: OC en borrador, confirmación, recepción parcial/total, aplicación con costo completo, lotes, promedio y Kardex. Requiere 017 después de 016. Una respuesta perdida se recupera por el mismo identificador; no se crea otra recepción. Las importaciones con gastos/prorrateo continúan en 2.1B. [DEV-34](docs/DEV-34-Impresion-Formatos.md) registra la impresión de etiquetas y formatos configurables solicitada: todavía no está disponible y no depende de una impresora ya elegida.

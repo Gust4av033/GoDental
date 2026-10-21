@@ -10,7 +10,19 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). La siguiente entrega es **2.1A: compras y recepción**, con diseño previo según IMP-01. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. La siguiente fase es **2.1B: importaciones y costeo**, con decisiones previas de IMP-01. [DEV-34](DEV-34-Impresion-Formatos.md) conserva el complemento de impresión configurable solicitado, aún pendiente. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+
+## Secuencia de entrega
+
+| Bloque | Estado | Referencia |
+| --- | --- | --- |
+| 2.0A · Recuperación | Implementado y validado automáticamente | DEV-31, migración 015, CI #106 |
+| 2.0B · Complementos MVP | Implementado y validado automáticamente | DEV-32, migración 016, CI #110 |
+| 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
+| 2.1B · Importaciones y costeo | Siguiente fase; decisiones de prorrateo y costos posteriores pendientes | IMP-01 y DEV-33 |
+| Impresión configurable | Complemento solicitado y registrado; aún sin implementar | DEV-34: sin impresora definida, medidas en mm |
+
+La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan el orden de DEV-30.
 
 ## Fases históricas de DM-01
 
@@ -29,8 +41,8 @@ Orden heredado de DM-01 v0.2:
 ## Avance de lógica · 19/10/2026
 
 - Fases 1–2: baseline, arquitectura, acceso y configuración implementados para desarrollo.
-- Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Conteos agregan contratos/pruebas en DEV-09 y pantalla en DEV-12. Existencias iniciales ya están conectadas (DEV-26). Series, mantenimiento de códigos/etiquetas y reposición avanzada conservan sus pendientes.
-- Fase 4: proveedores, contactos y referencias comerciales tienen lógica/persistencia (DEV-10) e interfaz (DEV-12/29). Órdenes, recepciones e importaciones con costeo siguen pendientes; el MVP de ventas se adelantó como recorrido mínimo. Prorrateo definitivo y recepciones con costo incompleto conservan sus decisiones de IMP-01.
+- Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Conteos agregan contratos/pruebas en DEV-09 y pantalla en DEV-12. Existencias iniciales ya están conectadas (DEV-26). Códigos ya tienen mantenimiento en DEV-32. Series, etiquetas y reposición avanzada conservan sus pendientes.
+- Fase 4: proveedores, contactos y referencias comerciales tienen lógica/persistencia (DEV-10) e interfaz (DEV-12/29). Órdenes y recepciones directas se conectan después en DEV-33. Importaciones y su prorrateo siguen pendientes; el MVP de ventas se adelantó como recorrido mínimo. Prorrateo definitivo y recepciones con costo incompleto conservan sus decisiones de IMP-01.
 
 ## Primer MVP operativo · incremento de lógica
 

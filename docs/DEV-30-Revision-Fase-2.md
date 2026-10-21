@@ -116,3 +116,5 @@ El usuario autorizó continuar el orden propuesto. [DEV-31](DEV-31-Recuperacion-
 - La instalación de 014 en la base personal y el recorrido manual en dos estaciones continúan **sin evidencia de ejecución en este chat**. Las pruebas SQL del runner utilizan bases aisladas.
 
 [DEV-32](DEV-32-Complementos-MVP.md) implementa el bloque 2.0B: parámetros consumidos, mantenimiento de códigos y registro manual de tarjeta, junto con adaptación del logo al tema. El siguiente bloque es 2.1A, compras y recepciones. Etiquetas físicas, series, conciliación y terminal bancaria conservan sus decisiones pendientes. Consultar DEV-32 para resultados de validación del incremento.
+
+El usuario autorizó 2.1A: [DEV-33](DEV-33-Compras-Recepciones.md) registra diseño, implementación, recorrido y validación de compras directas/recepciones con costo completo. La siguiente fase sigue siendo 2.1B; su prorrateo y tratamiento de costo incompleto no se dan por resueltos. La impresión configurable solicitada se conserva como complemento separado en DEV-34.

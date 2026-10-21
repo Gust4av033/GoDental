@@ -2,7 +2,9 @@
 
 Organización vigente: DEV-08. Presentación, contratos y persistencia avanzan en `feature/desarrollo`, separados por capas y commits. `feature/ui` y `feature/logica` son referencias históricas.
 
-Estado actual: [DEV-32](DEV-32-Complementos-MVP.md) conecta parámetros, códigos y tarjeta manual con migración 016; CI Windows #110 sobre `f34b1a3`: 202 xUnit, 438 SQL y 593 WPF. Las secciones fechadas inferiores conservan evidencia histórica.
+Estado actual: [DEV-33](DEV-33-Compras-Recepciones.md) conecta compras y recepciones con migración 017; CI #116 sobre `c9a7ae5`: 218 xUnit, 477 SQL, 625 WPF. La siguiente fase es 2.1B y el complemento de impresión queda en DEV-34.
+
+Entrega anterior: [DEV-32](DEV-32-Complementos-MVP.md) conecta parámetros, códigos y tarjeta manual con migración 016; CI Windows #110 sobre `f34b1a3`: 202 xUnit, 438 SQL y 593 WPF. Las secciones fechadas inferiores conservan evidencia histórica.
 
 Estado global y prioridades: [DEV-30](DEV-30-Revision-Fase-2.md). Recuperación 2.0A implementada en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015; CI Windows #106 sobre `c3d3445`: 187 xUnit, 399 comprobaciones SQL y 575 WPF correctas. Los resultados anteriores conservan su contexto histórico.
 
