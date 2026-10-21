@@ -2,6 +2,8 @@
 
 Organización vigente: DEV-08. Presentación, contratos y persistencia avanzan en `feature/desarrollo`, separados por capas y commits. `feature/ui` y `feature/logica` son referencias históricas.
 
+Estado actual: [DEV-32](DEV-32-Complementos-MVP.md) conecta parámetros, códigos y tarjeta manual con migración 016; CI Windows #110 sobre `f34b1a3`: 202 xUnit, 438 SQL y 593 WPF. Las secciones fechadas inferiores conservan evidencia histórica.
+
 Estado global y prioridades: [DEV-30](DEV-30-Revision-Fase-2.md). Recuperación 2.0A implementada en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015; CI Windows #106 sobre `c3d3445`: 187 xUnit, 399 comprobaciones SQL y 575 WPF correctas. Los resultados anteriores conservan su contexto histórico.
 
 | Necesidad | Estado | Contrato y verificación |
@@ -38,7 +40,7 @@ Si vuelve a fallar la preparación del acceso, recoger el tipo de error del regi
 
 Caja, POS/cálculo/cobro, autorización puntual, cotizaciones/conversión, crédito/abonos, pedidos/entregas y PDF interno quedaron **conectados** en las páginas de DEV-19. Pruebas de presentación verifican recuperación con OperationId, concurrencia y cálculos del servicio; la validación WPF Windows de esta interfaz se completó en CI #50: 139 xUnit, 329 SQL y 123 WPF, sin errores de binding; evidencia en DEV-19. La tabla refleja esta conexión; la revisión manual en dos estaciones permanece pendiente.
 
-No falta ningún contrato para el recorrido nominal solicitado. Caja de POS se consulta con CAJA.VER; gestión de cajas requiere también INVENTARIO.VER para el catálogo de almacenes. En ese bloque histórico saldo inicial/códigos y fiscal pendiente conservaron UI pendiente. La carga inicial se conecta posteriormente con autorización explícita según DEV-19/26; mantenimiento de códigos de barras y fiscal pendiente siguen fuera del bloque.
+No falta ningún contrato para el recorrido nominal solicitado. Caja de POS se consulta con CAJA.VER; gestión de cajas requiere también INVENTARIO.VER para el catálogo de almacenes. En ese bloque histórico saldo inicial/códigos y fiscal pendiente conservaron UI pendiente. La carga inicial se conecta posteriormente con autorización explícita según DEV-19/26; el mantenimiento de códigos se conecta posteriormente en DEV-32; fiscal pendiente sigue fuera del bloque.
 
 ### Recuperación excepcional · implementada en la etapa 2.0A
 

@@ -10,7 +10,7 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. La siguiente entrega es **2.0B**, complementos de módulos actuales. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). La siguiente entrega es **2.1A: compras y recepción**, con diseño previo según IMP-01. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Fases históricas de DM-01
 
@@ -36,7 +36,7 @@ Orden heredado de DM-01 v0.2:
 
 El ciclo priorizado es existencias iniciales/ajustes → clientes → cotización → venta → cobro/crédito → pedido/entrega → arqueo. DEV-17 documenta su implementación en `feature/logica`, los contratos para `feature/ui`, las pruebas y sus límites. Esto adelanta un recorrido mínimo de operación; no declara completas todas las fases del roadmap. Las interfaces de conteos, proveedores y clientes ya existen en la base común.
 
-La suite SQL nueva pasó en CI Windows junto con regresiones y smoke WPF (DEV-17). Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno están conectados (DEV-19); DEV-26 agrega existencias iniciales y Pedido → POS, y DEV-27 vista previa/impresión. Para cerrar el MVP quedan la validación manual en dos estaciones y la recuperación completa de operaciones inciertas (DEV-15/30). El mantenimiento de códigos de barras y fiscal pendiente conservan UI pendiente. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores requieren incrementos con decisiones explícitas. La segunda etapa de DEV-30 no sustituye la numeración histórica de DM-01.
+La suite SQL nueva pasó en CI Windows junto con regresiones y smoke WPF (DEV-17). Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno están conectados (DEV-19); DEV-26 agrega existencias iniciales y Pedido → POS, y DEV-27 vista previa/impresión. La recuperación completa se implementa en DEV-31; códigos de barras, parámetros y tarjeta manual en DEV-32. Para cerrar la aceptación operativa queda la validación manual en dos estaciones. Fiscal pendiente conserva UI pendiente. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores requieren incrementos con decisiones explícitas. La segunda etapa de DEV-30 no sustituye la numeración histórica de DM-01.
 
 ## Prioridad vigente · Pedidos → Ventas → Entregas
 

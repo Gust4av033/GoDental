@@ -21,6 +21,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 13. `013_Pedidos_MVP.sql`
 14. `014_Codigos_Automaticos.sql`
 15. `015_Resolucion_Operaciones.sql`
+16. `016_Parametros_Comerciales.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -78,3 +79,7 @@ La suite aislada `--run-codes` comprueba concurrencia, colisiones, auditoría, r
 ## Migración 015 · resolución de operaciones
 
 Aplicar después de 014 y actualizar todas las estaciones antes de volver a operar. Agrega EstadoResolucion y HashRecuperacion al ledger sis.OperacionesMvp, conservando recibos confirmados anteriores. Los cierres RECHAZADA_DEFINITIVA usan EntidadId=0 y nunca se devuelven como recibos. Las escrituras actuales consultan el cierre bajo el mismo applock; una versión anterior de la app no conoce ese estado y no debe seguir operando tras la actualización. No agrega tablas/vistas/procedimientos: siguen **76/8/18**. Diseño y pruebas en DEV-31. La herramienta de desarrollo incluye 015; no instala sobre una base no marcada.
+
+## Parámetros comerciales · 016
+
+DEV-32 agrega `RowVersion` a `sis.Configuracion`; conserva las 76 tablas, 8 vistas y 18 procedimientos. Cambia únicamente etiquetas de los tres permisos de descuento para describir sus tramos configurables, conservando códigos y concesiones. Aplicar después de 015 y actualizar todas las estaciones. La pestaña Comercial requiere `AJUSTES.EDITAR`; no ejecutar de nuevo 001–008 sobre una base con datos para actualizarla.

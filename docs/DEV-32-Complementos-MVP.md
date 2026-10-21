@@ -23,3 +23,29 @@ Pruebas SQL aisladas: parámetros fuera de rango, falta/revocación de permiso, 
 ## Apariencia de marca
 
 Se elimina la placa blanca fija en Dark: el fondo del logo sigue `SurfaceBrush` en acceso, menú y Ajustes. Un componente común usa el PNG transparente original; la rotulación se ilumina con una máscara de sus propios píxeles en Dark para conservar contraste, manteniendo el diente/degradado. El PNG compartido con PDF permanece intacto.
+
+## Actualizar la PC de desarrollo
+
+Cerrar GoDental en todas las estaciones. Desde PowerShell en la raíz del repositorio:
+
+```powershell
+git fetch origin
+git switch feature/desarrollo
+git pull --ff-only origin feature/desarrollo
+$servidor = Read-Host 'Servidor SQL guardado en Ajustes de conexión'
+dotnet run --project tests/GoDental.DatabaseTests -c Release -- --install-development --server "$servidor" .
+dotnet build GoDental.sln -c Release
+dotnet run --project src/GoDental.Wpf -c Release
+```
+
+El instalador actualiza exclusivamente `GoDental_Development` con marcador reconocido de desarrollo, conservando datos; ejecuta las migraciones pendientes y debe mostrar `SQL 016_Parametros_Comerciales.sql` y `GoDental_Development lista.`. No usarlo para otra base ni cambiar marcadores para forzarlo. Para una base distinta, seleccionar explícitamente la base correcta en SSMS y aplicar únicamente 016 después de comprobar 015; este entorno no tiene acceso a la instancia de la PC del usuario.
+
+Los parámetros requieren AJUSTES.EDITAR; códigos requieren INVENTARIO.VER y, para cambios, INVENTARIO.PRODUCTOS_GESTIONAR. El flujo conserva el centro de pendientes y nunca descarta un resultado incierto para permitir una segunda operación.
+
+## Resultado verificado
+
+[CI Windows #110 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39678804036), código **`f34b1a3d73b90cb97508b8ec5236b9d5f7a0abc9`**, job `119495564921`: Release con **0 advertencias/errores**, **202 xUnit**, **438 comprobaciones SQL** y **593 WPF**, sin errores de binding. Se consultó el resultado y los logs del job. SQL conserva 399 regresiones y agrega 39 comprobaciones de este bloque. Incluye conflictos, rollback de auditoría, reenvíos, invalidación de cálculo, códigos activos/inactivos y tarjeta/abonos sin duplicar efectivo o saldo.
+
+WPF agrega Comercial en 760×680 y 540×500, códigos y formularios en ambos temas, junto con las regresiones de navegación/cierre real y comprobantes. La CI genera capturas de acceso, menú y Ajustes con el logo adaptable; esto no certifica monitor/DPI ni impresora física. El artefacto de capturas existe en CI, pero su descarga local fue rechazada con HTTP 403 por el entorno; no se declara una inspección visual manual de esas capturas. Se inspeccionó el PNG transparente original y la composición de la vista. Localmente pasaron build Release y `dotnet test GoDental.sln -c Release` (202), con Windows targeting para compilar desde Linux.
+
+**2.0B queda implementado y validado automáticamente.** No se modificó la BD del usuario ni se fusionó `main`. Continúa **2.1A · Compras y recepción**, con diseño de estados/moneda/costos según IMP-01 antes de agregar contratos o pantallas. Etiquetas, series, conciliación bancaria, impresión/DPI físico y el piloto de dos estaciones continúan pendientes.

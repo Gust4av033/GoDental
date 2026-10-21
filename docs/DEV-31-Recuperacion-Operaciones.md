@@ -51,3 +51,5 @@ WPF comprueba la pantalla y su acción de resolución en Light/Dark y tamaño co
 Localmente: Release sin advertencias/errores, 187 xUnit y proceso aislado terminado conservando su ticket en disco. El ajuste final del arnés usa una comprobación específica de la página de recuperación, que no tiene pestañas comerciales. Las modificaciones posteriores a `c3d3445` de esta entrega sólo registran documentación.
 
 El bloque **2.0A queda implementado y validado automáticamente**. No se aplicó 015 en la base del usuario ni se certificó el piloto de dos estaciones. La siguiente entrega es **2.0B: parámetros comerciales consumidos, mantenimiento de códigos de barras y registro manual de tarjeta**, antes de compras/recepciones/importaciones.
+
+La entrega posterior 2.0B se implementa en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. La evidencia de 2.0A anterior se conserva como referencia histórica.

@@ -1,5 +1,11 @@
 # Validación de baseline v0.1
 
+## Complementos MVP · etapa 2.0B · 21/10/2026
+
+[DEV-32](DEV-32-Complementos-MVP.md), código `f34b1a3`, [CI Windows #110 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39678804036): Release sin advertencias/errores, **202 xUnit**, **438 comprobaciones SQL** y **593 WPF**, sin errores de binding. Agrega 39 comprobaciones SQL de parámetros/códigos/tarjeta y las pantallas/formularios en ambos temas. El fondo del logo sigue el tema y su rotulación mantiene contraste en Dark. Localmente pasaron Release y test de solución (202) con Windows targeting.
+
+Requiere **016 después de 015**, actualizando todas las estaciones. No se aplicó en la BD del usuario. La validación WPF y sus capturas son automáticas, sin certificar hardware/DPI físico. DEV-32 detalla los límites. La siguiente entrega del plan es 2.1A, compras y recepciones; etiquetas, series, conciliación y terminal bancaria siguen pendientes.
+
 ## Recuperación de operaciones · etapa 2.0A · 21/10/2026
 
 [DEV-31](DEV-31-Recuperacion-Operaciones.md), código `c3d3445`, [CI Windows #106 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39644476282): Release con 0 advertencias/errores, **187 xUnit**, **399 comprobaciones SQL** y **575 WPF**, sin errores de binding. Incluye 24 comprobaciones SQL de recuperación, procesos terminados antes/después del commit y cierre real con pendiente durable. La pantalla consulta/resuelve sin reenviar automáticamente. Las suites SQL siguen usando bases aisladas del runner.
@@ -12,7 +18,7 @@ Requiere migración **015**, con actualización coordinada de todas las estacion
 
 [CI Windows #98](https://github.com/Gust4av033/GoDental/actions/runs/39637090540) del mismo código: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, sin errores de binding y con Release sin advertencias/errores. SQL usa exclusivamente bases aisladas del runner. El smoke comprueba también salida real de los procesos de acceso y ventana principal.
 
-Las pantallas de existencias iniciales, Pedido → POS y vista previa/impresión están conectadas (DEV-26/27); los estados «UI pendiente» inferiores corresponden a sus entregas históricas. Faltan recuperación terminal y tras reinicio, complementos/módulos señalados en DEV-30 y validación operativa de dos estaciones, respaldos/restauración y hardware. No se confirma instalación de 014 en la PC del usuario ni se declara producción aprobada.
+Las pantallas de existencias iniciales, Pedido → POS y vista previa/impresión están conectadas (DEV-26/27); los estados «UI pendiente» inferiores corresponden a sus entregas históricas. La recuperación se completa después en DEV-31 y los primeros complementos en DEV-32; siguen pendientes los módulos restantes de DEV-30 y la validación operativa de dos estaciones, respaldos/restauración y hardware. No se confirma instalación de 014 en la PC del usuario ni se declara producción aprobada.
 
 ## Códigos automáticos y cierre · 19/10/2026 (El Salvador)
 
