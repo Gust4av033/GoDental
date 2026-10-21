@@ -2,6 +2,12 @@
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
+## Estado actual y siguiente etapa
+
+La revisión del **21/10/2026** en [DEV-30](docs/DEV-30-Revision-Fase-2.md) distingue los recorridos implementados de los complementos y módulos pendientes respecto de DM-01. El núcleo operativo está conectado; compras/recepciones/importaciones, devoluciones, dashboard/reportes y las integraciones conservan trabajo pendiente. La segunda etapa empieza por recuperación de operaciones y complementos del MVP; el orden y criterios de aceptación están en ese documento.
+
+Rama activa: **`feature/desarrollo`**. CI Windows #98 del código `28ffc5f`: Release sin errores/advertencias, **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas. La validación del piloto en dos estaciones, respaldo/restauración y despliegue sigue pendiente.
+
 ## Stack
 
 - .NET 8 + C# 12
@@ -55,7 +61,7 @@ La continuación agrega [conteos físicos](docs/DEV-09-Conteos.md): apertura, ca
 
 También incorpora [proveedores, contactos y referencias comerciales de productos](docs/DEV-10-Proveedores.md), con permisos, control de versiones y auditoría, y [clientes, direcciones, crédito e historiales](docs/DEV-13-Clientes.md).
 
-El [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md) agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013. Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno ya tienen pantallas conectadas en `feature/desarrollo`; [DEV-15](docs/DEV-15-Coordinacion-UI.md) documenta contratos y estado de validación. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
+El [incremento del MVP operativo](docs/DEV-17-MVP-Logica.md), incorporado a `feature/desarrollo`, agrega saldo inicial, códigos, precios/cotizaciones, ventas, caja, abonos, comprobante interno y pedidos/entregas. Requiere 012–013, más 014 para los códigos automáticos. Sus pantallas operativas están conectadas; [DEV-15](docs/DEV-15-Coordinacion-UI.md) identifica los contratos y las funciones que aún no tienen UI, como mantenimiento de códigos de barras y fiscal pendiente. Compras, recepciones, importaciones y otras ampliaciones conservan su trabajo pendiente.
 
 El perfil sin credenciales en `%LOCALAPPDATA%\GoDental\workstation.json` alimenta ahora tanto el diagnóstico como las operaciones. Para este avance se usa Windows integrada sobre SQL local; la cuenta SQL de producción con mínimo privilegio y su almacén protegido sigue pendiente. No se guarda una contraseña SQL en el perfil.
 
@@ -126,7 +132,7 @@ La documentación fuente vive en `docs/` y es la referencia para decisiones func
 
 ## Conteos y proveedores
 
-Las interfaces de conteos físicos y proveedores consumen los servicios existentes: apertura/captura/cierre/cancelación de conteos y fichas/contactos/referencias comerciales de proveedores. [Alcance y validación de DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md). La ejecución visual y la suite SQL de este incremento requieren validación en Windows antes de integrar. El usuario autorizó continuar con Clientes manteniendo pendiente esa validación.
+Las interfaces de conteos físicos y proveedores consumen los servicios existentes: apertura/captura/cierre/cancelación de conteos y fichas/contactos/referencias comerciales. [DEV-12](docs/DEV-12-UI-Conteos-Proveedores.md) conserva la entrega inicial; DEV-25/29 documentan el refinamiento. La validación automatizada Windows/SQL vigente se resume en DEV-30; el recorrido manual entre las estaciones sigue pendiente.
 
 ## Clientes y VS Code
 

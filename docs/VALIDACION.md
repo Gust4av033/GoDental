@@ -1,5 +1,13 @@
 # Validación de baseline v0.1
 
+## Revisión vigente · 21/10/2026
+
+[DEV-30](DEV-30-Revision-Fase-2.md) revisa `feature/desarrollo` en `28ffc5f` contra DM-01 y los documentos funcionales. Compilación Release local con SDK 8.0.426 y Windows targeting: 0 advertencias/errores; **173 xUnit aprobadas**. La consulta NuGet de paquetes directos/transitivos no reportó vulnerabilidades conocidas.
+
+[CI Windows #98](https://github.com/Gust4av033/GoDental/actions/runs/39637090540) del mismo código: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, sin errores de binding y con Release sin advertencias/errores. SQL usa exclusivamente bases aisladas del runner. El smoke comprueba también salida real de los procesos de acceso y ventana principal.
+
+Las pantallas de existencias iniciales, Pedido → POS y vista previa/impresión están conectadas (DEV-26/27); los estados «UI pendiente» inferiores corresponden a sus entregas históricas. Faltan recuperación terminal y tras reinicio, complementos/módulos señalados en DEV-30 y validación operativa de dos estaciones, respaldos/restauración y hardware. No se confirma instalación de 014 en la PC del usuario ni se declara producción aprobada.
+
 ## Códigos automáticos y cierre · 19/10/2026 (El Salvador)
 
 [DEV-20](DEV-20-Codigos-Cierre.md) y [CI Windows #61](https://github.com/Gust4av033/GoDental/actions/runs/39349292934), código `9547d41`: Release sin errores/advertencias, 140 casos xUnit, 347 comprobaciones SQL y 125 WPF correctas. Incluye altas simultáneas, colisiones históricas, rollback y reaplicación de 014, códigos de personal y dos procesos que terminan al cerrar acceso/espacio de trabajo después de limpiar el host. Total SQL vigente: 76 tablas, 8 vistas y 18 procedimientos. No se aplicaron migraciones en el equipo del usuario.

@@ -2,6 +2,8 @@
 
 Los documentos fuente vigentes se organizan por código dentro de este directorio. Los resúmenes Markdown históricos en la raíz de `docs/` se conservan como material de consulta y trazabilidad del repositorio inicial.
 
+Estado funcional vigente, hallazgos y plan de la segunda etapa: [DEV-30 · Revisión del proyecto](DEV-30-Revision-Fase-2.md), 21/10/2026. Consultarlo junto con [ROADMAP](ROADMAP.md) para distinguir resultados históricos de pendientes actuales.
+
 | Código | Documento | Versión |
 |---|---|---:|
 | DM-01 | Documento Maestro | v0.2 |

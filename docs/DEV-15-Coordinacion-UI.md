@@ -2,12 +2,14 @@
 
 Organización vigente: DEV-08. Presentación, contratos y persistencia avanzan en `feature/desarrollo`, separados por capas y commits. `feature/ui` y `feature/logica` son referencias históricas.
 
+Estado global y prioridades del 21/10/2026: [DEV-30](DEV-30-Revision-Fase-2.md). CI Windows #98 sobre `28ffc5f`: 173 xUnit, 374 comprobaciones SQL y 570 WPF correctas. Los resultados siguientes de #44/#50 conservan su contexto histórico.
+
 | Necesidad | Estado | Contrato y verificación |
 | --- | --- | --- |
 | Preparar acceso y detectar primer administrador | conectado | `IIdentityGateway.NeedsAdministratorAsync()`, sin entradas; booleano, sin sesión previa. Revisar conexión, esquema y permisos en Windows; una conexión comprobada no certifica el esquema. |
 | Guardar conexión y reintentar acceso | conectado | Ajustes y acceso comparten configuración; el usuario pulsa Reintentar acceso tras cerrar Ajustes. No se reintentan escrituras automáticamente. |
 | Códigos de maestros y personal | conectado; requiere 014 | Altas nuevas con `Code`/`Sku` vacío; SQL asigna CLI/PRD/PROV/CAJ dentro de la transacción. DTO `UserSummary.EmployeeCode` es consulta. Formularios muestran código automático; no generan números en WPF. Error `CODE_UNAVAILABLE` exige revisar secuencia. Ver DEV-20. |
-| Conteos, proveedores y clientes | conectado | Contratos documentados en DEV-09 a DEV-13; pendiente validación WPF/SQL en Windows del nuevo estilo. |
+| Conteos, proveedores y clientes | conectado; CI Windows correcto | Contratos en DEV-09 a DEV-13; refinamientos DEV-24/25/29. CI #98 verifica SQL/WPF; recorrido manual de dos estaciones aún pendiente. |
 | Saldo inicial | UI conectada; validación en DEV-26 | `InventorySetupService.InitializeAsync(InitialInventory)`. Productos → ficha/inventario → almacén → Existencias iniciales, tras consultar un almacén sin saldo y con permiso de ajuste. Exige ausencia de saldo/historial, costo y motivo; lotes/fechas según producto, Kardex y auditoría. Conserva GUID y recuperación de operación incierta. |
 | Códigos de barras | lógica implementada; mantenimiento UI pendiente | `InventorySetupService.SaveBarcodeAsync(BarcodeChange)`. Permiso de productos existente; exige versión del producto, vacío genera CODE128 interno. La búsqueda por código ya existe. |
 | Caja y arqueo | conectado; CI correcto (DEV-19) | `CashService.BoxesAsync/SaveBoxAsync`, `CurrentAsync/ReadAsync`, `OpenAsync/MoveAsync/CloseAsync`, `MovementsAsync`. Cierre/movimiento exigen `RowVersion` de turno leído. Permisos CAJA.VER y acción ABRIR/CERRAR/MOVIMIENTO; catálogo editable además AJUSTES.EDITAR. |
@@ -28,7 +30,7 @@ Cada solicitud nueva lleva `OperationId` GUID y motivo. Crear el GUID una sola v
 
 `Result<MvpReceipt>` contiene `Id` y `OperationId`. Errores de negocio: `VALIDATION`, `FORBIDDEN`, `INVALID_STATE`, `INSUFFICIENT_STOCK`, `CONCURRENCY_CONFLICT`, `DUPLICATE`. Ante conflicto refrescar y pedir que se revise la información; después crear una solicitud nueva si el usuario confirma una operación distinta. Las consultas pueden lanzar `UnauthorizedAccessException` o `ArgumentException`; errores SQL/transporte desconocidos se diagnostican sin mostrar SQL/credenciales al usuario. Paginación `MvpFilter`: páginas desde 1, tamaño 1–100.
 
-Todos estos contratos están registrados en DI e incorporados a la base de `feature/desarrollo`. Requieren migraciones 012–013. [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837) aprobó Release, 116 casos xUnit, 329 comprobaciones SQL (102 del MVP) y 101 comprobaciones WPF existentes. La suite `--run-mvp` usa una base aislada y no modifica la base del usuario. Las pantallas de las funciones nuevas y su recorrido en dos estaciones siguen pendientes. Detalle de alcance y pruebas en DEV-17; corrección compartida del arnés visual en DEV-18.
+Todos estos contratos están registrados en DI e incorporados a la base de `feature/desarrollo`. Requieren migraciones 012–013; los códigos automáticos requieren además 014. [CI Windows #44](https://github.com/Gust4av033/GoDental/actions/runs/39328112837) aprobó el incremento inicial con 116 casos xUnit, 329 comprobaciones SQL y 101 WPF. La suite `--run-mvp` usa una base aislada y no modifica la base del usuario. Las pantallas operativas se conectaron después en DEV-19/26/27; el recorrido manual en dos estaciones sigue pendiente. DEV-30 resume la validación vigente y los complementos faltantes.
 
 Si vuelve a fallar la preparación del acceso, recoger el tipo de error del registro local sin credenciales y reproducir contra la base de pruebas antes de atribuirlo a lógica.
 

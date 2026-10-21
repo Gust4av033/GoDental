@@ -1,5 +1,17 @@
 # Roadmap y decisiones pendientes
 
+## Estado vigente · revisión del 21/10/2026
+
+[DEV-30 · Revisión funcional y segunda etapa](DEV-30-Revision-Fase-2.md) compara el código `28ffc5f` con DM-01 y los documentos funcionales. Incluye matriz por módulo, hallazgos, pruebas y criterios de salida. La rama activa es **`feature/desarrollo`**; `feature/ui` y `feature/logica` son históricas (DEV-08).
+
+El MVP tiene UI conectada para productos/inventario **con existencias iniciales**, conteos, proveedores, clientes, caja, POS/cotizaciones, crédito/abonos, Pedido → POS/entrega y PDF con vista previa/impresión. El cierre normal de acceso y ventana principal está probado. Esto no completa todos los módulos del Documento Maestro ni certifica el uso productivo.
+
+La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pendientes después de un reinicio; después completa códigos de barras, parámetros y tarjeta manual. Continúa con compras/recepciones/importaciones y su costeo, posventa/cobranza, reportes y piloto entre estaciones. Los criterios y dependencias están en DEV-30. Fiscal/DTE y Online conservan su etapa posterior y sus requisitos externos. Preparar respaldo/restauración y despliegue desde el inicio, con validación antes del piloto.
+
+CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
+
+## Fases históricas de DM-01
+
 Orden heredado de DM-01 v0.2:
 
 1. Revisar dominio y DB-01; cerrar relaciones, restricciones, índices y reglas.
@@ -15,14 +27,14 @@ Orden heredado de DM-01 v0.2:
 ## Avance de lógica · 19/10/2026
 
 - Fases 1–2: baseline, arquitectura, acceso y configuración implementados para desarrollo.
-- Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Los conteos físicos agregan contratos C#/SQL y pruebas en DEV-09; su pantalla queda para el incremento de UI. Inventario inicial definitivo, series, etiquetas y reposición avanzada conservan sus pendientes.
-- Fase 4: proveedores, contactos y referencias comerciales de productos tienen lógica, persistencia y pruebas (DEV-10); UI pendiente. El siguiente bloque es órdenes y recepciones, con sus estados y costeo, antes de ventas. Prorrateo definitivo de importaciones y recepciones con costo incompleto conservan sus decisiones pendientes de IMP-01.
+- Fase 3: catálogo, lotes, saldos, movimientos y seguridad operativos (DEV-03). Conteos agregan contratos/pruebas en DEV-09 y pantalla en DEV-12. Existencias iniciales ya están conectadas (DEV-26). Series, mantenimiento de códigos/etiquetas y reposición avanzada conservan sus pendientes.
+- Fase 4: proveedores, contactos y referencias comerciales tienen lógica/persistencia (DEV-10) e interfaz (DEV-12/29). Órdenes, recepciones e importaciones con costeo siguen pendientes; el MVP de ventas se adelantó como recorrido mínimo. Prorrateo definitivo y recepciones con costo incompleto conservan sus decisiones de IMP-01.
 
 ## Primer MVP operativo · incremento de lógica
 
 El ciclo priorizado es existencias iniciales/ajustes → clientes → cotización → venta → cobro/crédito → pedido/entrega → arqueo. DEV-17 documenta su implementación en `feature/logica`, los contratos para `feature/ui`, las pruebas y sus límites. Esto adelanta un recorrido mínimo de operación; no declara completas todas las fases del roadmap. Las interfaces de conteos, proveedores y clientes ya existen en la base común.
 
-La suite SQL nueva ya pasó en CI Windows, junto con regresiones y smoke WPF (DEV-17). Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno ya están conectados en páginas propias (DEV-19), con CI Windows #50 correcto. Para cerrar el MVP queda la validación manual del recorrido en dos estaciones y la resolución negativa definitiva de operaciones inciertas indicada en DEV-15. Saldo inicial/códigos de barras y fiscal pendiente conservan UI pendiente fuera del bloque solicitado. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores se desarrollarán después con sus decisiones de negocio explícitas. La fase dos solicitada por el usuario es ese segundo ciclo de refinamiento/ampliación; no sustituye la numeración histórica de DM-01.
+La suite SQL nueva pasó en CI Windows junto con regresiones y smoke WPF (DEV-17). Caja, POS/cotizaciones, crédito/abonos, pedidos/entregas y PDF interno están conectados (DEV-19); DEV-26 agrega existencias iniciales y Pedido → POS, y DEV-27 vista previa/impresión. Para cerrar el MVP quedan la validación manual en dos estaciones y la recuperación completa de operaciones inciertas (DEV-15/30). El mantenimiento de códigos de barras y fiscal pendiente conservan UI pendiente. Compras/recepciones/importaciones, reportes avanzados, devoluciones y conectores requieren incrementos con decisiones explícitas. La segunda etapa de DEV-30 no sustituye la numeración histórica de DM-01.
 
 ## Prioridad vigente · Pedidos → Ventas → Entregas
 
@@ -50,6 +62,6 @@ Correcciones de usabilidad autorizadas por separado e implementadas sobre servic
 
 ## Pendientes que no deben darse por resueltos
 
-Prioridad y acumulación de precios/promociones/descuentos; bloqueo por mora y excepciones; prorrateo final de importaciones (por valor es la propuesta inicial); series de productos; terminal de tarjeta; ubicación compartida de evidencias; datos fiscales; DTE; canales Online autorizados; instancia SQL y red; retención y restauración de backups; identidad y plantillas definitivas.
+Bloqueo por mora y excepciones; prorrateo final de importaciones (por valor es la propuesta inicial); series de productos; conciliación del registro manual y terminal de tarjeta; ubicación compartida de evidencias; datos fiscales; DTE; canales Online autorizados; instancia SQL y red; retención y restauración de backups; plantillas restantes. La precedencia y acumulación básica ya están resueltas en VEN-01A; combos y reglas no soportadas siguen como ampliación. La marca del usuario ya se incorporó en DEV-28.
 
-DB-01 sigue en versión 0.1 como borrador. Su revisión precede a la generación del DDL. La creación del repositorio no implica aprobar todas esas decisiones.
+DB-01 v0.1 documenta la baseline de 72 tablas, ya materializada en 001–008. Las ampliaciones aprobadas en DEV-17/20 y 012–014 dejan 76 tablas, 8 vistas y 18 procedimientos. Cada cambio posterior requiere diseño/migración aditiva; tener DDL no implica implementar un módulo ni aprobar decisiones comerciales pendientes.
