@@ -22,6 +22,11 @@ public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IR
 {
     private const string Ink = "#18334D", Blue = "#1474B8", Muted = "#526779", Line = "#DCE5ED", Tint = "#F1F6FA";
     private static readonly CultureInfo Usd = CultureInfo.GetCultureInfo("en-US");
+    private static readonly Lazy<byte[]> Logo = new(() =>
+    {
+        using var stream = typeof(ReceiptPdfRenderer).Assembly.GetManifestResourceStream("GoDental.Branding.Logo.png") ?? throw new InvalidOperationException("Falta el logo del comprobante.");
+        using var bytes = new MemoryStream(); stream.CopyTo(bytes); return bytes.ToArray();
+    });
     private static string Money(decimal value) => value.ToString("$ #,##0.00", Usd);
     public byte[] Render(SaleSnapshot snapshot) => Compose(snapshot).GeneratePdf();
     public ReceiptDocument RenderPreview(SaleSnapshot snapshot)
@@ -49,15 +54,23 @@ public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IR
             {
                 row.RelativeItem(3).Column(c =>
                 {
-                    c.Item().Text(string.IsNullOrWhiteSpace(issuer.IssuerName) ? "GoDental" : issuer.IssuerName).FontSize(25).Bold().FontColor(Blue);
+                    c.Item().Row(brand =>
+                    {
+                        brand.ConstantItem(88).Height(76).Image(Logo.Value).FitArea();
+                        brand.RelativeItem().PaddingLeft(10).AlignMiddle().Column(identity =>
+                        {
+                            identity.Item().Text(string.IsNullOrWhiteSpace(issuer.IssuerName) ? "GoDental" : issuer.IssuerName).FontSize(21).Bold().FontColor(Blue);
+                            Optional(identity, issuer.Phone, "Tel. ");
+                        });
+                    });
                     c.Item().Text("COMPROBANTE DE VENTA Y ENTREGA").FontSize(9).SemiBold().LetterSpacing(.5f);
-                    Optional(c, issuer.Address); Optional(c, issuer.Phone, "Tel. "); Optional(c, issuer.Email);
+                    Optional(c, issuer.Address); Optional(c, issuer.Email);
                 });
                 row.RelativeItem(2).AlignRight().Column(c =>
                 {
                     c.Item().AlignRight().Text("COMPROBANTE INTERNO").FontSize(8).FontColor(Muted);
                     c.Item().AlignRight().Text(sale.Number).FontSize(12).Bold();
-                    c.Item().AlignRight().Text(sale.Date.ToString("dd/MM/yyyy · HH:mm", Usd));
+                    c.Item().AlignRight().Text(sale.Date.ToString("dd/MM/yyyy", Usd));
                     c.Item().PaddingTop(5).AlignRight().Background(Tint).PaddingHorizontal(9).PaddingVertical(4)
                         .Text(sale.Pending == 0 ? "PAGADO" : "SALDO PENDIENTE").SemiBold().FontColor(Blue);
                 });
@@ -95,17 +108,17 @@ public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IR
                     });
                     table.Header(header =>
                     {
-                        foreach (var title in new[] { "PRODUCTO / SKU", "CANT.", "P. NETO", "DESC.", "IMPUESTO", "IMPORTE" })
+                        foreach (var title in new[] { "PRODUCTO", "CANT.", "P. NETO", "DESC.", "IMPUESTO", "IMPORTE" })
                         {
                             var cell = header.Cell().Background(Ink).Padding(7);
-                            (title == "PRODUCTO / SKU" ? cell.AlignLeft() : cell.AlignRight()).Text(title).FontSize(7).SemiBold().FontColor(Colors.White);
+                            (title == "PRODUCTO" ? cell.AlignLeft() : cell.AlignRight()).Text(title).FontSize(7).SemiBold().FontColor(Colors.White);
                         }
                     });
                     foreach (var item in snapshot.Lines)
                     {
                         table.Cell().Element(Cell).Column(product =>
                         {
-                            product.Item().Text(item.Name).SemiBold(); product.Item().Text(item.Sku).FontSize(8).FontColor(Muted);
+                            product.Item().Text(item.Name).SemiBold();
                         });
                         table.Cell().Element(Cell).AlignRight().Text(item.Quantity.ToString("0.####", Usd));
                         table.Cell().Element(Cell).AlignRight().Text(Money(item.UnitPrice)); table.Cell().Element(Cell).AlignRight().Text(Money(item.Discount));

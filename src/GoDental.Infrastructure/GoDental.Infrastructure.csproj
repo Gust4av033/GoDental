@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\branding\GoDentalLogo.png" LogicalName="GoDental.Branding.Logo.png" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\GoDental.Application\GoDental.Application.csproj" />
     <ProjectReference Include="..\GoDental.Domain\GoDental.Domain.csproj" />
   </ItemGroup>

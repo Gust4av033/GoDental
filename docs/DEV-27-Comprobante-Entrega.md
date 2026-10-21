@@ -12,7 +12,9 @@ Ampliación autorizada en `feature/desarrollo`: presentación tipo factura comer
 
 ## Presentación
 
-PDF Carta: encabezado de marca/número/fecha/estado de pago, bloques cliente y entrega, tabla de SKU/producto/cantidad/precio/descuento/impuesto/total, pagos y referencias, efectivo recibido/cambio/saldo, resumen con total destacado, observaciones de recepción y pie con numeración de páginas y advertencia de comprobante interno. No se incluyen firmas digitales, aceptación fiscal ni datos que no estén disponibles. Los importes se toman de la venta confirmada; no se recomponen subtotales ni descuentos históricos.
+PDF Carta: encabezado de marca/número/fecha/estado de pago, bloques cliente y entrega, tabla de producto/cantidad/precio/descuento/impuesto/total, pagos y referencias, efectivo recibido/cambio/saldo, resumen con total destacado, observaciones de recepción y pie con numeración de páginas y advertencia de comprobante interno. No se incluyen firmas digitales, aceptación fiscal ni datos que no estén disponibles. Los importes se toman de la venta confirmada; no se recomponen subtotales ni descuentos históricos.
+
+Refinamiento posterior en [DEV-28](DEV-28-Marca-Acceso-Ajustes.md): logo original adaptado a fondo transparente, sin SKU ni hora impresa; se conserva la fecha de venta. La validación histórica inferior corresponde a la versión anterior con SKU.
 
 Datos proporcionados por el usuario para el emisor: **GoDental · Tel. 7203-7117**. Se configuran en la sección Pdf; dirección/correo se omiten mientras no se proporcionen.
 
