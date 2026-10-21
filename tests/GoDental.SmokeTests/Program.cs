@@ -39,7 +39,7 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace");
+        shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace" or "--shutdown-pending");
         var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls", "Branding" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -144,7 +144,7 @@ internal static class Program
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
             var mvpRepository = new MvpUiRepository();
             var mvpDialogs = new MvpVisualDialogs();
-            var operationService = new MvpOperationService(mvpRepository, session);
+            var operationService = new MvpOperationService(mvpRepository, session, shutdownProbe == "--shutdown-pending" ? new FilePendingOperationStore(temporaryFolder) : null);
             var initialStock = new InitialInventoryViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<InitialInventoryViewModel>.Instance);
             var visualInventory = new VisualInventoryRepository();
             var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock);
@@ -172,7 +172,7 @@ internal static class Program
                 new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations);
             if (shutdownProbe is not null)
             {
-                await StartShutdownProbeAsync(shell, session);
+                await StartShutdownProbeAsync(shell, session, temporaryFolder);
                 return;
             }
             shell.NavigateCommand.Execute(SetupPage.Connection);
@@ -908,10 +908,10 @@ internal static class Program
             await VerifyShutdownProcessesAsync();
             Console.WriteLine($"{passed} comprobaciones correctas.");
         }
-        finally { Directory.Delete(temporaryFolder, recursive: true); }
+        finally { if (shutdownProbe != "--shutdown-pending") Directory.Delete(temporaryFolder, recursive: true); }
     }
 
-    private static async Task StartShutdownProbeAsync(ShellViewModel shell, ISessionController session)
+    private static async Task StartShutdownProbeAsync(ShellViewModel shell, ISessionController session, string temporaryFolder)
     {
         var app = System.Windows.Application.Current;
         var login = new LoginWindow(shell);
@@ -923,13 +923,26 @@ internal static class Program
         app.Exit += (_, _) =>
         {
             shutdownVerified = service.Stopped && service.Disposed && !login.IsVisible && !workspace.IsVisible;
+            if (shutdownProbe == "--shutdown-pending")
+            {
+                var journal = Path.Combine(temporaryFolder, "pending-operations.json");
+                shutdownVerified &= File.Exists(journal) && System.Text.Json.JsonSerializer.Deserialize<List<PendingOperation>>(File.ReadAllText(journal))?.Count == 1;
+                Directory.Delete(temporaryFolder, recursive: true);
+            }
             coordinator.Dispose();
         };
         coordinator.Start();
-        if (shutdownProbe == "--shutdown-workspace")
-            session.Begin(new(1, "probe", "Cuenta de prueba", 1, [], [ProductService.ReadPermission], false));
+        if (shutdownProbe is "--shutdown-workspace" or "--shutdown-pending")
+            session.Begin(new(1, "probe", "Cuenta de prueba", 1, [], [ProductService.ReadPermission], false, "smoke|isolated"));
+        if (shutdownProbe == "--shutdown-pending")
+        {
+            var request = new OpenCashShift(Guid.NewGuid(), 1, 10, "Salida con diario aislado");
+            await shell.Pos.Operation.StartAsync(request, request.OperationId, _ => throw new IOException("Respuesta perdida de prueba"), _ => Task.CompletedTask);
+            if (shell.PendingOperations?.ReloadCommand.ExecutionTask is { } loading) await loading;
+            Check(shell.HasPendingMvp && shell.CanCloseWorkspace, "Un pendiente durable permite cerrar el espacio de trabajo sin perder el diario");
+        }
         await app.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-        var active = shutdownProbe == "--shutdown-workspace" ? (Window)workspace : login;
+        var active = shutdownProbe is "--shutdown-workspace" or "--shutdown-pending" ? (Window)workspace : login;
         Check(active.IsVisible, "La ventana de la prueba de cierre está visible");
         // El seguimiento del coordinador debe resistir un MainWindow obsoleto.
         app.MainWindow = ReferenceEquals(active, workspace) ? login : workspace;
@@ -952,7 +965,7 @@ internal static class Program
 
     private static async Task VerifyShutdownProcessesAsync()
     {
-        foreach (var mode in new[] { "--shutdown-login", "--shutdown-workspace" })
+        foreach (var mode in new[] { "--shutdown-login", "--shutdown-workspace", "--shutdown-pending" })
         {
             var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
             start.ArgumentList.Add(typeof(Program).Assembly.Location);

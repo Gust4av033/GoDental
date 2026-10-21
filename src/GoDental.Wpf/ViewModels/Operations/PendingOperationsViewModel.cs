@@ -13,6 +13,7 @@ public sealed partial class PendingOperationsViewModel : ObservableObject
     private readonly MvpOperationService operations;
     private readonly ISessionController session;
     private readonly ILogger logger;
+    private bool reloadRequested;
     public ObservableCollection<PendingOperation> Items { get; } = [];
     public bool HasAttention => Items.Count > 0 || LoadFailed;
     [ObservableProperty] private PendingOperation? selected;
@@ -23,19 +24,24 @@ public sealed partial class PendingOperationsViewModel : ObservableObject
     {
         this.operations = operations; this.session = session; this.logger = logger;
         Items.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasAttention));
-        session.Changed += (_, _) => { Items.Clear(); Selected = null; LoadFailed = false; if (session.IsAuthenticated) ReloadCommand.Execute(null); };
-        operations.PendingChanged += (_, _) => { if (session.IsAuthenticated && !IsBusy) ReloadCommand.Execute(null); };
+        session.Changed += (_, _) => { Items.Clear(); Selected = null; LoadFailed = false; StatusMessage = ""; if (session.IsAuthenticated) RequestReload(); };
+        operations.PendingChanged += (_, _) => { if (session.IsAuthenticated) RequestReload(); };
     }
+    private void RequestReload() { reloadRequested = true; if (!IsBusy) ReloadCommand.Execute(null); }
     [RelayCommand] private async Task ReloadAsync()
     {
         if (IsBusy || !session.IsAuthenticated) return;
         IsBusy = true; var revision = session.Revision;
         try
         {
-            var rows = await operations.PendingAsync();
-            if (revision != session.Revision) return;
-            Items.Clear(); foreach (var row in rows) Items.Add(row); Selected = Items.FirstOrDefault(); LoadFailed = false;
-            StatusMessage = Items.Count == 0 ? "No hay solicitudes pendientes en esta base para tu cuenta y estación." : "Hay solicitudes guardadas. Consulta el resultado antes de capturar una nueva operación.";
+            do
+            {
+                reloadRequested = false; revision = session.Revision;
+                var rows = await operations.PendingAsync();
+                if (revision != session.Revision) continue;
+                Items.Clear(); foreach (var row in rows) Items.Add(row); Selected = Items.FirstOrDefault(); LoadFailed = false;
+                StatusMessage = Items.Count == 0 ? "No hay solicitudes pendientes en esta base para tu cuenta y estación." : "Hay solicitudes guardadas. Consulta el resultado antes de capturar una nueva operación.";
+            } while (reloadRequested && session.IsAuthenticated);
         }
         catch (Exception ex) { Error(ex, revision); }
         finally { IsBusy = false; }

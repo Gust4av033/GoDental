@@ -122,6 +122,7 @@ public sealed class OperationRecoveryTests : IDisposable
         await vm.ReloadCommand.ExecuteAsync(null); Assert.True(vm.HasAttention); Assert.Equal(saved, vm.Selected);
         repo.FoundReceipt = new(15, saved.Ticket.OperationId); await vm.CheckCommand.ExecuteAsync(null);
         Assert.Empty(vm.Items); Assert.False(vm.HasAttention); Assert.Contains("15", vm.StatusMessage); Assert.Empty(repo.Writes);
+        session.Clear(); Assert.Equal("", vm.StatusMessage); Assert.Null(vm.Selected);
     }
 
     [Fact] public async Task GlobalResolutionReleasesTheOriginalWorkspaceWithoutAnotherSend()
@@ -140,6 +141,15 @@ public sealed class OperationRecoveryTests : IDisposable
         var model = new MvpOperationModel(session, service, NullLogger.Instance); var request = Request(); var refreshes = 0;
         await model.StartAsync(request, request.OperationId, _ => Task.FromResult(Result<MvpReceipt>.Success(new(5, Guid.NewGuid()))), _ => { refreshes++; return Task.CompletedTask; });
         Assert.True(model.HasPending); Assert.Equal(0, refreshes); Assert.Single(await service.PendingAsync());
+    }
+
+    [Fact] public async Task StartupReadInFlightCannotHideANewPendingNotification()
+    {
+        var session = Session(); var store = new SnapshotGateStore(); var service = new MvpOperationService(new MvpUiRepository(), session, store);
+        var screen = new PendingOperationsViewModel(service, session, NullLogger<PendingOperationsViewModel>.Instance);
+        var loading = screen.ReloadCommand.ExecuteAsync(null); await store.Reading.Task;
+        var saved = await service.RememberAsync(Request()); store.Proceed.SetResult(); await loading;
+        Assert.Equal(saved, Assert.Single(screen.Items)); Assert.True(screen.HasAttention);
     }
 
     [Fact] public async Task SessionChangeDuringReceiptCleanupCannotRefreshTheNextUsersWorkspace()
@@ -174,5 +184,21 @@ public sealed class OperationRecoveryTests : IDisposable
         public Task<IReadOnlyList<PendingOperation>> LoadAsync(string scope, long userId, long? workstationId, CancellationToken ct = default) => store.LoadAsync(scope, userId, workstationId, ct);
         public Task<bool> TryAddAsync(PendingOperation pending, CancellationToken ct = default) => store.TryAddAsync(pending, ct);
         public async Task RemoveAsync(PendingOperation pending, CancellationToken ct = default) { Cleaning.SetResult(); await Proceed.Task; await store.RemoveAsync(pending, ct); }
+    }
+
+    private sealed class SnapshotGateStore : IPendingOperationStore
+    {
+        public TaskCompletionSource Reading { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Proceed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly List<PendingOperation> rows = [];
+        private bool first = true;
+        public bool IsDurable => false;
+        public async Task<IReadOnlyList<PendingOperation>> LoadAsync(string scope, long userId, long? workstationId, CancellationToken ct = default)
+        {
+            if (first) { first = false; Reading.SetResult(); await Proceed.Task; return []; }
+            return rows.ToArray();
+        }
+        public Task<bool> TryAddAsync(PendingOperation pending, CancellationToken ct = default) { rows.Add(pending); return Task.FromResult(true); }
+        public Task RemoveAsync(PendingOperation pending, CancellationToken ct = default) { rows.Remove(pending); return Task.CompletedTask; }
     }
 }
