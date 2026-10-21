@@ -91,6 +91,21 @@ public sealed class PurchaseTests
         var r = Assert.IsType<PurchaseReceiptAction>(Assert.Single(repo.Writes)); Assert.True(r.Apply);
         Assert.Equal(repo.Purchase.Order.RowVersion, r.ExpectedOrderVersion); Assert.Equal(repo.PurchaseReceipt.Receipt.RowVersion, r.ExpectedVersion);
     }
+    [Fact] public async Task CommittedChangeRefreshesBothListAndDetailFromServer()
+    {
+        var repo = new MvpUiRepository(); var session = Session("COMPRAS.VER", "COMPRAS.GESTIONAR"); var dialogs = new Dialogs(); var vm = Vm(repo, session, dialogs);
+        await vm.ReloadCommand.ExecuteAsync(null); vm.Selected = vm.Items.Single(); await vm.OpenCommand.ExecuteAsync(null);
+        vm.SelectedReceipt = vm.Detail!.Receipts.Single(); await vm.ReadReceiptCommand.ExecuteAsync(null);
+        var old = vm.Items.Single();
+        dialogs.Action = async f =>
+        {
+            repo.Purchase = new(new() { Id = old.Id, Number = old.Number, State = "RECIBIDA_PARCIAL", RowVersion = old.RowVersion.ToArray() }, repo.Purchase.Lines, repo.Purchase.Receipts);
+            f.Fields.Single(x => x.Key == "reason").Value = "Aplicación"; f.Confirmed = true; await ((IAsyncRelayCommand)f.SaveCommand).ExecuteAsync(null);
+        };
+        await vm.ApplyCommand.ExecuteAsync(null);
+        Assert.NotSame(old, vm.Items.Single()); Assert.Equal("RECIBIDA_PARCIAL", vm.Items.Single().State);
+        Assert.Same(vm.Items.Single(), vm.Detail!.Order);
+    }
     [Fact] public void MultiLotCaptureTotalsCannotExceedPending()
     {
         var repo = new MvpUiRepository(); var draft = new PurchaseReceiptDraftModel(repo.Purchase, [new() { Id = 1, Name = "Almacén" }]);

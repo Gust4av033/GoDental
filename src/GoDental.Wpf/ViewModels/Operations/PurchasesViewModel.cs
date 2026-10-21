@@ -72,8 +72,12 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
     private Task RefreshAsync(long orderId, long? receiptId = null) => ReadAsync(async revision =>
     {
         var result = await service.ReadAsync(orderId); var receipt = receiptId is { } id ? await service.ReceiptAsync(id) : null;
+        var rows = await service.SearchAsync(Search, State == "Todos" ? null : State, new(Page));
         if (!Current(revision)) return;
+        Items.Clear(); foreach (var row in rows.Items) Items.Add(row); Total = rows.Total;
+        Selected = Items.FirstOrDefault(row => row.Id == orderId);
         Detail = result; IsDetailOpen = result is not null; SelectedReceipt = result?.Receipts.FirstOrDefault(r => r.Id == receiptId); ReceiptDetail = receipt;
+        StatusMessage = result is null ? "La orden ya no está disponible." : "Consulta actualizada. Revisa cantidades pendientes y estado antes de preparar otra recepción.";
     });
     [RelayCommand] private Task NewAsync() => EditAsync(null);
     [RelayCommand] private Task EditOrderAsync() => CanEditOrder ? EditAsync(Detail) : Task.CompletedTask;
