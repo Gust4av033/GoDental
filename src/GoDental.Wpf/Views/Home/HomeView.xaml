@@ -1,0 +1,71 @@
+<UserControl x:Class="GoDental.Wpf.Views.Home.HomeView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:nav="clr-namespace:GoDental.Wpf.Navigation">
+  <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Home.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+  <StackPanel>
+    <DockPanel Margin="0,0,0,20">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Top">
+        <Button Content="&#xE72C;" Command="{Binding Home.ReloadCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Actualizar resumen" AutomationProperties.Name="Actualizar resumen de Inicio" Margin="0,0,8,0"/>
+        <Button Content="Ir al POS" Tag="&#xE719;" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Pos}" Style="{StaticResource PrimaryActionButton}" Visibility="{Binding CanOpenPos, Converter={StaticResource BoolToVisibility}}"/>
+      </StackPanel>
+      <StackPanel>
+        <TextBlock Text="{Binding Home.Greeting}" Style="{StaticResource Heading}" FontSize="24"/>
+        <TextBlock Text="{Binding Home.TodayLabel}" Style="{StaticResource MutedText}" FontSize="12"/>
+      </StackPanel>
+    </DockPanel>
+    <DockPanel Margin="0,0,0,12">
+      <TextBlock DockPanel.Dock="Right" Text="{Binding Home.UpdatedLabel}" Style="{StaticResource MutedText}" FontSize="11" Margin="16,0,0,0" VerticalAlignment="Center"/>
+      <TextBlock Text="Resumen general" Style="{StaticResource SectionHeading}" Margin="0"/>
+    </DockPanel>
+    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding Home.IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Actualizando resumen de Inicio"/>
+    <ItemsControl ItemsSource="{Binding Home.Metrics}" ItemTemplate="{StaticResource HomeMetricTemplate}" Margin="0,0,-12,0" AutomationProperties.Name="Indicadores de Inicio">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid><UniformGrid.Columns><MultiBinding Converter="{StaticResource HomeColumns}"><Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/><Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/></MultiBinding></UniformGrid.Columns></UniformGrid></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+    </ItemsControl>
+    <TextBlock Text="{Binding Home.StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,0,0,16" AutomationProperties.LiveSetting="Polite"/>
+    <StackPanel Margin="0,0,0,12">
+      <TextBlock Text="Accesos rápidos" Style="{StaticResource FieldLabel}"/>
+      <WrapPanel>
+        <Button Content="Caja" Tag="&#xE825;" Style="{StaticResource HomeQuickAction}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Cash}" Visibility="{Binding CanOpenCash, Converter={StaticResource BoolToVisibility}}"/>
+        <Button Content="Pedidos" Tag="&#xE7F4;" Style="{StaticResource HomeQuickAction}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Orders}" Visibility="{Binding CanOpenOrders, Converter={StaticResource BoolToVisibility}}"/>
+        <Button Content="Productos" Tag="&#xE7B8;" Style="{StaticResource HomeQuickAction}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Products}" Visibility="{Binding CanOpenProducts, Converter={StaticResource BoolToVisibility}}"/>
+        <Button Content="Clientes" Tag="&#xE77B;" Style="{StaticResource HomeQuickAction}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Customers}" Visibility="{Binding CanOpenCustomers, Converter={StaticResource BoolToVisibility}}"/>
+      </WrapPanel>
+    </StackPanel>
+    <UniformGrid x:Name="ActivityPanels" Margin="0,0,-12,0" Visibility="{Binding Home.CanReadSales, Converter={StaticResource BoolToVisibility}}">
+      <UniformGrid.Columns><MultiBinding Converter="{StaticResource HomeColumns}" ConverterParameter="2"><Binding Path="ActualWidth" ElementName="ActivityPanels"/><Binding Source="2"/></MultiBinding></UniformGrid.Columns>
+      <Border Style="{StaticResource HomePanel}">
+        <StackPanel>
+          <DockPanel Margin="0,0,0,12"><Button DockPanel.Dock="Right" Content="Ver ventas" Style="{StaticResource TextButton}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Sales}" Margin="12,0,0,0"/><StackPanel><TextBlock Text="Ventas recientes" Style="{StaticResource SectionHeading}"/><TextBlock Text="Últimos registros del historial" Style="{StaticResource MutedText}" FontSize="11"/></StackPanel></DockPanel>
+          <Grid>
+            <DataGrid ItemsSource="{Binding Home.RecentSales}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="220" RowHeight="44" SelectionMode="Single" AutomationProperties.Name="Ventas recientes de Inicio">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Venta / Cliente" Width="*" MinWidth="150"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Style="{StaticResource CommerceRowLink}" Command="{Binding DataContext.CommercialHistory.OpenSaleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" ToolTip="Abrir venta" AutomationProperties.Name="{Binding Number}"><StackPanel><TextBlock Text="{Binding Number}" Style="{StaticResource CommerceCell}" FontWeight="SemiBold"/><TextBlock Text="{Binding Converter={StaticResource SaleCustomerName}}" Style="{StaticResource CommerceCell}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/></StackPanel></Button></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat={}{0:dd/MM/yyyy}}" Width="85" ElementStyle="{StaticResource CommerceCell}"/>
+                <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource UsdMoney}}" Width="90" ElementStyle="{StaticResource CommerceNumber}"/>
+                <DataGridTemplateColumn Header="Estado" Width="100"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource CommerceState}" Tag="{Binding State}" HorizontalAlignment="Left" Padding="6,2"><TextBlock Text="{Binding State}" FontSize="10"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+              </DataGrid.Columns>
+            </DataGrid>
+            <ContentControl DataContext="{Binding Home}" Style="{StaticResource CommerceEmpty}" Tag="{Binding RecentSales.Count}" Content="{Binding SalesMessage}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource HomePanel}">
+        <StackPanel>
+          <DockPanel Margin="0,0,0,12"><Button DockPanel.Dock="Right" Content="Ver pedidos" Style="{StaticResource TextButton}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Orders}" Margin="12,0,0,0"/><StackPanel><TextBlock Text="Pedidos recientes" Style="{StaticResource SectionHeading}"/><TextBlock Text="Solicitud y preparación de entregas" Style="{StaticResource MutedText}" FontSize="11"/></StackPanel></DockPanel>
+          <Grid>
+            <DataGrid ItemsSource="{Binding Home.RecentOrders}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="220" RowHeight="44" SelectionMode="Single" AutomationProperties.Name="Pedidos recientes de Inicio">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Pedido / Contacto" Width="*" MinWidth="150"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Style="{StaticResource CommerceRowLink}" Command="{Binding DataContext.OpenHomeOrderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" ToolTip="Abrir pedido" AutomationProperties.Name="{Binding Id, StringFormat='Pedido {0}'}"><StackPanel><TextBlock Text="{Binding Id, StringFormat='Pedido #{0}'}" Style="{StaticResource CommerceCell}" FontWeight="SemiBold"/><TextBlock Text="{Binding Contact}" Style="{StaticResource CommerceCell}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/></StackPanel></Button></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Estado" Width="105"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource CommerceState}" Tag="{Binding State}" HorizontalAlignment="Left"><TextBlock Text="{Binding State}" FontSize="11"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                <DataGridTextColumn Header="Entrega" Binding="{Binding Scheduled, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=—}" Width="85" ElementStyle="{StaticResource CommerceCell}"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <ContentControl DataContext="{Binding Home}" Style="{StaticResource CommerceEmpty}" Tag="{Binding RecentOrders.Count}" Content="{Binding OrdersMessage}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+    </UniformGrid>
+    <Button Content="Configuración del equipo" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}" Style="{StaticResource TextButton}" HorizontalAlignment="Left" Margin="0,4,0,0"/>
+    <Border Style="{StaticResource HomePanel}" Margin="0,4,0,0" Visibility="{Binding HasPendingMvp, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel><TextBlock Text="Hay operaciones por verificar" Style="{StaticResource SectionHeading}"/><TextBlock Text="Consulta las operaciones pendientes antes de repetir un registro." Style="{StaticResource MutedText}" Margin="0,4,0,12"/><Button Content="Ver pendientes" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.PendingOperations}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left"/></StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

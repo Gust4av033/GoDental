@@ -53,3 +53,9 @@ Antes del envío, el diario local durable guarda ticket, fecha, base, usuario y 
 ## Refinamiento con Imagenes · feature/desarrollo
 
 DEV-23 verifica las conexiones vigentes y adapta componentes compartidos, POS/cobro, caja y crédito a las ocho composiciones. No se cambian contratos, reglas, SQL ni recuperación de OperationId. Los estados de conexión se conservan; la edición de parámetros comerciales de DEV-22 sigue pendiente.
+
+## Inicio y analítica · DEV-35
+
+El refinamiento de Inicio usa servicios de catálogo/ventas/pedidos existentes, con conteos globales y hasta cinco registros recientes; consultas independientes de los filtros de otros módulos. No requiere SQL ni contrato nuevo para ese alcance.
+
+Para un dashboard analítico posterior faltan contratos de resumen por período y ámbito (día/mes, almacén/caja), series comparables, ventas confirmadas/anuladas, alertas agregadas por lote/vencimiento y rentabilidad con costo histórico. Deben definir zona horaria/cortes, filtros, permisos de costos, consistencia y fecha de corte; devolver importes e indicadores calculados en servidor. No estimarlos sumando páginas del historial ni interpretar productos activos como unidades disponibles. Estado: pendiente de diseño del bloque 2.3A de DEV-30; DEV-35 no lo declara implementado.

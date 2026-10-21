@@ -169,10 +169,11 @@ internal static class Program
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
             var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance);
             var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
+            var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations, commercialParameters, purchasesMvp);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session, temporaryFolder);
@@ -587,6 +588,33 @@ internal static class Program
                     new() { Id = 4, Sku = "UI-004", Name = "Instrumental de prueba con nombre largo para comprobar el ajuste en la tarjeta", Price = 85, Available = 4 },
                     new() { Id = 5, Sku = "UI-005", Name = "Adhesivo de prueba", Price = 28, Available = 0 }
                 ]);
+                nav.Navigate(SetupPage.Home);
+                await home.ReloadCommand.ExecuteAsync(null);
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"inicio-operacion-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"inicio-operacion-compacto-{theme}.png"));
+                }
+                var recentSale = home.RecentSales.Single();
+                await historyMvp.OpenSaleCommand.ExecuteAsync(recentSale);
+                Check(shell.IsSales && historyMvp.SaleDetail?.Sale.Id == recentSale.Id, "La actividad de Inicio abre la ficha real de venta");
+                nav.Navigate(SetupPage.Home);
+                var recentOrder = home.RecentOrders.Single();
+                await shell.OpenHomeOrderCommand.ExecuteAsync(recentOrder);
+                Check(shell.IsOrders && ordersMvp.Detail?.Order.Id == recentOrder.Id, "La actividad de Inicio abre la ficha real de pedido");
+                nav.Navigate(SetupPage.Home);
+                mvpRepository.PendingSales = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                var homeLoading = home.ReloadCommand.ExecuteAsync(null);
+                Check(home.IsBusy && !home.ReloadCommand.CanExecute(null), "Inicio bloquea otra actualización mientras consulta");
+                await RenderAsync(shell, 1093, 614, Path.Combine(output, "inicio-cargando.png"));
+                mvpRepository.PendingSales.SetResult(new([mvpRepository.Sale.Sale], 1)); await homeLoading; mvpRepository.PendingSales = null;
+                mvpRepository.FailSales = true; await home.ReloadCommand.ExecuteAsync(null);
+                await RenderAsync(shell, 1093, 614, Path.Combine(output, "inicio-error-parcial.png"));
+                mvpRepository.FailSales = false; mvpRepository.EmptyActivity = true; await home.ReloadCommand.ExecuteAsync(null);
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "inicio-sin-actividad.png"));
+                mvpRepository.EmptyActivity = false; await home.ReloadCommand.ExecuteAsync(null);
+                ordersMvp.ReturnToListCommand.Execute(null); historyMvp.ReturnToSalesCommand.Execute(null);
                 var customerName = new GoDental.Wpf.Converters.SaleCustomerNameConverter();
                 var historicalCustomer = new SaleData { CustomerId = 1, CustomerSnapshot = "{\"Name\":\"Cliente histórico de prueba\"}" };
                 Check(customerName.Convert(historicalCustomer, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Cliente histórico de prueba"),
@@ -1297,6 +1325,39 @@ internal static class Program
                     var bounds = edit.TransformToAncestor(root).TransformBounds(new Rect(edit.RenderSize));
                     Check(edit.IsEnabled && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height, $"Parámetros comerciales carga valores y acción visible en {width}×{height}");
                 }
+            }
+            if (root.DataContext is ShellViewModel { IsHome: true } homeShell && homeShell.Access.IsAuthenticated)
+            {
+                var view = FindChildren<GoDental.Wpf.Views.Home.HomeView>(root).Single();
+                var indicators = FindChildren<ItemsControl>(view).Single(control => ReferenceEquals(control.ItemsSource, homeShell.Home.Metrics));
+                var surfaces = FindChildren<Border>(indicators).Where(border => ReferenceEquals(border.Style, view.FindResource("HomeMetricSurface"))).ToArray();
+                Check(surfaces.Length == homeShell.Home.Metrics.Count && surfaces.All(border =>
+                {
+                    var bounds = border.TransformToAncestor(root).TransformBounds(new Rect(border.RenderSize));
+                    return bounds.Left >= 0 && bounds.Right <= width;
+                }), $"Los indicadores autorizados de Inicio caben en {width}×{height}");
+                if (surfaces.Length > 1)
+                    Check(surfaces.Max(border => border.ActualHeight) - surfaces.Min(border => border.ActualHeight) < 1,
+                        "Los indicadores de Inicio mantienen la misma altura");
+                var activity = (System.Windows.Controls.Primitives.UniformGrid)view.FindName("ActivityPanels");
+                if (homeShell.Home.CanReadSales)
+                    Check(activity.Columns == (activity.ActualWidth < 900 ? 1 : 2), $"La actividad de Inicio adapta sus columnas en {width}×{height}");
+                if (homeShell.CanOpenPos)
+                {
+                    var posAction = FindChildren<Button>(view).Single(button => button.Content is "Ir al POS");
+                    var bounds = posAction.TransformToAncestor(root).TransformBounds(new Rect(posAction.RenderSize));
+                    Check(posAction.ActualWidth == 152 && posAction.ActualHeight == 36 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                        $"Ir al POS permanece visible y uniforme en Inicio de {width}×{height}");
+                }
+                var actions = FindChildren<Button>(view).Where(button => ReferenceEquals(button.Style, view.FindResource("HomeQuickAction")) && IsLayoutVisible(button));
+                Check(actions.All(button => button.ActualWidth == 152 && button.ActualHeight == 36), "Los accesos rápidos de Inicio comparten tamaño");
+                var progress = FindChildren<ProgressBar>(view).Single();
+                Check((progress.Visibility == Visibility.Visible) == homeShell.Home.IsBusy, "Inicio refleja el estado real de carga");
+                if (!homeShell.Home.CanReadSales)
+                    Check(activity.Visibility == Visibility.Collapsed && homeShell.Home.RecentSales.Count == 0, "Inicio oculta la actividad comercial sin permiso");
+                if (!homeShell.Home.IsBusy && homeShell.Home.CanReadSales && homeShell.Home.RecentSales.Count == 0)
+                    Check(FindChildren<TextBlock>(view).Any(text => text.Text == homeShell.Home.SalesMessage && IsLayoutVisible(text)),
+                        "Inicio muestra el motivo de una actividad vacía o no disponible");
             }
             if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1093 && height >= 614)
             {

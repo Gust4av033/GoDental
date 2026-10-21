@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/HomeViewModel.cs" Link="Ui/HomeViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/WorkflowViewModel.cs" Link="Ui/WorkflowViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/InventoryCountsViewModel.cs" Link="Ui/InventoryCountsViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/SuppliersViewModel.cs" Link="Ui/SuppliersViewModel.cs" />

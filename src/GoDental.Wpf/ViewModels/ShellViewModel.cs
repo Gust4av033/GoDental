@@ -15,6 +15,7 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool IsPurchases => navigation.CurrentPage == SetupPage.Purchases;
     public bool CanOpenPurchases => Purchases?.CanRead == true;
     public CommercialParametersViewModel? CommercialParameters { get; }
+    public HomeViewModel Home { get; }
     public ConnectionViewModel Connection { get; }
     public PendingOperationsViewModel? PendingOperations { get; }
     public bool IsPendingOperations => navigation.CurrentPage == SetupPage.PendingOperations;
@@ -94,9 +95,10 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => CanCloseWorkspace && Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null, PurchasesViewModel? purchases = null)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, HomeViewModel home, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null, PurchasesViewModel? purchases = null)
     {
         this.navigation = navigation;
+        Home = home;
         Purchases = purchases;
         CommercialParameters = commercialParameters;
         PendingOperations = pendingOperations;
@@ -124,7 +126,9 @@ public sealed partial class ShellViewModel : ObservableObject
             OnPropertyChanged(nameof(CanOpenUsers));
             foreach (var n in new[] { nameof(CanOpenCash), nameof(CanOpenPos), nameof(CanOpenCredit), nameof(CanOpenOrders), nameof(CanOpenSales) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(CanOpenCounts)); OnPropertyChanged(nameof(CanOpenSuppliers)); OnPropertyChanged(nameof(CanOpenCustomers));
+            var wasHome = IsHome;
             navigation.Navigate(session.IsAuthenticated ? SetupPage.Home : SetupPage.Access);
+            if (session.IsAuthenticated && wasHome) Home.ReloadCommand.Execute(null);
             if (session.IsAuthenticated) Products.ReloadCommand.Execute(null);
         };
         navigation.PageChanged += (_, _) =>
@@ -134,6 +138,7 @@ public sealed partial class ShellViewModel : ObservableObject
             OnPropertyChanged(nameof(IsPendingOperations));
             foreach (var n in new[] { nameof(IsCash), nameof(IsPos), nameof(IsCredit), nameof(IsOrders), nameof(IsSales), nameof(IsQuotations) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(IsHome));
+            if (IsHome) Home.ReloadCommand.Execute(null);
             OnPropertyChanged(nameof(IsConnection));
             OnPropertyChanged(nameof(IsAccess)); OnPropertyChanged(nameof(IsProducts));
             OnPropertyChanged(nameof(IsUsers));
@@ -166,6 +171,12 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Counts) Counts.ReloadCommand.Execute(null);
         if (page == SetupPage.Suppliers) Suppliers.ReloadCommand.Execute(null);
         if (page == SetupPage.Customers) Customers.ReloadCommand.Execute(null);
+    }
+    [RelayCommand] private async Task OpenHomeOrderAsync(GoDental.Application.DTOs.OrderData? order)
+    {
+        if (!CanOpenOrders || Orders.IsBusy || order is null) return;
+        await Orders.OpenOrderCommand.ExecuteAsync(order);
+        if (Orders.Detail?.Order.Id == order.Id) navigation.Navigate(SetupPage.Orders);
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
     [RelayCommand] private void OpenSettings() => settingsWindow.Show();

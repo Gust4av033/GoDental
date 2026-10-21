@@ -80,6 +80,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<CommercialParametersViewModel>();
                     services.AddSingleton<PurchasesViewModel>();
                     services.AddSingleton<BarcodesViewModel>();
+                    services.AddSingleton<HomeViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<LoginWindow>();

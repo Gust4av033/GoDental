@@ -39,7 +39,19 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<MvpPage<QuotationData>> QuotationsAsync(MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<QuotationData>(Quotations, Quotations.Count));
     public Task<SaleSnapshot?> ReadReceiptAsync(long id, int userId, CancellationToken ct) => ReceiptReadTask ?? Task.FromResult<SaleSnapshot?>(Sale);
     public Task<SaleSnapshot?> ReadSaleAsync(long id, int userId, CancellationToken ct) => Task.FromResult<SaleSnapshot?>(Sale);
-    public Task<MvpPage<SaleData>> SalesAsync(MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<SaleData>([Sale.Sale], 1));
+    public int SalesReadCount { get; private set; }
+    public int OrdersReadCount { get; private set; }
+    public MvpFilter? LastSalesFilter { get; private set; }
+    public MvpFilter? LastOrdersFilter { get; private set; }
+    public TaskCompletionSource<MvpPage<SaleData>>? PendingSales { get; set; }
+    public bool FailSales { get; set; }
+    public bool EmptyActivity { get; set; }
+    public Task<MvpPage<SaleData>> SalesAsync(MvpFilter filter, int userId, CancellationToken ct)
+    {
+        SalesReadCount++; LastSalesFilter = filter;
+        if (FailSales) throw new IOException("Error controlado de consulta");
+        return PendingSales?.Task ?? Task.FromResult(new MvpPage<SaleData>(EmptyActivity ? [] : [Sale.Sale], EmptyActivity ? 0 : 1));
+    }
     public Task<IReadOnlyList<CashBoxData>> CashBoxesAsync(int userId, CancellationToken ct) => Task.FromResult<IReadOnlyList<CashBoxData>>(Boxes);
     public Task<CashShiftData?> ReadShiftAsync(int boxId, int userId, CancellationToken ct) => Task.FromResult(Shift?.State == "ABIERTO" ? Shift : null);
     public Task<CashShiftData?> ReadShiftByIdAsync(long id, int userId, CancellationToken ct) => Task.FromResult(Shift);
@@ -54,7 +66,11 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<Result<MvpReceipt>> TransitionOrderAsync(OrderTransition request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, Order.Order.Id);
     public Task<Result<MvpReceipt>> LinkSaleAsync(LinkOrderSale request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, Order.Order.Id);
     public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => OrderReadTask ?? Task.FromResult<OrderSnapshot?>(Order);
-    public Task<MvpPage<OrderData>> OrdersAsync(string? state, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderData>([Order.Order], 1));
+    public Task<MvpPage<OrderData>> OrdersAsync(string? state, MvpFilter filter, int userId, CancellationToken ct)
+    {
+        OrdersReadCount++; LastOrdersFilter = filter;
+        return Task.FromResult(new MvpPage<OrderData>(EmptyActivity ? [] : [Order.Order], EmptyActivity ? 0 : 1));
+    }
     public Task<MvpPage<OrderEventData>> OrderEventsAsync(long id, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderEventData>(Order.Events, Order.TotalEvents));
     public Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 1);
     public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 40);

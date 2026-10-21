@@ -184,3 +184,5 @@ Validación de 2.0A: [CI Windows #106](https://github.com/Gust4av033/GoDental/ac
 ## Compras y recepciones · 2.1A
 
 [DEV-33](docs/DEV-33-Compras-Recepciones.md) conecta el menú Compras: OC en borrador, confirmación, recepción parcial/total, aplicación con costo completo, lotes, promedio y Kardex. Requiere 017 después de 016. Una respuesta perdida se recupera por el mismo identificador; no se crea otra recepción. Las importaciones con gastos/prorrateo continúan en 2.1B. [DEV-34](docs/DEV-34-Impresion-Formatos.md) registra la impresión de etiquetas y formatos configurables solicitada: todavía no está disponible y no depende de una impresora ya elegida.
+
+Inicio incorpora un panel operativo con indicadores consultados por servicio, actividad reciente y accesos por permiso: [DEV-35 · Inicio](docs/DEV-35-Inicio-Panel-Operativo.md).
