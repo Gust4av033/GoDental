@@ -39,6 +39,8 @@ try {
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-codes --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-purchases --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-complements --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-recovery --server $SqlServer $repoRoot

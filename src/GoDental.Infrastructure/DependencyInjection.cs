@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddTransient<IFiscalPendingRepository, SqlMvpRepository>();
         services.AddTransient<IMvpOperationRepository, SqlMvpRepository>();
         services.AddTransient<ICommercialParametersRepository, SqlMvpRepository>();
+        services.AddTransient<IPurchaseRepository, SqlMvpRepository>();
         services.AddOptions<ReceiptPdfOptions>().Bind(configuration.GetSection("Pdf"));
         services.AddTransient<IReceiptRenderer, ReceiptPdfRenderer>();
         services.AddTransient<ICategoryRepository, SqlCategoryRepository>();

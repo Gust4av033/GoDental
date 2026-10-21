@@ -73,6 +73,9 @@ jobs:
       - name: Complementos comerciales sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-complements --localdb .
 
+      - name: Compras y recepciones sobre SQL Server aislado
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-purchases --localdb .
+
       - name: Smoke WPF y vistas
         run: dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- TestResults/UiPreviews
 

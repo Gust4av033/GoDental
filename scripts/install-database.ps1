@@ -27,12 +27,13 @@ $scripts = @(
     '013_Pedidos_MVP.sql',
     '014_Codigos_Automaticos.sql',
     '015_Resolucion_Operaciones.sql',
-    '016_Parametros_Comerciales.sql'
+    '016_Parametros_Comerciales.sql',
+    '017_Compras_Recepciones.sql'
 )
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if (-not $sqlcmd) {
-    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-016 manualmente desde SSMS.'
+    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-017 manualmente desde SSMS.'
 }
 
 foreach ($scriptName in $scripts) {
