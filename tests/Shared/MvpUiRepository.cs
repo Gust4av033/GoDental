@@ -4,7 +4,7 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 
 // Synthetic data for tests and visual smoke only; never registered by the app.
-internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository
+internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository, ICommercialParametersRepository
 {
     public List<object> Writes { get; } = [];
     public bool LoseResponse { get; set; }
@@ -17,7 +17,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public List<CashBoxData> Boxes { get; } = [new() { Id = 1, WarehouseId = 1, Code = "PRUEBA", Name = "Caja de prueba", Active = true }];
     public CashShiftData? Shift { get; set; } = new() { Id = 1, CashBoxId = 1, State = "ABIERTO", Opening = 50, Expected = 75, RowVersion = [1,2,3,4,5,6,7,8] };
     public List<CashMovementData> Movements { get; } = [new() { Id = 1, Date = DateTimeOffset.UtcNow, Type = "INGRESO", Amount = 25, Reason = "Movimiento de prueba" }];
-    public List<PaymentMethodData> Methods { get; } = [new() { Id = 1, Code = "EFECTIVO", Name = "Efectivo", AffectsCash = true }, new() { Id = 2, Code = "TRANSFERENCIA", Name = "Transferencia", RequiresReference = true }, new() { Id = 3, Code = "CREDITO", Name = "Crédito" }];
+    public List<PaymentMethodData> Methods { get; } = [new() { Id = 1, Code = "EFECTIVO", Name = "Efectivo", AffectsCash = true }, new() { Id = 2, Code = "TRANSFERENCIA", Name = "Transferencia", RequiresReference = true }, new() { Id = 3, Code = "CREDITO", Name = "Crédito" }, new() { Id = 4, Code = "TARJETA", Name = "Tarjeta", RequiresReference = true }];
     public List<PosProductData> Products { get; } = [new() { Id = 1, Sku = "UI-TEST", Name = "Producto de prueba", Price = 100, Available = 10 }];
     public SaleSnapshot Sale { get; } = new(new() { Id = 1, Number = "PRUEBA-001", State = "CONFIRMADA", Total = 123.45m, CashTendered = 150, Change = 26.55m }, [new() { ProductId = 1, Sku = "UI-TEST", Name = "Producto de prueba", Quantity = 1, UnitPrice = 100, Total = 123.45m }], [new() { MethodId = 1, Method = "Efectivo", Amount = 123.45m }]);
     public List<QuotationData> Quotations { get; } = [];
@@ -57,7 +57,13 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<MvpPage<OrderData>> OrdersAsync(string? state, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderData>([Order.Order], 1));
     public Task<MvpPage<OrderEventData>> OrderEventsAsync(long id, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderEventData>(Order.Events, Order.TotalEvents));
     public Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 1);
-    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct) => throw new NotSupportedException();
+    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 40);
+    public CommercialParameters Parameters { get; set; } = new(7, 35, [1,2,3,4,5,6,7,8], [8,7,6,5,4,3,2,1]);
+    public Task<CommercialParameters>? ParametersTask { get; set; }
+    public Task<CommercialParameters> ReadParametersAsync(int userId, CancellationToken ct) => ParametersTask ?? Task.FromResult(Parameters);
+    public Task<Result<MvpReceipt>> ChangeParametersAsync(ChangeCommercialParameters request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 50);
+    public List<BarcodeData> Barcodes { get; } = [];
+    public Task<ProductBarcodes> ReadBarcodesAsync(int productId, int userId, CancellationToken ct) => Task.FromResult(new ProductBarcodes([1,2,3,4,5,6,7,8], Barcodes));
     public Task<OperationResolution> ResolveOperationAsync(OperationTicket ticket, bool rejectIfAbsent, int userId, int? workstationId, CancellationToken ct) => Task.FromResult(FoundReceipt is not null && FoundReceipt.OperationId == ticket.OperationId ? new OperationResolution(OperationResolutionState.Confirmed, FoundReceipt) : new(rejectIfAbsent ? OperationResolutionState.RejectedDefinitively : OperationResolutionState.Unconfirmed));
     public Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct) => Task.FromResult(FoundReceipt);
 }

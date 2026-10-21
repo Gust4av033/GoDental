@@ -18,15 +18,16 @@ public static class OperationIdentity
     public static bool IsValid(OperationTicket t) => t.OperationId != Guid.Empty && Types.Contains(t.Type)
         && t.RequestHash is { Length: 64 } && t.RequestHash.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F');
 
-    private static readonly HashSet<string> Types = ["CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
+    private static readonly HashSet<string> Types = ["PARAMETROS_COMERCIALES", "CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
 
     private static (Guid, string, object) Normalize(object request) => request switch
     {
+        ChangeCommercialParameters r => (r.OperationId, "PARAMETROS_COMERCIALES", r with { JustificationVersion = r.JustificationVersion.ToArray(), AuthorizationVersion = r.AuthorizationVersion.ToArray(), Reason = r.Reason.Trim() }),
         ConfirmSale r => (r.OperationId, "CONFIRMAR_VENTA", r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim(), Order = r.Order is { } o ? o with { ExpectedVersion = o.ExpectedVersion.ToArray() } : null }),
         SaveQuotation r => (r.OperationId, "EMITIR_COTIZACION", r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }),
         DiscountApproval r => (r.OperationId, "AUTORIZAR_DESCUENTO", r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }),
         InitialInventory r => (r.OperationId, "SALDO_INICIAL", r with { Reason = r.Reason.Trim(), LotNumber = r.LotNumber?.Trim() }),
-        BarcodeChange r => (r.OperationId, "CODIGO_BARRAS", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        BarcodeChange r => (r.OperationId, "CODIGO_BARRAS", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Code = r.Code?.Trim(), Reason = r.Reason.Trim() }),
         CashBoxChange r => (r.OperationId, "GUARDAR_CAJA", r with { Code = r.Code?.Trim() ?? "", Name = r.Name.Trim(), Reason = r.Reason.Trim() }),
         OpenCashShift r => (r.OperationId, "ABRIR_CAJA", r with { Reason = r.Reason.Trim() }),
         CashMovement r => (r.OperationId, "MOVIMIENTO_CAJA", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),

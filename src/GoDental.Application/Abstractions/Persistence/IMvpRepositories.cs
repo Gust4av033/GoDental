@@ -40,6 +40,7 @@ public interface IOrderRepository
 }
 public interface IInventorySetupRepository
 {
+    Task<ProductBarcodes> ReadBarcodesAsync(int productId, int userId, CancellationToken ct);
     Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct);
     Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct);
 }

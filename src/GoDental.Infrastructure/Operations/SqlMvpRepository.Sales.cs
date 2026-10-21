@@ -56,7 +56,7 @@ public sealed partial class SqlMvpRepository
         public decimal Authorization { get; set; }
     }
 
-    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 AND Codigo<>N'TARJETA' ORDER BY Nombre;"), ct);
+    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 ORDER BY Nombre;"), ct);
     public Task<MvpPage<PosProductData>> SearchProductsAsync(int boxId, string search, MvpFilter f, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], async w =>
     {
         var warehouse = await BoxWarehouse(w, boxId);
@@ -220,7 +220,6 @@ public sealed partial class SqlMvpRepository
         foreach (var p in r.Payments)
         {
             var method = await Method(w, p.MethodId);
-            Require(method.Code != "TARJETA", "INVALID_STATE", "El cobro con tarjeta queda pendiente de integración.");
             Require(!method.RequiresReference || !string.IsNullOrWhiteSpace(p.Reference), "VALIDATION", "El método requiere referencia.");
             methods.Add((p, method));
         }

@@ -60,7 +60,7 @@ internal static class MvpIntegration
         var effective = methods.Single(m => m.Code == "EFECTIVO").Id;
         var credit = methods.Single(m => m.Code == "CREDITO").Id;
         var transfer = methods.Single(m => m.Code == "TRANSFERENCIA").Id;
-        Check(methods.All(m => m.Code != "TARJETA"), "No anuncia cobro con tarjeta sin integración");
+        Check(methods.Any(m => m.Code == "TARJETA" && m.RequiresReference && !m.AffectsCash), "Ofrece tarjeta manual con referencia y sin afectar efectivo");
         var type = checked((short)(await customers.CatalogsAsync()).Types.First().Id);
         var createdCustomer = await customers.SaveAsync(new(new() { Code = "MVP-CLIENTE", Name = "Cliente aislado", TypeId = type, Nit = "MVP-NIT", Nrc = "MVP-NRC" }, "Alta cliente"));
         Check(createdCustomer.IsSuccess, "Crea cliente para ventas y entregas"); var customerId = createdCustomer.Value;

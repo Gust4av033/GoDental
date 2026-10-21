@@ -198,8 +198,15 @@ public sealed class OrderService(IOrderRepository repository, IUserSession sessi
 
 public sealed class InventorySetupService(IInventorySetupRepository repository, IUserSession session) : MvpServiceAccess(session)
 {
+    public bool CanReadBarcodes => Has("INVENTARIO.VER");
+    public bool CanManageBarcodes => Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR");
+    public Task<ProductBarcodes> BarcodesAsync(int productId, CancellationToken ct = default)
+    {
+        Read("INVENTARIO.VER"); Id(productId);
+        return repository.ReadBarcodesAsync(productId, UserId, ct);
+    }
     public Task<Result<MvpReceipt>> InitializeAsync(InitialInventory r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.AJUSTAR"), r, () => repository.InitialInventoryAsync(r with { Reason=r.Reason.Trim(), LotNumber=r.LotNumber?.Trim() }, UserId, WorkstationId, ct));
-    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"), r, () => repository.SaveBarcodeAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
+    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"), r, () => repository.SaveBarcodeAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Code = r.Code?.Trim(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
 }
 
 public sealed class FiscalPendingService(IFiscalPendingRepository repository, IUserSession session) : MvpServiceAccess(session)

@@ -100,6 +100,13 @@ public sealed partial class SqlMvpRepository
         Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.ExistenciasProducto WITH(UPDLOCK,HOLDLOCK) WHERE IdProducto=@ProductId AND IdAlmacen=@WarehouseId) OR EXISTS(SELECT 1 FROM inv.MovimientosInventario WITH(HOLDLOCK) WHERE IdProducto=@ProductId AND IdAlmacen=@WarehouseId) THEN 1 ELSE 0 END);", r), "CONCURRENCY_CONFLICT", "Ya existe saldo o historial para ese producto y almacén. Consulta antes de ajustar.");
         return await w.Scalar<long>("EXEC inv.sp_RegistrarAjuste @ProductId=@ProductId,@WarehouseId=@WarehouseId,@Quantity=@Quantity,@UnitCost=@UnitCost,@Type=N'AJUSTE',@Reason=@Reason,@ExpectedVersion=0x,@NewLotNumber=@LotNumber,@Manufactured=@Manufactured,@Expires=@Expires,@UserId=@userId,@WorkstationId=@workstationId;", new { r.ProductId, r.WarehouseId, r.Quantity, r.UnitCost, r.Reason, r.LotNumber, r.Manufactured, r.Expires, userId, workstationId });
     }, ct);
+    public Task<ProductBarcodes> ReadBarcodesAsync(int productId, int userId, CancellationToken ct) => Read(userId, ["INVENTARIO.VER"], async w =>
+    {
+        var version = await w.Scalar<byte[]?>("SELECT RowVersion FROM inv.Productos WITH(HOLDLOCK) WHERE IdProducto=@productId;", new { productId });
+        Require(version is not null, "INVALID_STATE", "El producto ya no está disponible.");
+        var items = await w.List<BarcodeData>("SELECT IdCodigoBarra Id,Codigo Code,Tipo Type,Activo Active,GeneradoInternamente Generated,EsPrincipal [Primary] FROM inv.ProductoCodigosBarra WHERE IdProducto=@productId ORDER BY Activo DESC,EsPrincipal DESC,IdCodigoBarra;", new { productId });
+        return new ProductBarcodes(version!, items);
+    }, ct);
     public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CODIGO_BARRAS", r, userId, workstationId, ["INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"], async w =>
     {
         Check(r);
@@ -108,8 +115,9 @@ public sealed partial class SqlMvpRepository
         var generated = string.IsNullOrWhiteSpace(r.Code);
         Require(!generated || r.Type == "CODE128", "VALIDATION", "El código interno utiliza CODE128.");
         var code = generated ? $"GD{r.ProductId:D10}" : r.Code!.Trim();
-        var existing = await w.Scalar<long?>("SELECT IdCodigoBarra FROM inv.ProductoCodigosBarra WITH(UPDLOCK,HOLDLOCK) WHERE Codigo=@code AND IdProducto=@ProductId;", new { code, r.ProductId });
-        var id = existing ?? await w.Scalar<long>("INSERT INTO inv.ProductoCodigosBarra(IdProducto,Codigo,Tipo,EsPrincipal,GeneradoInternamente,Activo) OUTPUT INSERTED.IdCodigoBarra VALUES(@ProductId,@code,@Type,0,@generated,@Active);", new { r.ProductId, code, r.Type, generated, r.Active });
+        var existing = await w.Maybe<BarcodeData>("SELECT IdCodigoBarra Id,Tipo Type,GeneradoInternamente Generated FROM inv.ProductoCodigosBarra WITH(UPDLOCK,HOLDLOCK) WHERE Codigo=@code AND IdProducto=@ProductId;", new { code, r.ProductId });
+        Require(existing is null || existing.Type == r.Type, "INVALID_STATE", "El tipo de un código existente no se cambia. Actualiza el listado.");
+        var id = existing?.Id ?? await w.Scalar<long>("INSERT INTO inv.ProductoCodigosBarra(IdProducto,Codigo,Tipo,EsPrincipal,GeneradoInternamente,Activo) OUTPUT INSERTED.IdCodigoBarra VALUES(@ProductId,@code,@Type,0,@generated,@Active);", new { r.ProductId, code, r.Type, generated, r.Active });
         if (existing is not null)
             await w.Execute("UPDATE inv.ProductoCodigosBarra SET Activo=@Active WHERE IdCodigoBarra=@id;", new { id, r.Active });
         await w.Execute("UPDATE inv.Productos SET Nombre=Nombre WHERE IdProducto=@ProductId;", r);

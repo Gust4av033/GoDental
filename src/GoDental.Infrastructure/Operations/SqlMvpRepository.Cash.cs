@@ -63,7 +63,8 @@ public sealed partial class SqlMvpRepository
     {
         Check(r);
         var method = await Method(w, r.MethodId);
-        Require(method.Code is not ("CREDITO" or "TARJETA"), "VALIDATION", "El abono requiere un pago real distinto de crédito o tarjeta.");
+        Require(method.Code != "CREDITO", "VALIDATION", "El abono requiere un pago real distinto de crédito.");
+        Require(!method.RequiresReference || !string.IsNullOrWhiteSpace(r.Reference), "VALIDATION", "El método requiere referencia.");
         if (method.AffectsCash)
         {
             Require(r.ShiftId is not null, "VALIDATION", "Selecciona el turno de caja.");
@@ -87,6 +88,7 @@ public sealed partial class SqlMvpRepository
     {
         var m = await w.Maybe<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WITH(HOLDLOCK) WHERE IdMetodoPago=@id AND Activo=1;", new { id });
         Require(m is not null, "VALIDATION", "El método de pago no está disponible.");
-        return m!;
+        Require(m!.Code != "TARJETA" || (!m.AffectsCash && m.RequiresReference), "INVALID_STATE", "Revisa el catálogo: tarjeta manual exige referencia y no afecta efectivo.");
+        return m;
     }
 }
