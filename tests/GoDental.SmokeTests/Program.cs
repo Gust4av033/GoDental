@@ -1341,7 +1341,15 @@ internal static class Program
                         "Los indicadores de Inicio mantienen la misma altura");
                 var activity = (System.Windows.Controls.Primitives.UniformGrid)view.FindName("ActivityPanels");
                 if (homeShell.Home.CanReadSales)
+                {
                     Check(activity.Columns == (activity.ActualWidth < 900 ? 1 : 2), $"La actividad de Inicio adapta sus columnas en {width}×{height}");
+                    if (width >= 1366 && height >= 768 && !homeShell.HasPendingMvp)
+                    {
+                        var bounds = activity.TransformToAncestor(root).TransformBounds(new Rect(activity.RenderSize));
+                        Check(bounds.Bottom <= height - 58,
+                            $"Los paneles completos de Inicio caben en {width}×{height}; borde inferior {bounds.Bottom:0}");
+                    }
+                }
                 if (homeShell.CanOpenPos)
                 {
                     var posAction = FindChildren<Button>(view).Single(button => button.Content is "Ir al POS");
