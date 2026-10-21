@@ -6,12 +6,14 @@
     </Grid.ColumnDefinitions>
     <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="8,14,8,10">
       <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,18">
-          <Border Width="30" Height="30" Background="{DynamicResource PrimaryBrush}" CornerRadius="6" VerticalAlignment="Center">
+        <Grid DockPanel.Dock="Top" Margin="6,0,6,18">
+          <Border Style="{StaticResource BrandPlate}" Height="96" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
+            <Image Source="{StaticResource GoDentalLogo}" Stretch="Uniform" AutomationProperties.Name="GoDental, depósito dental"/>
+          </Border>
+          <Border Width="30" Height="30" Background="{DynamicResource PrimaryBrush}" CornerRadius="6" Visibility="{Binding IsSidebarCompact, Converter={StaticResource BoolToVisibility}}">
             <Image Source="{StaticResource DentalMark}" Width="21" Height="21"/>
           </Border>
-          <TextBlock Text="GoDental" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
-        </StackPanel>
+        </Grid>
         <TextBlock DockPanel.Dock="Bottom" Text="GoDental · v0.3" Foreground="{DynamicResource SidebarMutedBrush}" FontSize="10" Margin="10,12,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
@@ -74,12 +76,6 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
               <TextBlock Text="Mi cuenta" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton ToolTip="Preparación del sistema" AutomationProperties.Name="Preparación del sistema" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPreparation, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Preparation}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
-              <TextBlock Text="Preparación" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
           </RadioButton>
           <RadioButton ToolTip="Ajustes" AutomationProperties.Name="Ajustes" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsConnection, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Connection}">
@@ -170,20 +166,6 @@
                 <TextBlock Text="Tu flujo de inventario" Style="{StaticResource SectionHeading}"/>
                 <TextBlock Text="Registra productos, consulta existencias y revisa el Kardex desde el detalle de cada producto." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
                 <Button Content="Abrir inventario" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Products}" IsEnabled="{Binding CanOpenProducts}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"/>
-              </StackPanel>
-            </Border>
-          </StackPanel>
-          <StackPanel Visibility="{Binding IsPreparation, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Preparación del sistema" Style="{StaticResource Heading}" />
-            <TextBlock Text="El avance actual y los siguientes pasos para comenzar a operar." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
-            <Border Style="{StaticResource Card}">
-              <StackPanel>
-                <TextBlock Text="01    Aplicación de escritorio" Style="{StaticResource SectionHeading}" />
-                <TextBlock Text="Disponible: navegación inicial, temas claro y oscuro, perfil del equipo y comprobación de conexión." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
-                <TextBlock Text="02    Base de datos y seguridad" Style="{StaticResource SectionHeading}" />
-                <TextBlock Text="Disponible: primer administrador, inicio y cierre de sesión, cambio de contraseña, permisos y auditoría. La baseline se probó en una base local separada." Style="{StaticResource MutedText}" Margin="0,0,0,24" />
-                <TextBlock Text="03    Inventario y operación" Style="{StaticResource SectionHeading}" />
-                <TextBlock Text="Disponible: productos, categorías, existencias, conteos, proveedores y clientes; caja, ventas, cotizaciones, crédito y pedidos. Cada operación conserva sus permisos y auditoría." Style="{StaticResource MutedText}" />
               </StackPanel>
             </Border>
           </StackPanel>

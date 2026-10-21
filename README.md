@@ -157,3 +157,5 @@ El refinamiento específico de Clientes reorganiza su listado, ficha y ventanas 
 Productos e Inventario continúan ese patrón en el catálogo, categorías, existencias, lotes, Kardex, movimientos y conteos físicos: [DEV-25 · Productos e Inventario](docs/DEV-25-Productos-Inventario-Refinamiento.md).
 
 Ventas, Caja, Crédito y Pedidos continúan con listados y fichas separados, ventanas de operación y confirmación de venta conectada al comprobante: [DEV-26 · Refinamiento comercial](docs/DEV-26-Ventas-Caja-Refinamiento.md).
+
+El acceso y Ajustes usan la marca original de GoDental y las referencias visuales del proyecto; Preparación deja de aparecer en el menú. El comprobante incluye el logo, sin SKU ni hora: [DEV-28 · Marca, acceso y ajustes](docs/DEV-28-Marca-Acceso-Ajustes.md).

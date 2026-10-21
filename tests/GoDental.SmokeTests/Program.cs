@@ -41,7 +41,7 @@ internal static class Program
     {
         shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace");
         var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls" })
+        foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls", "Branding" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
                 Source = new Uri($"/GoDental;component/Themes/{name}.xaml", UriKind.Relative)
@@ -95,7 +95,7 @@ internal static class Program
             await vm.InitializeAsync();
             Check(vm.IsDark && themes.CurrentTheme == "Dark", "Restaura el tema al iniciar");
             var probe = vm.CheckConnectionCommand.ExecuteAsync(null);
-            Check(vm.IsBusy && !vm.SaveCommand.CanExecute(null) && !vm.CheckConnectionCommand.CanExecute(null), "Bloquea operaciones solapadas durante la comprobación");
+            Check(vm.IsBusy && !vm.CanEditConnection && !vm.SaveCommand.CanExecute(null) && !vm.CheckConnectionCommand.CanExecute(null), "Bloquea operaciones solapadas durante la comprobación");
             fake.Complete(new(true, "Respuesta controlada para prueba"));
             await probe;
             Check(vm.ConnectionStatus == "Conexión comprobada" && !vm.IsBusy, "Refleja una comprobación exitosa sin crear sesión");
@@ -176,6 +176,20 @@ internal static class Program
             }
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
+            nav.Navigate(SetupPage.Home);
+            shell.NavigateCommand.Execute(SetupPage.Preparation);
+            Check(shell.IsConnection && nav.CurrentPage == SetupPage.Connection, "La ruta antigua de Preparación abre Ajustes sin dejar una pantalla vacía");
+            Check(appResource("GoDentalLogo") is BitmapSource { PixelWidth: > 0, PixelHeight: > 0 }, "El logo de GoDental está incluido en el programa sin depender de archivos externos");
+            var protectedSettings = new ConnectionViewModel(store, fake, themes, NullLogger<ConnectionViewModel>.Instance, session);
+            session.Begin(new(99, "ajustes_prueba", "Usuario de prueba", 1, [], [], false));
+            Check(!protectedSettings.CanEditConnection && protectedSettings.ConnectionEditHint.Contains("Cierra sesión", StringComparison.OrdinalIgnoreCase), "Ajustes explica que la conexión queda protegida durante una sesión");
+            var beforeTheme = await store.LoadAsync();
+            await protectedSettings.SetThemeCommand.ExecuteAsync("Dark");
+            Check(protectedSettings.IsDark && (await store.LoadAsync()) == beforeTheme with { Theme = "Dark" }, "Elegir un tema durante la sesión conserva el perfil de conexión");
+            await protectedSettings.SetThemeCommand.ExecuteAsync("Light");
+            Check(!protectedSettings.IsDark && themes.CurrentTheme == "Light", "La tarjeta de tema claro aplica la apariencia al instante");
+            session.Clear();
+            Check(protectedSettings.CanEditConnection, "Cerrar sesión vuelve a habilitar los campos de conexión");
             shell.OpenSettingsCommand.Execute(null);
             Check(settingsHarness.OpenCount == 1, "El acceso puede abrir los ajustes antes de iniciar sesión");
             shell.ToggleSidebarCommand.Execute(null);
@@ -201,7 +215,15 @@ internal static class Program
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-oscuro.png"));
-                await RenderWindowAsync(new SettingsWindow(vm) { Width = 760, Height = 680 }, Path.Combine(output, "ajustes-ventana-oscuro.png"));
+                foreach (var dark in new[] { false, true })
+                {
+                    vm.IsDark = dark;
+                    var themeName = dark ? "oscuro" : "claro";
+                    foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
+                        for (var tab = 0; tab < 2; tab++)
+                            await RenderWindowAsync(new SettingsWindow(vm) { Width = size.Width, Height = size.Height },
+                                Path.Combine(output, $"ajustes-{themeName}-{size.Width}-pestana-{tab}.png"), tab);
+                }
                 shell.IsSidebarCompact = true;
                 await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
                 shell.IsSidebarCompact = false;
@@ -1095,7 +1117,7 @@ internal static class Program
     private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
         RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);
 
-    private static async Task RenderWindowAsync(Window window, string path)
+    private static async Task RenderWindowAsync(Window window, string path, int? settingsTab = null)
     {
         var width = window.Width;
         var height = window.Height;
@@ -1115,6 +1137,34 @@ internal static class Program
             root.Measure(new Size(width, height));
             root.Arrange(new Rect(0, 0, width, height));
             root.UpdateLayout();
+            if (settingsTab is not null)
+            {
+                FindChildren<TabControl>(root).Single().SelectedIndex = settingsTab.Value;
+                root.UpdateLayout();
+            }
+            if (window is LoginWindow)
+            {
+                Check(FindChildren<Image>(root).Any(image => image.Source is BitmapSource { PixelWidth: > 0 }), $"El acceso muestra el logo en {width}×{height}");
+                var submit = FindChildren<Button>(root).Single(button => button.IsDefault);
+                var bounds = submit.TransformToAncestor(root).TransformBounds(new Rect(submit.RenderSize));
+                Check(submit.ActualHeight == 44 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción de acceso admite Enter y cabe en {width}×{height}");
+            }
+            if (window is SettingsWindow)
+            {
+                var tabs = FindChildren<TabControl>(root).Single();
+                if (tabs.SelectedIndex == 0)
+                {
+                    var save = FindChildren<Button>(root).Single(button => button.Content is string text && text == "Guardar conexión");
+                    var bounds = save.TransformToAncestor(root).TransformBounds(new Rect(save.RenderSize));
+                    Check(save.ActualWidth == 152 && save.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width,
+                        $"Guardar conexión conserva su tamaño y cabe en Ajustes de {width}×{height}");
+                    Check(!FindChildren<Expander>(root).Single().IsExpanded, "Las opciones de desarrollo empiezan contraídas");
+                }
+                else
+                    Check(FindChildren<Button>(root).Count(button => button.CommandParameter is "Light" or "Dark" && button.ActualWidth == 180) == 2,
+                        $"Apariencia muestra las dos opciones de tema en {width}×{height}");
+            }
             if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1093 && height >= 614)
             {
                 var pos = ((ShellViewModel)root.DataContext).Pos;

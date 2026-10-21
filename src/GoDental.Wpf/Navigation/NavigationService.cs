@@ -17,6 +17,7 @@ public sealed partial class NavigationService : ObservableObject, INavigationSer
     public event EventHandler? PageChanged;
     public void Navigate(SetupPage page)
     {
+        if (page == SetupPage.Preparation) page = SetupPage.Connection;
         if (CurrentPage == page) return;
         CurrentPage = page;
         PageChanged?.Invoke(this, EventArgs.Empty);

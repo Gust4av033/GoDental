@@ -65,7 +65,6 @@ public sealed partial class ShellViewModel : ObservableObject
         SetupPage.Orders => "Pedidos / Entregas",
         SetupPage.Sales => "Ventas / Comprobantes internos",
         SetupPage.Quotations => "Ventas / Cotizaciones",
-        SetupPage.Preparation => "Preparación del sistema",
         SetupPage.Connection => "Ajustes",
         SetupPage.Access => "Mi cuenta",
         SetupPage.Products => "Inventario / Productos",
@@ -76,7 +75,6 @@ public sealed partial class ShellViewModel : ObservableObject
         _ => "Inicio"
     };
     public bool IsHome => navigation.CurrentPage == SetupPage.Home;
-    public bool IsPreparation => navigation.CurrentPage == SetupPage.Preparation;
     public bool IsConnection => navigation.CurrentPage == SetupPage.Connection;
     public bool IsAccess => navigation.CurrentPage == SetupPage.Access;
     public bool IsProducts => navigation.CurrentPage == SetupPage.Products;
@@ -118,7 +116,6 @@ public sealed partial class ShellViewModel : ObservableObject
             OnPropertyChanged(nameof(PageTitle));
             foreach (var n in new[] { nameof(IsCash), nameof(IsPos), nameof(IsCredit), nameof(IsOrders), nameof(IsSales), nameof(IsQuotations) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(IsHome));
-            OnPropertyChanged(nameof(IsPreparation));
             OnPropertyChanged(nameof(IsConnection));
             OnPropertyChanged(nameof(IsAccess)); OnPropertyChanged(nameof(IsProducts));
             OnPropertyChanged(nameof(IsUsers));
