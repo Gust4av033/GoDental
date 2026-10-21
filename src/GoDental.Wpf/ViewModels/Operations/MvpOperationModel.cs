@@ -37,7 +37,7 @@ public sealed partial class MvpOperationModel : ObservableObject
         operations.Recovered += (_, recovered) =>
         {
             if (!IsBusy && HasPending && pending == recovered.Pending && revision == session.Revision)
-                _ = ApplyRecoveredAsync(recovered.Resolution);
+                _ = ApplyExternalResolutionAsync(recovered.Resolution);
         };
     }
     public async Task StartAsync<T>(T request, Guid id, Func<T, Task<Result<MvpReceipt>>> sender, Func<MvpReceipt, Task> onSuccess) where T : notnull
@@ -72,6 +72,13 @@ public sealed partial class MvpOperationModel : ObservableObject
             var result = await operations.ResolveAsync(pending, rejectIfAbsent);
             if (started == session.Revision) await ApplyRecoveredAsync(result);
         }
+        catch (Exception ex) { Unknown(ex, started); }
+        finally { IsBusy = false; }
+    }
+    private async Task ApplyExternalResolutionAsync(OperationResolution result)
+    {
+        IsBusy = true; var started = revision;
+        try { await ApplyRecoveredAsync(result); }
         catch (Exception ex) { Unknown(ex, started); }
         finally { IsBusy = false; }
     }
@@ -129,12 +136,12 @@ public sealed partial class MvpOperationModel : ObservableObject
         StatusMessage = $"Operación confirmada · Registro {receipt.Id}.";
         if (!acknowledged && saved is not null)
         {
-            try { await operations.AcknowledgeAsync(saved, new(OperationResolutionState.Confirmed, receipt)); }
-            catch (Exception ex) { logger.LogWarning("Limpieza de diario pendiente: {ErrorType}", ex.GetType().Name); StatusMessage += " Falta limpiar el registro local; abre Operaciones pendientes."; }
+            try { await operations.AcknowledgeConfirmedAsync(saved, receipt); }
+            catch (Exception ex) { logger.LogWarning("Limpieza de diario pendiente: {ErrorType}", ex.GetType().Name); if (started == session.Revision) StatusMessage += " Falta limpiar el registro local; abre Operaciones pendientes."; }
         }
         if (started != session.Revision) return;
         try { Committed?.Invoke(this, EventArgs.Empty); if (refresh is not null) await refresh(receipt); }
-        catch (Exception ex) { logger.LogWarning("Falló recarga MVP: {ErrorType}", ex.GetType().Name); StatusMessage += " No se pudo actualizar la consulta; pulsa Actualizar."; }
+        catch (Exception ex) { logger.LogWarning("Falló recarga MVP: {ErrorType}", ex.GetType().Name); if (started == session.Revision) StatusMessage += " No se pudo actualizar la consulta; pulsa Actualizar."; }
     }
     private void Unknown(Exception ex, long started)
     {

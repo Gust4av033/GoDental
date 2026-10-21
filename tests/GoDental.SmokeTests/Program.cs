@@ -659,7 +659,28 @@ internal static class Program
                             ordersMvp.Selected = null; await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
                             await File.WriteAllBytesAsync(Path.Combine(output, $"comprobante-interno-{theme}.pdf"), document.Pdf);
                         }
-                        if (page == SetupPage.Pos)
+                        if (page == SetupPage.PendingOperations)
+                        {
+                            var recoveryRequest = new OpenCashShift(Guid.NewGuid(), 1, 10, "Preparación visual aislada");
+                            var writesBeforeRecovery = mvpRepository.Writes.Count;
+                            await operationService.RememberAsync(recoveryRequest);
+                            await pendingOperations.ReloadCommand.ExecuteAsync(null);
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"operaciones-pendientes-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"operaciones-pendientes-compacto-{theme}.png"));
+                            var recoveryWindow = new MainWindow(shell) { Width = 1093, Height = 614, ShowActivated = false };
+                            var recoveryRoot = (FrameworkElement)recoveryWindow.Content;
+                            recoveryRoot.Measure(new Size(1093,614)); recoveryRoot.Arrange(new Rect(0,0,1093,614)); recoveryRoot.UpdateLayout();
+                            var recoveryView = FindChildren<PendingOperationsView>(recoveryRoot).Single();
+                            var resolveButton = FindChildren<Button>(recoveryView).Single(button => button.Content is string label && label == "Resolver y liberar");
+                            Check(shell.IsPendingOperations && pendingOperations.Items.Single().Ticket.OperationId == recoveryRequest.OperationId
+                                && ReferenceEquals(resolveButton.Command, pendingOperations.ResolveAndReleaseCommand) && IsLayoutVisible(resolveButton),
+                                "La pantalla de recuperación muestra el ticket y conecta su resolución visible en tamaño compacto");
+                            await ((IAsyncRelayCommand)resolveButton.Command).ExecuteAsync(null);
+                            Check(pendingOperations.Items.Count == 0 && !pendingOperations.HasAttention && mvpRepository.Writes.Count == writesBeforeRecovery,
+                                "Resolver pendiente sin confirmar libera el diario sin otro cobro ni escritura comercial");
+                            recoveryWindow.Close();
+                        }
+                        else if (page == SetupPage.Pos)
                         {
                             var cartWindow = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
                             var cartRoot = (FrameworkElement)cartWindow.Content;

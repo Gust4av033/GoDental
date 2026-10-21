@@ -20,6 +20,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 12. `012_MVP_Operativo.sql`
 13. `013_Pedidos_MVP.sql`
 14. `014_Codigos_Automaticos.sql`
+15. `015_Resolucion_Operaciones.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 

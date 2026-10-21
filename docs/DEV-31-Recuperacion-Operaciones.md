@@ -18,7 +18,7 @@ El reenvío consulta el registro después de validar identidad activa y adquirir
 
 Infrastructure guarda un diario en LocalApplicationData/GoDental, con reemplazo atómico, flush a disco y exclusión entre procesos. Reservar una operación comprueba y escribe bajo el mismo lock: sólo una solicitud pendiente por base/usuario/equipo en este perfil. Si falla la persistencia no se envía. Error o corrupción del diario bloquea nuevas escrituras MVP y se informa; no se borra ni reemplaza silenciosamente. Scope/usuario/equipo diferentes no se mezclan. No hay una operación que borre pendientes sin comprobar un resultado terminal en SQL.
 
-La eliminación local ocurre sólo tras confirmación, rechazo definitivo o rechazo conocido del envío que terminó, antes de liberar la captura. Ante fallo al limpiar se conserva el pendiente para reconciliar. Al cambiar de sesión se limpia la presentación, no el diario anterior. Respuestas tardías no se aplican a otra sesión. El diario productivo es durable; las pruebas pueden usar implementación volátil aislada.
+La eliminación local ocurre sólo tras confirmación o rechazo definitivo serializado en SQL, antes de liberar la captura. Un rechazo conocido del envío se cierra también bajo el bloqueo antes de limpiar el diario. Ante fallo al limpiar se conserva el pendiente para reconciliar. Al cambiar de sesión se limpia la presentación, no el diario anterior. Respuestas tardías no se aplican a otra sesión. El diario productivo es durable; las pruebas pueden usar implementación volátil aislada.
 
 ## UI
 

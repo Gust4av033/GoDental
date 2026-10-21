@@ -51,11 +51,14 @@ public sealed class MvpOperationService(IMvpOperationRepository repository, IUse
         // Recheck after IO: another user must not consume a previous session's result.
         Own(pending);
         if (result.State is OperationResolutionState.Confirmed or OperationResolutionState.RejectedDefinitively)
-            await AcknowledgeAsync(pending, result, ct);
+            await ForgetTerminalAsync(pending, result, ct);
         return result;
     }
 
-    public async Task AcknowledgeAsync(PendingOperation pending, OperationResolution terminal, CancellationToken ct = default)
+    public Task AcknowledgeConfirmedAsync(PendingOperation pending, MvpReceipt receipt, CancellationToken ct = default) =>
+        ForgetTerminalAsync(pending, new(OperationResolutionState.Confirmed, receipt), ct);
+
+    private async Task ForgetTerminalAsync(PendingOperation pending, OperationResolution terminal, CancellationToken ct)
     {
         if (terminal.State is not (OperationResolutionState.Confirmed or OperationResolutionState.RejectedDefinitively)
             || terminal.State == OperationResolutionState.Confirmed && (terminal.Receipt is null || terminal.Receipt.OperationId != pending.Ticket.OperationId || terminal.Receipt.Id <= 0))

@@ -134,6 +134,14 @@ public sealed class OperationRecoveryTests : IDisposable
         Assert.True(operation.CanStart); Assert.Equal("OPERATION_REJECTED", operation.LastErrorCode); Assert.Equal(1, sends);
     }
 
+    [Fact] public async Task AReceiptForAnotherGuidCannotReleaseTheOriginalJournal()
+    {
+        var session = Session(); var service = new MvpOperationService(new MvpUiRepository(), session, new FilePendingOperationStore(folder));
+        var model = new MvpOperationModel(session, service, NullLogger.Instance); var request = Request(); var refreshes = 0;
+        await model.StartAsync(request, request.OperationId, _ => Task.FromResult(Result<MvpReceipt>.Success(new(5, Guid.NewGuid()))), _ => { refreshes++; return Task.CompletedTask; });
+        Assert.True(model.HasPending); Assert.Equal(0, refreshes); Assert.Single(await service.PendingAsync());
+    }
+
     [Fact] public async Task SessionChangeDuringReceiptCleanupCannotRefreshTheNextUsersWorkspace()
     {
         var session = Session(); var store = new GatedCleanup(new FilePendingOperationStore(folder));
