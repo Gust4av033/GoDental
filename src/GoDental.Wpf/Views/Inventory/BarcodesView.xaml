@@ -17,6 +17,20 @@
         <DataGridCheckBoxColumn Header="Interno" Binding="{Binding Generated}" Width="65"/>
       </DataGrid.Columns>
     </DataGrid>
+    <TextBlock Text="Etiquetas imprimibles" Style="{StaticResource SectionHeading}" Margin="0,16,0,0"/>
+    <TextBlock Text="Selecciona un código activo. OTRO necesita una simbología definida. Las barras se muestran al generar la vista previa." Style="{StaticResource MutedText}" Margin="0,4,0,8"/>
+    <WrapPanel IsEnabled="{Binding IsNotBusy}">
+      <StackPanel Width="140" Margin="0,0,8,8"><TextBlock Text="Etiqueta" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding PrintSettings.Presets}" SelectedItem="{Binding PrintSettings.Preset}" AutomationProperties.Name="Tamaño de etiqueta"/></StackPanel>
+      <StackPanel Width="110" Margin="0,0,8,8"><TextBlock Text="Papel" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding PrintSettings.Papers}" SelectedItem="{Binding PrintSettings.Paper}" AutomationProperties.Name="Papel de etiquetas"/></StackPanel>
+      <StackPanel Width="90" Margin="0,0,8,8"><TextBlock Text="Ancho (mm)" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Width, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Ancho de etiqueta en milímetros"/></StackPanel>
+      <StackPanel Width="90" Margin="0,0,8,8"><TextBlock Text="Alto (mm)" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Height, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Alto de etiqueta en milímetros"/></StackPanel>
+      <StackPanel Width="75" Margin="0,0,8,8"><TextBlock Text="Copias" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Copies, UpdateSourceTrigger=PropertyChanged}" MaxLength="3" AutomationProperties.Name="Cantidad de etiquetas"/></StackPanel>
+      <StackPanel Width="100" Margin="0,0,8,8"><TextBlock Text="Margen hoja (mm)" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Margin, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Margen de hoja de etiquetas"/></StackPanel>
+      <StackPanel Width="100" Margin="0,0,8,8"><TextBlock Text="Separación (mm)" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Gap, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Separación entre etiquetas"/></StackPanel>
+    </WrapPanel>
+    <TextBlock Text="Etiqueta: una por página, sin papel fijo. Carta/A4: columnas automáticas según medidas, margen y separación. No se reduce el código para hacerlo caber." Style="{StaticResource MutedText}" Margin="0,0,0,8"/>
+    <Button Content="Ver etiquetas" Command="{Binding PreviewReceiptCommand}" IsEnabled="{Binding CanPreview}" Style="{StaticResource PrimaryActionButton}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+    <operations:ReceiptPreviewView Visibility="{Binding IsReceiptPreviewOpen, Converter={StaticResource BoolToVisibility}}"/>
     <operations:OperationStatusView DataContext="{Binding Operation}"/>
   </StackPanel>
 </UserControl>

@@ -66,6 +66,27 @@ public sealed class ComplementsTests
         Assert.False(request.Active); Assert.Equal("GD0000000001", request.Code); Assert.Equal(new byte[] {1,2,3,4,5,6,7,8}, request.ExpectedVersion);
         session.Clear(); Assert.Empty(vm.Items); Assert.False(vm.CanManage);
     }
+    [Fact] public async Task LabelPreviewInvalidatesChangedSizeAndSessionWithoutBusinessWrites()
+    {
+        var repo = new MvpUiRepository(); repo.Barcodes.Add(new() { Id = 4, Code = "GD0000000001", Type = "CODE128", Active = true });
+        var session = Session("INVENTARIO.VER"); var files = new LabelFiles();
+        var renderer = new GoDental.Infrastructure.Operations.BarcodeLabelPdfRenderer(Microsoft.Extensions.Options.Options.Create(new GoDental.Infrastructure.Operations.ReceiptPdfOptions()));
+        var vm = new BarcodesViewModel(new(repo, session), new Dialogs(), session, new(repo, session), NullLogger<BarcodesViewModel>.Instance,
+            new BarcodeLabelService(repo, renderer, session), files, files);
+        await vm.OpenAsync(new() { Id = 1, Sku = "PRD", Name = "Ejemplo" }); vm.Selected = vm.Items.Single();
+        await vm.PreviewReceiptCommand.ExecuteAsync(null); Assert.True(vm.CanUsePreview); var doc = vm.ReceiptPreview!;
+        await vm.ExportCommand.ExecuteAsync(null); await vm.PrintReceiptCommand.ExecuteAsync(null);
+        Assert.Same(doc.Pdf, files.Bytes); Assert.Same(doc, files.Document);
+        vm.PrintSettings.Width = "60"; Assert.False(vm.CanUsePreview); files.Bytes = null; files.Document = null;
+        await vm.ExportCommand.ExecuteAsync(null); await vm.PrintReceiptCommand.ExecuteAsync(null); Assert.Null(files.Bytes); Assert.Null(files.Document);
+        session.Clear(); Assert.Null(vm.ReceiptPreview); Assert.Empty(repo.Writes);
+    }
+    private sealed class LabelFiles : IPdfFileService, IPdfPrintService
+    {
+        public byte[]? Bytes; public ReceiptDocument? Document;
+        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) { Bytes = pdf; return Task.FromResult(true); }
+        public Task<bool> PrintAsync(ReceiptDocument document, string name) { Document = document; return Task.FromResult(true); }
+    }
     [Fact] public void CardCheckoutRequiresReferenceAndKeepsManualNotice()
     {
         var repo = new MvpUiRepository(); var vm = new CheckoutModel(repo.QuoteFactory(new(1, null, [new(1, 1)])), repo.Methods);

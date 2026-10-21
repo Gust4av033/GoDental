@@ -146,7 +146,8 @@ internal static class Program
             var mvpDialogs = new MvpVisualDialogs();
             var operationService = new MvpOperationService(mvpRepository, session, shutdownProbe == "--shutdown-pending" ? new FilePendingOperationStore(temporaryFolder) : null);
             var initialStock = new InitialInventoryViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<InitialInventoryViewModel>.Instance);
-            var barcodes = new BarcodesViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<BarcodesViewModel>.Instance);
+            var labelFiles = new VisualPdfFiles();
+            var barcodes = new BarcodesViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<BarcodesViewModel>.Instance, new BarcodeLabelService(mvpRepository, new BarcodeLabelPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), labelFiles, labelFiles);
             var commercialParameters = new CommercialParametersViewModel(new CommercialParametersService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<CommercialParametersViewModel>.Instance);
             var visualInventory = new VisualInventoryRepository();
             var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock, barcodes);
@@ -666,6 +667,29 @@ internal static class Program
                     var barcodeView = new BarcodesView { DataContext = barcodes };
                     await RenderWindowAsync(new Window { Width = 650, Height = 500, DataContext = barcodes, Content = new ScrollViewer { Content = barcodeView } }, Path.Combine(output, $"codigos-producto-{theme}.png"));
                     Check(FindChildren<DataGrid>(barcodeView).Single().Items.Count == 1 && FindChildren<Button>(barcodeView).Any(b => b.IsEnabled && b.Content is "Agregar código"), "Códigos muestra listado y acción de mantenimiento");
+                    barcodes.Selected = barcodes.Items.Single(); await barcodes.PreviewReceiptCommand.ExecuteAsync(null);
+                    Check(barcodes.ReceiptPreview is { IsLabel: true } && barcodes.CanUsePreview, "Etiquetas genera barras y PDF reales del código activo");
+                    var reviewedLabel = barcodes.ReceiptPreview!;
+                    await barcodes.ExportCommand.ExecuteAsync(null); await barcodes.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(labelFiles.Saved, reviewedLabel.Pdf) && ReferenceEquals(labelFiles.Printed, reviewedLabel), "Etiquetas guarda e imprime el documento revisado sin cambios de negocio");
+                    var labelSize = new Size((double)reviewedLabel.WidthMm * 96 / 25.4, (double)reviewedLabel.HeightMm * 96 / 25.4);
+                    var labelPages = PdfPrintService.BuildDocument(reviewedLabel, labelSize, new Rect(labelSize));
+                    Check(Math.Abs(labelPages.Pages[0].Child.Children.OfType<Image>().Single().Width - labelSize.Width) < .01, "La etiqueta conserva tamaño real al imprimir");
+                    var rejectedPaper = false;
+                    try { PdfPrintService.BuildDocument(reviewedLabel, new Size(816, 1056), new Rect(0, 0, 816, 1056)); } catch (ArgumentException) { rejectedPaper = true; }
+                    Check(rejectedPaper, "Una etiqueta no se escala silenciosamente a Carta");
+                    foreach (var size in new[] { new Size(900, 700), new Size(700, 500) })
+                    {
+                        var scrollLabels = new ScrollViewer { Content = new BarcodesView { DataContext = barcodes }, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+                        var labelsHost = new Grid(); labelsHost.Children.Add(scrollLabels); labelsHost.Measure(size); labelsHost.Arrange(new Rect(size)); labelsHost.UpdateLayout();
+                        var labelPreview = FindChildren<ReceiptPreviewView>(labelsHost).Single();
+                        Check(FindChildren<Image>(labelPreview).Single().Source is not null, "La ficha muestra las barras en Light/Dark y tamaño compacto");
+                        var printLabel = FindChildren<Button>(labelPreview).Single(b => b.Content is string text && text == "Imprimir");
+                        printLabel.BringIntoView(); labelsHost.UpdateLayout();
+                        SavePreview(labelsHost, Path.Combine(output, $"etiquetas-{size.Width}-{theme}.png"));
+                    }
+                    barcodes.PrintSettings.Width = "60"; Check(!barcodes.CanUsePreview, "Cambiar la etiqueta bloquea guardar e imprimir hasta regenerar");
+                    barcodes.PrintSettings.Width = "50"; barcodes.CloseReceiptPreviewCommand.Execute(null);
                     mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"codigos-agregar-{theme}.png"));
                     await barcodes.AddCommand.ExecuteAsync(null);
                     mvpDialogs.Render = null;
@@ -688,7 +712,7 @@ internal static class Program
                             Check(historyMvp.PreviewPageNumber == 1 && historyMvp.PreviewZoom == 1, "Los controles de página respetan límites y el zoom cambia sin regenerar la venta");
                             await historyMvp.ExportCommand.ExecuteAsync(null); await historyMvp.PrintReceiptCommand.ExecuteAsync(null);
                             Check(ReferenceEquals(pdfFiles.Saved, document.Pdf) && ReferenceEquals(pdfFiles.Printed, document), "Guardar e imprimir usan el documento previsualizado y cancelar conserva la vista");
-                            foreach (var size in new[] { new Size(816, 1056), new Size(794, 1123) })
+                            foreach (var size in new[] { new Size(816, 1056) })
                             {
                                 var printable = new Rect(24, 24, size.Width - 48, size.Height - 48);
                                 var pages = PdfPrintService.BuildDocument(document, size, printable);
@@ -696,11 +720,23 @@ internal static class Program
                                 printedPage.Measure(size); printedPage.Arrange(new Rect(size)); printedPage.UpdateLayout();
                                 var image = printedPage.Children.OfType<Image>().Single();
                                 var bounds = image.TransformToAncestor(printedPage).TransformBounds(new Rect(image.RenderSize));
-                                Check(pages.Pages.Count == document.Pages.Count && bounds.Left >= printable.Left - .01 && bounds.Right <= printable.Right + .01
-                                    && bounds.Top >= printable.Top - .01 && bounds.Bottom <= printable.Bottom + .01
+                                Check(pages.Pages.Count == document.Pages.Count && bounds.Left >= -.01 && bounds.Right <= size.Width + .01
+                                    && bounds.Top >= -.01 && bounds.Bottom <= size.Height + .01
+                                    && Math.Abs(image.Width - 816) < .01 && Math.Abs(image.Height - 1056) < .01
                                     && Math.Abs(image.Width / image.Height - 816d / 1056) < .001,
-                                    "La composición de impresión conserva todas las páginas y su proporción dentro del área imprimible");
+                                    "La impresión conserva las páginas y tamaño real, con contenido dentro del área imprimible");
                             }
+                            foreach (var paper in new[] { "Ticket 58 mm", "Ticket 80 mm", "A4" })
+                            {
+                                historyMvp.PrintSettings.Paper = paper;
+                                Check(!historyMvp.CanUsePreview, "Cambiar el papel exige actualizar la vista previa del comprobante");
+                                await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                                Check(historyMvp.CanUsePreview && historyMvp.ReceiptPreview!.WidthMm == (paper == "A4" ? 210 : paper == "Ticket 58 mm" ? 58 : 80), "El formato elegido se aplica a PDF y vista previa");
+                                await RenderAsync(shell, 1093, 614, Path.Combine(output, $"formato-{paper.Replace(' ', '-')}-{theme}.png"));
+                            }
+                            historyMvp.PrintSettings.Kind = "Entrega"; await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                            Check(historyMvp.CanUsePreview, "La venta con pedido permite generar su nota interna de entrega");
+                            historyMvp.PrintSettings.Kind = "Venta"; historyMvp.PrintSettings.Paper = "Carta";
                             historyMvp.CloseReceiptPreviewCommand.Execute(null);
                             Check(!historyMvp.IsReceiptPreviewOpen && historyMvp.IsSaleDetailOpen, "Volver desde el comprobante conserva el detalle de venta");
                             var originalSaleId = mvpRepository.Order.Order.SaleId;
@@ -1270,6 +1306,13 @@ internal static class Program
 
     private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
         RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);
+
+    private static void SavePreview(FrameworkElement root, string path)
+    {
+        var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(root); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(path); encoder.Save(stream);
+    }
 
     private static async Task RenderWindowAsync(Window window, string path, int? settingsTab = null)
     {

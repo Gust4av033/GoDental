@@ -12,15 +12,16 @@
     <KeyBinding Key="S" Modifiers="Control" Command="{Binding ExportCommand}"/>
   </UserControl.InputBindings>
   <StackPanel>
-    <DockPanel Margin="0,0,0,12">
-      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-        <Button Content="Guardar PDF" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
-        <Button Content="Imprimir" Command="{Binding PrintReceiptCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource PrimaryActionButton}"/>
-      </StackPanel>
-      <Button Content="Volver a la venta" Command="{Binding CloseReceiptPreviewCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource TextButton}" HorizontalAlignment="Left"/>
-    </DockPanel>
-    <TextBlock Text="Vista previa del comprobante" Style="{StaticResource Heading}"/>
-    <TextBlock Text="{Binding SaleDetail.Sale.Number}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+    <WrapPanel Margin="0,0,0,12">
+      <WrapPanel>
+        <Button Content="Actualizar vista" Command="{Binding PreviewReceiptCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
+        <Button Content="Guardar PDF" Command="{Binding ExportCommand}" IsEnabled="{Binding CanUsePreview}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
+        <Button Content="Imprimir" Command="{Binding PrintReceiptCommand}" IsEnabled="{Binding CanUsePreview}" Style="{StaticResource PrimaryActionButton}"/>
+      </WrapPanel>
+      <Button Content="Cerrar vista previa" Command="{Binding CloseReceiptPreviewCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource TextButton}" HorizontalAlignment="Left"/>
+    </WrapPanel>
+    <TextBlock Text="Vista previa de impresión" Style="{StaticResource Heading}"/>
+    <TextBlock Text="{Binding PreviewCaption}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
     <DockPanel Margin="0,0,0,12" IsEnabled="{Binding IsNotBusy}">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
         <Button Content="−" Command="{Binding ZoomOutCommand}" Style="{StaticResource PaginationButton}" ToolTip="Reducir zoom" AutomationProperties.Name="Reducir zoom"/>

@@ -389,6 +389,17 @@ public sealed class MvpUiTests
         c.Session.Begin(new(1, "lector", "Lector", 1, [], ["VENTAS.VER"], false));
         await history.PreviewSaleCommand.ExecuteAsync(1L); Assert.Null(history.ReceiptPreview); Assert.Empty(c.Repository.Writes);
     }
+    [Fact] public async Task ChangedReceiptFormatMustBeReviewedBeforeSavingOrPrinting()
+    {
+        var c = new Context(); var files = new TestPdfFiles();
+        var history = new CommercialHistoryViewModel(c.Sales, new SaleReceiptService(c.Repository, new GoDental.Infrastructure.Operations.ReceiptPdfRenderer(Microsoft.Extensions.Options.Options.Create(new GoDental.Infrastructure.Operations.ReceiptPdfOptions())), c.Session), files, files, c.PosVm(), new NavigationService(), c.Session, c.Operations, NullLogger<CommercialHistoryViewModel>.Instance);
+        await history.ReloadSalesCommand.ExecuteAsync(null); history.SelectedSale = history.Sales.Single(); await history.ReadSaleCommand.ExecuteAsync(null);
+        await history.PreviewReceiptCommand.ExecuteAsync(null); Assert.True(history.CanUsePreview);
+        history.PrintSettings.Paper = "Ticket 58 mm"; Assert.False(history.CanUsePreview);
+        await history.ExportCommand.ExecuteAsync(null); await history.PrintReceiptCommand.ExecuteAsync(null); Assert.Null(files.Bytes); Assert.Null(files.Printed);
+        await history.PreviewReceiptCommand.ExecuteAsync(null); Assert.True(history.CanUsePreview); Assert.Equal(58, history.ReceiptPreview!.WidthMm);
+        Assert.InRange(history.PreviewWidth, 164, 165); Assert.Empty(c.Repository.Writes);
+    }
     public class PdfPort : DispatchProxy
     {
         protected override object? Invoke(MethodInfo? method, object?[]? args)

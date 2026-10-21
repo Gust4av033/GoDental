@@ -48,6 +48,7 @@ public partial class App : System.Windows.Application
                 {
                     services.AddApplication();
                     services.AddInfrastructure(context.Configuration);
+                    services.AddSingleton<IPrintPreferencesStore>(new LocalPrintPreferencesStore(Path.Combine(localFolder, "printing.json")));
                     services.AddSingleton<IWorkstationSettingsStore>(new LocalWorkstationSettingsStore(Path.Combine(localFolder, "workstation.json")));
                     services.AddSingleton<GoDental.Application.Abstractions.Persistence.IPendingOperationStore>(new FilePendingOperationStore(localFolder));
                     services.AddSingleton<System.Windows.Application>(this);
