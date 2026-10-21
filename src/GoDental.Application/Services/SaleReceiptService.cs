@@ -5,8 +5,10 @@ using GoDental.Application.DTOs;
 namespace GoDental.Application.Services;
 public sealed class SaleReceiptService(ISalesRepository repository, IReceiptRenderer renderer, IUserSession session) : MvpServiceAccess(session)
 {
-    public Task<byte[]> ExportAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, renderer.Render, ct);
-    public Task<ReceiptDocument> PreviewAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, renderer.RenderPreview, ct);
+    public Task<byte[]> ExportAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, sale => renderer.Render(sale), ct);
+    public Task<ReceiptDocument> PreviewAsync(long saleId, CancellationToken ct = default) => GenerateAsync(saleId, sale => renderer.RenderPreview(sale), ct);
+    public Task<ReceiptDocument> PreviewAsync(long saleId, PrintLayout layout, ReceiptKind kind, CancellationToken ct = default)
+        => GenerateAsync(saleId, sale => renderer.RenderPreview(sale, layout, kind), ct);
     private async Task<T> GenerateAsync<T>(long saleId, Func<SaleSnapshot, T> render, CancellationToken ct)
     {
         Read("VENTAS.VER", "VENTAS.REIMPRIMIR");

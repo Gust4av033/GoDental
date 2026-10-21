@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddTransient<IPurchaseRepository, SqlMvpRepository>();
         services.AddOptions<ReceiptPdfOptions>().Bind(configuration.GetSection("Pdf"));
         services.AddTransient<IReceiptRenderer, ReceiptPdfRenderer>();
+        services.AddTransient<IBarcodeLabelRenderer, BarcodeLabelPdfRenderer>();
         services.AddTransient<ICategoryRepository, SqlCategoryRepository>();
         services.AddTransient<IUserRepository, SqlUserRepository>();
         services.AddTransient<IConnectionHealthCheck, SqlConnectionHealthCheck>();

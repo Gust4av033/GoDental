@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddTransient<FiscalPendingService>();
         services.AddSingleton<MvpOperationService>();
         services.AddTransient<SaleReceiptService>();
+        services.AddTransient<BarcodeLabelService>();
         services.AddTransient<CategoryService>();
         services.AddTransient<UserManagementService>();
         return services;

@@ -18,7 +18,7 @@ public sealed class ReceiptPdfOptions
     public string? Email { get; set; }
 }
 
-public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IReceiptRenderer
+public sealed partial class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IReceiptRenderer
 {
     private const string Ink = "#18334D", Blue = "#1474B8", Muted = "#526779", Line = "#DCE5ED", Tint = "#F1F6FA";
     private static readonly CultureInfo Usd = CultureInfo.GetCultureInfo("en-US");
@@ -28,18 +28,29 @@ public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IR
         using var bytes = new MemoryStream(); stream.CopyTo(bytes); return bytes.ToArray();
     });
     private static string Money(decimal value) => value.ToString("$ #,##0.00", Usd);
-    public byte[] Render(SaleSnapshot snapshot) => Compose(snapshot).GeneratePdf();
-    public ReceiptDocument RenderPreview(SaleSnapshot snapshot)
+    public byte[] Render(SaleSnapshot snapshot, PrintLayout? layout = null, ReceiptKind kind = ReceiptKind.Sale) => WithLayoutError(() => Compose(snapshot, layout ?? PrintLayout.Letter, kind).GeneratePdf());
+    public ReceiptDocument RenderPreview(SaleSnapshot snapshot, PrintLayout? layout = null, ReceiptKind kind = ReceiptKind.Sale)
     {
-        var document = Compose(snapshot);
-        return new(document.GeneratePdf(), document.GenerateImages(new ImageGenerationSettings { RasterDpi = 300 }).ToArray());
+        layout ??= PrintLayout.Letter;
+        var document = Compose(snapshot, layout, kind);
+        return WithLayoutError(() => new ReceiptDocument(document.GeneratePdf(), document.GenerateImages(new ImageGenerationSettings { RasterDpi = 300 }).ToArray(), layout.WidthMm, layout.HeightMm, layout.MarginMm));
     }
 
-    private IDocument Compose(SaleSnapshot snapshot)
+    private static T WithLayoutError<T>(Func<T> generate)
+    {
+        try { return generate(); }
+        catch (QuestPDF.Drawing.Exceptions.DocumentLayoutException)
+        { throw new ArgumentException("El contenido no cabe con estas medidas. Aumenta el alto/ancho o reduce el margen y actualiza la vista previa."); }
+    }
+    private IDocument Compose(SaleSnapshot snapshot, PrintLayout layout, ReceiptKind kind)
     {
         if (!Enum.TryParse<LicenseType>(options.Value.License, true, out var license) || !Enum.IsDefined(license))
             throw new InvalidOperationException("Configura Pdf:License para generar comprobantes.");
         QuestPDF.Settings.License = license;
+        layout.Validate(narrow: layout.WidthMm < 140);
+        if (!Enum.IsDefined(kind)) throw new ArgumentException("Tipo de documento no válido.");
+        if (kind == ReceiptKind.Delivery && snapshot.Delivery is null) throw new ArgumentException("La nota de entrega requiere una venta con pedido asociado.");
+        if (kind == ReceiptKind.Delivery || layout.WidthMm < 140) return ComposeCompact(snapshot, layout, kind);
         var sale = snapshot.Sale;
         var customer = CustomerFields(sale.CustomerSnapshot);
         string Field(string key) => customer.GetValueOrDefault(key) ?? "";
@@ -48,7 +59,7 @@ public sealed class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> options) : IR
         var issuer = options.Value;
         return Document.Create(document => document.Page(page =>
         {
-            page.Size(PageSizes.Letter); page.Margin(32);
+            page.Size((float)layout.WidthMm, (float)layout.HeightMm, Unit.Millimetre); page.Margin((float)layout.MarginMm, Unit.Millimetre);
             page.DefaultTextStyle(t => t.FontSize(9).FontColor(Ink));
             page.Header().PaddingBottom(16).BorderBottom(2).BorderColor(Blue).PaddingBottom(12).Row(row =>
             {
