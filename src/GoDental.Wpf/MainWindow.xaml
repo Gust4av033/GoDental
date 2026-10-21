@@ -65,6 +65,7 @@
           <RadioButton ToolTip="Ventas y PDF" AutomationProperties.Name="Ventas y PDF" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenSales, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsSales, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Sales}">
             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Ventas y PDF" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
           </RadioButton>
+          <RadioButton ToolTip="Compras y recepciones" AutomationProperties.Name="Compras y recepciones" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenPurchases, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsPurchases, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Purchases}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Compras" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
           <TextBlock Text="SISTEMA" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
           <RadioButton ToolTip="Operaciones pendientes" AutomationProperties.Name="Operaciones pendientes" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPendingOperations, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.PendingOperations}">
             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Pendientes" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
@@ -120,6 +121,7 @@
       <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="{StaticResource CardRadius}" Margin="12,4,12,8" Padding="{StaticResource ShellPagePadding}">
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid x:Name="PageHost" Margin="{StaticResource PagePadding}">
+          <operations:PurchasesView DataContext="{Binding Purchases}" Visibility="{Binding DataContext.IsPurchases, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:PendingOperationsView DataContext="{Binding PendingOperations}" Visibility="{Binding DataContext.IsPendingOperations, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <StackPanel Visibility="{Binding IsHome, Converter={StaticResource BoolToVisibility}}">
             <DockPanel Margin="0,0,0,22">

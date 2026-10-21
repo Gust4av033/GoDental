@@ -78,6 +78,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<CommercialHistoryViewModel>();
                     services.AddSingleton<PendingOperationsViewModel>();
                     services.AddSingleton<CommercialParametersViewModel>();
+                    services.AddSingleton<PurchasesViewModel>();
                     services.AddSingleton<BarcodesViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();

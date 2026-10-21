@@ -10,6 +10,8 @@
       <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:CheckoutModel}">
         <local:CheckoutView/>
       </DataTemplate>
+      <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:PurchaseOrderDraftModel}"><local:PurchaseOrderDraftView/></DataTemplate>
+      <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:PurchaseReceiptDraftModel}"><local:PurchaseReceiptDraftView/></DataTemplate>
       <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:OrderDraftModel}">
         <local:OrderDraftView/>
       </DataTemplate>

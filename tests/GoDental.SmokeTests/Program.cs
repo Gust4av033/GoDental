@@ -167,11 +167,12 @@ internal static class Program
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var pdfFiles = new VisualPdfFiles();
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
+            var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance);
             var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations, commercialParameters);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations, commercialParameters, purchasesMvp);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session, temporaryFolder);
@@ -579,7 +580,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -611,6 +612,25 @@ internal static class Program
                 foreach (var theme in new[] { "Light", "Dark" })
                 {
                     themes.Apply(theme);
+                    await purchasesMvp.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Purchases);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"compras-listado-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"compras-listado-compacto-{theme}.png"));
+                    purchasesMvp.Selected = purchasesMvp.Items.Single(); await purchasesMvp.OpenCommand.ExecuteAsync(null);
+                    purchasesMvp.SelectedReceipt = purchasesMvp.Detail!.Receipts.Single(); await purchasesMvp.ReadReceiptCommand.ExecuteAsync(null);
+                    Check(shell.CanOpenPurchases && purchasesMvp.CanPrepare && purchasesMvp.CanActOnReceipt, "Compras abre orden, pendiente y recepción con acciones autorizadas");
+                    await RenderCommerceTabsAsync(shell, typeof(PurchasesView), "Compras", theme, output, 1093, 614);
+                    mvpDialogs.Render = async form =>
+                    {
+                        if (form.Body is PurchaseOrderDraftModel purchaseDraft) await purchaseDraft.SearchCommand.ExecuteAsync(null);
+                        var view = new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form, view, Path.Combine(output, $"compras-formulario-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
+                    };
+                    await purchasesMvp.NewCommand.ExecuteAsync(null);
+                    await purchasesMvp.TransitionCommand.ExecuteAsync(null);
+                    await purchasesMvp.PrepareCommand.ExecuteAsync(null);
+                    await purchasesMvp.ApplyCommand.ExecuteAsync(null);
+                    await purchasesMvp.CancelReceiptCommand.ExecuteAsync(null);
+                    mvpDialogs.Render = null;
                     foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
                         await RenderWindowAsync(new SettingsWindow(vm, commercialParameters) { Width = size.Width, Height = size.Height }, Path.Combine(output, $"ajustes-comercial-{theme}-{size.Width}.png"), 2);
                     mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"parametros-editar-{theme}.png"));
