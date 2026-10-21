@@ -182,7 +182,7 @@ public sealed partial class SqlMvpRepository
         var percent = quote.Lines.Max(l => l.EffectiveDiscountPercent);
         Require(percent > quote.AuthorizationThreshold, "VALIDATION", "Ese descuento no necesita autorización administrativa.");
         return await w.Scalar<long>("INSERT INTO sis.AutorizacionesOperacion(TipoOperacion,EntidadTipo,SolicitadoPor,AutorizadoPor,PorcentajeValor,Motivo,FechaAutorizacion,Resultado,TokenCalculoMvp) OUTPUT INSERTED.IdAutorizacion VALUES(N'DESCUENTO_MAYOR_35',N'CARRITO_MVP',@userId,@administratorId,@percent,@Reason,SYSDATETIMEOFFSET(),N'APROBADA',@QuoteToken);", new { userId, administratorId, percent = decimal.Ceiling(percent * 10000) / 10000, r.Reason, r.QuoteToken });
-    }, ct);
+    }, ct, GoDental.Application.Common.OperationIdentity.Describe(r));
     private static async Task ConsumeDiscount(Work w, SaleQuote quote, long? authorizationId, int userId, string entity, long id)
     {
         if (quote.Lines.Max(l => l.EffectiveDiscountPercent) <= quote.AuthorizationThreshold) return;

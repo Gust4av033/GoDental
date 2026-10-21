@@ -20,7 +20,7 @@ public static class DependencyInjection
         services.AddTransient<OrderService>();
         services.AddTransient<InventorySetupService>();
         services.AddTransient<FiscalPendingService>();
-        services.AddTransient<MvpOperationService>();
+        services.AddSingleton<MvpOperationService>();
         services.AddTransient<SaleReceiptService>();
         services.AddTransient<CategoryService>();
         services.AddTransient<UserManagementService>();

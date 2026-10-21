@@ -90,6 +90,7 @@ La herramienta limita el destino a una base local de desarrollo marcada. Nunca i
 012_MVP_Operativo.sql
 013_Pedidos_MVP.sql
 014_Codigos_Automaticos.sql
+015_Resolucion_Operaciones.sql
 ```
 
 La baseline define 72 tablas, datos iniciales controlados, 8 vistas y 12 procedimientos almacenados. Las migraciones 010 y 011 elevan el total a 17 procedimientos; 012–013 añaden cuatro tablas de operaciones/pedidos (76 en total). No crea un usuario Administrador con contraseña por defecto y no utiliza triggers.
@@ -167,3 +168,7 @@ Ventas, Caja, Crédito y Pedidos continúan con listados y fichas separados, ven
 El acceso y Ajustes usan la marca original de GoDental y las referencias visuales del proyecto; Preparación deja de aparecer en el menú. El comprobante incluye el logo, sin SKU ni hora: [DEV-28 · Marca, acceso y ajustes](docs/DEV-28-Marca-Acceso-Ajustes.md).
 
 Proveedores actualiza listado, ficha, contactos y productos relacionados; la revisión también refina Usuarios y sus ventanas de administración: [DEV-29 · Proveedores y revisión de UI](docs/DEV-29-Proveedores-Usuarios-Refinamiento.md).
+
+## Recuperación de operaciones · segunda etapa
+
+[DEV-31](docs/DEV-31-Recuperacion-Operaciones.md) implementa el primer bloque de la segunda etapa: diario local antes de enviar, consulta al reiniciar y cierre definitivo bajo el mismo bloqueo SQL que la escritura. **Operaciones pendientes** permite recuperar un resultado o resolver y liberar sin volver a cobrar automáticamente. Requiere **015** además de las migraciones anteriores. El diario no guarda contraseñas ni el contenido comercial; tras reiniciar se consulta/cierra la solicitud y se revisa el módulo antes de una nueva captura. No se han aplicado migraciones en la PC del usuario desde este entorno.

@@ -1,0 +1,41 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using GoDental.Application.DTOs;
+using GoDental.Application.Validators;
+
+namespace GoDental.Application.Common;
+
+public static class OperationIdentity
+{
+    public static OperationTicket Describe(object request)
+    {
+        var (id, type, normalized) = Normalize(request);
+        if (id == Guid.Empty) throw new ArgumentException("Identificador vacío.");
+        return new(id, type, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(normalized)))));
+    }
+
+    public static bool IsValid(OperationTicket t) => t.OperationId != Guid.Empty && Types.Contains(t.Type)
+        && t.RequestHash is { Length: 64 } && t.RequestHash.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F');
+
+    private static readonly HashSet<string> Types = ["CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
+
+    private static (Guid, string, object) Normalize(object request) => request switch
+    {
+        ConfirmSale r => (r.OperationId, "CONFIRMAR_VENTA", r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim(), Order = r.Order is { } o ? o with { ExpectedVersion = o.ExpectedVersion.ToArray() } : null }),
+        SaveQuotation r => (r.OperationId, "EMITIR_COTIZACION", r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }),
+        DiscountApproval r => (r.OperationId, "AUTORIZAR_DESCUENTO", r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }),
+        InitialInventory r => (r.OperationId, "SALDO_INICIAL", r with { Reason = r.Reason.Trim(), LotNumber = r.LotNumber?.Trim() }),
+        BarcodeChange r => (r.OperationId, "CODIGO_BARRAS", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        CashBoxChange r => (r.OperationId, "GUARDAR_CAJA", r with { Code = r.Code?.Trim() ?? "", Name = r.Name.Trim(), Reason = r.Reason.Trim() }),
+        OpenCashShift r => (r.OperationId, "ABRIR_CAJA", r with { Reason = r.Reason.Trim() }),
+        CashMovement r => (r.OperationId, "MOVIMIENTO_CAJA", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        CloseCashShift r => (r.OperationId, "CERRAR_CAJA", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        AccountPayment r => (r.OperationId, "ABONO_CLIENTE", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim(), Reference = r.Reference?.Trim() }),
+        PlaceOrder r => (r.OperationId, "CREAR_PEDIDO", r with { Items = r.Items.Select(i => i with { }).OrderBy(i => i.ProductId).ToArray(), Reason = r.Reason.Trim() }),
+        OrderTransition r => (r.OperationId, "ESTADO_PEDIDO", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        LinkOrderSale r => (r.OperationId, "VINCULAR_PEDIDO_VENTA", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
+        PendingFiscal r => (r.OperationId, "FISCAL_PENDIENTE", r with { Reason = r.Reason.Trim() }),
+        _ => throw new ArgumentException("Tipo de operación desconocido.")
+    };
+}

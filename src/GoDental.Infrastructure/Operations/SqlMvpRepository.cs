@@ -72,10 +72,12 @@ public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISa
         public int UserId { get; set; }
         public byte[] Hash { get; set; } = [];
         public long Id { get; set; }
+        public string State { get; set; } = "";
+        public byte[] RecoveryHash { get; set; } = [];
     }
 
-    private Task<Result<MvpReceipt>> Write(Guid operationId, string type, object request, int userId, int? workstationId, string[] permissions, Func<Work, Task<long>> write, CancellationToken ct) => WriteCore(operationId, type, request, userId, workstationId, permissions, write, ct);
-    private async Task<Result<MvpReceipt>> WriteCore(Guid operationId, string type, object request, int userId, int? workstationId, string[] permissions, Func<Work, Task<long>> write, CancellationToken ct)
+    private Task<Result<MvpReceipt>> Write(Guid operationId, string type, object request, int userId, int? workstationId, string[] permissions, Func<Work, Task<long>> write, CancellationToken ct, OperationTicket? recovery = null) => WriteCore(operationId, type, request, userId, workstationId, permissions, write, ct, recovery);
+    private async Task<Result<MvpReceipt>> WriteCore(Guid operationId, string type, object request, int userId, int? workstationId, string[] permissions, Func<Work, Task<long>> write, CancellationToken ct, OperationTicket? recovery)
     {
         await using var c = await factory.OpenConnectionAsync(ct);
         await using var tx = await c.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
@@ -83,21 +85,25 @@ public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISa
         try
         {
             await w.Execute("SET XACT_ABORT ON;");
-            await w.Authorize(userId, permissions);
+            await w.Authorize(userId);
             Require(operationId != Guid.Empty, "VALIDATION", "Falta identificador de operación.");
             var hash = SHA256.HashData(Encoding.UTF8.GetBytes(Json(request)));
+            var recoveryHash = recovery is null ? hash : Convert.FromHexString(recovery.RequestHash);
             var locked = await w.Scalar<int>("DECLARE @r int;EXEC @r=sys.sp_getapplock @Resource=@resource,@LockMode=N'Exclusive',@LockOwner=N'Transaction',@LockTimeout=5000;SELECT @r;", new { resource = "GoDental:MVP:" + operationId.ToString("D") });
             Require(locked >= 0, "CONCURRENCY_CONFLICT", "Hay una operación en curso con ese identificador. Consulta el resultado antes de repetir.");
-            var previous = await w.Maybe<OperationRow>("SELECT Tipo Type,IdUsuario UserId,HashSolicitud Hash,EntidadId Id FROM sis.OperacionesMvp WHERE IdOperacion=@operationId;", new { operationId });
+            var previous = await w.Maybe<OperationRow>("SELECT Tipo Type,IdUsuario UserId,HashSolicitud Hash,ISNULL(HashRecuperacion,HashSolicitud) RecoveryHash,EntidadId Id,EstadoResolucion State FROM sis.OperacionesMvp WHERE IdOperacion=@operationId;", new { operationId });
             if (previous is not null)
             {
-                Require(previous.Type == type && previous.UserId == userId && previous.Hash.SequenceEqual(hash), "CONCURRENCY_CONFLICT", "Ese identificador ya se utilizó para otra solicitud.");
+                Require(previous.Type == type && previous.UserId == userId && (previous.State == "RECHAZADA_DEFINITIVA" ? previous.RecoveryHash.SequenceEqual(recoveryHash) : previous.Hash.SequenceEqual(hash)), "CONCURRENCY_CONFLICT", "Ese identificador ya se utilizó para otra solicitud.");
+                if (previous.State == "RECHAZADA_DEFINITIVA")
+                    return Result<MvpReceipt>.Failure("OPERATION_REJECTED", "Esta solicitud se cerró definitivamente sin confirmar. Revisa los datos antes de iniciar una nueva.");
                 await tx.CommitAsync(ct);
                 return Result<MvpReceipt>.Success(new(previous.Id, operationId));
             }
 
+            await w.Authorize(userId, permissions);
             var id = await write(w);
-            await w.Execute("INSERT INTO sis.OperacionesMvp(IdOperacion,Tipo,IdUsuario,HashSolicitud,EntidadId) VALUES(@operationId,@type,@userId,@hash,@id);", new { operationId, type, userId, hash, id });
+            await w.Execute("INSERT INTO sis.OperacionesMvp(IdOperacion,Tipo,IdUsuario,HashSolicitud,HashRecuperacion,EntidadId) VALUES(@operationId,@type,@userId,@hash,@recoveryHash,@id);", new { operationId, type, userId, hash, recoveryHash, id });
             await w.Execute("""
                 INSERT INTO sis.Bitacora(IdUsuario,IdEquipo,Modulo,Accion,Entidad,EntidadId,Descripcion,DatosDespuesJson)
                 VALUES(@userId,@workstationId,N'MVP',@type,@type,@id,N'Operación confirmada con identificador de reenvío.',@json);
@@ -138,7 +144,7 @@ public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISa
 
     public Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct) => Read(userId, [], async w =>
     {
-        var row = await w.Maybe<OperationRow>("SELECT EntidadId Id FROM sis.OperacionesMvp WHERE IdOperacion=@id AND IdUsuario=@userId;", new { id, userId });
+        var row = await w.Maybe<OperationRow>("SELECT EntidadId Id FROM sis.OperacionesMvp WHERE IdOperacion=@id AND IdUsuario=@userId AND EstadoResolucion=N'CONFIRMADA';", new { id, userId });
         return row is null ? null : new MvpReceipt(row.Id, id);
     }, ct);
     private static async Task<MvpPage<T>> Page<T>(Work w, string from, string columns, string where, string order, object p)

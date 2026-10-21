@@ -176,7 +176,10 @@ internal static class MvpIntegration
         var highSale = new ConfirmSale(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, [new(effective, discountQuote.Total)], discountQuote.Total, shiftId, "Descuento autorizado");
         Check((await sales.ConfirmAsync(highSale)).ErrorCode == "FORBIDDEN", "Descuento efectivo mayor a 35 exige autorización aun junto al umbral");
         Check((await sales.SaveQuotationAsync(new(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, today.AddDays(1), "Cotización sin autorización"))).ErrorCode == "FORBIDDEN", "Cotización emitida tampoco puede eludir autorización administrativa");
-        var authorizationId = Saved(await sales.AuthorizeDiscountAsync(new(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, "Autorización de prueba"), identity.UserName, password));
+        var approvalRequest = new DiscountApproval(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, "Autorización de prueba");
+        var authorizationId = Saved(await sales.AuthorizeDiscountAsync(approvalRequest, identity.UserName, password));
+        Check((await repository.ResolveOperationAsync(OperationIdentity.Describe(approvalRequest), false, identity.Id, identity.WorkstationId, default)).Receipt?.Id == authorizationId,
+            "Recupera autorización sin persistir ni volver a pedir su contraseña administrativa");
         Saved(await sales.ConfirmAsync(highSale with { DiscountAuthorizationId = authorizationId }));
         Check(await c.ExecuteScalarAsync<bool>("SELECT UtilizadaMvp FROM sis.AutorizacionesOperacion WHERE IdAutorizacion=@authorizationId;", new { authorizationId }), "Autorización administrativa se consume en la transacción de venta");
 

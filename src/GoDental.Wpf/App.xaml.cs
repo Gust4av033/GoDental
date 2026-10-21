@@ -49,6 +49,7 @@ public partial class App : System.Windows.Application
                     services.AddApplication();
                     services.AddInfrastructure(context.Configuration);
                     services.AddSingleton<IWorkstationSettingsStore>(new LocalWorkstationSettingsStore(Path.Combine(localFolder, "workstation.json")));
+                    services.AddSingleton<GoDental.Application.Abstractions.Persistence.IPendingOperationStore>(new FilePendingOperationStore(localFolder));
                     services.AddSingleton<System.Windows.Application>(this);
                     services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<INavigationService, NavigationService>();
@@ -75,6 +76,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<CreditViewModel>();
                     services.AddSingleton<OrdersViewModel>();
                     services.AddSingleton<CommercialHistoryViewModel>();
+                    services.AddSingleton<PendingOperationsViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<LoginWindow>();

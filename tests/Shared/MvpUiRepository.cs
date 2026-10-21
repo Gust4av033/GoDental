@@ -58,5 +58,6 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<MvpPage<OrderEventData>> OrderEventsAsync(long id, MvpFilter filter, int userId, CancellationToken ct) => Task.FromResult(new MvpPage<OrderEventData>(Order.Events, Order.TotalEvents));
     public Task<Result<MvpReceipt>> InitialInventoryAsync(InitialInventory request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, 1);
     public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange request, int userId, int? workstationId, CancellationToken ct) => throw new NotSupportedException();
+    public Task<OperationResolution> ResolveOperationAsync(OperationTicket ticket, bool rejectIfAbsent, int userId, int? workstationId, CancellationToken ct) => Task.FromResult(FoundReceipt is not null && FoundReceipt.OperationId == ticket.OperationId ? new OperationResolution(OperationResolutionState.Confirmed, FoundReceipt) : new(rejectIfAbsent ? OperationResolutionState.RejectedDefinitively : OperationResolutionState.Unconfirmed));
     public Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct) => Task.FromResult(FoundReceipt);
 }

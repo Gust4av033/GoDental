@@ -165,10 +165,11 @@ internal static class Program
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var pdfFiles = new VisualPdfFiles();
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
+            var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session);
@@ -605,7 +606,7 @@ internal static class Program
                 foreach (var theme in new[] { "Light", "Dark" })
                 {
                     themes.Apply(theme);
-                    foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations })
+                    foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations, SetupPage.PendingOperations })
                     {
                         nav.Navigate(page);
                         await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-{theme}.png"));

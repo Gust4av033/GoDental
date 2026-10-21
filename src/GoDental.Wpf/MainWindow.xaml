@@ -66,6 +66,9 @@
             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center"/><TextBlock Text="Ventas y PDF" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
           </RadioButton>
           <TextBlock Text="SISTEMA" Style="{StaticResource SidebarSectionLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+          <RadioButton ToolTip="Operaciones pendientes" AutomationProperties.Name="Operaciones pendientes" Style="{StaticResource NavigationButton}" IsChecked="{Binding IsPendingOperations, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.PendingOperations}">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Width="20"/><TextBlock Text="Pendientes" Margin="10,0,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel>
+          </RadioButton>
           <RadioButton ToolTip="Administrar usuarios" AutomationProperties.Name="Administrar usuarios" Style="{StaticResource NavigationButton}" Visibility="{Binding CanOpenUsers, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding IsUsers, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Users}">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Width="20" VerticalAlignment="Center" />
@@ -104,6 +107,7 @@
           <Button Content="" FontFamily="Segoe MDL2 Assets" Command="{Binding ToggleSidebarCommand}" ToolTip="Expandir o contraer menú" AutomationProperties.Name="Expandir o contraer menú" Margin="0,0,10,0" Padding="6" Width="32" MinHeight="30" />
           <TextBlock Grid.Column="1" Text="{Binding PageTitle}" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource MutedBrush}" />
           <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Content="Revisar pendientes" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.PendingOperations}" Visibility="{Binding PendingOperations.HasAttention, Converter={StaticResource BoolToVisibility}}" Margin="0,0,10,0"/>
             <Border Background="{DynamicResource SidebarSelectionBrush}" CornerRadius="14" Width="28" Height="28" Margin="0,0,8,0"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
             <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
               <TextBlock Text="{Binding Access.IdentityLabel}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" FontSize="12" />
@@ -116,6 +120,7 @@
       <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="{StaticResource CardRadius}" Margin="12,4,12,8" Padding="{StaticResource ShellPagePadding}">
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid x:Name="PageHost" Margin="{StaticResource PagePadding}">
+          <operations:PendingOperationsView DataContext="{Binding PendingOperations}" Visibility="{Binding DataContext.IsPendingOperations, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <StackPanel Visibility="{Binding IsHome, Converter={StaticResource BoolToVisibility}}">
             <DockPanel Margin="0,0,0,22">
               <TextBlock DockPanel.Dock="Right" Text="{Binding TodayLabel}" Style="{StaticResource MutedText}" FontSize="12" VerticalAlignment="Bottom" Margin="16,0,0,0"/>

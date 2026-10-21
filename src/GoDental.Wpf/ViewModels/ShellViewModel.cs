@@ -12,6 +12,8 @@ public sealed partial class ShellViewModel : ObservableObject
     private readonly INavigationService navigation;
     private readonly ISettingsWindowService settingsWindow;
     public ConnectionViewModel Connection { get; }
+    public PendingOperationsViewModel? PendingOperations { get; }
+    public bool IsPendingOperations => navigation.CurrentPage == SetupPage.PendingOperations;
     public AccessViewModel Access { get; }
     public ProductsViewModel Products { get; }
     public UsersViewModel Users { get; }
@@ -43,7 +45,7 @@ public sealed partial class ShellViewModel : ObservableObject
         }
     }
     public bool HasPendingMvp => MvpWorkspaces.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
-    public bool CanCloseWorkspace => !HasPendingMvp && MvpWorkspaces.All(m => !m.IsBusy && !m.IsEditing) && Products.IsNotBusy && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
+    public bool CanCloseWorkspace => PendingOperations?.IsBusy != true && MvpWorkspaces.All(m => m.Operation.CanClose && !m.IsBusy && !m.IsEditing) && !Products.IsBusy && Products.Inventory?.IsBusy != true && Products.CategoryManager?.IsBusy != true && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
     public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
     public bool CanOpenCustomers => Customers.CanRead;
     public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
@@ -59,6 +61,7 @@ public sealed partial class ShellViewModel : ObservableObject
     public string TodayLabel => DateTime.Now.ToString("dddd, d 'de' MMMM 'de' yyyy", CultureInfo.GetCultureInfo("es-SV"));
     public string PageTitle => navigation.CurrentPage switch
     {
+        SetupPage.PendingOperations => "Operaciones pendientes",
         SetupPage.Cash => "Caja / Turnos y movimientos",
         SetupPage.Pos => "Ventas / Punto de venta",
         SetupPage.Credit => "Crédito / Cuentas y abonos",
@@ -83,9 +86,11 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => CanCloseWorkspace && Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, PendingOperationsViewModel? pendingOperations = null)
     {
         this.navigation = navigation;
+        PendingOperations = pendingOperations;
+        if (pendingOperations is not null) pendingOperations.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanCloseWorkspace)); OnPropertyChanged(nameof(CanSignOut)); };
         this.settingsWindow = settingsWindow;
         Connection = connection;
         Access = access; Products = products;
@@ -114,6 +119,7 @@ public sealed partial class ShellViewModel : ObservableObject
         navigation.PageChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(IsPendingOperations));
             foreach (var n in new[] { nameof(IsCash), nameof(IsPos), nameof(IsCredit), nameof(IsOrders), nameof(IsSales), nameof(IsQuotations) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(IsHome));
             OnPropertyChanged(nameof(IsConnection));
@@ -133,6 +139,7 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Cash && !CanOpenCash || page == SetupPage.Pos && !CanOpenPos || page == SetupPage.Credit && !CanOpenCredit || page == SetupPage.Orders && !CanOpenOrders || page is SetupPage.Sales or SetupPage.Quotations && !CanOpenSales) page = SetupPage.Access;
         navigation.Navigate(page);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
+        if (page == SetupPage.PendingOperations) PendingOperations?.ReloadCommand.Execute(null);
         if (page == SetupPage.Cash) Cash.ReloadCommand.Execute(null);
         if (page == SetupPage.Pos && Pos.Boxes.Count == 0) Pos.ReloadCommand.Execute(null);
         if (page == SetupPage.Credit) Credit.ReloadCommand.Execute(null);

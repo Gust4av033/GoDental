@@ -212,14 +212,3 @@ public sealed class FiscalPendingService(IFiscalPendingRepository repository, IU
         return repository.PendingAsync(f, UserId, ct);
     }
 }
-
-public sealed class MvpOperationService(IMvpOperationRepository repository, IUserSession session) : MvpServiceAccess(session)
-{
-    public Task<MvpReceipt?> FindAsync(Guid id, CancellationToken ct = default)
-    {
-        Read();
-        if (id == Guid.Empty)
-            throw new ArgumentException("Identificador vacío.");
-        return repository.FindOperationAsync(id, UserId, ct);
-    }
-}

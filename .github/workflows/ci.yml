@@ -67,6 +67,9 @@ jobs:
       - name: Códigos automáticos sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-codes --localdb .
 
+      - name: Recuperación de operaciones y reinicio aislados
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-recovery --localdb .
+
       - name: Smoke WPF y vistas
         run: dotnet run --project tests/GoDental.SmokeTests -c Release --no-build -- TestResults/UiPreviews
 

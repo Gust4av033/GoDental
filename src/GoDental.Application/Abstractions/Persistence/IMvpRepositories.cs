@@ -51,4 +51,5 @@ public interface IFiscalPendingRepository
 public interface IMvpOperationRepository
 {
     Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct);
+    Task<OperationResolution> ResolveOperationAsync(OperationTicket ticket, bool rejectIfAbsent, int userId, int? workstationId, CancellationToken ct);
 }

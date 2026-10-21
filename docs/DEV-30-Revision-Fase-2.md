@@ -103,6 +103,10 @@ Los bloques siguientes son un plan de trabajo, todos pendientes de implementaci�
 
 El primer incremento queda acotado a **2.0A**. La aceptación de módulos nuevos no sustituye la validación de los existentes. Cada incremento debe cerrar diseño, SQL/contratos cuando correspondan, servicio, UI, permisos, versiones, auditoría, errores y pruebas; no dejar nuevamente una interfaz sin conectar.
 
+## Avance posterior
+
+El usuario autorizó continuar el orden propuesto. [DEV-31](DEV-31-Recuperacion-Operaciones.md) implementa 2.0A para los hallazgos R1/R2; sus decisiones y validación se registran por separado. Los estados y resultados anteriores corresponden a la revisión original, no afirman que se implementaron los demás bloques.
+
 ## Validación de esta revisión
 
 - `dotnet build GoDental.sln -c Release -p:EnableWindowsTargeting=true`: correcto, **0 advertencias y 0 errores**, SDK 8.0.426.

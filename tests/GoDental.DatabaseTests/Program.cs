@@ -10,9 +10,24 @@ using GoDental.Infrastructure.Data;
 using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
+if (args is ["--recovery-journal-probe", var journalFolder, var serializedPending])
+{
+    var pending = System.Text.Json.JsonSerializer.Deserialize<PendingOperation>(Convert.FromBase64String(serializedPending))!;
+    if (!await new FilePendingOperationStore(journalFolder).TryAddAsync(pending)) throw new InvalidOperationException("El diario ya tenía una solicitud.");
+    Console.WriteLine("JOURNAL_READY");
+    await Task.Delay(Timeout.InfiniteTimeSpan);
+    return;
+}
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-recovery"))
+{
+    var recoveryDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(recoveryDatabase, Path.Combine(root, "database"));
+    await OperationRecoveryIntegration.RunAsync(new TestConnectionFactory(recoveryDatabase), root, recoveryDatabase);
+    return;
+}
 if (args.Contains("--run-codes"))
 {
     var codesDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
@@ -67,7 +82,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes | --run-recovery [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 
