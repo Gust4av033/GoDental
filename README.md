@@ -172,3 +172,5 @@ Proveedores actualiza listado, ficha, contactos y productos relacionados; la rev
 ## Recuperación de operaciones · segunda etapa
 
 [DEV-31](docs/DEV-31-Recuperacion-Operaciones.md) implementa el primer bloque de la segunda etapa: diario local antes de enviar, consulta al reiniciar y cierre definitivo bajo el mismo bloqueo SQL que la escritura. **Operaciones pendientes** permite recuperar un resultado o resolver y liberar sin volver a cobrar automáticamente. Requiere **015** además de las migraciones anteriores. El diario no guarda contraseñas ni el contenido comercial; tras reiniciar se consulta/cierra la solicitud y se revisa el módulo antes de una nueva captura. No se han aplicado migraciones en la PC del usuario desde este entorno.
+
+Validación de 2.0A: [CI Windows #106](https://github.com/Gust4av033/GoDental/actions/runs/39644476282), código `c3d3445`, Release sin advertencias/errores, **187 xUnit, 399 comprobaciones SQL y 575 WPF** correctas. La próxima entrega es 2.0B; los módulos nuevos y el piloto real siguen pendientes.

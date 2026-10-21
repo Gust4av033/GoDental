@@ -10,7 +10,7 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. La siguiente entrega es **2.0B**, complementos de módulos actuales. La aceptación de 2.0A se registra en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. La siguiente entrega es **2.0B**, complementos de módulos actuales. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Fases históricas de DM-01
 

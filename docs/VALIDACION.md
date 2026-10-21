@@ -1,5 +1,11 @@
 # Validación de baseline v0.1
 
+## Recuperación de operaciones · etapa 2.0A · 21/10/2026
+
+[DEV-31](DEV-31-Recuperacion-Operaciones.md), código `c3d3445`, [CI Windows #106 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39644476282): Release con 0 advertencias/errores, **187 xUnit**, **399 comprobaciones SQL** y **575 WPF**, sin errores de binding. Incluye 24 comprobaciones SQL de recuperación, procesos terminados antes/después del commit y cierre real con pendiente durable. La pantalla consulta/resuelve sin reenviar automáticamente. Las suites SQL siguen usando bases aisladas del runner.
+
+Requiere migración **015**, con actualización coordinada de todas las estaciones; no se aplicó en la base del usuario. La puesta en operación entre dos PCs, respaldo/restauración y hardware sigue pendiente. DEV-30 conserva la revisión original; los hallazgos R1/R2 se resuelven en este incremento y los demás bloques continúan pendientes.
+
 ## Revisión vigente · 21/10/2026
 
 [DEV-30](DEV-30-Revision-Fase-2.md) revisa `feature/desarrollo` en `28ffc5f` contra DM-01 y los documentos funcionales. Compilación Release local con SDK 8.0.426 y Windows targeting: 0 advertencias/errores; **173 xUnit aprobadas**. La consulta NuGet de paquetes directos/transitivos no reportó vulnerabilidades conocidas.

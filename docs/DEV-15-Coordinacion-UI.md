@@ -2,7 +2,7 @@
 
 Organización vigente: DEV-08. Presentación, contratos y persistencia avanzan en `feature/desarrollo`, separados por capas y commits. `feature/ui` y `feature/logica` son referencias históricas.
 
-Estado global y prioridades del 21/10/2026: [DEV-30](DEV-30-Revision-Fase-2.md). CI Windows #98 sobre `28ffc5f`: 173 xUnit, 374 comprobaciones SQL y 570 WPF correctas. Los resultados siguientes de #44/#50 conservan su contexto histórico.
+Estado global y prioridades: [DEV-30](DEV-30-Revision-Fase-2.md). Recuperación 2.0A implementada en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015; CI Windows #106 sobre `c3d3445`: 187 xUnit, 399 comprobaciones SQL y 575 WPF correctas. Los resultados anteriores conservan su contexto histórico.
 
 | Necesidad | Estado | Contrato y verificación |
 | --- | --- | --- |
