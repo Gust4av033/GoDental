@@ -8,7 +8,7 @@
       </DockPanel>
     </Border>
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <settings:SettingsView Margin="24"/>
+      <settings:SettingsView x:Name="SettingsContent" Margin="24"/>
     </ScrollViewer>
   </Grid>
 </Window>

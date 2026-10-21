@@ -24,5 +24,6 @@
     <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource LightRowHover}" />
     <SolidColorBrush x:Key="RowSelectionBrush" Color="{StaticResource LightRowSelection}" />
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource LightShadow}"/>
+    <SolidColorBrush x:Key="BrandWordmarkBrush" Color="Transparent"/>
 </ResourceDictionary>
 

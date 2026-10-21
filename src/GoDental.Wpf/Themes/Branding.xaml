@@ -1,11 +1,11 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <BitmapImage x:Key="GoDentalLogo" UriSource="/GoDental;component/Resources/Branding/GoDentalLogo.png"/>
-  <!-- El logo original conserva sus colores sobre una placa clara en ambos temas. -->
+  <!-- El PNG transparente conserva sus colores; la placa acompaña la superficie del tema. -->
   <SolidColorBrush x:Key="BrandPaperBrush" Color="{StaticResource LightSurface}"/>
   <SolidColorBrush x:Key="PreviewLightBrush" Color="{StaticResource LightBackground}"/>
   <SolidColorBrush x:Key="PreviewDarkBrush" Color="{StaticResource DarkBackground}"/>
   <Style x:Key="BrandPlate" TargetType="Border">
-    <Setter Property="Background" Value="{StaticResource BrandPaperBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
     <Setter Property="CornerRadius" Value="{StaticResource CardRadius}"/>
     <Setter Property="Padding" Value="12"/>
   </Style>

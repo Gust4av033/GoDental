@@ -98,7 +98,7 @@ public sealed partial class PosViewModel : MvpWorkspaceViewModel
         var lists = customers.CanRead ? (await customers.CatalogsAsync()).PriceLists : [];
         if (!Current(r)) return;
         var id = Box?.Id; Boxes.Clear(); foreach (var b in boxes.Where(b => b.Active)) Boxes.Add(b); Box = Boxes.FirstOrDefault(b => b.Id == id) ?? Boxes.FirstOrDefault();
-        methods = payments.Where(m => m.Code != "TARJETA" && (m.Code != "CREDITO" || Has("VENTAS.USAR_CREDITO"))).ToArray();
+        methods = payments.Where(m => m.Code != "CREDITO" || Has("VENTAS.USAR_CREDITO")).ToArray();
         var listId = PriceList?.Id; PriceLists.Clear(); PriceLists.Add(new() { Id = 0, Name = "Condición del cliente / automática" }); foreach (var l in lists) PriceLists.Add(l); PriceList = PriceLists.FirstOrDefault(l => l.Id == listId) ?? PriceLists.First();
         Page = 1; await SearchCoreAsync(r);
     }

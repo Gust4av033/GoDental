@@ -146,8 +146,10 @@ internal static class Program
             var mvpDialogs = new MvpVisualDialogs();
             var operationService = new MvpOperationService(mvpRepository, session, shutdownProbe == "--shutdown-pending" ? new FilePendingOperationStore(temporaryFolder) : null);
             var initialStock = new InitialInventoryViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<InitialInventoryViewModel>.Instance);
+            var barcodes = new BarcodesViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<BarcodesViewModel>.Instance);
+            var commercialParameters = new CommercialParametersViewModel(new CommercialParametersService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<CommercialParametersViewModel>.Instance);
             var visualInventory = new VisualInventoryRepository();
-            var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock);
+            var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock, barcodes);
             var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
             var productRepository = new FakeProductRepository();
             var productService = new ProductService(productRepository, session);
@@ -169,7 +171,7 @@ internal static class Program
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, pendingOperations, commercialParameters);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session, temporaryFolder);
@@ -599,6 +601,9 @@ internal static class Program
                 await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
                 await ordersMvp.ReloadCommand.ExecuteAsync(null); ordersMvp.Selected = ordersMvp.Items.First();
                 await ordersMvp.DetailCommand.ExecuteAsync(null);
+                await commercialParameters.ReloadCommand.ExecuteAsync(null);
+                mvpRepository.Barcodes.Add(new() { Id = 1, Code = "GD0000000001", Type = "CODE128", Active = true, Generated = true });
+                await barcodes.OpenAsync(new() { Id = 1, Sku = "UI-TEST", Name = "Producto de prueba" });
                 var emitted = mvpRepository.QuoteFactory(new(1, 1, [new(1, 1)]));
                 mvpRepository.Quotations.Add(new() { Id = 10, Number = "COT-PRUEBA", State = "EMITIDA", Total = emitted.Total, SnapshotJson = System.Text.Json.JsonSerializer.Serialize(emitted) });
                 await historyMvp.ReloadSalesCommand.ExecuteAsync(null); historyMvp.SelectedSale = historyMvp.Sales.First(); await historyMvp.ReadSaleCommand.ExecuteAsync(null);
@@ -606,6 +611,16 @@ internal static class Program
                 foreach (var theme in new[] { "Light", "Dark" })
                 {
                     themes.Apply(theme);
+                    foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
+                        await RenderWindowAsync(new SettingsWindow(vm, commercialParameters) { Width = size.Width, Height = size.Height }, Path.Combine(output, $"ajustes-comercial-{theme}-{size.Width}.png"), 2);
+                    mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"parametros-editar-{theme}.png"));
+                    await commercialParameters.ChangeCommand.ExecuteAsync(null);
+                    var barcodeView = new BarcodesView { DataContext = barcodes };
+                    await RenderWindowAsync(new Window { Width = 650, Height = 500, DataContext = barcodes, Content = new ScrollViewer { Content = barcodeView } }, Path.Combine(output, $"codigos-producto-{theme}.png"));
+                    Check(FindChildren<DataGrid>(barcodeView).Single().Items.Count == 1 && FindChildren<Button>(barcodeView).Any(b => b.IsEnabled && b.Content is "Agregar código"), "Códigos muestra listado y acción de mantenimiento");
+                    mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"codigos-agregar-{theme}.png"));
+                    await barcodes.AddCommand.ExecuteAsync(null);
+                    mvpDialogs.Render = null;
                     foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations, SetupPage.PendingOperations })
                     {
                         nav.Navigate(page);
@@ -1252,9 +1267,16 @@ internal static class Program
                         $"Guardar conexión conserva su tamaño y cabe en Ajustes de {width}×{height}");
                     Check(!FindChildren<Expander>(root).Single().IsExpanded, "Las opciones de desarrollo empiezan contraídas");
                 }
-                else
+                else if (tabs.SelectedIndex == 1)
                     Check(FindChildren<Button>(root).Count(button => button.CommandParameter is "Light" or "Dark" && button.ActualWidth == 180) == 2,
                         $"Apariencia muestra las dos opciones de tema en {width}×{height}");
+                else
+                {
+                    var commercial = FindChildren<CommercialParametersView>(root).Single();
+                    var edit = FindChildren<Button>(commercial).Single(b => b.Content is "Editar parámetros");
+                    var bounds = edit.TransformToAncestor(root).TransformBounds(new Rect(edit.RenderSize));
+                    Check(edit.IsEnabled && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height, $"Parámetros comerciales carga valores y acción visible en {width}×{height}");
+                }
             }
             if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1093 && height >= 614)
             {

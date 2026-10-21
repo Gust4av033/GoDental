@@ -74,7 +74,7 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
         if (!CanPay || Selected is null) return; var account = Selected;
         await ReadAsync(async r =>
         {
-            var methods = (await sales.PaymentMethodsAsync()).Where(m => m.Code is not ("CREDITO" or "TARJETA")).ToArray();
+            var methods = (await sales.PaymentMethodsAsync()).Where(m => m.Code != "CREDITO").ToArray();
             var boxes = await cash.BoxesAsync(); if (!Current(r)) return;
             using var form = new MvpFormModel($"Abonar · {account.Customer}", "Registrar abono", Operation, async f =>
             {
@@ -90,7 +90,7 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
                     if (shift is not null) await cash.ReadAsync(shift.Id);
                 });
             }) { Description = $"Venta {account.Sale} · Saldo leído {account.Balance:N2}. La cuenta se vuelve a validar al registrar." };
-            form.Select("method", "Forma de pago", methods, methods.FirstOrDefault()).Input("amount", "Importe del abono", account.Balance.ToString("0.00")).Input("reference", "Referencia (obligatoria según forma de pago)").Select("box", "Caja para efectivo", boxes.Where(b => b.Active), boxes.FirstOrDefault(b => b.Active)).Input("reason", "Motivo");
+            form.Select("method", "Forma de pago · Tarjeta registra un cobro externo ya aprobado", methods, methods.FirstOrDefault()).Input("amount", "Importe del abono", account.Balance.ToString("0.00")).Input("reference", "Referencia del comprobante (sin datos de tarjeta)").Select("box", "Caja para efectivo", boxes.Where(b => b.Active), boxes.FirstOrDefault(b => b.Active)).Input("reason", "Motivo");
             IsEditing = true; try { await dialogs.ShowAsync(form); } finally { IsEditing = false; }
         });
     }

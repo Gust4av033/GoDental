@@ -1,13 +1,13 @@
-<UserControl x:Class="GoDental.Wpf.Views.Settings.SettingsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<UserControl x:Class="GoDental.Wpf.Views.Settings.SettingsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" x:Name="SettingsRoot" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:brand="clr-namespace:GoDental.Wpf.Controls" xmlns:settings="clr-namespace:GoDental.Wpf.Views.Settings">
   <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
     <DockPanel Margin="0,0,0,20">
       <Border DockPanel.Dock="Right" Style="{StaticResource BrandPlate}" Width="100" Height="76" Margin="20,0,0,0">
-        <Image Source="{StaticResource GoDentalLogo}" Stretch="Uniform" AutomationProperties.Name="GoDental, depósito dental"/>
+        <brand:BrandLogoView/>
       </Border>
       <StackPanel VerticalAlignment="Center">
         <TextBlock Text="TU ESPACIO DE TRABAJO" Style="{StaticResource PageEyebrow}"/>
         <TextBlock Text="Ajustes" Style="{StaticResource Heading}"/>
-        <TextBlock Text="Conexión y apariencia para este equipo." Style="{StaticResource MutedText}"/>
+        <TextBlock Text="Conexión, apariencia y parámetros de tu negocio." Style="{StaticResource MutedText}"/>
       </StackPanel>
     </DockPanel>
     <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="14,10" Margin="0,0,0,20">
@@ -89,6 +89,9 @@
             <TextBlock Text="{Binding ThemePreferenceStatus}" Style="{StaticResource StatusMessage}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
           </StackPanel>
         </Border>
+      </TabItem>
+      <TabItem Header="Comercial" Style="{StaticResource SettingsTab}" Visibility="{Binding CommercialParameters.CanRead, ElementName=SettingsRoot, Converter={StaticResource BoolToVisibility}}">
+        <settings:CommercialParametersView DataContext="{Binding CommercialParameters, ElementName=SettingsRoot}"/>
       </TabItem>
     </TabControl>
   </StackPanel>

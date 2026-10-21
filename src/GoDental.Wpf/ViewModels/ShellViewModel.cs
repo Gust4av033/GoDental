@@ -11,6 +11,7 @@ public sealed partial class ShellViewModel : ObservableObject
 {
     private readonly INavigationService navigation;
     private readonly ISettingsWindowService settingsWindow;
+    public CommercialParametersViewModel? CommercialParameters { get; }
     public ConnectionViewModel Connection { get; }
     public PendingOperationsViewModel? PendingOperations { get; }
     public bool IsPendingOperations => navigation.CurrentPage == SetupPage.PendingOperations;
@@ -40,7 +41,9 @@ public sealed partial class ShellViewModel : ObservableObject
     {
         get
         {
+            if (CommercialParameters is { } parameters) yield return parameters;
             yield return Cash; yield return Pos; yield return Credit; yield return Orders; yield return CommercialHistory;
+            if (Products.Inventory?.Barcodes is { } barcodes) yield return barcodes;
             if (Products.Inventory?.InitialInventory is { } initial) yield return initial;
         }
     }
@@ -86,9 +89,10 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => CanCloseWorkspace && Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, PendingOperationsViewModel? pendingOperations = null)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null)
     {
         this.navigation = navigation;
+        CommercialParameters = commercialParameters;
         PendingOperations = pendingOperations;
         if (pendingOperations is not null) pendingOperations.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanCloseWorkspace)); OnPropertyChanged(nameof(CanSignOut)); };
         this.settingsWindow = settingsWindow;
@@ -138,6 +142,7 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Customers && !CanOpenCustomers) page = SetupPage.Access;
         if (page == SetupPage.Cash && !CanOpenCash || page == SetupPage.Pos && !CanOpenPos || page == SetupPage.Credit && !CanOpenCredit || page == SetupPage.Orders && !CanOpenOrders || page is SetupPage.Sales or SetupPage.Quotations && !CanOpenSales) page = SetupPage.Access;
         navigation.Navigate(page);
+        if (page == SetupPage.Connection && CommercialParameters?.CanRead == true) CommercialParameters.ReloadCommand.Execute(null);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
         if (page == SetupPage.PendingOperations) PendingOperations?.ReloadCommand.Execute(null);
         if (page == SetupPage.Cash) Cash.ReloadCommand.Execute(null);

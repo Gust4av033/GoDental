@@ -18,6 +18,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     private readonly ILogger<InventoryViewModel> logger;
     private readonly IDialogService dialogs;
     public event EventHandler? InventoryChanged;
+    public BarcodesViewModel? Barcodes { get; }
     public InitialInventoryViewModel? InitialInventory { get; }
     private bool snapshotLoaded, initializedRefresh;
     public bool CanOfferInitial => InitialInventory is not null && CanAdjust && snapshotLoaded && product?.Active == true && SelectedStock is null;
@@ -60,7 +61,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private DateTime? until;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel)), NotifyPropertyChangedFor(nameof(IsHistoryEmpty))] private int total;
-    public bool IsNotBusy => !IsBusy && (InitialInventory is null || (!InitialInventory.IsBusy && !InitialInventory.IsEditing && InitialInventory.Operation.CanStart));
+    public bool IsNotBusy => Barcodes?.IsBusy != true && Barcodes?.IsEditing != true && Barcodes?.Operation.CanStart != false && !IsBusy && (InitialInventory is null || (!InitialInventory.IsBusy && !InitialInventory.IsEditing && InitialInventory.Operation.CanStart));
     public bool CanAdjust => service.CanAdjust;
     public bool CanSeeCosts => service.CanSeeCosts;
     public bool CanWrite => CanAdjust && IsNotBusy && version is not null;
@@ -71,9 +72,11 @@ public sealed partial class InventoryViewModel : ObservableObject
     public bool IsLotsEmpty => Lots.Count == 0;
     public string PageLabel => $"{Total} movimientos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
 
-    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs, InitialInventoryViewModel? initialInventory = null)
+    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs, InitialInventoryViewModel? initialInventory = null, BarcodesViewModel? barcodes = null)
     {
         this.service = service; this.session = session; this.logger = logger; this.dialogs = dialogs;
+        Barcodes = barcodes;
+        if (barcodes is not null) barcodes.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(CanInitialize)); };
         InitialInventory = initialInventory;
         if (initialInventory is not null) initialInventory.PropertyChanged += (_, _) =>
         {
@@ -114,6 +117,7 @@ public sealed partial class InventoryViewModel : ObservableObject
         product = selected; OnPropertyChanged(nameof(Product)); Title = $"{selected.Name} · {selected.Sku}"; IsOpen = true; Page = 1;
         From = null; Until = null; HistoryType = "Todos"; FilterSelectedLot = false;
         ResetForm(); OnPropertyChanged(nameof(TracksLot));
+        var openedRevision = session.Revision;
         await ExecuteAsync(async revision =>
         {
             var values = await service.WarehousesAsync();
@@ -122,6 +126,7 @@ public sealed partial class InventoryViewModel : ObservableObject
             Warehouse = Warehouses.FirstOrDefault();
             await ReadCoreAsync(revision);
         });
+        if (openedRevision == session.Revision && Barcodes is not null) await Barcodes.OpenAsync(selected);
     }
     [RelayCommand] private void Close() { if (IsNotBusy) IsOpen = false; }
     [RelayCommand] private async Task OpenInitialInventoryAsync()
