@@ -8,8 +8,8 @@ public sealed partial class SqlMvpRepository
 {
     private const string PurchaseColumns = "o.IdOrdenCompra Id,o.NumeroOrden Number,o.IdProveedor SupplierId,p.Nombre Supplier,o.IdMoneda CurrencyId,m.CodigoISO Currency,ISNULL(o.TipoCambioEstimado,0) EstimatedRate,o.FechaOrden Date,o.Estado State,o.Subtotal,o.Total,o.RowVersion";
     private const string PurchaseFrom = "cmp.OrdenesCompra o JOIN cmp.Proveedores p ON p.IdProveedor=o.IdProveedor JOIN cat.Monedas m ON m.IdMoneda=o.IdMoneda";
-    private const string PurchaseLineColumns = "d.IdDetalle Id,d.IdProducto ProductId,ISNULL(d.SKU,p.SKU) Sku,ISNULL(d.Nombre,p.Nombre) Name,d.Cantidad Quantity,d.CantidadRecibida Received,d.CostoUnitario UnitCost,d.Descuento Discount,d.TotalLinea Total,p.ControlaLote TracksLot,p.ControlaVencimiento TracksExpiry";
-    private const string ReceiptColumns = "r.IdRecepcion Id,r.NumeroRecepcion Number,r.IdOrdenCompra OrderId,r.IdAlmacen WarehouseId,a.Nombre Warehouse,r.FechaRecepcion Date,r.Estado State,r.TipoCambioReal ExchangeRate,r.CostosCompletos CostsComplete,u.NombreCompleto [User],r.RowVersion";
+    private const string PurchaseLineColumns = "d.IdDetalle Id,d.IdProducto ProductId,ISNULL(d.SKU,p.SKU) Sku,ISNULL(d.Nombre,p.Nombre) Name,d.Cantidad Quantity,d.CantidadRecibida Received,d.CostoUnitario UnitCost,d.Descuento Discount,d.TotalLinea Total,p.ControlaLote TracksLot,p.ControlaVencimiento TracksExpiry,d.CostoImportacionUSD ImportPurchaseCostUsd,d.GastoImportacionUSD ImportExpenseUsd";
+    private const string ReceiptColumns = "r.IdRecepcion Id,r.NumeroRecepcion Number,r.IdOrdenCompra OrderId,r.IdImportacion ImportId,r.IdAlmacen WarehouseId,a.Nombre Warehouse,r.FechaRecepcion Date,r.Estado State,r.TipoCambioReal ExchangeRate,r.CostosCompletos CostsComplete,u.NombreCompleto [User],r.RowVersion";
     private const string ReceiptFrom = "cmp.RecepcionesCompra r JOIN inv.Almacenes a ON a.IdAlmacen=r.IdAlmacen JOIN seg.Usuarios u ON u.IdUsuario=r.RecibidoPor";
     private sealed class ReceivingProduct
     {
@@ -63,7 +63,7 @@ public sealed partial class SqlMvpRepository
         var order = await Purchase(w, id); if (order is null) return null;
         return new PurchaseOrderSnapshot(order, await PurchaseLines(w, id), await w.List<PurchaseReceiptData>($"SELECT {ReceiptColumns} FROM {ReceiptFrom} WHERE r.IdOrdenCompra=@id ORDER BY r.IdRecepcion DESC;", new { id }));
     }, ct);
-    private static Task<IReadOnlyList<PurchaseReceiptLineData>> ReceiptLines(Work w, long id) => w.List<PurchaseReceiptLineData>("SELECT r.IdDetalle Id,r.IdOrdenCompraDetalle OrderLineId,r.IdProducto ProductId,ISNULL(d.SKU,p.SKU) Sku,ISNULL(d.Nombre,p.Nombre) Name,r.CantidadRecibida Quantity,r.CostoCompraUSD PurchaseCostUsd,r.GastoAsignadoUSD ExtraUnitCostUsd,r.CostoPuestoBodega LandedUnitCost,r.NumeroLote LotNumber,r.FechaVencimiento Expires,r.FechaFabricacion Manufactured FROM cmp.RecepcionCompraDetalle r JOIN cmp.OrdenCompraDetalle d ON d.IdDetalle=r.IdOrdenCompraDetalle JOIN inv.Productos p ON p.IdProducto=r.IdProducto WHERE r.IdRecepcion=@id ORDER BY r.IdProducto,r.IdDetalle;", new { id });
+    private static Task<IReadOnlyList<PurchaseReceiptLineData>> ReceiptLines(Work w, long id) => w.List<PurchaseReceiptLineData>("SELECT r.IdDetalle Id,r.IdOrdenCompraDetalle OrderLineId,r.IdProducto ProductId,ISNULL(d.SKU,p.SKU) Sku,ISNULL(d.Nombre,p.Nombre) Name,r.CantidadRecibida Quantity,r.CostoCompraUSD PurchaseCostUsd,r.GastoAsignadoUSD ExtraUnitCostUsd,r.CostoPuestoBodega LandedUnitCost,r.NumeroLote LotNumber,r.FechaVencimiento Expires,r.FechaFabricacion Manufactured,r.GastoImportacionTotalUSD ImportExpenseTotalUsd FROM cmp.RecepcionCompraDetalle r JOIN cmp.OrdenCompraDetalle d ON d.IdDetalle=r.IdOrdenCompraDetalle JOIN inv.Productos p ON p.IdProducto=r.IdProducto WHERE r.IdRecepcion=@id ORDER BY r.IdProducto,r.IdDetalle;", new { id });
     public Task<PurchaseReceiptSnapshot?> ReadPurchaseReceiptAsync(long id, int userId, CancellationToken ct) => Read(userId, ["COMPRAS.VER"], async w =>
     {
         var receipt = await w.Maybe<PurchaseReceiptData>($"SELECT {ReceiptColumns} FROM {ReceiptFrom} WHERE r.IdRecepcion=@id;", new { id });
@@ -95,6 +95,7 @@ public sealed partial class SqlMvpRepository
     {
         CheckPurchase(r); await Station(w, workstationId);
         var order = await LockPurchase(w, r.OrderId, r.ExpectedVersion);
+        await NoImport(w,order.Id);
         var lines = await PurchaseLines(w, r.OrderId);
         Require(lines.Count > 0 && PurchaseRules.CanTransition(order.State, r.State, lines.Any(l => l.Received > 0)), "INVALID_STATE", "La transición no está permitida o ya hay unidades recibidas.");
         await w.Execute("UPDATE cmp.OrdenesCompra SET Estado=@State WHERE IdOrdenCompra=@OrderId;", r);
@@ -102,26 +103,33 @@ public sealed partial class SqlMvpRepository
     }, ct);
     public Task<Result<MvpReceipt>> PrepareReceiptAsync(PreparePurchaseReceipt r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "PREPARAR_RECEPCION", r, userId, workstationId, ["COMPRAS.VER", "COMPRAS.GESTIONAR"], async w =>
     {
-        CheckPurchase(r); await Station(w, workstationId);
-        var order = await LockPurchase(w, r.OrderId, r.ExpectedOrderVersion);
-        Require(PurchaseRules.CanReceive(order.State), "INVALID_STATE", "Confirma la orden antes de preparar una recepción.");
-        await NoImport(w, order.Id); await CurrencyRate(w, order.CurrencyId, r.ExchangeRate);
-        Require(await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.Almacenes WITH(HOLDLOCK) WHERE IdAlmacen=@WarehouseId AND Activo=1) THEN 1 ELSE 0 END);", r), "INVALID_STATE", "El almacén no está activo.");
-        var lines = await PurchaseLines(w, order.Id);
-        ValidatePending(lines, r.Lines.Select(l => (l.OrderLineId, l.Quantity)).ToArray());
-        var today = await w.Scalar<DateTime>("SELECT CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time');");
-        var receipt = await w.Scalar<long>("INSERT INTO cmp.RecepcionesCompra(NumeroRecepcion,IdOrdenCompra,IdAlmacen,RecibidoPor,Observaciones,TipoCambioReal,CostosCompletos) OUTPUT INSERTED.IdRecepcion VALUES(@number,@OrderId,@WarehouseId,@userId,@Reason,@ExchangeRate,@CostsComplete);", new { number = await Number(w, "RECEPCION_COMPRA"), r.OrderId, r.WarehouseId, userId, r.Reason, r.ExchangeRate, r.CostsComplete });
-        foreach (var item in r.Lines.OrderBy(l => lines.Single(d => d.Id == l.OrderLineId).ProductId).ThenBy(l => l.OrderLineId))
+        CheckPurchase(r); await Station(w,workstationId);
+        var order=await LockPurchase(w,r.OrderId,r.ExpectedOrderVersion); await NoImport(w,order.Id);
+        return await PrepareReceiptCore(w,r,order,userId,null);
+    },ct);
+    private static async Task<long> PrepareReceiptCore(Work w,PreparePurchaseReceipt r,PurchaseOrderData order,int userId,ImportationData? import)
+    {
+        Require(PurchaseRules.CanReceive(order.State),"INVALID_STATE","Confirma la orden antes de recibir.");
+        await CurrencyRate(w,order.CurrencyId,r.ExchangeRate);
+        Require(await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.Almacenes WITH(HOLDLOCK) WHERE IdAlmacen=@WarehouseId AND Activo=1) THEN 1 ELSE 0 END);",r),"INVALID_STATE","El almacén no está activo.");
+        var lines=await PurchaseLines(w,order.Id);ValidatePending(lines,r.Lines.Select(l=>(l.OrderLineId,l.Quantity)).ToArray());
+        var incoming=r.Lines.OrderBy(l=>lines.Single(d=>d.Id==l.OrderLineId).ProductId).ThenBy(l=>l.OrderLineId).ToArray();
+        var allocations=import is null ? null : await ReceiptExpenses(w,lines,incoming);
+        var today=await w.Scalar<DateTime>("SELECT CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time');");
+        var receipt=await w.Scalar<long>("INSERT INTO cmp.RecepcionesCompra(NumeroRecepcion,IdOrdenCompra,IdImportacion,IdAlmacen,RecibidoPor,Observaciones,TipoCambioReal,CostosCompletos) OUTPUT INSERTED.IdRecepcion VALUES(@number,@OrderId,@importId,@WarehouseId,@userId,@Reason,@ExchangeRate,@CostsComplete);",new{number=await Number(w,"RECEPCION_COMPRA"),r.OrderId,importId=import?.Id,r.WarehouseId,userId,r.Reason,r.ExchangeRate,r.CostsComplete});
+        for(var index=0;index<incoming.Length;index++)
         {
-            var original = lines.Single(l => l.Id == item.OrderLineId); var product = await ReceivingItem(w, original.ProductId);
-            PurchaseQuantity(product, item.Quantity); await LotForReceipt(w, product, item.LotNumber, item.Manufactured, item.Expires, today);
-            var purchase = PurchaseRules.PurchaseCostUsd(original.UnitCost, original.Discount, original.Quantity, r.ExchangeRate);
-            var landed = purchase + item.ExtraUnitCostUsd;
-            Require(PurchaseValidator.Cost(purchase) && PurchaseValidator.Cost(landed), "VALIDATION", "El costo convertido supera el rango unitario.");
-            await w.Execute("INSERT INTO cmp.RecepcionCompraDetalle(IdRecepcion,IdOrdenCompraDetalle,IdProducto,CantidadRecibida,CostoCompraUSD,GastoAsignadoUSD,CostoPuestoBodega,NumeroLote,FechaVencimiento,FechaFabricacion) VALUES(@receipt,@OrderLineId,@ProductId,@Quantity,@purchase,@ExtraUnitCostUsd,@landed,@LotNumber,@Expires,@Manufactured);", new { receipt, item.OrderLineId, original.ProductId, item.Quantity, purchase, item.ExtraUnitCostUsd, landed, item.LotNumber, item.Expires, item.Manufactured });
+            var item=incoming[index];var original=lines.Single(l=>l.Id==item.OrderLineId);var product=await ReceivingItem(w,original.ProductId);
+            PurchaseQuantity(product,item.Quantity);await LotForReceipt(w,product,item.LotNumber,item.Manufactured,item.Expires,today);
+            decimal? allocated=allocations is null?null:allocations[index];
+            var purchase=import is null?PurchaseRules.PurchaseCostUsd(original.UnitCost,original.Discount,original.Quantity,r.ExchangeRate):original.ImportPurchaseCostUsd!.Value;
+            var extra=allocated is {} amount?PurchaseRules.Cost(amount/item.Quantity):item.ExtraUnitCostUsd;var landed=purchase+extra;
+            Require(PurchaseValidator.Cost(purchase)&&PurchaseValidator.Cost(landed),"VALIDATION","El costo convertido supera el rango unitario.");
+            await w.Execute("INSERT INTO cmp.RecepcionCompraDetalle(IdRecepcion,IdOrdenCompraDetalle,IdProducto,CantidadRecibida,CostoCompraUSD,GastoAsignadoUSD,CostoPuestoBodega,NumeroLote,FechaVencimiento,FechaFabricacion,GastoImportacionTotalUSD) VALUES(@receipt,@OrderLineId,@ProductId,@Quantity,@purchase,@extra,@landed,@LotNumber,@Expires,@Manufactured,@allocated);",new{receipt,item.OrderLineId,original.ProductId,item.Quantity,purchase,extra,landed,item.LotNumber,item.Expires,item.Manufactured,allocated});
         }
-        await TouchPurchase(w, order.Id); return receipt;
-    }, ct);
+        if(import is not null){await TouchImport(w,import.Id);await ImportNote(w,import.Id,"BORRADOR_RECEPCION",$"Recepción #{receipt} preparada; no ingresa stock.",userId);}
+        await TouchPurchase(w,order.Id);return receipt;
+    }
     private static void ValidatePending(IReadOnlyList<PurchaseOrderLineData> lines, IReadOnlyList<(long Id, decimal Quantity)> received)
     {
         foreach (var group in received.GroupBy(l => l.Id))
@@ -142,27 +150,35 @@ public sealed partial class SqlMvpRepository
         var orderId = await w.Scalar<long?>("SELECT IdOrdenCompra FROM cmp.RecepcionesCompra WHERE IdRecepcion=@ReceiptId;", r);
         Require(orderId is not null, "INVALID_STATE", "La recepción no existe.");
         var order = await LockPurchase(w, orderId!.Value, r.ExpectedOrderVersion);
+        var import=await Importation(w,order.Id);
         var receipt = await w.Maybe<PurchaseReceiptData>($"SELECT {ReceiptColumns} FROM cmp.RecepcionesCompra r WITH(UPDLOCK,HOLDLOCK) JOIN inv.Almacenes a ON a.IdAlmacen=r.IdAlmacen JOIN seg.Usuarios u ON u.IdUsuario=r.RecibidoPor WHERE r.IdRecepcion=@ReceiptId;", r);
         Version(receipt?.RowVersion, r.ExpectedVersion);
         Require(receipt!.State == "BORRADOR", "INVALID_STATE", "Sólo se aplica o anula un borrador; una recepción aplicada no se revierte aquí.");
         Require(receipt.OrderId == order.Id, "INVALID_STATE", "La recepción no corresponde a la orden consultada.");
-        await NoImport(w, order.Id);
-        Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cmp.RecepcionesCompra WHERE IdRecepcion=@ReceiptId AND IdImportacion IS NOT NULL) THEN 1 ELSE 0 END);", r), "INVALID_STATE", "La recepción pertenece a una importación; requiere el flujo 2.1B.");
-        if (!r.Apply) { await w.Execute("UPDATE cmp.RecepcionesCompra SET Estado=N'ANULADA' WHERE IdRecepcion=@ReceiptId;", r); await TouchPurchase(w, order.Id); return r.ReceiptId; }
+        Require(receipt.ImportId==import?.Id,"INVALID_STATE","El origen de la recepción no coincide con la importación de la orden.");
+        if (!r.Apply) { await w.Execute("UPDATE cmp.RecepcionesCompra SET Estado=N'ANULADA' WHERE IdRecepcion=@ReceiptId;", r); await TouchPurchase(w, order.Id); if(import is not null) { await TouchImport(w,import.Id); await ImportNote(w,import.Id,"ANULAR_RECEPCION",$"Borrador #{receipt.Id} anulado.",userId); } return r.ReceiptId; }
         Require(PurchaseRules.CanReceive(order.State) && receipt.CostsComplete && PurchaseValidator.Rate(receipt.ExchangeRate ?? 0), "INVALID_STATE", "La orden no admite recepción o el costo no se confirmó completo. Corrige el borrador antes de aplicar.");
         await CurrencyRate(w, order.CurrencyId, receipt.ExchangeRate!.Value);
         Require(await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.Almacenes WITH(HOLDLOCK) WHERE IdAlmacen=@WarehouseId AND Activo=1) THEN 1 ELSE 0 END);", receipt), "INVALID_STATE", "El almacén está inactivo.");
         var lines = await ReceiptLines(w, receipt.Id); var ordered = await PurchaseLines(w, order.Id);
         Require(lines.Count is > 0 and <= 100, "INVALID_STATE", "La recepción no contiene líneas válidas.");
         ValidatePending(ordered, lines.Select(l => (l.OrderLineId, l.Quantity)).ToArray());
-        var today = await w.Scalar<DateTime>("SELECT CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time');");
-        foreach (var item in lines)
+        IReadOnlyDictionary<int,decimal>? allocations=null;
+        if(import is not null)
         {
+            Require(import.CostsClosed && import.Rate==receipt.ExchangeRate,"INVALID_STATE","La importación no tiene costos cerrados compatibles.");
+            allocations=await ReceiptExpenses(w,ordered,lines.Select(l=>new ReceivePurchaseLine(l.OrderLineId,l.Quantity)).ToArray());
+        }
+        var today = await w.Scalar<DateTime>("SELECT CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time');");
+        for(var index=0;index<lines.Count;index++)
+        {
+            var item=lines[index];
             var source = ordered.Single(l => l.Id == item.OrderLineId);
             Require(source.ProductId == item.ProductId && MvpValidator.Quantity(item.Quantity), "INVALID_STATE", "El detalle no corresponde al producto o cantidad de la orden.");
             var product = await ReceivingItem(w, item.ProductId); PurchaseQuantity(product, item.Quantity);
             await LotForReceipt(w, product, item.LotNumber, item.Manufactured, item.Expires, today);
-            var calculated = PurchaseRules.PurchaseCostUsd(source.UnitCost, source.Discount, source.Quantity, receipt.ExchangeRate!.Value);
+            var calculated = import is null ? PurchaseRules.PurchaseCostUsd(source.UnitCost, source.Discount, source.Quantity, receipt.ExchangeRate!.Value) : source.ImportPurchaseCostUsd ?? -1;
+            if(allocations is not null) Require(item.ImportExpenseTotalUsd==allocations[index] && item.ExtraUnitCostUsd==PurchaseRules.Cost(allocations[index]/item.Quantity),"CONCURRENCY_CONFLICT","El reparto del borrador cambió por otra recepción. Anula y prepara otro con el pendiente actualizado.");
             Require(PurchaseValidator.Cost(item.ExtraUnitCostUsd) && PurchaseValidator.Cost(item.LandedUnitCost) && calculated == item.PurchaseCostUsd && item.LandedUnitCost == calculated + item.ExtraUnitCostUsd, "INVALID_STATE", "Los costos no coinciden con la orden y su cambio histórico.");
             var stock = await w.Maybe<ReceivingStock>("SELECT StockActual Quantity,CostoPromedio Cost FROM inv.ExistenciasProducto WITH(UPDLOCK,HOLDLOCK) WHERE IdProducto=@ProductId AND IdAlmacen=@warehouse;", new { item.ProductId, warehouse = receipt.WarehouseId });
             var before = stock?.Quantity ?? 0; var after = before + item.Quantity;
@@ -181,6 +197,12 @@ public sealed partial class SqlMvpRepository
         }
         await w.Execute("UPDATE cmp.RecepcionesCompra SET Estado=N'APLICADA' WHERE IdRecepcion=@ReceiptId;", r);
         await w.Execute("UPDATE cmp.OrdenesCompra SET Estado=CASE WHEN EXISTS(SELECT 1 FROM cmp.OrdenCompraDetalle WHERE IdOrdenCompra=@id AND CantidadRecibida<Cantidad) THEN N'RECIBIDA_PARCIAL' ELSE N'RECIBIDA' END WHERE IdOrdenCompra=@id;", new { id = order.Id });
+        if(import is not null)
+        {
+            var partial=await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cmp.OrdenCompraDetalle WHERE IdOrdenCompra=@id AND CantidadRecibida<Cantidad) THEN 1 ELSE 0 END);",new{id=order.Id});
+            await w.Execute("UPDATE cmp.Importaciones SET Estado=@state,FechaRecepcion=CASE WHEN @state=N'RECIBIDA' THEN @today ELSE FechaRecepcion END WHERE IdImportacion=@id;",new{state=partial?"RECIBIDA_PARCIAL":"RECIBIDA",today,id=import.Id});
+            await ImportNote(w,import.Id,partial?"RECIBIDA_PARCIAL":"RECIBIDA",$"Recepción {receipt.Number} aplicada con costos cerrados.",userId);
+        }
         return receipt.Id;
     }, ct);
 }

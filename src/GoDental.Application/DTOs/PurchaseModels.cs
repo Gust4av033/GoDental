@@ -35,6 +35,8 @@ public sealed class PurchaseOrderData
 }
 public sealed class PurchaseOrderLineData
 {
+    public decimal? ImportPurchaseCostUsd { get; set; }
+    public decimal? ImportExpenseUsd { get; set; }
     public long Id { get; set; }
     public int ProductId { get; set; }
     public string Sku { get; set; } = "";
@@ -50,6 +52,7 @@ public sealed class PurchaseOrderLineData
 }
 public sealed class PurchaseReceiptData
 {
+    public long? ImportId { get; set; }
     public long Id { get; set; }
     public string Number { get; set; } = "";
     public long OrderId { get; set; }
@@ -64,6 +67,8 @@ public sealed class PurchaseReceiptData
 }
 public sealed class PurchaseReceiptLineData
 {
+    public decimal? ImportExpenseTotalUsd { get; set; }
+    public decimal? ExpenseRoundingUsd => ImportExpenseTotalUsd is {} total ? total - Quantity * ExtraUnitCostUsd : null;
     public long Id { get; set; }
     public long OrderLineId { get; set; }
     public int ProductId { get; set; }

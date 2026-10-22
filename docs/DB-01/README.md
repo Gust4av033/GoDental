@@ -7,3 +7,5 @@ DB-01 define la estructura formal de datos de GoDental. La transcripción histó
 La baseline ejecutable 001–008 y las migraciones posteriores viven en `../../database/`. Las ampliaciones se documentan antes de implementarlas: [DEV-03](../DEV-03-Inventario-operativo.md) define 010 y [DEV-09](../DEV-09-Conteos.md) define 011 sobre las tablas de conteos existentes. No inventar tablas, columnas o procedimientos desde C# sin una definición versionada.
 
 DEV-33 documenta la ampliación 017 sobre las tablas de compras existentes: estado parcial, snapshots de líneas, versión/cambio real/costo completo de recepción y fecha de fabricación. No agrega tablas ni procedimientos y mantiene la separación entre compra directa e importación pendiente de diseño 2.1B.
+
+DEV-37 define la ampliación 018 de importaciones: cierre/cambio/gastos totales, anulación de gastos, presupuestos por línea de OC y total de gasto recibido. Conserva 76 tablas, 8 vistas y 18 procedimientos; no reconstruye costos históricos.

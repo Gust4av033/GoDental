@@ -10,7 +10,7 @@ using GoDental.Application.DTOs;
 using Microsoft.Data.SqlClient;
 
 namespace GoDental.Infrastructure.Operations;
-public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISalesRepository, ICashRepository, IOrderRepository, IInventorySetupRepository, IFiscalPendingRepository, IMvpOperationRepository, ICommercialParametersRepository, IPurchaseRepository
+public sealed partial class SqlMvpRepository(IDbConnectionFactory factory) : ISalesRepository, ICashRepository, IOrderRepository, IInventorySetupRepository, IFiscalPendingRepository, IMvpOperationRepository, ICommercialParametersRepository, IPurchaseRepository, IImportRepository
 {
     private const string Authorization = """
         IF NOT EXISTS(SELECT 1 FROM seg.Usuarios WHERE IdUsuario=@userId AND Activo=1 AND DebeCambiarClave=0)

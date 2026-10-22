@@ -18,10 +18,11 @@ public static class OperationIdentity
     public static bool IsValid(OperationTicket t) => t.OperationId != Guid.Empty && Types.Contains(t.Type)
         && t.RequestHash is { Length: 64 } && t.RequestHash.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F');
 
-    private static readonly HashSet<string> Types = ["GUARDAR_OC", "ESTADO_OC", "PREPARAR_RECEPCION", "APLICAR_RECEPCION", "ANULAR_RECEPCION", "PARAMETROS_COMERCIALES", "CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
+    private static readonly HashSet<string> Types = ["CREAR_IMPORTACION", "EVENTO_IMPORTACION", "GASTO_IMPORTACION", "ANULAR_GASTO_IMPORTACION", "CERRAR_COSTOS_IMPORTACION", "RECEPCION_IMPORTACION", "GUARDAR_OC", "ESTADO_OC", "PREPARAR_RECEPCION", "APLICAR_RECEPCION", "ANULAR_RECEPCION", "PARAMETROS_COMERCIALES", "CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
 
     private static (Guid, string, object) Normalize(object request) => request switch
     {
+        SaveImportation or ImportEvent or ImportExpense or VoidImportExpense or CloseImportCosts or PrepareImportReceipt => (ImportValidator.Id(request), ImportValidator.Type(request), ImportValidator.Freeze(request)),
         SavePurchaseOrder r => (r.OperationId, "GUARDAR_OC", PurchaseValidator.Freeze(r)),
         PurchaseTransition r => (r.OperationId, "ESTADO_OC", r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason = r.Reason.Trim() }),
         PreparePurchaseReceipt r => (r.OperationId, "PREPARAR_RECEPCION", PurchaseValidator.Freeze(r)),
