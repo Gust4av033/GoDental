@@ -10,7 +10,7 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. La siguiente fase es **2.1B: importaciones y costeo**, con decisiones previas de IMP-01. [DEV-34](DEV-34-Impresion-Formatos.md) conserva el complemento de impresión configurable solicitado, aún pendiente. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. La siguiente fase es **2.1B: importaciones y costeo**, con decisiones previas de IMP-01. [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Secuencia de entrega
 
@@ -20,7 +20,10 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.0B · Complementos MVP | Implementado y validado automáticamente | DEV-32, migración 016, CI #110 |
 | 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
 | 2.1B · Importaciones y costeo | Siguiente fase; decisiones de prorrateo y costos posteriores pendientes | IMP-01 y DEV-33 |
-| Impresión configurable | Complemento solicitado y registrado; aún sin implementar | DEV-34: sin impresora definida, medidas en mm |
+| Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
+| Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
+
+DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la siguiente fase funcional 2.1B.
 
 La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan el orden de DEV-30.
 
