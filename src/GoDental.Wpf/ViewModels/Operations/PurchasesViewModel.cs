@@ -13,6 +13,7 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
 {
     private readonly PurchaseService service;
     private readonly IMvpDialogService dialogs;
+    private readonly ImportService? importService;
     private PurchaseCatalogs? catalogs;
     public ObservableCollection<PurchaseOrderData> Items { get; } = [];
     public IReadOnlyList<string> States { get; } = ["Todos", "BORRADOR", "ENVIADA", "CONFIRMADA", "EN_PRODUCCION", "DESPACHADA", "RECIBIDA_PARCIAL", "RECIBIDA", "CANCELADA"];
@@ -31,19 +32,19 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
     public bool CanManage => CanEdit && service.CanManage;
     public bool CanCreate => CanManage && catalogs is not null;
     public bool CanEditOrder => CanManage && Detail?.Order.State == "BORRADOR";
-    public bool CanTransition => CanManage && Detail is not null && States.Any(s => PurchaseRules.CanTransition(Detail.Order.State, s, Detail.Lines.Any(l => l.Received > 0)));
-    public bool CanPrepare => CanManage && Detail is not null && PurchaseRules.CanReceive(Detail.Order.State) && catalogs is not null;
+    public bool CanTransition => CanManage && Importation is null && Detail is not null && States.Any(s => PurchaseRules.CanTransition(Detail.Order.State, s, Detail.Lines.Any(l => l.Received > 0)));
+    public bool CanPrepare => CanManage && Detail is not null && PurchaseRules.CanReceive(Detail.Order.State) && catalogs is not null && (Importation is null || Importation.Importation.CostsClosed);
     public bool CanActOnReceipt => CanManage && ReceiptDetail?.Receipt.State == "BORRADOR";
-    protected override void PermissionsChanged() { foreach (var property in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanEditOrder), nameof(CanTransition), nameof(CanPrepare), nameof(CanActOnReceipt) }) OnPropertyChanged(property); }
-    protected override void Reset() { catalogs = null; Items.Clear(); Selected = null; Detail = null; ReceiptDetail = null; SelectedReceipt = null; IsDetailOpen = false; Page = 1; Total = 0; PermissionsChanged(); }
+    protected override void PermissionsChanged() { foreach (var property in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanEditOrder), nameof(CanTransition), nameof(CanPrepare), nameof(CanActOnReceipt) }) OnPropertyChanged(property); ImportPermissionsChanged(); }
+    protected override void Reset() { Importation = null; SelectedImportExpense = null; catalogs = null; Items.Clear(); Selected = null; Detail = null; ReceiptDetail = null; SelectedReceipt = null; IsDetailOpen = false; Page = 1; Total = 0; PermissionsChanged(); }
     partial void OnDetailChanged(PurchaseOrderSnapshot? value) => PermissionsChanged();
     partial void OnReceiptDetailChanged(PurchaseReceiptSnapshot? value) => PermissionsChanged();
-    partial void OnSelectedChanged(PurchaseOrderData? value) { Detail = null; ReceiptDetail = null; SelectedReceipt = null; }
+    partial void OnSelectedChanged(PurchaseOrderData? value) { Importation = null; SelectedImportExpense = null; Detail = null; ReceiptDetail = null; SelectedReceipt = null; }
     partial void OnSelectedReceiptChanged(PurchaseReceiptData? value) => ReceiptDetail = null;
     partial void OnPageChanged(int value) => OnPropertyChanged(nameof(PageLabel));
     partial void OnTotalChanged(int value) => OnPropertyChanged(nameof(PageLabel));
     public PurchasesViewModel(PurchaseService service, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations,
-        ILogger<PurchasesViewModel> logger) : base(session, operations, logger) { this.service = service; this.dialogs = dialogs; }
+        ILogger<PurchasesViewModel> logger, ImportService? importService = null) : base(session, operations, logger) { this.service = service; this.dialogs = dialogs; this.importService = importService; }
     [RelayCommand] private Task ReloadAsync() { if (IsBusy) return Task.CompletedTask; Page = 1; return LoadAsync(); }
     [RelayCommand] private Task NextAsync() { if (IsBusy || Page * 30 >= Total) return Task.CompletedTask; Page++; return LoadAsync(); }
     [RelayCommand] private Task PreviousAsync() { if (IsBusy || Page <= 1) return Task.CompletedTask; Page--; return LoadAsync(); }
@@ -58,8 +59,9 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
     [RelayCommand] private Task OpenAsync() => Selected is { } selected ? ReadAsync(async revision =>
     {
         var result = await service.ReadAsync(selected.Id);
+        var import = importService is null ? null : await importService.ReadAsync(selected.Id);
         if (!Current(revision) || Selected?.Id != selected.Id) return;
-        Detail = result; ReceiptDetail = null; SelectedReceipt = null; IsDetailOpen = result is not null;
+        Detail = result; Importation = import; ImportEventPage = 1; ReceiptDetail = null; SelectedReceipt = null; IsDetailOpen = result is not null;
         StatusMessage = result is null ? "La orden ya no está disponible." : "El stock cambia únicamente al aplicar una recepción con costo completo.";
     }) : Task.CompletedTask;
     [RelayCommand] private Task RefreshDetailAsync() => !IsBusy && !IsEditing && Detail is { } d ? RefreshAsync(d.Order.Id, SelectedReceipt?.Id) : Task.CompletedTask;
@@ -73,10 +75,11 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
     {
         var result = await service.ReadAsync(orderId); var receipt = receiptId is { } id ? await service.ReceiptAsync(id) : null;
         var rows = await service.SearchAsync(Search, State == "Todos" ? null : State, new(Page));
+        var import = importService is null ? null : await importService.ReadAsync(orderId);
         if (!Current(revision)) return;
         Items.Clear(); foreach (var row in rows.Items) Items.Add(row); Total = rows.Total;
         Selected = Items.FirstOrDefault(row => row.Id == orderId);
-        Detail = result; IsDetailOpen = result is not null; SelectedReceipt = result?.Receipts.FirstOrDefault(r => r.Id == receiptId); ReceiptDetail = receipt;
+        Detail = result; Importation = import; ImportEventPage = 1; IsDetailOpen = result is not null; SelectedReceipt = result?.Receipts.FirstOrDefault(r => r.Id == receiptId); ReceiptDetail = receipt;
         StatusMessage = result is null ? "La orden ya no está disponible." : "Consulta actualizada. Revisa cantidades pendientes y estado antes de preparar otra recepción.";
     });
     [RelayCommand] private Task NewAsync() => EditAsync(null);
@@ -107,13 +110,19 @@ public sealed partial class PurchasesViewModel : MvpWorkspaceViewModel
     [RelayCommand] private async Task PrepareAsync()
     {
         if (!CanPrepare || Detail is not { } source || catalogs is null) return;
-        var draft = new PurchaseReceiptDraftModel(source, catalogs.Warehouses);
+        var import = Importation?.Importation;
+        var draft = new PurchaseReceiptDraftModel(source, catalogs.Warehouses, import);
         using var form = new MvpFormModel("Preparar recepción de compra", "Guardar borrador", Operation, async f =>
         {
             if (draft.Warehouse is null) throw new ArgumentException("Selecciona el almacén de recepción.");
             var id = Guid.NewGuid(); var request = new PreparePurchaseReceipt(id, source.Order.Id, source.Order.RowVersion.ToArray(), draft.Warehouse.Id, CheckoutModel.Parse(draft.Rate, "cambio real"), draft.CostsComplete, draft.Snapshot(), f.Text("reason"));
-            await Operation.StartAsync(request, id, r => service.PrepareAsync(r), receipt => RefreshAsync(source.Order.Id, receipt.Id));
-        }) { Body = draft, Description = $"{source.Order.Number} · {source.Order.Currency}. Compra directa con costos conocidos. El gasto adicional es USD por unidad; no distribuye gastos de importación. El borrador no crea stock; revísalo y aplica después." };
+            if (import is not null && importService is not null)
+            {
+                var imported = new PrepareImportReceipt(id,import.Id,import.RowVersion.ToArray(),request);
+                await Operation.StartAsync(imported,id,r=>importService.SaveAsync(r),receipt=>RefreshAsync(source.Order.Id,receipt.Id));
+            }
+            else await Operation.StartAsync(request, id, r => service.PrepareAsync(r), receipt => RefreshAsync(source.Order.Id, receipt.Id));
+        }) { Body = draft, Description = import is not null ? "Recepción de importación con cambio y costos congelados. El servidor calcula el gasto proporcional; no captures un gasto adicional manual. Aplicar valida el presupuesto actualizado." : $"{source.Order.Number} · {source.Order.Currency}. Compra directa con costos conocidos. El gasto adicional es USD por unidad; no distribuye gastos de importación. El borrador no crea stock; revísalo y aplica después." };
         form.Input("reason", "Motivo de la recepción"); await DialogAsync(form);
     }
     [RelayCommand] private Task ApplyAsync() => ActAsync(true);

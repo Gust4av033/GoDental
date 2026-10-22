@@ -168,7 +168,7 @@ internal static class Program
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var pdfFiles = new VisualPdfFiles();
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
-            var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance);
+            var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance, new ImportService(mvpRepository,session));
             var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
             var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
@@ -659,6 +659,33 @@ internal static class Program
                     await purchasesMvp.PrepareCommand.ExecuteAsync(null);
                     await purchasesMvp.ApplyCommand.ExecuteAsync(null);
                     await purchasesMvp.CancelReceiptCommand.ExecuteAsync(null);
+                    var savedPurchase = mvpRepository.Purchase;
+                    mvpRepository.Purchase = savedPurchase with { Receipts = [] };
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.CanCreateImport, "Una OC confirmada sin recepciones permite crear importación");
+                    await purchasesMvp.CreateImportCommand.ExecuteAsync(null);
+                    mvpRepository.Importation = new(new() { Id=301,OrderId=savedPurchase.Order.Id,State="CONFIRMADA",Courier="Courier de prueba",RowVersion=[1,2,3,4,5,6,7,8] },
+                        [new() { Id=9,Type="FLETE",Amount=10,Currency="USD",Rate=1,AmountUsd=10,Description="Flete de ejemplo" }],
+                        [new() { Id=1,Type="CREADA",Description="Evento manual de prueba",Date=DateTimeOffset.UtcNow,User="Prueba" }],1);
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.HasImportation && purchasesMvp.CanEditImportCosts && !purchasesMvp.CanPrepare, "La importación muestra gastos y bloquea recibir sin cerrar costos");
+                    await RenderCommerceTabsAsync(shell,typeof(PurchasesView),"Importaciones",theme,output,1093,614);
+                    mvpDialogs.Render = async form =>
+                    {
+                        if(form.Body is ImportCostDraftModel cost) cost.CalculateCommand.Execute(null);
+                        var view=new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form,view,Path.Combine(output,$"importaciones-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await purchasesMvp.ImportEventCommand.ExecuteAsync(null);await purchasesMvp.AddImportExpenseCommand.ExecuteAsync(null);
+                    purchasesMvp.SelectedImportExpense=purchasesMvp.Importation!.Expenses.Single();await purchasesMvp.VoidImportExpenseCommand.ExecuteAsync(null);
+                    await purchasesMvp.CloseImportCostsCommand.ExecuteAsync(null);
+                    mvpRepository.Importation.Importation.CostsClosed=true;mvpRepository.Importation.Importation.Rate=1;
+                    foreach(var line in savedPurchase.Lines){line.ImportPurchaseCostUsd=10;line.ImportExpenseUsd=10;}
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.CanPrepare && !purchasesMvp.CanEditImportCosts,"Cerrar costos habilita recepción y bloquea gastos posteriores");
+                    await purchasesMvp.PrepareCommand.ExecuteAsync(null);
+                    foreach(var line in savedPurchase.Lines){line.ImportPurchaseCostUsd=null;line.ImportExpenseUsd=null;}
+                    mvpRepository.Importation=null;mvpRepository.Purchase=savedPurchase;await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
                     mvpDialogs.Render = null;
                     foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
                         await RenderWindowAsync(new SettingsWindow(vm, commercialParameters) { Width = size.Width, Height = size.Height }, Path.Combine(output, $"ajustes-comercial-{theme}-{size.Width}.png"), 2);

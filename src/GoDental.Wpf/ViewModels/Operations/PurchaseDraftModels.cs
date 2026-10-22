@@ -95,10 +95,12 @@ public sealed partial class PurchaseReceiptDraftModel : ObservableObject
     [ObservableProperty] private DateTime? expires;
     [ObservableProperty] private bool costsComplete;
     [ObservableProperty] private string statusMessage = "Captura sólo unidades físicamente recibidas. Puedes dividir un producto en varios lotes.";
-    public PurchaseReceiptDraftModel(PurchaseOrderSnapshot source, IReadOnlyList<CatalogOption> warehouses)
+    public bool CanEditCosts { get; }
+    public PurchaseReceiptDraftModel(PurchaseOrderSnapshot source, IReadOnlyList<CatalogOption> warehouses, ImportationData? import = null)
     {
+        CanEditCosts = import is null; CostsComplete = import?.CostsClosed ?? false;
         Source = source; Warehouses = warehouses; Warehouse = warehouses.FirstOrDefault();
-        PendingLines = source.Lines.Where(l => l.Pending > 0).ToArray(); OrderLine = PendingLines.FirstOrDefault(); Rate = source.Order.EstimatedRate.ToString("0.########");
+        PendingLines = source.Lines.Where(l => l.Pending > 0).ToArray(); OrderLine = PendingLines.FirstOrDefault(); Rate = (import?.Rate ?? source.Order.EstimatedRate).ToString("0.########");
     }
     [RelayCommand] private void Add()
     {

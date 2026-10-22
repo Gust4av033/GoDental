@@ -2,13 +2,13 @@
   <StackPanel>
     <UniformGrid Columns="2">
       <StackPanel Margin="0,0,12,12"><TextBlock Text="Almacén de recepción" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding Warehouse}" DisplayMemberPath="Name" AutomationProperties.Name="Almacén de recepción"/></StackPanel>
-      <StackPanel Margin="0,0,12,12"><TextBlock Text="Cambio real: USD por unidad de moneda" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Rate, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cambio real de recepción"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Cambio real: USD por unidad de moneda" Style="{StaticResource FieldLabel}"/><TextBox IsEnabled="{Binding CanEditCosts}" Text="{Binding Rate, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cambio real de recepción"/></StackPanel>
     </UniformGrid>
     <TextBlock Text="Producto pendiente de recibir" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding PendingLines}" SelectedItem="{Binding OrderLine}" DisplayMemberPath="Name" AutomationProperties.Name="Línea pendiente de compra" Margin="0,0,0,12"/>
     <TextBlock Text="{Binding OrderLine.Pending, StringFormat='Pendiente de esta línea: {0:0.####}'}" Style="{StaticResource MutedText}" Margin="0,0,0,8"/>
     <UniformGrid Columns="2">
       <StackPanel Margin="0,0,12,12"><TextBlock Text="Cantidad recibida" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cantidad recibida"/></StackPanel>
-      <StackPanel Margin="0,0,12,12"><TextBlock Text="Gasto adicional USD por unidad" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding ExtraCost, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Gasto unitario de recepción"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Gasto adicional USD por unidad" Style="{StaticResource FieldLabel}"/><TextBox IsEnabled="{Binding CanEditCosts}" Text="{Binding ExtraCost, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Gasto unitario de recepción"/></StackPanel>
       <StackPanel Margin="0,0,12,12"><TextBlock Text="Lote · sólo si el producto lo requiere" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Lot, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Lote recibido"/></StackPanel>
       <StackPanel Margin="0,0,12,12"><TextBlock Text="Fabricación" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding Manufactured}" AutomationProperties.Name="Fabricación del lote recibido"/></StackPanel>
       <StackPanel Margin="0,0,12,12"><TextBlock Text="Vencimiento" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding Expires}" AutomationProperties.Name="Vencimiento del lote recibido"/></StackPanel>
@@ -17,7 +17,7 @@
     <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="160" AutomationProperties.Name="Captura de recepción">
       <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="*" MinWidth="150"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="85"/><DataGridTextColumn Header="Lote" Binding="{Binding Lot}" Width="110"/><DataGridTextColumn Header="Extra/unidad USD" Binding="{Binding ExtraCost}" Width="120"/></DataGrid.Columns>
     </DataGrid>
-    <CheckBox IsChecked="{Binding CostsComplete}" Margin="0,16,0,0" AutomationProperties.Name="Costo completo de recepción"><TextBlock Text="Confirmo que el costo incluye mercadería y todos los gastos atribuibles conocidos. No hay costos pendientes." TextWrapping="Wrap"/></CheckBox>
+    <CheckBox IsEnabled="{Binding CanEditCosts}" IsChecked="{Binding CostsComplete}" Margin="0,16,0,0" AutomationProperties.Name="Costo completo de recepción"><TextBlock Text="Confirmo que el costo incluye mercadería y todos los gastos atribuibles conocidos. No hay costos pendientes." TextWrapping="Wrap"/></CheckBox>
     <TextBlock Text="Sin esta confirmación, el borrador no podrá aplicarse ni poner unidades a la venta." Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>

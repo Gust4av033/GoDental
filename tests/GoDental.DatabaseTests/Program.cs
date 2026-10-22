@@ -21,6 +21,13 @@ if (args is ["--recovery-journal-probe", var journalFolder, var serializedPendin
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-imports"))
+{
+    var importDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(importDatabase, Path.Combine(root, "database"));
+    await ImportIntegration.RunAsync(new TestConnectionFactory(importDatabase), root, importDatabase);
+    return;
+}
 if (args.Contains("--run-purchases"))
 {
     var purchaseDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
@@ -96,7 +103,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes | --run-recovery | --run-complements | --run-purchases [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes | --run-recovery | --run-complements | --run-purchases | --run-imports [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 

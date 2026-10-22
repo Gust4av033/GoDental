@@ -34,9 +34,10 @@
             <TextBlock Text="{Binding ReceiptDetail.Receipt.Number}" Style="{StaticResource SectionHeading}"/>
             <TextBlock Text="Costos unitarios de recepción en USD. Aplicar ingresa unidades; anular sólo se permite al borrador." Style="{StaticResource MutedText}" Margin="0,4,0,8"/>
             <DataGrid ItemsSource="{Binding ReceiptDetail.Lines}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" AutomationProperties.Name="Costos y lotes de recepción">
-              <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="130"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="80"/><DataGridTextColumn Header="Compra USD" Binding="{Binding PurchaseCostUsd}" Width="100"/><DataGridTextColumn Header="Extra/unidad" Binding="{Binding ExtraUnitCostUsd}" Width="100"/><DataGridTextColumn Header="Puesto bodega" Binding="{Binding LandedUnitCost}" Width="110"/><DataGridTextColumn Header="Lote" Binding="{Binding LotNumber}" Width="100"/><DataGridTextColumn Header="Vence" Binding="{Binding Expires, StringFormat=dd/MM/yyyy}" Width="95"/></DataGrid.Columns>
+              <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="130"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="80"/><DataGridTextColumn Header="Compra USD" Binding="{Binding PurchaseCostUsd}" Width="100"/><DataGridTextColumn Header="Extra/unidad" Binding="{Binding ExtraUnitCostUsd}" Width="100"/><DataGridTextColumn Header="Puesto bodega" Binding="{Binding LandedUnitCost}" Width="110"/><DataGridTextColumn Header="Gasto total USD" Binding="{Binding ImportExpenseTotalUsd, StringFormat=N2}" Width="120"/><DataGridTextColumn Header="Residuo USD" Binding="{Binding ExpenseRoundingUsd}" Width="110"/><DataGridTextColumn Header="Lote" Binding="{Binding LotNumber}" Width="100"/><DataGridTextColumn Header="Vence" Binding="{Binding Expires, StringFormat=dd/MM/yyyy}" Width="95"/></DataGrid.Columns>
             </DataGrid>
           </StackPanel></TabItem>
+          <TabItem Header="Importación"><local:ImportationView/></TabItem>
         </TabControl>
       </StackPanel></Border>
     </StackPanel>

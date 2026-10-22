@@ -4,7 +4,7 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 
 // Synthetic data for tests and visual smoke only; never registered by the app.
-internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository, ICommercialParametersRepository, IPurchaseRepository
+internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository, ICommercialParametersRepository, IPurchaseRepository, IImportRepository
 {
     public List<object> Writes { get; } = [];
     public bool LoseResponse { get; set; }
@@ -94,4 +94,9 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<Result<MvpReceipt>> ActOnReceiptAsync(PurchaseReceiptAction request, int userId, int? workstationId, CancellationToken ct) => Write(request, request.OperationId, request.ReceiptId);
     public Task<OperationResolution> ResolveOperationAsync(OperationTicket ticket, bool rejectIfAbsent, int userId, int? workstationId, CancellationToken ct) => Task.FromResult(FoundReceipt is not null && FoundReceipt.OperationId == ticket.OperationId ? new OperationResolution(OperationResolutionState.Confirmed, FoundReceipt) : new(rejectIfAbsent ? OperationResolutionState.RejectedDefinitively : OperationResolutionState.Unconfirmed));
     public Task<MvpReceipt?> FindOperationAsync(Guid id, int userId, CancellationToken ct) => Task.FromResult(FoundReceipt);
+    public ImportationSnapshot? Importation {get;set;}
+    public Task<ImportationSnapshot?>? ImportReadTask {get;set;}
+    public Task<ImportationSnapshot?> ReadImportAsync(long orderId,MvpFilter events,int userId,CancellationToken ct) => ImportReadTask??Task.FromResult(Importation);
+    public Task<Result<MvpReceipt>> WriteImportAsync(object request,int userId,int? workstationId,CancellationToken ct) => Write(request,GoDental.Application.Validators.ImportValidator.Id(request),request is PrepareImportReceipt?201:301);
+
 }
