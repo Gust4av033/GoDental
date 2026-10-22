@@ -10,7 +10,7 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. La siguiente fase es **2.1B: importaciones y costeo**, con decisiones previas de IMP-01. [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. La siguiente fase funcional es **2.2A: posventa**. [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Secuencia de entrega
 
@@ -19,11 +19,12 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.0A · Recuperación | Implementado y validado automáticamente | DEV-31, migración 015, CI #106 |
 | 2.0B · Complementos MVP | Implementado y validado automáticamente | DEV-32, migración 016, CI #110 |
 | 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
-| 2.1B · Importaciones y costeo | Siguiente fase; decisiones de prorrateo y costos posteriores pendientes | IMP-01 y DEV-33 |
+| 2.1B · Importaciones y costeo | Implementado y validado automáticamente | DEV-37, migración 018, CI #136: 255 xUnit / 520 SQL / 767 WPF |
+| 2.2A · Posventa | Siguiente fase funcional | Devoluciones/anulaciones y reversos según DEV-30 |
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
-DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la siguiente fase funcional 2.1B.
+DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.
 
 La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan el orden de DEV-30.
 
@@ -79,6 +80,6 @@ Correcciones de usabilidad autorizadas por separado e implementadas sobre servic
 
 ## Pendientes que no deben darse por resueltos
 
-Bloqueo por mora y excepciones; prorrateo final de importaciones (por valor es la propuesta inicial); series de productos; conciliación del registro manual y terminal de tarjeta; ubicación compartida de evidencias; datos fiscales; DTE; canales Online autorizados; instancia SQL y red; retención y restauración de backups; plantillas restantes. La precedencia y acumulación básica ya están resueltas en VEN-01A; combos y reglas no soportadas siguen como ampliación. La marca del usuario ya se incorporó en DEV-28.
+Bloqueo por mora y excepciones; costos posteriores al cierre y recepción con costos incompletos (no admitidos en 2.1B); series de productos; conciliación del registro manual y terminal de tarjeta; ubicación compartida de evidencias; datos fiscales; DTE; canales Online autorizados; instancia SQL y red; retención y restauración de backups; plantillas restantes. La precedencia y acumulación básica ya están resueltas en VEN-01A; combos y reglas no soportadas siguen como ampliación. La marca del usuario ya se incorporó en DEV-28.
 
 DB-01 v0.1 documenta la baseline de 72 tablas, ya materializada en 001–008. Las ampliaciones aprobadas en DEV-17/20 y 012–014 dejan 76 tablas, 8 vistas y 18 procedimientos. Cada cambio posterior requiere diseño/migración aditiva; tener DDL no implica implementar un módulo ni aprobar decisiones comerciales pendientes.

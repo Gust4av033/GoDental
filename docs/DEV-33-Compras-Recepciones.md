@@ -63,3 +63,5 @@ Las 39 comprobaciones SQL nuevas cubren creación/edición concurrente y correla
 WPF renderiza el listado a 1366×768 y compacto, las pestañas de detalle/recepciones en compacto y formularios de alta, cambio de estado, preparación, aplicación y anulación en Light/Dark. Se conservan las regresiones de login, logo, comprobantes y cierre real con pendiente durable. Las capturas y pruebas son automáticas; no certifican impresora/lector/DPI físicos ni el piloto entre dos PCs. Localmente pasaron Release y test de solución (218) con Windows targeting en Linux. Los cambios posteriores al código citado sólo registran documentación.
 
 **2.1A queda implementado y validado automáticamente**, para compras directas con costo completo. La siguiente fase es **2.1B**; no incluye ya prorrateo/importaciones, costo incompleto operativo, devoluciones ni documentos nuevos. La impresión de etiquetas y tamaños configurables se implementa como complemento separado en DEV-34; no cambia el siguiente bloque 2.1B.
+
+Continuación: [DEV-37](DEV-37-Importaciones-Costeo.md) implementa 2.1B con 018 y la política confirmada de valor neto/costos cerrados. La siguiente fase funcional es 2.2A.

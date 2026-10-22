@@ -4,6 +4,8 @@ Los documentos fuente vigentes se organizan por código dentro de este directori
 
 Estado funcional vigente, hallazgos y plan de la segunda etapa: [DEV-30 · Revisión del proyecto](DEV-30-Revision-Fase-2.md), 21/10/2026. Los avances posteriores están en [DEV-31 · Recuperación](DEV-31-Recuperacion-Operaciones.md), [DEV-32 · Complementos MVP](DEV-32-Complementos-MVP.md) y [DEV-33 · Compras y recepciones](DEV-33-Compras-Recepciones.md). [DEV-34](DEV-34-Impresion-Formatos.md) implementa barras/etiquetas, formatos configurables de comprobantes y notas de entrega, con vista previa/PDF/impresión al 100%. Consultarlos junto con [ROADMAP](ROADMAP.md) para distinguir resultados históricos de pendientes actuales.
 
+[DEV-37](DEV-37-Importaciones-Costeo.md) conecta importaciones, eventos manuales, gastos y cierre/prorrateo con recepciones parciales (018). La siguiente fase funcional es 2.2A.
+
 Preparación de instalador y actualizaciones con conservación de datos: [DEV-36](DEV-36-Instalador-Actualizaciones.md). Es un diseño propuesto; aún no hay instalador productivo ni migrador con historial.
 
 | Código | Documento | Versión |
@@ -14,7 +16,7 @@ Preparación de instalador y actualizaciones con conservación de datos: [DEV-36
 | UX-01 | Arquitectura UI/UX y Design System | v0.1 |
 | SEC-01 | Seguridad, Roles, Permisos, Auditoría y Sesiones | v0.1 |
 | INV-01 | Inventario, Productos, Lotes, Costeo y Trazabilidad | v0.1 |
-| IMP-01 | Compras, Proveedores, Importaciones, DHL, Recepciones y Costeo | v0.1 |
+| IMP-01 | Compras, Proveedores, Importaciones, DHL, Recepciones y Costeo | v0.2 |
 | VEN-01 | Ventas, POS, Precios, Descuentos, Caja, Pagos, Crédito y Devoluciones | v0.1 |
 | VEN-01A | Cierre de pendientes comerciales previos al desarrollo | v0.1 |
 | FIS-01 | Fiscal, Facturación, DTE y Crédito Fiscal | v0.1 |
