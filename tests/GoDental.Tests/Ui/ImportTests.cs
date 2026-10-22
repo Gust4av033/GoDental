@@ -62,6 +62,15 @@ public sealed class ImportTests
         await vm.ReloadCommand.ExecuteAsync(null);vm.Selected=vm.Items.Single();var pending=new TaskCompletionSource<ImportationSnapshot?>();repo.ImportReadTask=pending.Task;
         var read=vm.OpenCommand.ExecuteAsync(null);session.Clear();pending.SetResult(Snapshot());await read;Assert.Null(vm.Importation);Assert.Null(vm.Detail);
     }
+    [Fact]public async Task CreateImportRequiresConfirmedOrderWithoutReceipts()
+    {
+        var repo=new MvpUiRepository();repo.Purchase=repo.Purchase with{Receipts=[]};var session=Session();
+        var vm=new PurchasesViewModel(new(repo,session),new Dialogs(),session,new(repo,session),NullLogger<PurchasesViewModel>.Instance,new(repo,session));
+        await vm.ReloadCommand.ExecuteAsync(null);vm.Selected=vm.Items.Single();await vm.OpenCommand.ExecuteAsync(null);
+        Assert.True(vm.CanCreateImport);Assert.True(vm.CanPrepare);
+        repo.Importation=Snapshot();await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.False(vm.CanCreateImport);Assert.False(vm.CanPrepare);Assert.True(vm.CanEditImportCosts);
+    }
     private sealed class Dialogs:IMvpDialogService
     {public Func<MvpFormModel,Task>? Action;public async Task<bool> ShowAsync(MvpFormModel f){if(Action is not null)await Action(f);return true;}}
 }

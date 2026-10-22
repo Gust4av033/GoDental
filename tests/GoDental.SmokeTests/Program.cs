@@ -661,6 +661,7 @@ internal static class Program
                     await purchasesMvp.CancelReceiptCommand.ExecuteAsync(null);
                     var savedPurchase = mvpRepository.Purchase;
                     mvpRepository.Purchase = savedPurchase with { Receipts = [] };
+                    purchasesMvp.SelectedReceipt = null;
                     await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
                     Check(purchasesMvp.CanCreateImport, "Una OC confirmada sin recepciones permite crear importación");
                     await purchasesMvp.CreateImportCommand.ExecuteAsync(null);
