@@ -60,7 +60,9 @@ foreach ($scriptName in $scripts) {
     $scriptPath = Join-Path $databaseDir $scriptName
     Write-Host "`n==> $scriptName"
 
-    $arguments = @('-S', $ServerInstance, '-E', '-b', '-i', $scriptPath)
+    # Cada sqlcmd abre una sesión nueva: las migraciones aditivas no deben caer en master.
+    $databaseTarget = if ($scriptName -eq '001_Core.sql') { 'master' } else { 'GoDental' }
+    $arguments = @('-S', $ServerInstance, '-E', '-b', '-d', $databaseTarget, '-i', $scriptPath)
     if ($TrustServerCertificate) {
         $arguments += '-C'
     }

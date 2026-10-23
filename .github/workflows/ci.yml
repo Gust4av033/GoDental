@@ -33,6 +33,14 @@ jobs:
             Directory.Packages.props
             **/*.csproj
 
+      - name: Validar sintaxis del instalador SQL
+        shell: pwsh
+        run: |
+          $installerTokens = $null
+          $installerErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/install-database.ps1'), [ref]$installerTokens, [ref]$installerErrors)
+          if ($installerErrors.Count -gt 0) { throw ($installerErrors | Out-String) }
+
       - name: Restore
         run: dotnet restore GoDental.sln
 

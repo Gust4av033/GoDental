@@ -2,6 +2,8 @@
 
 **Versión:** v0.2 interna · conectores externos pendientes
 
+[Guía de uso del recorrido interno](Guia-Online-Interno.md).
+
 El módulo Comercial/Online automatiza descubrimiento, normalización, deduplicación, scoring y preparación, pero mantiene control humano sobre comunicaciones comerciales.
 
 ## Reglas centrales

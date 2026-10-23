@@ -61,6 +61,8 @@ como bloqueos antes de conectores; instalador/actualizaciones/respaldos y piloto
 No declarar Online completo ni seguridad certificada por terminar sus pantallas internas.
 
 **PC personal: siguen pendientes 021 → 022 → 023 → 024 → 025 → 026, en orden.**
+El instalador SQL básico fija GoDental explícitamente después de 001: cada sqlcmd abre
+una conexión nueva y no debe ejecutar las migraciones sin USE en master.
 026 no contiene las anteriores. Respaldo previo, ambas aplicaciones cerradas y base/instancia
 correctas. Desde cloud no se aplica SQL a la PC personal. Comandos de desarrollo en DEV-46
 recorren scripts en orden únicamente sobre GoDental_Development reconocida.
