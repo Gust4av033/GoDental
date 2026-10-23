@@ -4,6 +4,7 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/>
       </ResourceDictionary.MergedDictionaries>
+      <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:OnlineDraftModel}"><local:OnlineDraftView/></DataTemplate>
       <DataTemplate xmlns:vm="clr-namespace:GoDental.Wpf.ViewModels.Operations" DataType="{x:Type vm:CustomerLookupModel}">
         <local:CustomerLookupView/>
       </DataTemplate>

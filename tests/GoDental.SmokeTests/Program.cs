@@ -171,6 +171,8 @@ internal static class Program
             var stageTwoRepository=new StageTwoUiRepository();
             var reportFiles=new VisualPdfFiles();
             var reportService=new ReportService(stageTwoRepository,new OperationalReportRenderer(Options.Create(new ReceiptPdfOptions())),session);
+            var onlineRepository=new OnlineUiRepository();
+            var onlineMvp=new OnlineViewModel(new(onlineRepository,session),mvpDialogs,session,operationService,NullLogger<OnlineViewModel>.Instance);
             var fiscalRepository=new FiscalUiRepository();
             var fiscalMvp=new FiscalViewModel(new(fiscalRepository,session),new(fiscalRepository,session),mvpDialogs,session,operationService,NullLogger<FiscalViewModel>.Instance);
             var reportsMvp=new ReportsViewModel(reportService,reportFiles,reportFiles,session,operationService,NullLogger<ReportsViewModel>.Instance);
@@ -184,7 +186,7 @@ internal static class Program
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp,reportsMvp,fiscalMvp);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp,reportsMvp,fiscalMvp,onlineMvp);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session, temporaryFolder);
@@ -604,7 +606,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["FISCAL.VER","FISCAL.CONFIGURAR","FISCAL.REVISAR_INTERNO","REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMERCIAL.VER","COMERCIAL.PROSPECTAR","COMERCIAL.EXCLUSIONES","FISCAL.VER","FISCAL.CONFIGURAR","FISCAL.REVISAR_INTERNO","REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -929,6 +931,19 @@ internal static class Program
                             if (page == SetupPage.Quotations) await historyMvp.OpenQuotationCommand.ExecuteAsync(historyMvp.SelectedQuotation);
                         }
                     }
+                    nav.Navigate(SetupPage.Online);await onlineMvp.ReloadCommand.ExecuteAsync(null);onlineMvp.Selected=onlineMvp.Items.Single();await onlineMvp.OpenCommand.ExecuteAsync(null);
+                    await onlineMvp.FindExclusionsCommand.ExecuteAsync(null);await onlineMvp.FindSalesCommand.ExecuteAsync(null);onlineMvp.SelectedSale=onlineMvp.Sales.Single();
+                    Check(shell.CanOpenOnline&&onlineMvp.CanManage&&onlineMvp.CanExclude&&onlineMvp.CanConvert,"Online habilita mantenimiento exclusiones y vínculo con permisos separados");
+                    Check(onlineMvp.Sources.Count==1&&onlineMvp.Matches.Count==1&&onlineMvp.History.Count==1,"Online consulta fuentes coincidencias e historial sin contactar");
+                    await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online",theme,output);
+                    await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online-compacto",theme,output,1093,614);
+                    var onlineRenderer=mvpDialogs.Render;
+                    mvpDialogs.Render=async form=>
+                    {
+                        if(form.Body is OnlineDraftModel draft){if(draft.Id==0){draft.Data.Name="Negocio sintético";draft.Data.Phone="70000000";await draft.CheckMatchesCommand.ExecuteAsync(null);}draft.SourceUrl="https://negocio.example.com/contacto";draft.Description="Contacto empresarial público";}
+                        await RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"online-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await onlineMvp.CreateCommand.ExecuteAsync(null);await onlineMvp.EditCommand.ExecuteAsync(null);await onlineMvp.AddSourceCommand.ExecuteAsync(null);await onlineMvp.ChangeStateCommand.ExecuteAsync(null);await onlineMvp.BlockCommand.ExecuteAsync(null);await onlineMvp.AddExclusionCommand.ExecuteAsync(null);await onlineMvp.ConvertCommand.ExecuteAsync(null);mvpDialogs.Render=onlineRenderer;
                     nav.Navigate(SetupPage.Fiscal);await fiscalMvp.ReloadCommand.ExecuteAsync(null);
                     fiscalMvp.Selected=fiscalMvp.Documents.Single();await fiscalMvp.OpenCommand.ExecuteAsync(null);
                     await fiscalMvp.FindSalesCommand.ExecuteAsync(null);fiscalMvp.SelectedSale=fiscalMvp.Candidates.Single();

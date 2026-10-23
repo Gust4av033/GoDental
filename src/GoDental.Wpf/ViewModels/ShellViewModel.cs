@@ -17,6 +17,9 @@ public sealed partial class ShellViewModel : ObservableObject
     public CommercialParametersViewModel? CommercialParameters { get; }
     public HomeViewModel Home { get; }
     public ReportsViewModel? Reports { get; }
+    public OnlineViewModel? Online {get;}
+    public bool IsOnline=>navigation.CurrentPage==SetupPage.Online;
+    public bool CanOpenOnline=>Online?.CanRead==true;
     public FiscalViewModel? Fiscal { get; }
     public bool IsFiscal=>navigation.CurrentPage==SetupPage.Fiscal;
     public bool CanOpenFiscal=>Fiscal?.CanRead==true;
@@ -51,6 +54,7 @@ public sealed partial class ShellViewModel : ObservableObject
     {
         get
         {
+            if (Online is {} online) yield return online;
             if (Fiscal is { } fiscal) yield return fiscal;
             if (Reports is { } reports) yield return reports;
             if (Purchases is { } purchases) yield return purchases;
@@ -77,6 +81,7 @@ public sealed partial class ShellViewModel : ObservableObject
     public string TodayLabel => DateTime.Now.ToString("dddd, d 'de' MMMM 'de' yyyy", CultureInfo.GetCultureInfo("es-SV"));
     public string PageTitle => navigation.CurrentPage switch
     {
+        SetupPage.Online => "Online / Gestión interna",
         SetupPage.Fiscal => "Fiscal / Preparación interna",
         SetupPage.Reports => "Reportes operativos",
         SetupPage.Purchases => "Compras / Órdenes y recepciones",
@@ -105,10 +110,10 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => CanCloseWorkspace && Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, HomeViewModel home, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null, PurchasesViewModel? purchases = null, ReportsViewModel? reports = null, FiscalViewModel? fiscal = null)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, HomeViewModel home, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null, PurchasesViewModel? purchases = null, ReportsViewModel? reports = null, FiscalViewModel? fiscal = null, OnlineViewModel? online = null)
     {
         this.navigation = navigation;
-        Home = home; Reports = reports; Fiscal=fiscal;
+        Home = home; Reports = reports; Fiscal=fiscal; Online=online;
         Purchases = purchases;
         CommercialParameters = commercialParameters;
         PendingOperations = pendingOperations;
@@ -131,6 +136,7 @@ public sealed partial class ShellViewModel : ObservableObject
         access.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         session.Changed += (_, _) =>
         {
+            OnPropertyChanged(nameof(CanOpenOnline));
             OnPropertyChanged(nameof(CanOpenFiscal));
             OnPropertyChanged(nameof(CanOpenReports));
             OnPropertyChanged(nameof(CanOpenPurchases));
@@ -146,6 +152,7 @@ public sealed partial class ShellViewModel : ObservableObject
         navigation.PageChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(IsOnline));
             OnPropertyChanged(nameof(IsFiscal));
             OnPropertyChanged(nameof(IsReports));
             OnPropertyChanged(nameof(IsPurchases));
@@ -162,6 +169,7 @@ public sealed partial class ShellViewModel : ObservableObject
 
     [RelayCommand] private void Navigate(SetupPage page)
     {
+        if (page == SetupPage.Online && !CanOpenOnline) page = SetupPage.Access;
         if (page == SetupPage.Fiscal && !CanOpenFiscal) page = SetupPage.Access;
         if (page == SetupPage.Reports && !CanOpenReports) page = SetupPage.Access;
         if (page == SetupPage.Purchases && !CanOpenPurchases) page = SetupPage.Access;
@@ -174,6 +182,7 @@ public sealed partial class ShellViewModel : ObservableObject
         navigation.Navigate(page);
         if (page == SetupPage.Connection && CommercialParameters?.CanRead == true) CommercialParameters.ReloadCommand.Execute(null);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
+        if (page == SetupPage.Online) Online?.ReloadCommand.Execute(null);
         if (page == SetupPage.Fiscal) Fiscal?.ReloadCommand.Execute(null);
         if (page == SetupPage.Reports) Reports?.ReloadCommand.Execute(null);
         if (page == SetupPage.Purchases) Purchases?.ReloadCommand.Execute(null);
