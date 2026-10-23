@@ -3,5 +3,5 @@ using GoDental.Application.Online;
 namespace GoDental.Application.Abstractions.Online;
 public interface IOnlineDiscoveryProvider
 {
-    Task<OnlineDiscoveryResult> DiscoverAsync(OnlineMapDepartment department,CancellationToken ct);
+    Task<OnlineDiscoveryResult> DiscoverAsync(OnlineMapDepartment department,CancellationToken ct,OnlineDiscoveryServer server=OnlineDiscoveryServer.Main);
 }

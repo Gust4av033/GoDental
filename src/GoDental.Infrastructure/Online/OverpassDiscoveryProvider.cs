@@ -10,32 +10,51 @@ namespace GoDental.Infrastructure.Online;
 public sealed class OverpassDiscoveryProvider: IOnlineDiscoveryProvider,IDisposable
 {
     public const string Endpoint="https://overpass-api.de/api/interpreter";
+    public const string AlternativeEndpoint="https://overpass.private.coffee/api/interpreter";
     public const string Attribution="© OpenStreetMap contributors · ODbL 1.0 · https://www.openstreetmap.org/copyright";
     private const int MaxBytes=2*1024*1024;
     private readonly HttpClient client;
     private readonly TimeProvider time;
     private readonly SemaphoreSlim gate=new(1,1);
-    private DateTimeOffset last=DateTimeOffset.MinValue;
+    private DateTimeOffset nextAllowed=DateTimeOffset.MinValue;
     public OverpassDiscoveryProvider():this(new HttpClient(new SocketsHttpHandler{AllowAutoRedirect=false,UseCookies=false,Credentials=null,MaxResponseHeadersLength=16,ConnectTimeout=TimeSpan.FromSeconds(10)}){Timeout=Timeout.InfiniteTimeSpan},TimeProvider.System){}
     public OverpassDiscoveryProvider(HttpClient client,TimeProvider time){this.client=client;this.time=time;}
-    public async Task<OnlineDiscoveryResult> DiscoverAsync(OnlineMapDepartment department,CancellationToken ct)
+    public async Task<OnlineDiscoveryResult> DiscoverAsync(OnlineMapDepartment department,CancellationToken ct,OnlineDiscoveryServer server=OnlineDiscoveryServer.Main)
     {
         if(!OnlineMapCatalog.Departments.Contains(department))throw new ArgumentException("Usa una región del catálogo cartográfico.");
+        var endpoint=server switch{OnlineDiscoveryServer.Main=>Endpoint,OnlineDiscoveryServer.Alternative=>AlternativeEndpoint,_=>throw new ArgumentException("Selecciona un servidor de búsqueda disponible.")};
         if(!await gate.WaitAsync(0,ct))throw new ArgumentException("Ya hay una búsqueda en curso.");
         try
         {
-            if(time.GetUtcNow()-last<TimeSpan.FromMinutes(1))throw new ArgumentException("Espera un minuto entre consultas a la fuente comunitaria.");
-            last=time.GetUtcNow();
+            var remaining=nextAllowed-time.GetUtcNow();
+            if(remaining>TimeSpan.Zero)throw new ArgumentException($"Espera {Math.Ceiling(remaining.TotalSeconds):0} segundos antes de otra consulta, también si cambias de servidor.");
+            nextAllowed=time.GetUtcNow().AddMinutes(1);
             var b=department.Bounds;
             var bbox=string.Join(",",new[]{b.South,b.West,b.North,b.East}.Select(n=>n.ToString("F6",CultureInfo.InvariantCulture)));
-            var query=$"[out:json][timeout:20];(nwr[\"amenity\"=\"dentist\"]({bbox});nwr[\"healthcare\"=\"dentist\"]({bbox}););out center tags 101;";
-            using var request=new HttpRequestMessage(HttpMethod.Post,Endpoint){Content=new FormUrlEncodedContent(new Dictionary<string,string>{{"data",query}})};
+            // body conserva lat/lon de nodes; tags+center sólo conserva centros de ways/relations.
+            var query=$"[out:json][timeout:20];(nwr[\"amenity\"=\"dentist\"]({bbox});nwr[\"healthcare\"=\"dentist\"]({bbox}););out body center 101;";
+            using var request=new HttpRequestMessage(HttpMethod.Post,endpoint){Content=new FormUrlEncodedContent(new Dictionary<string,string>{{"data",query}})};
             request.Headers.UserAgent.ParseAdd("GoDental/0.1 (+https://github.com/Gust4av033/GoDental)");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromSeconds(35));
             using var response=await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,timeout.Token);
-            if(response.StatusCode==HttpStatusCode.TooManyRequests)throw new ArgumentException("La fuente limitó las consultas. Inténtalo más tarde; no se reenvía automáticamente.");
-            if(!response.IsSuccessStatusCode)throw new ArgumentException("La fuente comunitaria no está disponible. No se guardaron prospectos.");
+            if(!response.IsSuccessStatusCode)
+            {
+                var retry=response.Headers.RetryAfter;
+                var delay=retry?.Delta??(retry?.Date-time.GetUtcNow());
+                if(delay is {} wait&&wait>TimeSpan.Zero)nextAllowed=time.GetUtcNow().AddSeconds(Math.Clamp(wait.TotalSeconds,60,86400));
+                var code=(int)response.StatusCode;
+                var detail=code switch
+                {
+                    400=>"El servidor rechazó la consulta.",
+                    401 or 403=>"El servidor denegó el acceso. Revisa si tu red o proxy bloquea la fuente.",
+                    408 or 504=>"El servidor agotó el tiempo de consulta o está ocupado.",
+                    429=>"El servidor limitó las consultas. Respeta la espera indicada antes de volver a buscar.",
+                    >=300 and <400=>"El servidor indicó otro destino; no se siguió la redirección.",
+                    _=>"El servidor comunitario no está disponible."
+                };
+                throw new ArgumentException($"{detail} (HTTP {code}). No se guardaron prospectos. Puedes elegir el otro servidor y consultar después de la espera.");
+            }
             if(response.Content.Headers.ContentLength is >MaxBytes)throw new ArgumentException("La respuesta supera el límite de búsqueda.");
             await using var body=await response.Content.ReadAsStreamAsync(timeout.Token);using var buffer=new MemoryStream();var bytes=new byte[8192];int count;
             while((count=await body.ReadAsync(bytes,timeout.Token))>0){if(buffer.Length+count>MaxBytes)throw new ArgumentException("La respuesta supera el límite de búsqueda.");await buffer.WriteAsync(bytes.AsMemory(0,count),timeout.Token);}
@@ -44,6 +63,7 @@ public sealed class OverpassDiscoveryProvider: IOnlineDiscoveryProvider,IDisposa
         catch(OperationCanceledException)when(!ct.IsCancellationRequested){throw new ArgumentException("La búsqueda agotó el tiempo de espera. No se guardaron prospectos.");}
         catch(HttpRequestException){throw new ArgumentException("No se pudo consultar la fuente por HTTPS. Revisa la conexión.");}
         catch(JsonException){throw new ArgumentException("La fuente devolvió una respuesta no válida. No se guardaron prospectos.");}
+        catch(IOException){throw new ArgumentException("Se interrumpió la respuesta de la fuente. No se guardaron prospectos; consulta de nuevo más tarde.");}
         finally{gate.Release();}
     }
     private static OnlineDiscoveryResult Parse(byte[] json,OnlineMapDepartment area,DateTimeOffset obtained)
