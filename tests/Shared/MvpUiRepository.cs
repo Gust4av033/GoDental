@@ -4,7 +4,7 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 
 // Synthetic data for tests and visual smoke only; never registered by the app.
-internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository, ICommercialParametersRepository, IPurchaseRepository, IImportRepository
+internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrderRepository, IMvpOperationRepository, IInventorySetupRepository, ICommercialParametersRepository, IPurchaseRepository, IImportRepository, ISaleReturnRepository
 {
     public List<object> Writes { get; } = [];
     public bool LoseResponse { get; set; }
@@ -19,7 +19,7 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public List<CashMovementData> Movements { get; } = [new() { Id = 1, Date = DateTimeOffset.UtcNow, Type = "INGRESO", Amount = 25, Reason = "Movimiento de prueba" }];
     public List<PaymentMethodData> Methods { get; } = [new() { Id = 1, Code = "EFECTIVO", Name = "Efectivo", AffectsCash = true }, new() { Id = 2, Code = "TRANSFERENCIA", Name = "Transferencia", RequiresReference = true }, new() { Id = 3, Code = "CREDITO", Name = "Crédito" }, new() { Id = 4, Code = "TARJETA", Name = "Tarjeta", RequiresReference = true }];
     public List<PosProductData> Products { get; } = [new() { Id = 1, Sku = "UI-TEST", Name = "Producto de prueba", Price = 100, Available = 10 }];
-    public SaleSnapshot Sale { get; } = new(new() { Id = 1, Number = "PRUEBA-001", State = "CONFIRMADA", Total = 123.45m, CashTendered = 150, Change = 26.55m }, [new() { ProductId = 1, Sku = "UI-TEST", Name = "Producto de prueba", Quantity = 1, UnitPrice = 100, Total = 123.45m }], [new() { MethodId = 1, Method = "Efectivo", Amount = 123.45m }]);
+    public SaleSnapshot Sale { get; } = new(new() { Id = 1, Number = "PRUEBA-001", State = "CONFIRMADA",Date=DateTimeOffset.UtcNow,CashBoxId=1,RowVersion=[1,2,3,4,5,6,7,8], Total = 123.45m, CashTendered = 150, Change = 26.55m }, [new() { Id=1, ProductId = 1, Sku = "UI-TEST", Name = "Producto de prueba", Quantity = 1, UnitPrice = 100, Total = 123.45m }], [new() { MethodId = 1, Method = "Efectivo", Amount = 123.45m }]);
     public List<QuotationData> Quotations { get; } = [];
     public CreditAccountData Account { get; } = new() { Id = 1, CustomerId = 1, Customer = "Cliente de prueba", Sale = "PRUEBA-001", Due = DateTime.Today, Original = 50, Balance = 25, State = "PENDIENTE", RowVersion = [8,7,6,5,4,3,2,1] };
     public OrderSnapshot Order { get; set; } = new(new() { Id = 1, CustomerId = 1, Customer = "Cliente de prueba", Contact = "Contacto de prueba", Phone = "0000", Address = "Dirección ficticia", State = "RECIBIDO", RowVersion = [2,2,2,2,2,2,2,2] }, [new() { ProductId = 1, Sku = "UI-TEST", Name = "Producto de prueba", Quantity = 1 }], [new() { Date = DateTimeOffset.UtcNow, State = "RECIBIDO", UserId = 1, Reason = "Pedido de prueba" }], 1);
@@ -98,5 +98,16 @@ internal sealed class MvpUiRepository : ISalesRepository, ICashRepository, IOrde
     public Task<ImportationSnapshot?>? ImportReadTask {get;set;}
     public Task<ImportationSnapshot?> ReadImportAsync(long orderId,MvpFilter events,int userId,CancellationToken ct) => ImportReadTask??Task.FromResult(Importation);
     public Task<Result<MvpReceipt>> WriteImportAsync(object request,int userId,int? workstationId,CancellationToken ct) => Write(request,GoDental.Application.Validators.ImportValidator.Id(request),request is PrepareImportReceipt?201:301);
+
+    public Task<SaleReturnsSnapshot>? ReturnsReadTask {get;set;}
+    public SaleReturnsSnapshot Returns {get;set;} = new([new(){Id=1,Sku="UI-TEST",Name="Producto de prueba",Sold=1,Total=123.45m}],[],0,1,24,DateTimeOffset.UtcNow);
+    public SaleReturnSnapshot? ReturnDetail {get;set;}
+    public Task<SaleReturnSnapshot?>? ReturnReadTask {get;set;}
+    public Task<SaleReturnsSnapshot> ReadReturnsAsync(long saleId,MvpFilter filter,int userId,CancellationToken ct)=>ReturnsReadTask??Task.FromResult(Returns);
+    public Task<SaleReturnSnapshot?> ReadReturnAsync(long saleId,long returnId,int userId,CancellationToken ct)=>ReturnReadTask??Task.FromResult(ReturnDetail);
+    public Task<Result<MvpReceipt>> RequestReturnAsync(RequestSaleReturn r,int userId,int? station,CancellationToken ct)=>Write(r,r.OperationId,401);
+    public Task<Result<MvpReceipt>> ResolveReturnAsync(ResolveSaleReturn r,int admin,int userId,int? station,CancellationToken ct)=>Write(r,r.OperationId,r.ReturnId);
+    public Task<ReturnEvidenceLocation> ReadEvidenceLocationAsync(int userId,CancellationToken ct)=>Task.FromResult(new ReturnEvidenceLocation("",[1,2,3,4,5,6,7,8]));
+    public Task<Result<MvpReceipt>> ConfigureEvidenceAsync(ConfigureReturnEvidence r,int userId,int? station,CancellationToken ct)=>Write(r,r.OperationId,1);
 
 }

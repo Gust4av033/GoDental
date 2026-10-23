@@ -77,6 +77,7 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<CreditViewModel>();
                     services.AddSingleton<OrdersViewModel>();
                     services.AddSingleton<CommercialHistoryViewModel>();
+                    services.AddSingleton<IReturnPhotoPicker, ReturnPhotoPicker>();
                     services.AddSingleton<PendingOperationsViewModel>();
                     services.AddSingleton<CommercialParametersViewModel>();
                     services.AddSingleton<PurchasesViewModel>();

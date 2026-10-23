@@ -168,6 +168,7 @@
             <ContentControl Style="{StaticResource CommerceField}" Tag="Cargo de entrega" Content="{Binding SaleDetail.Sale.DeliveryCharge, Converter={StaticResource UsdMoney}, FallbackValue=—}"/>
           </StackPanel>
         </TabItem>
+        <TabItem Header="Devoluciones / anulaciones" Style="{StaticResource CommerceTab}"><local:SaleReturnsView/></TabItem>
       </TabControl>
     </StackPanel>
     </StackPanel>

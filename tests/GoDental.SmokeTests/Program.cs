@@ -167,7 +167,7 @@ internal static class Program
             var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var pdfFiles = new VisualPdfFiles();
-            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
+            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance,returnService:new SaleReturnService(mvpRepository,session,new FakeIdentityGateway()),returnCash:cashService,returnDialogs:mvpDialogs);
             var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance, new ImportService(mvpRepository,session));
             var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
             var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance);
@@ -582,7 +582,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -641,6 +641,31 @@ internal static class Program
                 foreach (var theme in new[] { "Light", "Dark" })
                 {
                     themes.Apply(theme);
+                    var returnHeader=new SaleReturnData{Id=401,SaleId=1,Number="DEV-PRUEBA-001",State="SOLICITADA",Requester="Usuario de prueba",Proof="PRUEBA-001",Reason="Devolución de prueba",Amount=123.45m,RowVersion=[1,2,3,4,5,6,7,8]};
+                    mvpRepository.Returns=mvpRepository.Returns with{Returns=[returnHeader],Total=1};
+                    mvpRepository.ReturnDetail=new(returnHeader,[new(){Id=4001,SaleLineId=1,Sku="UI-TEST",Name="Producto de prueba",Quantity=1,Condition="SELLADO",Restock=true,Amount=123.45m}],123.45m,0,123.45m,new string('A',64),null);
+                    await historyMvp.ReloadReturnsCommand.ExecuteAsync(null);historyMvp.SelectedReturn=returnHeader;await historyMvp.ReadReturnCommand.ExecuteAsync(null);
+                    Check(historyMvp.CanRequestReturn&&historyMvp.CanApplyReturn,"Posventa permite solicitar y revisar una resolución pendiente con permisos vigentes");
+                    foreach(var size in new[]{new Size(900,600),new Size(700,500)})
+                    {
+                        var returnsView=new SaleReturnsView{DataContext=historyMvp};var scrollReturns=new ScrollViewer{Content=returnsView,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+                        scrollReturns.Measure(size);scrollReturns.Arrange(new Rect(size));scrollReturns.UpdateLayout();
+                        Check(FindChildren<DataGrid>(returnsView).All(g=>g.Items.Count==1),"Posventa enlaza la solicitud y el detalle original del contrato");
+                        var returnApplyButton=FindChildren<Button>(returnsView).Single(b=>b.Content is "Autorizar y aplicar");returnApplyButton.BringIntoView();scrollReturns.UpdateLayout();
+                        var bounds=returnApplyButton.TransformToAncestor(scrollReturns).TransformBounds(new Rect(returnApplyButton.RenderSize));
+                        Check(returnApplyButton.IsEnabled&&bounds.Right<=size.Width+.1&&bounds.Bottom<=size.Height+.1,"Posventa mantiene accesible la resolución en Light/Dark y tamaño compacto");
+                        SavePreview(scrollReturns,Path.Combine(output,$"posventa-{size.Width}-{theme}.png"));
+                    }
+                    mvpDialogs.Render=async form=>
+                    {
+                        if(form.Body is ReturnDraftModel draft)
+                        {
+                            var line=draft.Lines.First();line.Condition="ABIERTO_DEFECTUOSO";Check(!line.Restock,"Producto abierto se presenta sin reingreso vendible");
+                        }
+                        await RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"posventa-dialogo-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await historyMvp.RequestReturnCommand.ExecuteAsync(null);await historyMvp.RequestCancellationCommand.ExecuteAsync(null);await historyMvp.ApplyReturnCommand.ExecuteAsync(null);await historyMvp.RejectReturnCommand.ExecuteAsync(null);await historyMvp.ConfigureReturnEvidenceCommand.ExecuteAsync(null);
+                    mvpDialogs.Render=null;mvpRepository.Returns=mvpRepository.Returns with{Returns=[],Total=0};mvpRepository.ReturnDetail=null;await historyMvp.ReloadReturnsCommand.ExecuteAsync(null);
                     await purchasesMvp.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Purchases);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"compras-listado-{theme}.png"));
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"compras-listado-compacto-{theme}.png"));
