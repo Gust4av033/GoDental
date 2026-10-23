@@ -195,7 +195,7 @@ public sealed partial class SqlMvpRepository
             await w.Execute("INSERT INTO inv.MovimientosInventario(IdAlmacen,IdProducto,IdLote,TipoMovimiento,Cantidad,CostoUnitario,ExistenciaAnterior,ExistenciaPosterior,ReferenciaTipo,ReferenciaId,IdUsuario,Observacion) VALUES(@warehouse,@ProductId,@lot,N'COMPRA',@Quantity,@LandedUnitCost,@before,@after,N'RECEPCION_COMPRA',@receiptId,@userId,@Reason);", new { warehouse = receipt.WarehouseId, item.ProductId, lot, item.Quantity, item.LandedUnitCost, before, after, receiptId = receipt.Id, userId, r.Reason });
             await w.Execute("UPDATE cmp.OrdenCompraDetalle SET CantidadRecibida=CantidadRecibida+@Quantity WHERE IdDetalle=@OrderLineId;", item);
         }
-        await w.Execute("UPDATE cmp.RecepcionesCompra SET Estado=N'APLICADA' WHERE IdRecepcion=@ReceiptId;", r);
+        await w.Execute("UPDATE cmp.RecepcionesCompra SET Estado=N'APLICADA',FechaAplicacionMvp=SYSDATETIMEOFFSET() WHERE IdRecepcion=@ReceiptId;", r);
         await w.Execute("UPDATE cmp.OrdenesCompra SET Estado=CASE WHEN EXISTS(SELECT 1 FROM cmp.OrdenCompraDetalle WHERE IdOrdenCompra=@id AND CantidadRecibida<Cantidad) THEN N'RECIBIDA_PARCIAL' ELSE N'RECIBIDA' END WHERE IdOrdenCompra=@id;", new { id = order.Id });
         if(import is not null)
         {

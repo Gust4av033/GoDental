@@ -42,15 +42,16 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
     public override bool CanRead => orders.CanRead;
     public bool CanManage => CanEdit && orders.CanManage;
     public bool CanCreate => CanManage && customers.CanRead && products.CanRead;
-    public bool CanTransition => CanManage && Detail is not null && States.Any(s => OrderRules.CanTransition(Detail.Order.State, s));
-    public bool CanLink => CanManage && Detail is not null && Detail.Order.SaleId is null && Detail.Order.State is not ("CANCELADO" or "ENTREGADO");
+    public bool CanTransition => CanManage && Delivery is null && Detail is not null && States.Any(s => OrderRules.CanTransition(Detail.Order.State, s));
+    public bool CanLink => CanManage && Delivery is null && Detail is not null && Detail.Order.SaleId is null && Detail.Order.State is not ("CANCELADO" or "ENTREGADO");
     public bool CanPassToPos => CanLink && customers.CanRead && pos.CanEdit;
     public bool CanOpenReceipt => CanEdit && Has("VENTAS.REIMPRIMIR") && Detail?.Order.SaleId is > 0;
-    partial void OnSelectedChanged(OrderData? value) { Detail = null; Events.Clear(); EventsPage = 1; }
+    partial void OnSelectedChanged(OrderData? value) { Detail = null; Events.Clear(); EventsPage = 1; ResetDelivery(); }
     partial void OnDetailChanged(OrderSnapshot? value) { IsDetailOpen = value is not null; PermissionsChanged(); }
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink), nameof(CanPassToPos), nameof(CanOpenReceipt) }) OnPropertyChanged(n); }
-    public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, PosViewModel pos, INavigationService navigation, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger) : base(session, operations, logger)
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanManage), nameof(CanCreate), nameof(CanTransition), nameof(CanLink), nameof(CanPassToPos), nameof(CanOpenReceipt) }) OnPropertyChanged(n); DeliveryPermissions(); }
+    public OrdersViewModel(OrderService orders, CustomerService customers, ProductService products, PosViewModel pos, INavigationService navigation, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<OrdersViewModel> logger, DeliveryService? deliveries = null, CashService? deliveryCash = null) : base(session, operations, logger)
     {
+        this.deliveries=deliveries; this.deliveryCash=deliveryCash;
         this.orders = orders; this.customers = customers; this.products = products; this.pos = pos; this.navigation = navigation; this.dialogs = dialogs;
         pos.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanPassToPos));
     }
@@ -65,7 +66,7 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
             else StatusMessage = pos.StatusMessage;
         });
     }
-    protected override void Reset() { IsDetailOpen = false; Items.Clear(); Events.Clear(); Selected = null; Detail = null; Page = EventsPage = 1; Total = EventsTotal = 0; }
+    protected override void Reset() { DeliveryBoxes.Clear(); DeliveryBox=null; ResetDelivery(); IsDetailOpen = false; Items.Clear(); Events.Clear(); Selected = null; Detail = null; Page = EventsPage = 1; Total = EventsTotal = 0; }
     [RelayCommand] private Task ReloadAsync() { Page = 1; return ReadAsync(LoadCoreAsync); }
     private async Task LoadCoreAsync(long r)
     {
@@ -81,6 +82,8 @@ public sealed partial class OrdersViewModel : MvpWorkspaceViewModel
         var result = await orders.ReadAsync(id); if (!Current(r) || Selected?.Id != id) return;
         Detail = result; IsDetailOpen = result is not null; Events.Clear(); EventsPage = 1; EventsTotal = result?.TotalEvents ?? 0;
         foreach (var e in result?.Events ?? []) Events.Add(e);
+        if(result is not null) await LoadDeliveryCoreAsync(id,r);
+        if(!Current(r)||Selected?.Id!=id)return;
         StatusMessage = result is null ? "El pedido no está disponible." : $"Pedido {id} · {EventsTotal} eventos · Página 1";
     }
     [RelayCommand] private async Task NextEventsAsync() { if (IsBusy || EventsPage * 30 >= EventsTotal) return; EventsPage++; await ReadAsync(EventsCoreAsync); }

@@ -56,7 +56,7 @@ public sealed partial class SqlMvpRepository
         public decimal Authorization { get; set; }
     }
 
-    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 ORDER BY Nombre;"), ct);
+    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 AND Codigo<>N'EFECTIVO_REPARTO' ORDER BY Nombre;"), ct);
     public Task<MvpPage<PosProductData>> SearchProductsAsync(int boxId, string search, MvpFilter f, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], async w =>
     {
         var warehouse = await BoxWarehouse(w, boxId);
@@ -214,7 +214,7 @@ public sealed partial class SqlMvpRepository
         Check(r);
         // Bloquear el pedido antes de cualquier efecto comercial impide cobrarlo en dos equipos.
         if (r.Order is { } origin)
-            LinkableOrder(await LockOrder(w, origin.OrderId, origin.ExpectedVersion));
+            { LinkableOrder(await LockOrder(w, origin.OrderId, origin.ExpectedVersion)); await NoDelivery(w, origin.OrderId); }
         Require(workstationId is not null, "FORBIDDEN", "La sesión no tiene equipo de trabajo.");
         var methods = new List<(SalePayment Payment, PaymentMethodData Method)>();
         foreach (var p in r.Payments)

@@ -67,3 +67,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-31 · Recuperación de operaciones](DEV-31-Recuperacion-Operaciones.md): etapa 2.0A, migración 015, diario local y reconciliación después de un reinicio.
 
 - [DEV-35 · Inicio y panel de operación](DEV-35-Inicio-Panel-Operativo.md): indicadores autorizados, actividad reciente y composición adaptable del Inicio.
+
+[DEV-41](DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). Sigue 2.4, piloto e instalación/actualizaciones/respaldos de DEV-36.

@@ -57,7 +57,7 @@ public sealed class CreditDocumentRenderer(IOptions<ReceiptPdfOptions> options) 
             c.Item().Text($"Cuenta {a.Id} · {a.Sale} · {a.State} · vence {a.Due:dd/MM/yyyy} · saldo {Money(a.Balance)}");
         c.Item().Text("Los cargos son el importe financiado, sin sumar el efectivo inicial de ventas mixtas. Sólo posventa aplicada reduce deuda. Estado al momento de consulta; no es cierre histórico.").FontSize(8);
     });
-    private ReceiptDocument Render(PrintLayout layout, string title, string number, string date, Action<ColumnDescriptor> body)
+    internal ReceiptDocument Render(PrintLayout layout, string title, string number, string date, Action<ColumnDescriptor> body)
     {
         layout.Validate(layout.WidthMm < 140);
         if (!Enum.TryParse<LicenseType>(options.Value.License, true, out var license) || !Enum.IsDefined(license)) throw new InvalidOperationException("Configura Pdf:License.");

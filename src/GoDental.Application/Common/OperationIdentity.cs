@@ -18,10 +18,13 @@ public static class OperationIdentity
     public static bool IsValid(OperationTicket t) => t.OperationId != Guid.Empty && Types.Contains(t.Type)
         && t.RequestHash is { Length: 64 } && t.RequestHash.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F');
 
-    private static readonly HashSet<string> Types = ["AVISO_COBRANZA", "CARPETA_EVIDENCIAS", "SOLICITAR_DEVOLUCION", "APLICAR_DEVOLUCION", "RECHAZAR_DEVOLUCION", "CREAR_IMPORTACION", "EVENTO_IMPORTACION", "GASTO_IMPORTACION", "ANULAR_GASTO_IMPORTACION", "CERRAR_COSTOS_IMPORTACION", "RECEPCION_IMPORTACION", "GUARDAR_OC", "ESTADO_OC", "PREPARAR_RECEPCION", "APLICAR_RECEPCION", "ANULAR_RECEPCION", "PARAMETROS_COMERCIALES", "CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
+    private static readonly HashSet<string> Types = ["DESPACHAR_REPARTO", "RESOLVER_REPARTO", "RENDIR_REPARTO", "AVISO_COBRANZA", "CARPETA_EVIDENCIAS", "SOLICITAR_DEVOLUCION", "APLICAR_DEVOLUCION", "RECHAZAR_DEVOLUCION", "CREAR_IMPORTACION", "EVENTO_IMPORTACION", "GASTO_IMPORTACION", "ANULAR_GASTO_IMPORTACION", "CERRAR_COSTOS_IMPORTACION", "RECEPCION_IMPORTACION", "GUARDAR_OC", "ESTADO_OC", "PREPARAR_RECEPCION", "APLICAR_RECEPCION", "ANULAR_RECEPCION", "PARAMETROS_COMERCIALES", "CONFIRMAR_VENTA", "EMITIR_COTIZACION", "AUTORIZAR_DESCUENTO", "SALDO_INICIAL", "CODIGO_BARRAS", "GUARDAR_CAJA", "ABRIR_CAJA", "MOVIMIENTO_CAJA", "CERRAR_CAJA", "ABONO_CLIENTE", "CREAR_PEDIDO", "ESTADO_PEDIDO", "VINCULAR_PEDIDO_VENTA", "FISCAL_PENDIENTE"];
 
     private static (Guid, string, object) Normalize(object request) => request switch
     {
+        DispatchDelivery r => (r.OperationId,"DESPACHAR_REPARTO",DeliveryValidator.Freeze(r)),
+        CompleteDelivery r => (r.OperationId,"RESOLVER_REPARTO",DeliveryValidator.Freeze(r)),
+        SettleDelivery r => (r.OperationId,"RENDIR_REPARTO",DeliveryValidator.Freeze(r)),
         RegisterCollectionNotice r => (r.OperationId, "AVISO_COBRANZA", CollectionValidator.Freeze(r)),
         ConfigureReturnEvidence r => (r.OperationId,"CARPETA_EVIDENCIAS",r with{Root=r.Root.Trim(),ExpectedVersion=r.ExpectedVersion.ToArray(),Reason=r.Reason.Trim()}),
         RequestSaleReturn r => (r.OperationId,"SOLICITAR_DEVOLUCION",SaleReturnValidator.Freeze(r)),

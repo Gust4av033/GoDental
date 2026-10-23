@@ -23,6 +23,8 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.2A · Posventa | Implementado y validado automáticamente | DEV-38, migración 019, CI #142: 272 xUnit / 574 SQL / 817 WPF |
 | 2.2B · Cobranza y documentos | Implementado; CI #155 correcto, detalle en DEV-40 | Avisos, recibo de abono y estado de cuenta con posventa trazable (021) |
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
+| 2.2C · Reparto contra entrega | Implementado; validación en DEV-41 | Custodia, entrega completa, incidencia/retorno y rendición de efectivo/transferencia (022) |
+| 2.3 · Reportes operativos | Implementado; validación en DEV-42 | Ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras aplicadas (023) |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.
@@ -101,3 +103,9 @@ bloqueos por mora ni enviar avisos externos por inferencia de esta fase.
 2.2B validado sobre `987b98b`: [CI Windows #155](https://github.com/Gust4av033/GoDental/actions/runs/39904041587),
 Release sin advertencias/errores, **315 xUnit / 627 SQL / 897 WPF**. DEV-40 deja los pasos
 de actualización y aceptación local; 021 no se ha aplicado desde cloud a la BD personal.
+
+Continuación autorizada 22/10/2026 (El Salvador): **DEV-41/42** implementan 2.2C y 2.3.
+El usuario confirmó entrega/retorno completos y efectivo o transferencia con rendición.
+022 añade custodia de reparto (79 tablas / 8 vistas / 18 procedimientos); 023 congela fecha
+de aplicación de nuevas recepciones. Sigue **2.4: piloto entre estaciones y despliegue DEV-36**,
+con respaldos/restauración, instalador/actualizaciones y compatibilidad antes de uso productivo.

@@ -97,6 +97,16 @@
         <Button Content="" Command="{Binding DetailCommand}" Style="{StaticResource CommerceIconButton}" ToolTip="Actualizar pedido" AutomationProperties.Name="Actualizar pedido" DockPanel.Dock="Right"/>
         <TextBlock Text="{Binding Detail.Order.Scheduled, StringFormat=Entrega prevista: {0:dd/MM/yyyy}}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
       </DockPanel>
+      <Border Style="{StaticResource SoftPanel}" Margin="0,0,0,16"><StackPanel>
+        <TextBlock Text="Cobro contra entrega" Style="{StaticResource SectionHeading}"/>
+        <TextBlock Text="{Binding DeliverySummary}" Style="{StaticResource MutedText}"/>
+        <WrapPanel Margin="0,12,0,8" IsEnabled="{Binding CanPrepareDelivery}"><StackPanel Margin="0,0,12,0"><TextBlock Text="Caja de origen"/><ComboBox ItemsSource="{Binding DeliveryBoxes}" SelectedItem="{Binding DeliveryBox}" DisplayMemberPath="Name" Width="220" AutomationProperties.Name="Caja de origen del reparto"/></StackPanel>
+        <Button Content="Consultar precio" Command="{Binding QuoteDeliveryCommand}" Style="{StaticResource ActionButton}" VerticalAlignment="Bottom"/></WrapPanel>
+        <TextBlock Text="{Binding DeliveryQuoteLabel}" Style="{StaticResource MutedText}"/>
+        <WrapPanel Margin="0,12,0,0"><Button Content="Despachar contra entrega" Command="{Binding DispatchCodCommand}" IsEnabled="{Binding CanDispatchDelivery}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+        <Button Content="Entrega / incidencia / retorno" Command="{Binding ResolveCodCommand}" IsEnabled="{Binding CanResolveDelivery}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+        <Button Content="Rendir cobro" Command="{Binding SettleCodCommand}" IsEnabled="{Binding CanSettleDelivery}" Style="{StaticResource PrimaryActionButton}" Margin="0,0,0,8"/></WrapPanel>
+      </StackPanel></Border>
       <TabControl>
         <TabItem Header="Detalle y entrega" Style="{StaticResource CommerceTab}">
           <StackPanel Margin="0,16,0,0">

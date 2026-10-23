@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.AddTransient<SaleReturnService>();
         services.AddTransient<CashService>();
         services.AddTransient<CollectionService>();
+        services.AddTransient<DeliveryService>();
+        services.AddTransient<ReportService>();
         services.AddTransient<OrderService>();
         services.AddTransient<InventorySetupService>();
         services.AddTransient<FiscalPendingService>();

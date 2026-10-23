@@ -121,3 +121,5 @@ nombres y saldo antes/después en abonos nuevos. Históricos siguen NULL, sin re
 Añade CLIENTES.COBRANZA_GESTIONAR y concesión Administrador sólo cuando falta. **77/8/18**.
 Aplicar después de 020 y actualizar/reiniciar ambas estaciones. Se conserva el JSON de solicitudes
 recuperables anteriores; la nueva solicitud AVISO_COBRANZA usa el mismo diario/ledger transaccional.
+
+`022_Reparto_ContraEntrega.sql`: custodia de reparto y rendición, dos tablas nuevas (79 tablas / 8 vistas / 18 procedimientos). `023_Reportes_Operativos.sql`: fecha de aplicación nullable para recepciones nuevas, sin reconstruir históricos. Aplicar en orden después de 021. Diseño, uso y límites: DEV-41/42.

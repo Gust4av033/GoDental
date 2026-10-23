@@ -148,3 +148,10 @@ con reintento del mismo GUID; vista previa/guardado/impresión en ambos temas y 
 Aplicar 021 a la BD personal y comprobar el recorrido entre estaciones siguen siendo pasos
 locales pendientes; el CI utiliza SQL aislado. La continuación conserva 2.2C (diseño COD)
 y después 2.3; no se abre automáticamente otro módulo ni se declara listo el despliegue DEV-36.
+
+Continuación autorizada 22/10/2026 (El Salvador): [DEV-41](DEV-41-Reparto-ContraEntrega.md)
+implementa **2.2C**, entrega/retorno completos, efectivo o transferencia con rendición,
+y [DEV-42](DEV-42-Reportes-Operativos.md) implementa **2.3**, reportes por período/permisos
+con costo histórico y compensaciones de posventa. Migraciones **022–023**, 79 tablas / 8 vistas
+/ 18 procedimientos. No se aplica SQL a la base personal desde cloud. La siguiente etapa es
+**2.4** y la implementación de DEV-36 para instalación/actualizaciones/respaldos y piloto.

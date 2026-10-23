@@ -121,7 +121,8 @@ public sealed partial class SqlMvpRepository
     {
         var m = await w.Maybe<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WITH(HOLDLOCK) WHERE IdMetodoPago=@id AND Activo=1;", new { id });
         Require(m is not null, "VALIDATION", "El método de pago no está disponible.");
-        Require(m!.Code != "TARJETA" || (!m.AffectsCash && m.RequiresReference), "INVALID_STATE", "Revisa el catálogo: tarjeta manual exige referencia y no afecta efectivo.");
+        Require(m!.Code != "EFECTIVO_REPARTO", "VALIDATION", "El efectivo de reparto sólo se registra desde Pedidos y entregas.");
+        Require(m.Code != "TARJETA" || (!m.AffectsCash && m.RequiresReference), "INVALID_STATE", "Revisa el catálogo: tarjeta manual exige referencia y no afecta efectivo.");
         return m;
     }
 }

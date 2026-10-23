@@ -61,6 +61,7 @@ public sealed partial class SqlMvpRepository
         decimal amount=0;string? unavailable=null;
         try
         {
+            Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.RepartosMvp WHERE IdVenta=@Id AND Estado<>N'RENDIDO') THEN 1 ELSE 0 END);",sale),"INVALID_STATE","Completa la rendición del reparto antes de aplicar posventa.");
             Require(sale.State is "CONFIRMADA" or "DEVUELTA_PARCIAL","INVALID_STATE","La venta ya fue anulada o devuelta completamente.");
             Require(!string.IsNullOrWhiteSpace(request.Proof)&&lines.Count>0&&lines.Select(l=>l.SaleLineId).Distinct().Count()==lines.Count,"INVALID_STATE","La solicitud histórica no tiene comprobante/detalle completo; recházala y presenta una nueva.");
             Require(lines.All(l=>l.Quantity>0&&(!l.Restock||l.Condition=="SELLADO")&&(l.Restock||!string.IsNullOrWhiteSpace(l.NoRestockReason))&&(l.Condition!="ABIERTO_DEFECTUOSO"||l.Evidence.Count>0)),"INVALID_STATE","Revisa condición, evidencia y destino de todos los productos.");

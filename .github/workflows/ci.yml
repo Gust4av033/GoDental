@@ -49,6 +49,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --localdb .
 
+      - name: Reparto contra entrega y reportes sobre SQL Server aislado
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-deliveries-reports --localdb .
+
       - name: Cobranza y documentos sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-collections --localdb .
 

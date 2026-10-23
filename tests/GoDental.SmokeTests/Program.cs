@@ -168,16 +168,21 @@ internal static class Program
             var collectionRepository = new CollectionUiRepository();
             var collectionService = new CollectionService(collectionRepository,new CreditDocumentRenderer(Options.Create(new ReceiptPdfOptions())),session);
             var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance,collectionService,collectionFiles,collectionFiles);
-            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
+            var stageTwoRepository=new StageTwoUiRepository();
+            var reportFiles=new VisualPdfFiles();
+            var reportService=new ReportService(stageTwoRepository,new OperationalReportRenderer(Options.Create(new ReceiptPdfOptions())),session);
+            var reportsMvp=new ReportsViewModel(reportService,reportFiles,reportFiles,session,operationService,NullLogger<ReportsViewModel>.Instance);
+            var deliveryService=new DeliveryService(stageTwoRepository,session);
+            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance,deliveryService,cashService);
             var pdfFiles = new VisualPdfFiles();
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance,returnService:new SaleReturnService(mvpRepository,session,new FakeIdentityGateway()),returnCash:cashService,returnDialogs:mvpDialogs);
             var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance, new ImportService(mvpRepository,session));
             var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
-            var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance);
+            var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance,reportService);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp,reportsMvp);
             if (shutdownProbe is not null)
             {
                 await StartShutdownProbeAsync(shell, session, temporaryFolder);
@@ -597,7 +602,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -922,6 +927,37 @@ internal static class Program
                             if (page == SetupPage.Quotations) await historyMvp.OpenQuotationCommand.ExecuteAsync(historyMvp.SelectedQuotation);
                         }
                     }
+                    Check(shell.CanOpenReports,"Reportes se habilita por los permisos propios del módulo");
+                    foreach(var reportChoice in reportsMvp.Kinds.ToArray())
+                    {
+                        reportsMvp.Kind=reportChoice;await reportsMvp.ReloadCommand.ExecuteAsync(null);nav.Navigate(SetupPage.Reports);
+                        Check(reportsMvp.Rows.Count>0,"Reporte consulta filas: "+reportChoice.Code);
+                        await RenderAsync(shell,1366,768,Path.Combine(output,$"reportes-{reportChoice.Code}-{theme}.png"));
+                        await RenderAsync(shell,1093,614,Path.Combine(output,$"reportes-{reportChoice.Code}-compacto-{theme}.png"));
+                    }
+                    reportsMvp.Kind=reportsMvp.Kinds.First();await reportsMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                    Check(reportsMvp.CanUsePreview&&reportsMvp.ReceiptPreview!.Pdf.Length>1000,"Reportes genera PDF real con vista previa");
+                    var reportPreview=reportsMvp.ReceiptPreview;await reportsMvp.ExportCommand.ExecuteAsync(null);await reportsMvp.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(reportFiles.Saved,reportPreview!.Pdf)&&ReferenceEquals(reportFiles.Printed,reportPreview),"Reporte guarda/imprime el mismo documento revisado");
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"reporte-documento-{theme}.png"));
+                    reportsMvp.PrintSettings.Paper="Ticket 80 mm";Check(!reportsMvp.CanUsePreview,"Medidas nuevas invalidan el reporte anterior");
+                    reportsMvp.CloseReceiptPreviewCommand.Execute(null);reportsMvp.PrintSettings.Paper="Carta";
+                    var priorOrderState=mvpRepository.Order.Order.State;var priorFormRenderer=mvpDialogs.Render;
+                    mvpRepository.Order.Order.State="LISTO";await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);nav.Navigate(SetupPage.Orders);
+                    await ordersMvp.QuoteDeliveryCommand.ExecuteAsync(null);Check(ordersMvp.CanDispatchDelivery,"Pedido listo consulta importe antes de despachar");
+                    mvpDialogs.Render=form=>RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"reparto-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    await ordersMvp.DispatchCodCommand.ExecuteAsync(null);
+                    foreach(var deliveryState in new[]{"EN_RUTA","PENDIENTE_RENDICION","RENDIDO","RETORNADO"})
+                    {
+                        stageTwoRepository.Delivery=new(){Id=1,OrderId=1,CashBoxId=1,WarehouseId=1,Courier="Repartidor de prueba",State=deliveryState,Total=20,Medium="TRANSFERENCIA",Reference="BANCO-PRUEBA",RowVersion=new byte[8]};
+                        await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);nav.Navigate(SetupPage.Orders);
+                        Check(!ordersMvp.CanPassToPos&&!ordersMvp.CanTransition,"Pedido con reparto bloquea atajos genéricos: "+deliveryState);
+                        await RenderAsync(shell,1093,614,Path.Combine(output,$"reparto-{deliveryState}-{theme}.png"));
+                        if(deliveryState=="EN_RUTA")await ordersMvp.ResolveCodCommand.ExecuteAsync(null);
+                        if(deliveryState=="PENDIENTE_RENDICION")await ordersMvp.SettleCodCommand.ExecuteAsync(null);
+                    }
+                    stageTwoRepository.Delivery=null;mvpRepository.Order.Order.State=priorOrderState;mvpDialogs.Render=priorFormRenderer;
+                    await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
                     await creditMvp.LoadNoticesCommand.ExecuteAsync(null); await creditMvp.LoadStatementCommand.ExecuteAsync(null);
                     await creditMvp.PreviewStatementCommand.ExecuteAsync(null);
                     Check(creditMvp.ReceiptPreview?.Pages.Count>0 && creditMvp.CanUsePreview,"Estado de cuenta genera PDF real y vista previa con permisos");

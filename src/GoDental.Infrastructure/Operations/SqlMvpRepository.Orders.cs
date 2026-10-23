@@ -50,6 +50,7 @@ public sealed partial class SqlMvpRepository
     {
         Check(r);
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
+        await NoDelivery(w, r.OrderId);
         Require(OrderRules.CanTransition(order.State, r.State), "INVALID_STATE", "La transición no está permitida para el estado actual.");
         if (r.State is "EN_RUTA" or "ENTREGADO")
             Require(order.SaleId is not null && await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId AND Estado=N'CONFIRMADA') THEN 1 ELSE 0 END);", new { order.SaleId }), "INVALID_STATE", "Vincula una venta confirmada antes de despachar o entregar el pedido.");
@@ -63,11 +64,13 @@ public sealed partial class SqlMvpRepository
         await LinkOrderSaleCore(w, r, userId);
         return r.OrderId;
     }, ct);
+    private static async Task NoDelivery(Work w,long order) => Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.RepartosMvp WITH(HOLDLOCK) WHERE IdPedido=@order) THEN 1 ELSE 0 END);",new{order}),"INVALID_STATE","Resuelve este pedido desde el flujo de reparto contra entrega.");
     private static void LinkableOrder(OrderData order) => Require(order.State is not ("CANCELADO" or "ENTREGADO") && order.SaleId is null, "INVALID_STATE", "El pedido ya tiene venta o está finalizado.");
     private static async Task LinkOrderSaleCore(Work w, LinkOrderSale r, int userId)
     {
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
         LinkableOrder(order);
+        await NoDelivery(w, r.OrderId);
         var sale = await w.Maybe<SaleData>("SELECT IdVenta Id,IdCliente CustomerId,Estado State,CargoEntrega DeliveryCharge FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId;", r);
         Require(sale is not null && sale.State == "CONFIRMADA" && sale.CustomerId == order.CustomerId && sale.DeliveryCharge == order.DeliveryCharge, "VALIDATION", "La venta debe estar confirmada y corresponder al cliente y cargo de entrega.");
         Require(await w.Scalar<bool>("""
