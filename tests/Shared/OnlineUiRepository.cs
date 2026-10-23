@@ -5,6 +5,7 @@ internal sealed class OnlineUiRepository:IOnlineRepository
 {
     public List<object> Writes{get;}=[];
     public bool LoseResponse{get;set;}
+    public Task<MvpPage<OnlineProspectData>>? PendingPreview {get;set;}
     public Task<OnlineProspectData?>? PendingDetail{get;set;}
     public Task<MvpPage<OnlineProspectData>>? PendingSearch{get;set;}
     public Task<MvpPage<OnlineMatch>>? PendingMatch{get;set;}
@@ -18,5 +19,12 @@ internal sealed class OnlineUiRepository:IOnlineRepository
     public Task<MvpPage<OnlineEvent>> OnlineHistoryAsync(long id,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineEvent>([new(){Date=DateTimeOffset.UtcNow,User="Usuario de prueba",Action="ONLINE_PROSPECTO",Reason="Alta sintética"}],1));
     public Task<MvpPage<OnlineExclusion>> OnlineExclusionsAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineExclusion>([new(){Id=1,Channel="EMAIL",Identifier="excluido@example.com",Active=true,Reason="No contactar",Date=DateTimeOffset.UtcNow}],1));
     public Task<MvpPage<SaleData>> OnlineSalesAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<SaleData>([Sale],1));
+    public Task<MvpPage<OnlineZone>> OnlineZonesAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineZone>([new(){Id=1,Department="San Salvador",Municipality="San Salvador Centro",Prospects=1,RowVersion=new byte[8]}],1));
+    public Task<MvpPage<OnlineSegment>> OnlineSegmentsAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineSegment>([new(){Id=1,Name="Negocios de prueba",Channel="EMAIL",RowVersion=new byte[8]}],1));
+    public Task<MvpPage<OnlineProspectData>> OnlineSegmentPreviewAsync(OnlineSegmentFilter filter,MvpFilter f,int u,CancellationToken ct)=>PendingPreview??Task.FromResult(new MvpPage<OnlineProspectData>([Prospect],1));
+    public Task<MvpPage<OnlineTemplate>> OnlineTemplatesAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineTemplate>([new(){Id=1,Name="Presentación",Channel="EMAIL",Content="Hola {nombre}, conoce nuestro catálogo.",RowVersion=new byte[8]}],1));
+    public Task<MvpPage<OnlineCampaign>> OnlineCampaignsAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineCampaign>([new(){Id=1,Name="Campaña de prueba",Channel="EMAIL",State="PENDIENTE_APROBACION",SegmentId=1,Segment="Negocios de prueba",CriteriaJson="{}",Content="Hola {nombre}, conoce nuestro catálogo.",Recipients=1,RowVersion=new byte[8]}],1));
+    public Task<MvpPage<OnlineRecipient>> OnlineRecipientsAsync(long id,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineRecipient>([new(){Id=1,Name="Negocio de prueba",Contact="negocio@example.com",State="PENDIENTE"}],1));
+    public Task<MvpPage<OnlineFollowUp>> OnlineFollowUpsAsync(string s,long? id,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineFollowUp>([new(){Id=1,ProspectId=1,Name="Negocio de prueba",Channel="EMAIL",Result="INTERESADO",Date=DateTimeOffset.UtcNow,NextDate=DateTime.Today.AddDays(2),Note="Solicita información del catálogo, ejemplo sintético.",User="Usuario de prueba"}],1));
     public Task<Result<MvpReceipt>> SaveOnlineAsync(object r,int u,int? station,CancellationToken ct){Writes.Add(r);if(LoseResponse)throw new System.IO.IOException("Respuesta perdida en prueba");return Task.FromResult(Result<MvpReceipt>.Success(new(1,GoDental.Application.Validators.OnlineValidator.Identity(r).Id)));}
 }

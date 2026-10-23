@@ -62,3 +62,17 @@ Continuación del 23/10/2026: DEV-46 conecta el primer bloque Online interno, de
 Pendiente local actualizado: **021 → 022 → 023 → 024 → 025**, incluida 021. Siguiente trabajo
 independiente: escalas/listas/promociones. Campañas/conectores/automatización y DTE externo siguen
 sujetos a sus requisitos y controles previos; no se declaran completados por este bloque manual.
+
+## Ampliación de Online según referencia · 23/10/2026
+
+El usuario pide asemejar las funciones a Imagenes/221200. [DEV-47](DEV-47-Online-Referencia.md)
+amplía el bloque manual con zonas, segmentos, plantillas, campañas preparadas/aprobadas y
+seguimiento. Esta continuación toma prioridad antes de escalas/listas/promociones.
+El alcance es interno; mapa, búsqueda remota, consentimiento/proveedores y envíos quedan para
+ONL externo con controles S1. Conversión conserva compra confirmada de DM-01.
+
+**Pendiente local vigente: 021 → 022 → 023 → 024 → 025 → 026, incluida 021.**
+La herramienta de desarrollo recorre 009–026 al actualizar una base completa reconocida;
+no equivale a aplicar sólo 026. 025 añade el primer bloque Online y 026 la planificación.
+Después del recorrido interno: escalas/listas/promociones y los requisitos externos pendientes;
+instalador/actualizaciones/respaldos antes del piloto formal de dos PCs. No se aplicó la BD personal.
