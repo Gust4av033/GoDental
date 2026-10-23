@@ -11,8 +11,9 @@ ante Hacienda y reconcilia. Dependencias internas conservadas; composición por 
 de operador por petición, sin singleton de sesión WPF. No se migra toda la aplicación a API
 en un bloque. El acceso SQL comercial actual sigue siendo deuda S1, no identidad fiscal confiable.
 
-Estado: **PREPARADO**, no existe todavía proyecto GoDental.Server. Implementación por bloques
-B de FIS-01; contratos externos bloqueados hasta verificar fuentes oficiales. Worker durable
+Estado: **B1 IMPLEMENTADO** en [DEV-51](../DEV-51-Servidor-Identidad.md): host GoDental.Server,
+autenticación y sesiones durables, sin operaciones fiscales externas ni migración WPF completa.
+Bloques B2/B3 pendientes; contratos externos bloqueados hasta verificar fuentes oficiales. Worker durable
 puede vivir en el host central, independiente de que WPF esté abierto. No crear otro proceso
 sólo para satisfacer el nombre de una arquitectura.
 

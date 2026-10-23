@@ -118,4 +118,6 @@ credenciales correctas, pruebas, restauración y S1 cerrado.
 
 El estado de un documento de diseño no se hereda al módulo. Esta iteración no crea emisor,
 certificado, JSON fiscal, firma, QR fiscal, autorización o sello ficticios. Migraciones personales
-pendientes: **021 → 022 → 023 → 024 → 025 → 026**, todas en orden.
+pendientes: **021 → 022 → 023 → 024 → 025 → 026 → 027**, todas en orden. DEV-51 añade
+GoDental.Server B1/identidad interna con 027; firma, transporte, secretos fiscales y producción
+siguen pendientes. Ver [configuración del servidor](../Servidor-Configuracion.md).

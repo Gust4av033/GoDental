@@ -54,6 +54,12 @@ corregir antes de habilitar su recorrido, aunque cambie la prioridad funcional s
 
 ## Fases de seguridad
 
+Avance [DEV-51](DEV-51-Servidor-Identidad.md): B1 añade host HTTPS, sesión opaca/revocable,
+contexto por petición, permisos actuales, respuestas/logs acotados y rol SQL sólo EXECUTE.
+No cierra SEC-01 global (WPF/PCs/provisión/operaciones fiscales pendientes), SEC-02 de escritorio,
+SEC-03 de secretos ni despliegue real. Revocación por estado inválido se persiste al detectarse;
+usuarios/estaciones aún se administran por el recorrido WPF, no por un API de servidor.
+
 Observación de CI #199 (DEV-50): avisos Node `DEP0169` de herramientas Actions, sin warnings
 del build C# ni CVE confirmado por esta revisión. Registrar actualización/pin dentro de SEC-06;
 la consulta NuGet de siete proyectos mantuvo cero avisos altos/críticos. No cierra SEC-06.

@@ -32,8 +32,18 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 24. `024_Fiscal_Revision_Interna.sql`
 25. `025_Online_Interno.sql`
 26. `026_Online_Planificacion.sql`
+27. `027_Servidor_Identidad.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
+
+## Identidad del servidor · DEV-51
+
+027 agrega `seg.SesionesServidor`, cuatro procedimientos de autenticación y rol
+`GoDentalServerRuntime` con EXECUTE limitado: **82 tablas / 8 vistas / 22 procedimientos**.
+No crea login ni asigna operadores al rol; provisión de cuenta Windows dedicada en
+[configuración del servidor](../docs/Servidor-Configuracion.md). Ningún secreto fiscal ni emisión.
+Actualizar todas las pendientes **021 → 022 → 023 → 024 → 025 → 026 → 027** antes de usar
+GoDental.Server. Las siguientes notas DEV-50 describen la iteración previa, que no agregó SQL.
 
 ## Preparación DTE · DEV-50
 
@@ -62,7 +72,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–026.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–027.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 

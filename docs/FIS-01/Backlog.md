@@ -10,8 +10,8 @@ quedan después de esta prioridad, salvo correcciones necesarias para mantener e
 | A1 | Auditar repo y baseline, incorporar fuentes aportadas, preparar FIS-01 v0.2 e inventario | HEAD remoto/PR/001–026 reales | Esta iteración; evidencia en DEV-50. No equivale a contratos finales |
 | A2 | Obtener/leer T01–T06 vigentes y verificar F01–F08 | Fuentes desde factura.gob.sv, URL/edición/hash/términos | PENDIENTE_DE_DOCUMENTACION_OFICIAL; cerrar matriz a nivel de campo/regla y resolver contradicciones |
 | A3 | Cerrar modelo fiscal definitivo/DDL y arquitectura de adaptadores | A2 y revisión ARQ-01/DB-01/SEC-01 | PENDIENTE_DE_CONTRATO_OFICIAL; sin endpoints o longitudes adivinados |
-| B1 | Host GoDental.Server .NET 8 y autenticación de operador | Diseño ARQ-01 v0.2; cerrar duración/revocación/estaciones en SEC-01 | Pendiente implementación; arranque/HTTPS, sesión por petición, anonimato/suplantación rechazados; sin emisión |
-| B2 | Autorización, identidad SQL y acceso a evidencias | B1, roles/provisión runtime/migración diseñados | Pendiente; permisos actuales y denegación SQL directa/impersonación demostrables, SEC-01 cerrado para alcance fiscal |
+| B1 | Host GoDental.Server .NET 8 y autenticación de operador | ARQ-01 v0.2, política SEC-01 / DEV-51 | IMPLEMENTADO: HTTPS, sesión por petición, revocación SQL; 22 HTTP locales correctas; SQL/WPF y evidencia final en DEV-51; sin emisión |
+| B2 | Autorización, identidad SQL y acceso a evidencias | B1, roles/provisión runtime/migración diseñados | Parcial DEV-51: permisos actuales, rol EXECUTE limitado y guard de privilegios; falta provisión/TLS real, estaciones y operaciones/evidencias fiscales, cierre SEC-01 |
 | B3 | Secret store y TEST/PROD | B1/B2; custodia genérica interna; formato final tras T05/T06 | Pendiente; Windows/ACL, aislamiento, instalación/rotación/restauración ensayados sin datos reales en CI |
 | C1 | Registro de contratos, catálogos y schemas locales versionados | A2/A3 y términos aprobados | Pendiente; validación sin red, referencias resueltas localmente, hash/edición por DTE |
 | C2 | Perfiles/autorizaciones/mapeos y snapshot inmutable | C1, migración aditiva aprobada | Pendiente; FE sin opcionales indebidos, CCFE independiente, Cliente posterior no altera snapshot |
@@ -37,11 +37,12 @@ estados manualmente. No se implementa todo B–J en esta primera iteración.
 ## Próxima sesión
 
 Leer DEV-50, FIS-01 v0.2 y este backlog. Verificar nuevamente fetch/HEAD/PR/migraciones y
-baseline. Primero A2 si se aportaron archivos oficiales; si siguen faltando, continuar **B1**
-con B2 diseñado antes de exponer operaciones sensibles. Concretar política de sesión y alta de
-estaciones desde SEC-01; no crear permisos/emisión sin caso real. No migrar WPF completo.
+baseline. Primero A2 si se aportaron archivos oficiales; si siguen faltando, continuar **B2/B3**
+desde DEV-51. B1 ya tiene host/autenticación/sesiones; faltan provisión/TLS y fronteras de las
+operaciones/evidencias fiscales y custodia genérica. No crear permisos/emisión sin caso real.
+No migrar WPF completo. Política inicial de sesión definida en SEC-01.
 
 Con cada bloque: commits por responsabilidad, validación local y Windows según corresponda,
 actualización de matriz/estado/fuentes, y continuación explícita. No modificar `main` directamente.
-En instrucciones personales seguir indicando **021 → 022 → 023 → 024 → 025 → 026**; esta
-iteración no añadió migración 027 ni aplicó cambios a la PC del usuario.
+En instrucciones personales indicar **021 → 022 → 023 → 024 → 025 → 026 → 027**: DEV-51
+añade identidad interna, no DTE. Ninguna se aplicó desde cloud a la PC del usuario.

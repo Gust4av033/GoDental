@@ -1,6 +1,8 @@
 # Arquitectura DTE y diseño de GoDental.Server
 
-**PREPARADO — diseño, sin proyecto servidor implementado.** Decisión ARQ-01 v0.2.
+**Diseño PREPARADO; B1 de identidad IMPLEMENTADO** en [DEV-51](../DEV-51-Servidor-Identidad.md).
+GoDental.Server ya existe con HTTPS, autenticación, sesiones durables y permisos de lectura;
+servicios fiscales/worker/firma/secretos aún pendientes. Decisión ARQ-01 v0.2.
 El diseño de responsabilidades queda definido aquí; firma/transporte y sus contratos permanecen
 PENDIENTE_DE_CONTRATO_OFICIAL. No se reutilizará un adaptador Meta como transporte fiscal.
 
@@ -44,8 +46,9 @@ y cambio obligatorio de contraseña. Guardar sólo hash del identificador de ses
 estación registrada, creación, expiración, revocación y última actividad. La identidad Windows
 de la estación no equivale por sí sola al operador GoDental.
 
-Antes de codificar, cerrar en SEC-01 la política de duración/inactividad, alta de estaciones,
-reautenticación sensible y revocación. No inventar números de duración en este diseño. La
+DEV-51 cierra la política inicial en SEC-01: ocho horas absolutas, veinte minutos sin actividad,
+una sesión por usuario/estación, revocación durable y alta de estaciones fuera de HTTP.
+Reautenticación sensible se añadirá antes de los recorridos de configuración fiscal. La
 sesión se valida en cada petición; permisos actuales se consultan del lado servidor, no se
 congelan indefinidamente al iniciar sesión. Limitar intentos y tamaño de peticiones, usar TLS
 válido, errores genéricos y respuestas de autenticación sin datos del usuario objetivo.

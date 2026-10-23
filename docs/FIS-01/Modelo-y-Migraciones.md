@@ -126,8 +126,9 @@ Retención y eliminación sólo desde política legal verificada; no inventar a�
 5. Fases G–H: agregar agregado de eventos y entrega/RG conforme contratos, sin renombrar
    destructivamente ni reinterpretar `fis.EventosDte` histórico.
 
-**No se creó 027**: siguiente número disponible, no asignado todavía a un diseño sin fuentes.
-Numerar cada migración al implementarla; no anunciar un “salto a 027” como sustituto de 021–026.
+En DEV-50 no se creó 027. **DEV-51 asigna 027 a identidad interna del servidor**, independiente
+del DDL fiscal aquí pendiente. La siguiente migración disponible es 028, sin diseño fiscal
+aprobado aún. No anunciar un salto a la última como sustituto de los scripts anteriores.
 Compatibilidad de clientes antiguos antes de activar funciones: versionado de capacidad,
 rechazo de escritor incompatible y ventana coordinada. Una actualización no debe recrear la BD.
 

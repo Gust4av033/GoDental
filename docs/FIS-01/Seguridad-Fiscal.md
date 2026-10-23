@@ -4,6 +4,10 @@
 acredita mínimo privilegio instalado, pentest ni producción. Fiscal actual no tiene transporte
 o secreto MH, por lo que no se debe habilitar captura de credenciales en sus formularios.
 
+Avance B1: [DEV-51](../DEV-51-Servidor-Identidad.md) implementa host, sesión opaca duradera,
+permisos actuales y rol SQL de autenticación. Validación y alcance de cierre allí; no convierte
+el acceso SQL comercial en confiable ni habilita firma/transmisión/PROD.
+
 ## Amenazas y controles de salida
 
 | Riesgo | Control exigido antes de habilitar recorrido | Prueba de cierre |

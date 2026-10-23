@@ -3,10 +3,13 @@
 Prioridad vigente: [nuevo plan DTE, DEV-50](docs/DEV-50-Preparacion-DTE.md) y
 [FIS-01 v0.2](docs/FIS-01/README.md). Primera iteración de auditoría/especificación y preparación;
 después servidor central seguro y contratos fiscales verificados, según [backlog A–J](docs/FIS-01/Backlog.md).
-No hay emisión real: faltan fuentes técnicas oficiales, servidor/secretos y acceso TEST.
+No hay emisión real: faltan fuentes técnicas oficiales, custodia fiscal y acceso TEST.
+Continuación [DEV-51](docs/DEV-51-Servidor-Identidad.md): GoDental.Server ya tiene HTTPS,
+autenticación, sesiones revocables y permisos actuales. [Configuración local](docs/Servidor-Configuracion.md).
 Online implementado se conserva; siguientes conectores y escalas/listas/promociones quedan después
 de esta prioridad. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) mantiene hallazgos S1 abiertos.
-En la PC faltan **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**; no hay 027 nueva.
+En la PC faltan **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026 → 027**.
+027 agrega identidad del servidor, sin emisión DTE ni cambios aplicados desde cloud a la PC.
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
@@ -46,6 +49,7 @@ GoDental/
 │   ├── GoDental.Domain/
 │   ├── GoDental.Application/
 │   ├── GoDental.Infrastructure/
+│   ├── GoDental.Server/
 │   └── GoDental.Wpf/
 ├── tests/
 │   └── GoDental.Tests/
@@ -62,7 +66,7 @@ Reglas principales:
 3. `Infrastructure` implementa acceso a datos, archivos, PDF e integraciones.
 4. `Wpf` es UI + composition root; no contiene SQL ni lógica transaccional.
 5. Las operaciones críticas se validan en SQL Server y deben ser seguras para múltiples PCs.
-6. GoDental.Server se incorporará como frontera confiable DTE según ARQ-01 v0.2; no existe todavía. El host central podrá ejecutar trabajo durable sin WPF abierto.
+6. GoDental.Server implementa B1 de identidad según ARQ-01 v0.2; operaciones fiscales, worker y custodia siguen pendientes. No migra el WPF completo.
 
 ## Abrir en Visual Studio 2022
 
