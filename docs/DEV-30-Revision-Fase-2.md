@@ -167,3 +167,12 @@ sustituye la propuesta de pasar inmediatamente al piloto después de 2.3. Siguen
 de módulos existentes, después módulos nuevos pendientes y, al final, preparación de instalación/
 actualizaciones/respaldos y piloto formal en las dos PCs. «Implementado» no significa que esté
 completo todo DM-01; DEV-43 identifica pendientes, decisiones abiertas y alcance opcional.
+
+
+Prioridad vigente, 23/10/2026 (El Salvador), por instrucción del usuario: módulos nuevos primero,
+con Fiscal interno en [DEV-44](DEV-44-Fiscal-Interno.md), después Online interno y luego
+escalas/listas/promociones y otros complementos. Instalación/actualizaciones/respaldos y piloto
+formal siguen al final. La seguridad se revisa durante los módulos: [DEV-45](DEV-45-Seguridad-Hallazgos.md)
+registra riesgos y fases; altos/críticos se corrigen antes de activar su función.
+Todavía no hay acceso al ambiente de pruebas de Hacienda: esta entrega no emite DTE.
+Pendiente local **021 → 022 → 023 → 024**, incluida 021; no se aplicó SQL personal desde cloud.

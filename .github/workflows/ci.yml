@@ -36,6 +36,10 @@ jobs:
       - name: Restore
         run: dotnet restore GoDental.sln
 
+      - name: Vulnerabilidades de dependencias
+        shell: pwsh
+        run: ./scripts/check-dependencies.ps1
+
       - name: Build
         run: dotnet build GoDental.sln -c Release --no-restore
 
@@ -48,6 +52,9 @@ jobs:
           sqllocaldb start MSSQLLocalDB
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --localdb .
+
+      - name: Fiscal interno sobre SQL Server aislado
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-fiscal --localdb .
 
       - name: Reparto contra entrega y reportes sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-deliveries-reports --localdb .

@@ -7,16 +7,14 @@ Es una consolidación de pendientes documentados, no una nueva auditoría exhaus
 
 ## Orden vigente solicitado
 
-1. Revisar y completar los complementos de los módulos existentes respecto de DM-01 y sus
-   documentos funcionales. Entregar cada incremento con lógica, UI, permisos, migración si
-   corresponde y pruebas; registrar qué queda terminado y qué conserva decisiones abiertas.
-2. Desarrollar los módulos nuevos pendientes, con su diseño y requisitos: Fiscal/DTE y Online,
-   entre los documentados. No inferir emisión fiscal o proveedores externos sin requisitos,
-   credenciales y autorizaciones correspondientes. Funciones adicionales fuera del alcance
-   aprobado se diseñan antes de asumir que forman parte de esta entrega.
-3. Preparar instalación/actualizaciones y respaldos/restauración de DEV-36; después ejecutar
-   el piloto formal/aceptación en las dos PCs y con hardware. Se conserva el identificador
-   histórico **2.4**, pero deja de ser la siguiente tarea inmediata tras 2.3.
+Prioridad sustituida por instrucción del 23/10/2026; ver [DEV-44](DEV-44-Fiscal-Interno.md)
+y [DEV-45](DEV-45-Seguridad-Hallazgos.md):
+
+1. Módulos nuevos: Fiscal interno primero y Online interno a continuación, según requisitos.
+   El usuario todavía no tiene ambiente de pruebas de Hacienda; emisión real no habilitada.
+2. Después, escalas/listas/promociones y los demás complementos priorizados.
+3. Endurecimiento final de seguridad, instalador/actualizaciones/respaldos y piloto formal en las
+   dos PCs. Seguridad se revisa también con cada módulo; riesgos altos/críticos no esperan al final.
 
 Las pruebas automáticas de concurrencia, recuperación y conservación de datos continúan
 con cada incremento. El piloto formal se coloca al final; los respaldos siguen siendo necesarios
@@ -26,7 +24,7 @@ antes de modificar una base con registros, sin esperar al piloto.
 
 | Área existente | Complemento | Referencia y condición |
 | --- | --- | --- |
-| Precios y promociones | Mantenimiento de listas, escalas y promociones que consume el motor comercial. | DEV-30 / VEN-01A. Primer bloque recomendado: cerrar alcance de mantenimiento y reglas soportadas antes de agregar UI/escrituras. |
+| Precios y promociones | Mantenimiento de listas, escalas y promociones que consume el motor comercial. | DEV-30 / VEN-01A. Después de módulos nuevos: cerrar alcance de mantenimiento y reglas soportadas antes de agregar UI/escrituras. |
 | Productos/inventario | Control operativo de series; reposición/alertas y analítica más avanzada según alcance. | DEV-30/32. Las barras gráficas y etiquetas configurables ya están hechas en DEV-34; no repetirlas. POS todavía no admite productos serializados. |
 | Crédito | Política de mora y excepciones, saldo a favor reutilizable y tratamiento autorizado de anulación de abonos. | DEV-30/38/40. Requieren decisiones de negocio antes de modificar dinero o bloquear clientes. Avisos, recibos y estados de cuenta ya están conectados. |
 | Caja/pagos | Conciliación bancaria/tarjeta y documentos adicionales de arqueo según alcance. | DEV-30/32. Registrar tarjeta o verificar una rendición no completa una conciliación bancaria general. |
@@ -41,16 +39,20 @@ exigido por documentación vigente de mejoras opcionales o reglas todavía por d
 
 ## Migraciones: son incrementales, no acumulativas por archivo
 
-Si la BD ya tiene 021, aplicar **022 y después 023**, ambas en la misma BD configurada:
+El usuario aclaró el 23/10/2026 que **falta desde 021, incluida**. La secuencia pendiente actual es
+**021 → 022 → 023 → 024**, en la misma BD configurada. No suponer 021 aplicada.
+Si otra estación ya tuviera 021, continuaría por 022 → 023 → 024.
 
+- `021_Cobranza_Documentos.sql`: avisos y snapshots de abonos.
 - `022_Reparto_ContraEntrega.sql`: tablas de custodia/rendición, permisos y método exclusivo de reparto.
 - `023_Reportes_Operativos.sql`: fecha de aplicación para nuevas recepciones. No ejecuta ni incluye 022.
+- `024_Fiscal_Revision_Interna.sql`: revisión administrativa de solicitudes fiscales, sin emisión.
 
 Si la BD está más atrás, aplicar también las migraciones faltantes anteriores, en orden.
 Que un archivo posterior pueda ejecutarse sin error no demuestra que la base esté completa.
 
-La herramienta `--install-development` recorre los scripts en orden (009–023 al actualizar una
-base completa existente marcada; incluye 022 y 023). Es distinta de ejecutar sólo el archivo 023.
+La herramienta `--install-development` recorre los scripts en orden (009–024 al actualizar una
+base completa existente marcada; incluye 021–024). Es distinta de ejecutar sólo el archivo 023.
 Se limita a `GoDental_Development` con marcador reconocido; no es un migrador productivo con
 historial/compatibilidad. No cambiar marcadores para forzar otra base. Ver DEV-36 y los comandos
-locales de DEV-41. No se confirma aquí qué migraciones tiene la PC del usuario.
+locales de DEV-41. El usuario reportó pendientes desde 021; no se aplicaron a su PC desde cloud.

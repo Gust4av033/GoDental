@@ -23,6 +23,13 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 15. `015_Resolucion_Operaciones.sql`
 16. `016_Parametros_Comerciales.sql`
 17. `017_Compras_Recepciones.sql`
+18. `018_Importaciones_Costeo.sql`
+19. `019_Posventa.sql`
+20. `020_Distritos_Formularios.sql`
+21. `021_Cobranza_Documentos.sql`
+22. `022_Reparto_ContraEntrega.sql`
+23. `023_Reportes_Operativos.sql`
+24. `024_Fiscal_Revision_Interna.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -45,7 +52,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–014.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–024.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -123,3 +130,17 @@ Aplicar después de 020 y actualizar/reiniciar ambas estaciones. Se conserva el 
 recuperables anteriores; la nueva solicitud AVISO_COBRANZA usa el mismo diario/ledger transaccional.
 
 `022_Reparto_ContraEntrega.sql`: custodia de reparto y rendición, dos tablas nuevas (79 tablas / 8 vistas / 18 procedimientos). `023_Reportes_Operativos.sql`: fecha de aplicación nullable para recepciones nuevas, sin reconstruir históricos. Aplicar en orden después de 021. Diseño, uso y límites: DEV-41/42.
+
+
+## Preparación fiscal interna · 024
+
+`024_Fiscal_Revision_Interna.sql` (DEV-44) agrega versión, resultado/observación/autor/fecha
+ y huella de revisión interna a `fis.DocumentosFiscales`, con CHECK/FK y permiso
+`FISCAL.REVISAR_INTERNO`. No genera DTE, cambia estados fiscales ni mueve caja/inventario.
+Conserva **79 tablas / 8 vistas / 18 procedimientos**. Reaplicar conserva revisiones y denegaciones.
+
+**Pendiente en la PC personal desde 021, incluida: 021 → 022 → 023 → 024.** Son incrementales;
+024 no contiene las anteriores. Respaldar BD y evidencias, cerrar/actualizar ambas estaciones y
+volver a iniciar sesión tras migrar. El instalador de desarrollo recorre la secuencia para la base
+marcada; el migrador productivo y restauración automatizada continúan pendientes en DEV-36.
+No se aplicaron migraciones a la BD personal desde este entorno.

@@ -12,15 +12,17 @@ CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 W
 
 El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
-## Prioridad vigente después de 2.3 · aclaración del usuario
+## Prioridad vigente · 23/10/2026
 
-[DEV-43](DEV-43-Complementos-y-Continuacion.md) consolida los complementos que aún faltan.
-Cerrar 2.2C y 2.3 no completa todos los módulos del Documento Maestro. El orden solicitado es:
-**complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones,
-respaldos/restauración y piloto formal en las dos PCs**. El hito histórico 2.4 queda al final de
-esa secuencia, no como siguiente tarea inmediata. Las pruebas de concurrencia siguen en cada
-incremento. Primera prioridad propuesta: mantenimiento de listas, escalas y promociones,
-con diseño previo; las reglas financieras abiertas se cierran antes de implementarlas.
+Por instrucción del usuario, [DEV-44](DEV-44-Fiscal-Interno.md) sustituye el orden de DEV-43:
+**módulos nuevos (Fiscal interno → Online interno) → escalas/listas/promociones y demás
+complementos → endurecimiento final, instalador/actualizaciones/respaldos → piloto formal en las
+PCs**. No hay acceso de pruebas de Hacienda todavía; la emisión real requiere FIS-01 v0.2.
+[DEV-45](DEV-45-Seguridad-Hallazgos.md) registra la revisión y sus fases: seguridad con cada
+incremento y antes de conectores; riesgos altos/críticos no esperan al cierre del programa.
+
+**Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024.**
+Cada archivo es incremental; el último no incluye los anteriores. No aplicadas desde cloud.
 
 ## Secuencia de entrega
 
@@ -35,11 +37,13 @@ con diseño previo; las reglas financieras abiertas se cierran antes de implemen
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | 2.2C · Reparto contra entrega | Implementado; CI #163 correcto, DEV-41 | Custodia, entrega completa, incidencia/retorno y rendición de efectivo/transferencia (022) |
 | 2.3 · Reportes operativos | Implementado; CI #163 correcto, DEV-42 | Ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras aplicadas (023) |
+| Fiscal interno | Implementado; validación Windows pendiente de registrar | DEV-44, migración 024; sin emisión/firma/transmisión |
+| Online interno | Siguiente módulo; pendiente | ONL-01 y DEV-44; fuentes/consentimiento/conversión antes de conectores |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.
 
-La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan el orden de DEV-30.
+La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan la prioridad vigente de DEV-44.
 
 ## Fases históricas de DM-01
 

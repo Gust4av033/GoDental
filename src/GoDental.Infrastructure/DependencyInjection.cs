@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddTransient<IOrderRepository, SqlMvpRepository>();
         services.AddTransient<IInventorySetupRepository, SqlMvpRepository>();
         services.AddTransient<IFiscalPendingRepository, SqlMvpRepository>();
+        services.AddTransient<IFiscalWorkspaceRepository, SqlMvpRepository>();
         services.AddTransient<IMvpOperationRepository, SqlMvpRepository>();
         services.AddTransient<ICommercialParametersRepository, SqlMvpRepository>();
         services.AddTransient<IPurchaseRepository, SqlMvpRepository>();

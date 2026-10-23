@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GoDental.Wpf.Navigation;
 
-public enum SetupPage { Home, Preparation, Connection, Access, Products, Users, Counts, Suppliers, Customers, Cash, Pos, Quotations, Credit, Orders, Sales, PendingOperations, Purchases, Reports }
+public enum SetupPage { Home, Preparation, Connection, Access, Products, Users, Counts, Suppliers, Customers, Cash, Pos, Quotations, Credit, Orders, Sales, PendingOperations, Purchases, Reports, Fiscal }
 
 public interface INavigationService
 {

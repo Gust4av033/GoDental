@@ -9,6 +9,8 @@ try {
     dotnet restore GoDental.sln
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    & ./scripts/check-dependencies.ps1
+
     Write-Host '==> GoDental: build Release' -ForegroundColor Cyan
     dotnet build GoDental.sln -c Release --no-restore
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -25,6 +27,8 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     if ($SqlIntegration) {
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-fiscal --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --server $SqlServer $repoRoot

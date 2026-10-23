@@ -1,0 +1,54 @@
+<UserControl x:Class="GoDental.Wpf.Views.Operations.FiscalView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations">
+<UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+<StackPanel><TextBlock Text="Fiscal · preparación interna" Style="{StaticResource Heading}"/>
+<TextBlock Text="Solicitudes y revisión de datos. La emisión, firma y transmisión a Hacienda aún no están habilitadas." Style="{StaticResource MutedText}"/>
+<ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+<local:OperationStatusView DataContext="{Binding Operation}"/>
+<TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,12"/>
+<TabControl>
+<TabItem Header="Solicitudes" Style="{StaticResource CommerceTab}"><StackPanel Margin="0,16,0,0">
+<WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,0,0,12"><StackPanel Width="230" Margin="0,0,8,8"><TextBlock Text="Venta o número de solicitud" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Buscar solicitud fiscal"/></StackPanel>
+<StackPanel Width="160" Margin="0,0,8,8"><TextBlock Text="Revisión interna" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding States}" SelectedItem="{Binding ReviewState}" AutomationProperties.Name="Estado de revisión fiscal"/></StackPanel>
+<Button Content="Consultar solicitudes" Command="{Binding ReloadCommand}" Style="{StaticResource ActionButton}" VerticalAlignment="Bottom" Margin="0,0,8,8"/>
+<Button Content="Consultar ficha" Command="{Binding OpenCommand}" Style="{StaticResource PrimaryActionButton}" VerticalAlignment="Bottom" Margin="0,0,0,8"/></WrapPanel>
+<DataGrid ItemsSource="{Binding Documents}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="260" AutomationProperties.Name="Solicitudes fiscales internas"><DataGrid.Columns>
+<DataGridTextColumn Header="Solicitud" Binding="{Binding Id}" Width="85"/>
+<DataGridTextColumn Header="Venta" Binding="{Binding SaleNumber}" Width="145"/>
+<DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="85"/>
+<DataGridTextColumn Header="Estado fiscal" Binding="{Binding State}" Width="120"/>
+<DataGridTextColumn Header="Revisión interna" Binding="{Binding ReviewState}" Width="140"/>
+<DataGridTextColumn Header="Revisor" Binding="{Binding Reviewer}" Width="180"/>
+</DataGrid.Columns></DataGrid><TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}"/>
+<WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Solicitudes anteriores"/><Button Content="›" Command="{Binding NextCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Solicitudes siguientes"/></WrapPanel>
+</StackPanel></TabItem>
+<TabItem Header="Preparar desde venta" Style="{StaticResource CommerceTab}"><StackPanel Margin="0,16,0,0"><TextBlock Text="Busca una venta confirmada por su número o ID; sólo aparecen las que no tienen solicitud fiscal activa." Style="{StaticResource MutedText}"/>
+<WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12"><TextBox Text="{Binding CandidateSearch, UpdateSourceTrigger=PropertyChanged}" Width="240" MaxLength="200" AutomationProperties.Name="Buscar venta para solicitud fiscal" Margin="0,0,8,0"/><Button Content="Buscar ventas" Command="{Binding FindSalesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/><Button Content="Preparar solicitud" Command="{Binding CreateCommand}" IsEnabled="{Binding CanCreate}" Style="{StaticResource PrimaryActionButton}"/></WrapPanel>
+<DataGrid ItemsSource="{Binding Candidates}" SelectedItem="{Binding SelectedSale}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="260" AutomationProperties.Name="Ventas disponibles para solicitud fiscal"><DataGrid.Columns>
+<DataGridTextColumn Header="Venta" Binding="{Binding Number}" Width="170"/>
+<DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="140"/>
+<DataGridTextColumn Header="Total USD" Binding="{Binding Total}" Width="120"/>
+</DataGrid.Columns></DataGrid><TextBlock Text="{Binding CandidatePageLabel}" Style="{StaticResource MutedText}"/><WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousCandidateCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Ventas anteriores para Fiscal"/><Button Content="›" Command="{Binding NextCandidateCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Ventas siguientes para Fiscal"/></WrapPanel>
+</StackPanel></TabItem>
+<TabItem Header="Revisión e historial" Style="{StaticResource CommerceTab}"><StackPanel Margin="0,16,0,0">
+<TextBlock Text="{Binding DetailMessage}" Style="{StaticResource StatusMessage}" Margin="0,0,0,12"/>
+<WrapPanel Margin="0,0,0,12"><Button Content="Actualizar ficha" Command="{Binding OpenCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/><Button Content="Registrar revisión interna" Command="{Binding ReviewCommand}" IsEnabled="{Binding CanReview}" Style="{StaticResource PrimaryActionButton}"/></WrapPanel>
+<TextBlock Text="Venta y comprobante originales" Style="{StaticResource SectionHeading}"/><UniformGrid Columns="2"><ContentControl Style="{StaticResource CommerceField}" Tag="Venta" Content="{Binding Detail.Sale.Number}"/><ContentControl Style="{StaticResource CommerceField}" Tag="Estado de venta" Content="{Binding Detail.Sale.State}"/>
+<ContentControl Style="{StaticResource CommerceField}" Tag="Total USD" Content="{Binding Detail.Sale.Total}"/><ContentControl Style="{StaticResource CommerceField}" Tag="Cliente original" Content="{Binding Detail.Sale, Converter={StaticResource SaleCustomerName}}"/></UniformGrid>
+<DataGrid ItemsSource="{Binding Detail.Lines}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" Margin="0,0,0,12" AutomationProperties.Name="Detalle original de venta para revisión fiscal"><DataGrid.Columns>
+<DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="120"/>
+<DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="260"/>
+<DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="95"/>
+<DataGridTextColumn Header="Precio USD" Binding="{Binding UnitPrice}" Width="100"/>
+<DataGridTextColumn Header="Total USD" Binding="{Binding Total}" Width="100"/>
+</DataGrid.Columns></DataGrid>
+<TextBlock Text="Datos actuales del receptor · se mantienen desde Clientes" Style="{StaticResource SectionHeading}"/>
+<UniformGrid Columns="2"><ContentControl Style="{StaticResource CommerceField}" Tag="Nombre / razón social" Content="{Binding Detail.Receiver.Name}"/><ContentControl Style="{StaticResource CommerceField}" Tag="NIT" Content="{Binding Detail.Receiver.Nit}"/><ContentControl Style="{StaticResource CommerceField}" Tag="NRC" Content="{Binding Detail.Receiver.Nrc}"/><ContentControl Style="{StaticResource CommerceField}" Tag="DUI" Content="{Binding Detail.Receiver.Dui}"/></UniformGrid>
+<ContentControl Style="{StaticResource CommerceField}" Tag="Dirección fiscal" Content="{Binding Detail.Receiver.Address}"/>
+<TextBlock Text="Revisado internamente no significa DTE emitido o aceptado. Los cambios posteriores exigen revisar otra vez." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+<DataGrid ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="210" AutomationProperties.Name="Historial de revisión fiscal"><DataGrid.Columns>
+<DataGridTextColumn Header="Fecha local" Binding="{Binding LocalDate, StringFormat=dd/MM/yyyy HH:mm}" Width="160"/>
+<DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="160"/>
+<DataGridTextColumn Header="Resultado interno" Binding="{Binding Outcome}" Width="140"/>
+<DataGridTextColumn Header="Observación" Binding="{Binding Reason}" Width="380"/>
+</DataGrid.Columns></DataGrid><TextBlock Text="{Binding HistoryPageLabel}" Style="{StaticResource MutedText}"/><WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousHistoryCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Revisiones anteriores"/><Button Content="›" Command="{Binding NextHistoryCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Revisiones siguientes"/></WrapPanel>
+</StackPanel></TabItem></TabControl></StackPanel></UserControl>

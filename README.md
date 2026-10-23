@@ -189,4 +189,6 @@ Inicio incorpora un panel operativo con indicadores consultados por servicio, ac
 
 [DEV-41](docs/DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](docs/DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
 
-Prioridad vigente: [DEV-43](docs/DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.
+Prioridad anterior (sustituida el 23/10/2026 por DEV-44): [DEV-43](docs/DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.
+
+Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.
