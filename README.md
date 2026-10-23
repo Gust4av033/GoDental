@@ -1,6 +1,6 @@
 # GoDental
 
-Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.
+Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), Fiscal interno y primer bloque de Online interno ([DEV-46](docs/DEV-46-Online-Interno.md)); después escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025**.
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
@@ -10,7 +10,7 @@ La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-3
 el alcance implementado de lo pendiente de DM-01. El MVP conecta inventario/conteos,
 proveedores/clientes, POS/caja/crédito/pedidos y comprobantes; ya incluye compras/recepciones,
 importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes operativos.
-Fiscal incorpora preparación/revisión interna; emisión/firma/transmisión DTE y Online siguen pendientes.
+Fiscal incorpora preparación/revisión interna; Online conecta prospectos/fuentes/exclusiones y vínculo por compra confirmada. Emisión DTE, campañas y conectores siguen pendientes.
 El orden vigente y los controles de seguridad están en DEV-44/45.
 
 Rama activa: **`feature/desarrollo`**. [CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720) valida `e8cab1a`: Release sin advertencias/errores, **347 xUnit / 721 SQL / 965 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos sin avisos conocidos.

@@ -27,6 +27,8 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     if ($SqlIntegration) {
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-online --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-fiscal --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration --server $SqlServer $repoRoot

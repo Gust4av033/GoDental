@@ -30,6 +30,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 22. `022_Reparto_ContraEntrega.sql`
 23. `023_Reportes_Operativos.sql`
 24. `024_Fiscal_Revision_Interna.sql`
+25. `025_Online_Interno.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -52,7 +53,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–024.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–025.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -144,3 +145,16 @@ Conserva **79 tablas / 8 vistas / 18 procedimientos**. Reaplicar conserva revisi
 volver a iniciar sesión tras migrar. El instalador de desarrollo recorre la secuencia para la base
 marcada; el migrador productivo y restauración automatizada continúan pendientes en DEV-36.
 No se aplicaron migraciones a la BD personal desde este entorno.
+
+
+## Online interno · 025
+
+`025_Online_Interno.sql` (DEV-46) extiende Prospectos/ListaNoContactar con versiones y datos
+operativos, sitio/dominio, distrito y referencia a venta de conversión; fecha nullable sólo para
+nuevas altas. Añade `com.fn_ClaveOnline` para comparación de formatos heredados sin reescritura,
+y permiso de exclusiones, preservando denegaciones. Conserva **79/8/18** objetos y agrega una función.
+No crea comunicaciones ni campañas ni transforma datos históricos. Reaplicable.
+
+Actualización pendiente personal **021 → 022 → 023 → 024 → 025**, incluida 021. Respaldar BD
+/evidencias, ejecutar incrementales en orden y actualizar/reiniciar todas las estaciones.
+La base personal no se modificó desde cloud. Comandos y límites: [DEV-46](../docs/DEV-46-Online-Interno.md).

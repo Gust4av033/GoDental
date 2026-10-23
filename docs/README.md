@@ -1,6 +1,6 @@
 # Documentación de GoDental
 
-Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.
+Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), Fiscal interno y primer bloque de Online interno ([DEV-46](DEV-46-Online-Interno.md)); después escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025**.
 
 Los documentos fuente vigentes se organizan por código dentro de este directorio. Los resúmenes Markdown históricos en la raíz de `docs/` se conservan como material de consulta y trazabilidad del repositorio inicial.
 

@@ -56,3 +56,9 @@ base completa existente marcada; incluye 021–024). Es distinta de ejecutar só
 Se limita a `GoDental_Development` con marcador reconocido; no es un migrador productivo con
 historial/compatibilidad. No cambiar marcadores para forzar otra base. Ver DEV-36 y los comandos
 locales de DEV-41. El usuario reportó pendientes desde 021; no se aplicaron a su PC desde cloud.
+
+
+Continuación del 23/10/2026: DEV-46 conecta el primer bloque Online interno, después de DEV-44.
+Pendiente local actualizado: **021 → 022 → 023 → 024 → 025**, incluida 021. Siguiente trabajo
+independiente: escalas/listas/promociones. Campañas/conectores/automatización y DTE externo siguen
+sujetos a sus requisitos y controles previos; no se declaran completados por este bloque manual.

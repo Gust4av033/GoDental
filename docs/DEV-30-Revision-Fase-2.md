@@ -184,3 +184,11 @@ NuGet sin avisos conocidos en siete proyectos. Fiscal interno incluye 34 comprob
 nuevas y pantallas/formularios Light/Dark/compacto, sin emisión DTE. Siguiente bloque: Online
 interno, según ONL-01; después escalas/listas/promociones. DEV-45 mantiene hallazgos abiertos
 por fase. Aplicar 021–024 en orden a la BD personal sigue pendiente; no se hizo desde cloud.
+
+
+Continuación autorizada, 23/10/2026: [DEV-46](DEV-46-Online-Interno.md), primer bloque Online
+manual. Usuario confirmó alta manual y vincular cliente existente; DM-01 exige compra confirmada.
+Captura empresarial/fuente, coincidencias, supresión central/versiones/ledger e historial, sin
+comunicaciones externas ni creación/crédito de clientes. Migración 025 sobre tablas existentes.
+Sigue escalas/listas/promociones; campañas, consentimiento/proveedores, descubrimiento y DTE real
+conservan requisitos pendientes. En la PC falta **021 → 022 → 023 → 024 → 025**, incluida 021.

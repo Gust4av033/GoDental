@@ -24,3 +24,14 @@ Fiscal interna de [DEV-44](../DEV-44-Fiscal-Interno.md), continuar Online intern
 no se declara implementado todavía. Cerrar fuentes/consentimiento y reglas de conversión antes
 de acciones externas. Los controles S1 de [DEV-45](../DEV-45-Seguridad-Hallazgos.md) son previos
 a conectores; no incorporar envíos ni descubrimiento externo con proveedores inventados.
+
+
+## Primer bloque operativo · DEV-46
+
+[DEV-46](../DEV-46-Online-Interno.md) conecta alta/edición manual de prospectos públicos,
+fuentes/fechas, coincidencias, exclusiones centrales y vínculo con cliente existente mediante
+compra confirmada (DM-01 §15.2). El usuario confirmó este recorrido; alta de cliente se mantiene
+en Clientes, sin crédito automático. Conserva opt-out y origen; no reescribe operaciones comerciales.
+Migración 025, sin tablas nuevas. Zonas, campañas/plantillas, scoring, atribución, consentimiento,
+proveedores y descubrimiento/envío siguen pendientes de requisitos y ONL-01 v0.2.
+La validación del incremento y siguiente bloque están en DEV-46; no equivale a Online completo.

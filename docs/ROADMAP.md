@@ -9,7 +9,7 @@ PCs**. No hay acceso de pruebas de Hacienda todavía; la emisión real requiere 
 [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra la revisión y sus fases: seguridad con cada
 incremento y antes de conectores; riesgos altos/críticos no esperan al cierre del programa.
 
-**Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024.**
+**Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024 → 025.**
 Cada archivo es incremental; el último no incluye los anteriores. No aplicadas desde cloud.
 
 ## Base histórica · revisión del 21/10/2026
@@ -23,6 +23,10 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
 El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+
+Continuación: [DEV-46](DEV-46-Online-Interno.md) implementa el primer bloque manual de Online.
+Después corresponde escalas/listas/promociones mientras DTE externo y campañas/conectores
+esperan requisitos/acceso verificables. No se declaran módulos externos completados.
 
 ## Secuencia de entrega
 
@@ -38,7 +42,7 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.2C · Reparto contra entrega | Implementado; CI #163 correcto, DEV-41 | Custodia, entrega completa, incidencia/retorno y rendición de efectivo/transferencia (022) |
 | 2.3 · Reportes operativos | Implementado; CI #163 correcto, DEV-42 | Ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras aplicadas (023) |
 | Fiscal interno | Implementado; CI #171 correcto: 347 xUnit / 721 SQL / 965 WPF | DEV-44, migración 024; sin emisión/firma/transmisión |
-| Online interno | Siguiente módulo; pendiente | ONL-01 y DEV-44; fuentes/consentimiento/conversión antes de conectores |
+| Online interno · primer bloque | Implementado; validación Windows pendiente de registrar | DEV-46, 025: manual/fuentes/coincidencias/exclusiones/vínculo con compra; campañas/conectores pendientes |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

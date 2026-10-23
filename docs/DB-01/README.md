@@ -14,3 +14,9 @@ DEV-38 define 019 antes de su SQL: versión, comprobante, tipo anulación, turno
 autorización/compensaciones y fecha de aplicación en devoluciones; enlace detalle→Kardex;
 raíz central de evidencias en Configuracion y conservación de entrega histórica al cancelar pedidos.
 Conserva 76 tablas, 8 vistas y 18 procedimientos. No reconstruye compensaciones históricas.
+
+
+DEV-46 define 025 antes de implementar: extensión de Prospectos con versión, distrito, sitio/dominio,
+fecha nullable para nuevas altas y venta de conversión; versión de ListaNoContactar y función de
+comparación de identificadores heredados sin reescribirlos. Conserva 79 tablas / 8 vistas / 18
+procedimientos; agrega una función, no un procedimiento. Sin reconstruir conversiones/fechas históricas.

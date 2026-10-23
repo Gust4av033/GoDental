@@ -82,3 +82,14 @@ valida permisos revocados, conflictos y rollback sin emisiones ni efectos financ
 Esto verifica los controles implementados en el alcance de DEV-44; no cierra SEC-01–06 ni
 certifica la instalación real. Repetir revisión de seguridad con los módulos y antes de sus fases
 bloqueantes. Documentación posterior no cambia el código validado.
+
+
+## Continuación Online interno · DEV-46
+
+Alta manual de fuentes/prospectos y exclusiones, sin proveedor de red/Worker/envíos. URLs
+son sólo referencias documentales; no se consultan ni abren y se rechazan credenciales/parámetros,
+fragmentos, destinos locales/IP y esquemas distintos de HTTPS. Publicidad de datos no equivale a
+consentimiento. Sin API para levantar opt-out; reingreso/edición/vínculo conservan supresión.
+Permisos separados, versiones, ledger y bitácora; conversión exige compra confirmada y no
+modifica venta/cliente/caja/stock. Las entradas históricas no se reescriben para normalizarlas.
+SEC-01–06 siguen abiertos según sus fases; esta entrega interna no cierra S1 ni certifica producción.
