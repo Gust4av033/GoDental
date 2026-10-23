@@ -176,3 +176,11 @@ formal siguen al final. La seguridad se revisa durante los módulos: [DEV-45](DE
 registra riesgos y fases; altos/críticos se corrigen antes de activar su función.
 Todavía no hay acceso al ambiente de pruebas de Hacienda: esta entrega no emite DTE.
 Pendiente local **021 → 022 → 023 → 024**, incluida 021; no se aplicó SQL personal desde cloud.
+
+
+DEV-44 validado en [CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720)
+sobre `e8cab1a`: Release sin advertencias/errores, **347 xUnit / 721 SQL / 965 WPF** y auditoría
+NuGet sin avisos conocidos en siete proyectos. Fiscal interno incluye 34 comprobaciones SQL
+nuevas y pantallas/formularios Light/Dark/compacto, sin emisión DTE. Siguiente bloque: Online
+interno, según ONL-01; después escalas/listas/promociones. DEV-45 mantiene hallazgos abiertos
+por fase. Aplicar 021–024 en orden a la BD personal sigue pendiente; no se hizo desde cloud.

@@ -1,5 +1,7 @@
 # Documentación de GoDental
 
+Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.
+
 Los documentos fuente vigentes se organizan por código dentro de este directorio. Los resúmenes Markdown históricos en la raíz de `docs/` se conservan como material de consulta y trazabilidad del repositorio inicial.
 
 Estado funcional vigente, hallazgos y plan de la segunda etapa: [DEV-30 · Revisión del proyecto](DEV-30-Revision-Fase-2.md), 21/10/2026. Los avances posteriores están en [DEV-31 · Recuperación](DEV-31-Recuperacion-Operaciones.md), [DEV-32 · Complementos MVP](DEV-32-Complementos-MVP.md) y [DEV-33 · Compras y recepciones](DEV-33-Compras-Recepciones.md). [DEV-34](DEV-34-Impresion-Formatos.md) implementa barras/etiquetas, formatos configurables de comprobantes y notas de entrega, con vista previa/PDF/impresión al 100%. Consultarlos junto con [ROADMAP](ROADMAP.md) para distinguir resultados históricos de pendientes actuales.
@@ -69,7 +71,3 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-35 · Inicio y panel de operación](DEV-35-Inicio-Panel-Operativo.md): indicadores autorizados, actividad reciente y composición adaptable del Inicio.
 
 [DEV-41](DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
-
-Prioridad anterior (sustituida el 23/10/2026 por DEV-44): [DEV-43](DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.
-
-Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.

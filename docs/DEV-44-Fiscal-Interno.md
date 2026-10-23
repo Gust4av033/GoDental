@@ -77,9 +77,27 @@ referencias seguras a secretos, TLS/validación de destino, firma protegida, san
 consulta/reconciliación tras respuesta incierta e idempotencia por documento independiente de Venta.
 No se inventan esos contratos fiscales en esta fase ni se certifica la aceptación por Hacienda.
 
-Validación local del incremento: Release con Windows targeting, 0 advertencias y 0 errores;
-`dotnet test GoDental.sln -c Release -p:EnableWindowsTargeting=true --no-build --no-restore`:
-**347 aprobadas**, 0 fallidas/omitidas. Incluye validación, identidad congelada, permisos separados,
-respuestas tardías/cambio de usuario y reintento de revisión con el mismo GUID. No ejecuta WPF
-ni SQL Server en Linux. Se agregan suite SQL `--run-fiscal` y smoke de pantallas/formularios en
-Windows; su resultado definitivo se registra después del CI sobre el código exacto.
+## Validación del incremento
+
+[CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720), correcto sobre
+**`e8cab1a4d05545b9a49eb9482f6c0ccbced35252`**, job `120279529268`:
+Release con **0 advertencias y 0 errores**, **347 xUnit / 721 SQL / 965 WPF**, sin errores de binding.
+La auditoría NuGet consulta siete proyectos sin avisos conocidos; el gate se ejecutó correctamente.
+Build Release y 347 pruebas también pasan localmente con Windows targeting; Linux no ejecuta WPF/SQL.
+
+- **34 comprobaciones SQL fiscales nuevas**: preparación/reenvío y unicidad de solicitud activa;
+  búsqueda/filtros/paginación; ficha, líneas y receptor; versión/token ante datos cambiados;
+  revisión vigente sin auto invalidarse; carrera entre estaciones, bitácora única, fallo de auditoría
+  con rollback del ledger y cierre terminal recuperable. CCFE incompleto/inactivo, cambios de
+  dirección/tipo, venta anulada y DTE asociado; sin crear DTE/eventos ni mover caja/inventario.
+  Reaplicación conserva revisiones/versiones/historial y denegaciones; SQL revalida permisos revocados.
+- Unitarias incluyen validación/identidad congelada, permisos separados, sesión/selección/filtros
+  cambiados y respuesta perdida con reintento de la misma solicitud/GUID.
+- Smoke captura las tres pestañas en Light/Dark y 1366×768/compacto, además de formularios de
+  preparación/revisión y confirmación visible sin guardar. Conserva regresiones de módulos previos.
+  Se consultaron logs de CI; no se atribuye inspección humana de capturas ni prueba de impresora/LAN.
+
+No se aplicó SQL a la PC personal ni se habilitó Hacienda. Siguiente bloque funcional:
+**Online interno**, según ONL-01 y la secuencia vigente; no repetir este incremento fiscal.
+Integración fiscal externa requiere FIS-01 v0.2 y los controles S1 de DEV-45.
+Las confirmaciones posteriores que sólo registran documentación no cambian el código validado.

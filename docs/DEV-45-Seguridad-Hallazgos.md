@@ -70,3 +70,15 @@ El orden funcional del usuario se respeta sin relegar riesgos altos al final. El
 funcional después de Fiscal interno es Online interno; escalas/listas/promociones vienen después
 de la prioridad de módulos nuevos. DEV-44 registra instrucciones: faltan **021 → 022 → 023 → 024**,
 incluida 021, en la PC personal; no se ha modificado esa BD desde cloud.
+
+
+## Validación registrada
+
+[CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720) sobre `e8cab1a`
+(job `120279529268`): auditoría NuGet de siete proyectos sin avisos conocidos, Release sin
+advertencias/errores, **347 xUnit / 721 SQL / 965 WPF**, sin errores de binding. Los logs no
+contienen avisos de dependencia; el informe JSON queda en el artefacto del CI. La suite fiscal
+valida permisos revocados, conflictos y rollback sin emisiones ni efectos financieros.
+Esto verifica los controles implementados en el alcance de DEV-44; no cierra SEC-01–06 ni
+certifica la instalación real. Repetir revisión de seguridad con los módulos y antes de sus fases
+bloqueantes. Documentación posterior no cambia el código validado.

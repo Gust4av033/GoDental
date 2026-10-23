@@ -18,3 +18,13 @@ GoDental será multiusuario y multi-PC con roles iniciales Administrador/Vendedo
 - Backups `.bak` terminados, protegidos y con pruebas periódicas de restauración.
 
 Las políticas definitivas de expiración, sesiones simultáneas, retención de logs y almacenamiento seguro de secretos se cierran antes de producción.
+
+
+## Revisión de implementación y cierre de seguridad
+
+[DEV-45](../DEV-45-Seguridad-Hallazgos.md), 23/10/2026, registra revisión limitada del código,
+evidencia y controles pendientes por fase. El acceso directo a SQL no se considera por sí mismo
+una frontera confiable de identidad: cerrar mínimo privilegio/impersonación antes de conectores
+y producción, junto con custodia de secretos fiscales. Expiración, ACL, respaldo/restauración y
+firma de distribución se verifican antes de instalador/piloto. Riesgos altos/críticos se corrigen
+antes de habilitar su función. Auditoría NuGet en CI no sustituye la revisión del código/despliegue.

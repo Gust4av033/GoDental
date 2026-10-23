@@ -1,12 +1,20 @@
 # GoDental
 
+Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.
+
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
 ## Estado actual y siguiente etapa
 
-La revisión del **21/10/2026** en [DEV-30](docs/DEV-30-Revision-Fase-2.md) distingue los recorridos implementados de los complementos y módulos pendientes respecto de DM-01. El núcleo operativo está conectado; DEV-33 agrega compras directas y recepciones con costo completo. Importaciones, devoluciones, dashboard/reportes y las integraciones conservan trabajo pendiente. La segunda etapa implementa recuperación de operaciones (DEV-31) y parámetros comerciales, códigos de barras y tarjeta manual (DEV-32); el orden y criterios de aceptación están en ese documento.
+La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-31–44 distinguen
+el alcance implementado de lo pendiente de DM-01. El MVP conecta inventario/conteos,
+proveedores/clientes, POS/caja/crédito/pedidos y comprobantes; ya incluye compras/recepciones,
+importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes operativos.
+Fiscal incorpora preparación/revisión interna; emisión/firma/transmisión DTE y Online siguen pendientes.
+El orden vigente y los controles de seguridad están en DEV-44/45.
 
-Rama activa: **`feature/desarrollo`**. CI Windows #98 del código `28ffc5f`: Release sin errores/advertencias, **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas. La validación del piloto en dos estaciones, respaldo/restauración y despliegue sigue pendiente.
+Rama activa: **`feature/desarrollo`**. [CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720) valida `e8cab1a`: Release sin advertencias/errores, **347 xUnit / 721 SQL / 965 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos sin avisos conocidos.
+La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack
 
@@ -188,7 +196,3 @@ Validación de 2.0A: [CI Windows #106](https://github.com/Gust4av033/GoDental/ac
 Inicio incorpora un panel operativo con indicadores consultados por servicio, actividad reciente y accesos por permiso: [DEV-35 · Inicio](docs/DEV-35-Inicio-Panel-Operativo.md).
 
 [DEV-41](docs/DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](docs/DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
-
-Prioridad anterior (sustituida el 23/10/2026 por DEV-44): [DEV-43](docs/DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.
-
-Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), módulos nuevos Fiscal interno y luego Online, antes de escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024**.

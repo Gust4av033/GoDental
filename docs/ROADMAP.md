@@ -1,17 +1,5 @@
 # Roadmap y decisiones pendientes
 
-## Estado vigente · revisión del 21/10/2026
-
-[DEV-30 · Revisión funcional y segunda etapa](DEV-30-Revision-Fase-2.md) compara el código `28ffc5f` con DM-01 y los documentos funcionales. Incluye matriz por módulo, hallazgos, pruebas y criterios de salida. La rama activa es **`feature/desarrollo`**; `feature/ui` y `feature/logica` son históricas (DEV-08).
-
-El MVP tiene UI conectada para productos/inventario **con existencias iniciales**, conteos, proveedores, clientes, caja, POS/cotizaciones, crédito/abonos, Pedido → POS/entrega y PDF con vista previa/impresión. El cierre normal de acceso y ventana principal está probado. Esto no completa todos los módulos del Documento Maestro ni certifica el uso productivo.
-
-La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pendientes después de un reinicio; después completa códigos de barras, parámetros y tarjeta manual. Continúa con compras/recepciones/importaciones y su costeo, posventa/cobranza, reportes y piloto entre estaciones. Los criterios y dependencias están en DEV-30. Fiscal/DTE y Online conservan su etapa posterior y sus requisitos externos. Preparar respaldo/restauración y despliegue desde el inicio, con validación antes del piloto.
-
-CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
-
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
-
 ## Prioridad vigente · 23/10/2026
 
 Por instrucción del usuario, [DEV-44](DEV-44-Fiscal-Interno.md) sustituye el orden de DEV-43:
@@ -23,6 +11,18 @@ incremento y antes de conectores; riesgos altos/críticos no esperan al cierre d
 
 **Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024.**
 Cada archivo es incremental; el último no incluye los anteriores. No aplicadas desde cloud.
+
+## Base histórica · revisión del 21/10/2026
+
+[DEV-30 · Revisión funcional y segunda etapa](DEV-30-Revision-Fase-2.md) compara el código `28ffc5f` con DM-01 y los documentos funcionales. Incluye matriz por módulo, hallazgos, pruebas y criterios de salida. La rama activa es **`feature/desarrollo`**; `feature/ui` y `feature/logica` son históricas (DEV-08).
+
+El MVP tiene UI conectada para productos/inventario **con existencias iniciales**, conteos, proveedores, clientes, caja, POS/cotizaciones, crédito/abonos, Pedido → POS/entrega y PDF con vista previa/impresión. El cierre normal de acceso y ventana principal está probado. Esto no completa todos los módulos del Documento Maestro ni certifica el uso productivo.
+
+La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pendientes después de un reinicio; después completa códigos de barras, parámetros y tarjeta manual. Continúa con compras/recepciones/importaciones y su costeo, posventa/cobranza, reportes y piloto entre estaciones. Los criterios y dependencias están en DEV-30. Fiscal/DTE y Online conservan su etapa posterior y sus requisitos externos. Preparar respaldo/restauración y despliegue desde el inicio, con validación antes del piloto.
+
+CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
+
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Secuencia de entrega
 
@@ -37,7 +37,7 @@ Cada archivo es incremental; el último no incluye los anteriores. No aplicadas 
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | 2.2C · Reparto contra entrega | Implementado; CI #163 correcto, DEV-41 | Custodia, entrega completa, incidencia/retorno y rendición de efectivo/transferencia (022) |
 | 2.3 · Reportes operativos | Implementado; CI #163 correcto, DEV-42 | Ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras aplicadas (023) |
-| Fiscal interno | Implementado; validación Windows pendiente de registrar | DEV-44, migración 024; sin emisión/firma/transmisión |
+| Fiscal interno | Implementado; CI #171 correcto: 347 xUnit / 721 SQL / 965 WPF | DEV-44, migración 024; sin emisión/firma/transmisión |
 | Online interno | Siguiente módulo; pendiente | ONL-01 y DEV-44; fuentes/consentimiento/conversión antes de conectores |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
