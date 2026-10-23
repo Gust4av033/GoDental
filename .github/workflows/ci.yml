@@ -59,7 +59,7 @@ jobs:
         run: dotnet build GoDental.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger "trx;LogFileName=godental-tests.trx" --results-directory TestResults
+        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
 
       - name: Inventario sobre SQL Server aislado
         shell: pwsh
@@ -70,6 +70,9 @@ jobs:
 
       - name: Online interno sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-online --localdb .
+
+      - name: Identidad del servidor y migración desde 026 sobre SQL aislado
+        run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-server-identity --localdb .
 
       - name: Fiscal interno sobre SQL Server aislado
         run: dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-fiscal --localdb .
