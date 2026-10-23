@@ -38,6 +38,8 @@ public sealed class DirectoryFieldsTests
     [InlineData("503+70000001", "SV")]
     [InlineData("++50370000001", "SV")]
     [InlineData("13800138000", null)]
+    [InlineData("008613800138000", "SV")]
+    [InlineData("00141555552671", "CN")]
     public void BadPhoneRequiresCorrection(string value, string? region) => Assert.False(PhoneFormat.TryFormat(value, region, out _, out _));
     [Theory]
     [InlineData("123456789", false, "12345678-9")]

@@ -18,6 +18,8 @@ public static class PhoneFormat
         try
         {
             var phone = util.Parse(text, region ?? "ZZ");
+            if (!text.StartsWith('+') && phone.CountryCode != util.GetCountryCodeForRegion(region!))
+            { hint = "Para un teléfono de otro país escribe + y su código internacional."; return false; }
             if (!util.IsPossibleNumber(phone)) { hint = "La longitud del teléfono no corresponde al país; revisa el número o agrega + y código internacional."; return false; }
             formatted = util.Format(phone, text.StartsWith('+') ? PhoneNumberFormat.INTERNATIONAL : PhoneNumberFormat.NATIONAL);
             var detected = util.GetRegionCodeForNumber(phone);
