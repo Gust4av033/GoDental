@@ -30,7 +30,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using GoDental.Application.Abstractions.Security;
 
-internal static class Program
+internal static partial class Program
 {
     private static int passed;
     private static string? shutdownProbe;
@@ -608,6 +608,7 @@ internal static class Program
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
                 session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMERCIAL.CAMPANIAS_CREAR","COMERCIAL.CAMPANIAS_APROBAR","COMERCIAL.VER","COMERCIAL.PROSPECTAR","COMERCIAL.EXCLUSIONES","FISCAL.VER","FISCAL.CONFIGURAR","FISCAL.REVISAR_INTERNO","REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                await VerifyWorkspaceScrollingAsync(shell, nav, themes);
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },

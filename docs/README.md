@@ -82,3 +82,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [Configuración Meta / requisitos de HTTPS](ONL-01/Configuracion-Meta.md): iniciar con el número de prueba; Cloud API, autorización por canal y servicio central seguro pendientes.
 
 - [DEV-49 · Búsqueda y acceso](DEV-49-Busqueda-y-Acceso.md): coordenadas de búsqueda, códigos HTTP/servidor alternativo manual y login con mostrar/ocultar contraseña; sin migración nueva.
+
+- [DEV-52 · Scroll y navegación](DEV-52-Scroll-Navegacion.md): lateral fijo, opción activa visible y continuidad de la rueda en tablas/listas.

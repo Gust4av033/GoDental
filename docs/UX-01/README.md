@@ -112,3 +112,7 @@ Colores sugeridos como tokens nuevos (con par Dark): borde fuerte de controles `
 - Ventana de 1366×768 y escala de Windows al 125 % y 150 %: el botón de acción principal de cada pantalla sigue visible (en Cobro, «Confirmar cobro»).
 - `scripts\verify.ps1` sin errores (incluye los smoke WPF y los enlaces de datos).
 - Sin hex ni radios nuevos dentro de las vistas: `git grep -n "#[0-9A-Fa-f]\{6\}" src/GoDental.Wpf/Views` no debe devolver coincidencias nuevas.
+
+## Scroll del espacio de trabajo
+
+El menú lateral y el contenido se desplazan por separado. Marca y pie del lateral permanecen fijos; su opción activa se mantiene visible al navegar o cambiar el tamaño. Cada cambio de módulo comienza arriba, sin alterar la posición al refrescar datos en la misma sección. Las listas/tablas continúan la rueda hacia el contenedor de página al alcanzar un extremo; campos y desplegables conservan su interacción. Ver [DEV-52](../DEV-52-Scroll-Navegacion.md).
