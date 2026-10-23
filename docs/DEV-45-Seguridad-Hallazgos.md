@@ -54,6 +54,10 @@ corregir antes de habilitar su recorrido, aunque cambie la prioridad funcional s
 
 ## Fases de seguridad
 
+Observación de CI #199 (DEV-50): avisos Node `DEP0169` de herramientas Actions, sin warnings
+del build C# ni CVE confirmado por esta revisión. Registrar actualización/pin dentro de SEC-06;
+la consulta NuGet de siete proyectos mantuvo cero avisos altos/críticos. No cierra SEC-06.
+
 Actualización DTE: [DEV-50](DEV-50-Preparacion-DTE.md) y [seguridad FIS-01 v0.2](FIS-01/Seguridad-Fiscal.md)
 fijan servidor autenticado, identidad SQL limitada, custodia/rotación y separación TEST/PROD como
 requisitos de S1. **SEC-01/03 no están cerrados** por esta especificación ni por el inventario PDF.

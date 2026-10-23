@@ -20,7 +20,11 @@ Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zona
 El orden vigente está en DEV-50/FIS-01; DEV-43/45 conservan pendientes y fases de seguridad.
 [Guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #193](https://github.com/Gust4av033/GoDental/actions/runs/40009637064) valida `7c6efa8`: Release sin advertencias/errores, **418 xUnit / 790 SQL / 1106 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos. Parser de PowerShell del instalador correcto.
+Rama activa: **`feature/desarrollo`**. [CI Windows #199](https://github.com/Gust4av033/GoDental/actions/runs/40025528003)
+valida `f805dac`: Release sin advertencias/errores, **418 xUnit / 790 SQL / 1106 WPF**, más
+ocho pruebas del verificador documental y ocho PDF intactos. Sin errores de binding reportados.
+NuGet: siete proyectos, cero avisos altos/críticos; parser PowerShell correcto. El CI del PR #200
+también pasó. [DEV-50](docs/DEV-50-Preparacion-DTE.md) conserva evidencia y límites; sin validación MH.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack

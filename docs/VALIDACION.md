@@ -7,7 +7,14 @@ de cambiarlo. Baseline inicial `657d836`: restore/Release con SDK 8.0.426 y Wind
 cero warnings/errores y **418 xUnit**. Sin LocalDB/WPF ejecutables en Linux.
 FIS-01 pasa a v0.2 de especificación; ocho PDF incorporados sin cambiar bytes y con inventario
 SHA-256, más verificador documental. Contratos técnicos externos, servidor y credenciales siguen
-pendientes; no hay DTE real, pruebas MH ni migración nueva. Resultado final del bloque en DEV-50.
+pendientes; no hay DTE real, pruebas MH ni migración nueva.
+
+Validación final sobre `f805dac`: [CI Windows #199](https://github.com/Gust4av033/GoDental/actions/runs/40025528003),
+Release sin warnings/errores, **418 xUnit / 790 SQL / 1106 WPF**, más ocho pruebas del
+verificador documental. Ocho PDF intactos; ningún script 001–026 modificado. NuGet: siete
+proyectos, cero avisos altos/críticos. El CI del PR #200 también pasó. DEV-50 distingue esta
+evidencia local/Windows de la validación fiscal real todavía pendiente y registra los avisos de
+herramientas Actions. Este cierre sólo cambia documentación.
 
 Las secciones siguientes son evidencia histórica de sus respectivos commits.
 

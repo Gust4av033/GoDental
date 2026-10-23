@@ -70,8 +70,20 @@ Los ocho PDF se compararon byte por byte contra el commit original y todas las m
 FIS-01/DEV-50 comprobados. Consulta NuGet de siete proyectos sin problemas ni vulnerabilidades
 conocidas; revisión limitada de cambios sin marcadores de clave privada añadidos.
 `--require-contracts` devuelve 2, como se espera mientras falten T01–T06.
-La nueva validación no equivale a VALIDADO_EN_TEST_MH. Resultado de xUnit/SQL/WPF final
-y SHA de CI se registrarán tras completar la ejecución Windows.
+La nueva validación no equivale a VALIDADO_EN_TEST_MH.
+
+[CI Windows #199](https://github.com/Gust4av033/GoDental/actions/runs/40025528003), código
+**f805dacc3b4e7b844d78df23bce01caf6129e658**, job `120660627762`: checkout portable y ocho
+pruebas documentales correctos; ocho fuentes SHA-256 intactas; parser PowerShell y restore
+correctos; Release **0 warnings/errores; 418 xUnit / 790 SQL / 1106 WPF**. Fiscal interno:
+34 comprobaciones SQL correctas; sin errores de binding reportados por el smoke. Auditoría
+NuGet: siete proyectos, cero avisos altos/críticos. El informe de fuentes está en los artefactos
+del run. [CI del PR #200](https://github.com/Gust4av033/GoDental/actions/runs/40025532833)
+también terminó correctamente. El cierre posterior sólo actualiza documentación/evidencia.
+
+El runner mostró avisos Node `DEP0169` de herramientas de Actions; no son warnings C# ni
+una vulnerabilidad confirmada por esta revisión. Seguimiento de actualización/pin de acciones
+en SEC-06 de DEV-45; no se declara cerrada la cadena de suministro.
 
 ## Continuación exacta
 
