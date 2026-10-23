@@ -115,7 +115,7 @@ internal static class CustomerIntegration
         denied = false; try { await Read(); } catch (UnauthorizedAccessException) { denied = true; }
         Check(denied, "SQL revalida lectura de clientes");
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Bitacora WHERE Entidad=N'Clientes' AND EntidadId=CONVERT(nvarchar(100),@id) AND Accion=N'CREAR_CLIENTE'", new { id }) == 1, "Auditoría registra alta una sola vez");
-        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 79 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 18, "Conserva la baseline y las cuatro extensiones documentadas del MVP");
+        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 81 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 18, "Conserva la baseline y las cuatro extensiones documentadas del MVP");
         Console.WriteLine($"{count} comprobaciones de clientes correctas.");
     }
 }

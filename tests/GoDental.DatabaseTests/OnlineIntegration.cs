@@ -85,6 +85,7 @@ internal static class OnlineIntegration
         Check(!(await online.SaveAsync(new ConvertOnlineProspect(Guid.NewGuid(),other,otherData.RowVersion,sale,sd.Sale.RowVersion,"Venta anterior"))).IsSuccess,"Venta modificada no se vincula con versión anterior");
         var annulled=(await sales.ReadAsync(sale))!.Sale;Check(!(await online.SaveAsync(new ConvertOnlineProspect(Guid.NewGuid(),other,otherData.RowVersion,sale,annulled.RowVersion,"Venta anulada"))).IsSuccess,"Venta anulada no acredita conversión");
         Check((await Read(id))!.ConversionSaleId==sale,"Posventa posterior no borra trazabilidad histórica");
+        checks+=await OnlinePlanningIntegration.RunAsync(factory,online,repo,session,root,database);
         var before=(await Read(id))!.RowVersion;await DevelopmentDatabase.InstallAsync(database,Path.Combine(root,"database"));
         Check((await Read(id))!.RowVersion.SequenceEqual(before)&&(await Read(id))!.DoNotContact,"Reaplicar 025 conserva versiones conversiones y exclusiones");
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'COMERCIAL.EXCLUSIONES');");

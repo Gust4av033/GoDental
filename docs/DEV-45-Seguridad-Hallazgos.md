@@ -102,3 +102,14 @@ Las pruebas nuevas incluyen preservación de opt-out ante reingreso/edición/ví
 URLs documentales sin consultas externas y rollback/recuperación. Los hallazgos SEC-01–06 siguen
 abiertos en sus fases: estas comprobaciones no cierran mínimo privilegio/identidad SQL, custodia,
 sesión, distribución o restauración real. Sólo cambios documentales posteriores al código validado.
+
+## Planificación Online interna · DEV-47
+
+026 mantiene los controles de DEV-46 y extiende permisos SQL/Application, versiones, recuperación
+GUID y auditoría a zonas, segmentos, plantillas, campañas y seguimiento. Contenido como texto
+plano; aprobación sin transporte, sin credenciales ni cambios de identidad del cliente.
+Los snapshots permiten revisar contenido/destinatarios y consultas señalan exclusiones o fichas
+modificadas incluso después de aprobar. Futuro envío deberá volver a comprobar consentimiento,
+exclusiones y contacto vigente inmediatamente antes del transporte; la aprobación interna actual
+no autoriza ese envío. Se mantienen abiertos SEC-01 y demás bloqueos S1: no es certificación
+productiva ni sustituto de pruebas de penetración o de permisos efectivos del despliegue.

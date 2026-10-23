@@ -4,11 +4,13 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 using GoDental.Application.Validators;
 namespace GoDental.Application.Services;
-public sealed class OnlineService(IOnlineRepository repository,IUserSession session):MvpServiceAccess(session)
+public sealed partial class OnlineService(IOnlineRepository repository,IUserSession session):MvpServiceAccess(session)
 {
     public bool CanRead=>Has("COMERCIAL.VER","CLIENTES.VER");
     public bool CanManage=>CanRead&&Has("COMERCIAL.PROSPECTAR");
     public bool CanExclude=>CanRead&&Has("COMERCIAL.EXCLUSIONES");
+    public bool CanCampaign=>CanRead&&Has("COMERCIAL.CAMPANIAS_CREAR");
+    public bool CanApprove=>CanRead&&Has("COMERCIAL.CAMPANIAS_APROBAR");
     public bool CanConvert=>CanManage&&Has("VENTAS.VER");
     private async Task<T> Guard<T>(Func<Task<T>> read)
     {var rev=CurrentSession is ISessionController s?s.Revision:0;var result=await read();if(!CanRead||CurrentSession is ISessionController c&&rev!=c.Revision)throw new UnauthorizedAccessException("La sesión cambió.");return result;}
@@ -23,7 +25,7 @@ public sealed class OnlineService(IOnlineRepository repository,IUserSession sess
     public Task<MvpPage<SaleData>> SalesAsync(string search,MvpFilter f,CancellationToken ct=default){Query(f,search);Read("VENTAS.VER");return Guard(()=>repository.OnlineSalesAsync(search.Trim(),f,UserId,ct));}
     public Task<Result<MvpReceipt>> SaveAsync(object r,CancellationToken ct=default)
     {
-        var allowed=r switch{ExcludeOnlineContact or BlockOnlineProspect=>CanExclude,ConvertOnlineProspect=>CanConvert,_=>CanManage};
+        var allowed=r switch{ExcludeOnlineContact or BlockOnlineProspect=>CanExclude,ConvertOnlineProspect=>CanConvert,SaveOnlineTemplate or CreateOnlineCampaign=>CanCampaign,TransitionOnlineCampaign t=>t.Action=="PREPARAR"?CanCampaign:CanApprove,_=>CanManage};
         if(!allowed)return Task.FromResult(Result<MvpReceipt>.Failure("FORBIDDEN","No tienes permiso para esta operación Online."));
         if(OnlineValidator.Validate(r) is {} error)return Task.FromResult(Result<MvpReceipt>.Failure("VALIDATION",error));
         return repository.SaveOnlineAsync(OnlineValidator.Freeze(r),UserId,WorkstationId,ct);

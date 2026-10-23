@@ -20,3 +20,7 @@ DEV-46 define 025 antes de implementar: extensión de Prospectos con versión, d
 fecha nullable para nuevas altas y venta de conversión; versión de ListaNoContactar y función de
 comparación de identificadores heredados sin reescribirlos. Conserva 79 tablas / 8 vistas / 18
 procedimientos; agrega una función, no un procedimiento. Sin reconstruir conversiones/fechas históricas.
+
+DEV-47 define 026 antes de implementar: SegmentosProspecto y SeguimientosProspecto; versiones
+de zonas/plantillas/campañas y snapshots de criterios, contenido y destinatarios. Estado final:
+81 tablas / 8 vistas / 18 procedimientos, más la función de 025. No reescribe datos históricos.

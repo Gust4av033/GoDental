@@ -3,7 +3,7 @@ using System.Net.Mail;
 using GoDental.Application.DTOs;
 using GoDental.Application.Localization;
 namespace GoDental.Application.Validators;
-public static class OnlineValidator
+public static partial class OnlineValidator
 {
     public static readonly string[] States=["NUEVO","REVISADO","CONTACTADO","INTERESADO","CONVERTIDO","DESCARTADO"];
     public static readonly string[] SourceTypes=["WEB","GOOGLE","INSTAGRAM","FACEBOOK","OTRA"];
@@ -16,7 +16,7 @@ public static class OnlineValidator
         BlockOnlineProspect r=>!Version(r.OperationId,r.ProspectId,r.ExpectedVersion,r.Reason)?"Actualiza la ficha y escribe motivo.":null,
         ExcludeOnlineContact r=>!Op(r.OperationId,r.Reason)||!Channels.Contains(r.Channel)||Identifier(r.Channel,r.Identifier) is null?"Revisa canal, identificador público y motivo.":null,
         ConvertOnlineProspect r=>!Version(r.OperationId,r.ProspectId,r.ExpectedVersion,r.Reason)||r.SaleId<=0||r.SaleVersion?.Length!=8?"Actualiza prospecto y venta confirmada.":null,
-        _=>"Operación Online desconocida."
+        _=>ValidatePlanning(request)
     };
     private static bool Op(Guid id,string reason)=>id!=Guid.Empty&&MvpValidator.Reason(reason);
     private static bool Version(Guid id,long entity,byte[]? version,string reason)=>Op(id,reason)&&entity>0&&version?.Length==8;
@@ -72,11 +72,11 @@ public static class OnlineValidator
         BlockOnlineProspect s=>s with{ExpectedVersion=s.ExpectedVersion.ToArray(),Reason=s.Reason.Trim()},
         ExcludeOnlineContact s=>s with{Identifier=Identifier(s.Channel,s.Identifier)??s.Identifier.Trim(),Reason=s.Reason.Trim()},
         ConvertOnlineProspect s=>s with{ExpectedVersion=s.ExpectedVersion.ToArray(),SaleVersion=s.SaleVersion.ToArray(),Reason=s.Reason.Trim()},
-        _=>throw new ArgumentException("Operación desconocida.")
+        _=>FreezePlanning(r)
     };
     public static (Guid Id,string Type) Identity(object r)=>r switch
     {
         SaveOnlineProspect s=>(s.OperationId,"ONLINE_PROSPECTO"),AddOnlineSource s=>(s.OperationId,"ONLINE_FUENTE"),ChangeOnlineState s=>(s.OperationId,"ONLINE_ESTADO"),
-        BlockOnlineProspect s=>(s.OperationId,"ONLINE_BLOQUEAR"),ExcludeOnlineContact s=>(s.OperationId,"ONLINE_EXCLUSION"),ConvertOnlineProspect s=>(s.OperationId,"ONLINE_CONVERTIR"),_=>throw new ArgumentException("Operación desconocida.")
+        BlockOnlineProspect s=>(s.OperationId,"ONLINE_BLOQUEAR"),ExcludeOnlineContact s=>(s.OperationId,"ONLINE_EXCLUSION"),ConvertOnlineProspect s=>(s.OperationId,"ONLINE_CONVERTIR"),_=>PlanningIdentity(r)
     };
 }

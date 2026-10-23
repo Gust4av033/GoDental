@@ -1,6 +1,6 @@
 # ONL-01 — Prospección, Campañas y Conversión
 
-**Versión:** v0.1
+**Versión:** v0.2 interna · conectores externos pendientes
 
 El módulo Comercial/Online automatiza descubrimiento, normalización, deduplicación, scoring y preparación, pero mantiene control humano sobre comunicaciones comerciales.
 
@@ -35,3 +35,10 @@ en Clientes, sin crédito automático. Conserva opt-out y origen; no reescribe o
 Migración 025, sin tablas nuevas. Zonas, campañas/plantillas, scoring, atribución, consentimiento,
 proveedores y descubrimiento/envío siguen pendientes de requisitos y ONL-01 v0.2.
 La validación del incremento y siguiente bloque están en DEV-46; no equivale a Online completo.
+
+## Ampliación conforme a referencia · DEV-47
+
+[DEV-47](../DEV-47-Online-Referencia.md) define zonas, segmentos reutilizables, plantillas,
+campañas preparadas/aprobadas y seguimiento manual. La referencia visual es 221200 de Imagenes.
+Aprobación interna no permite envío ni acredita consentimiento. Sustituye el alcance manual
+limitado de DEV-46 para esta continuación; proveedores, mapa y conectores siguen pendientes.
