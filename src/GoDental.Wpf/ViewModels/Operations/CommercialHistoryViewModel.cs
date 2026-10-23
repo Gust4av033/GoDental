@@ -125,7 +125,7 @@ public sealed partial class CommercialHistoryViewModel : MvpWorkspaceViewModel
             { printWarning = " No se pudo cargar el formato local de impresión; puedes elegir las medidas aquí."; }
         }
         if (!Current(r) || SelectedSale?.Id != id) return;
-        if (result?.Delivery is null && PrintSettings.DocumentKind == ReceiptKind.Delivery) PrintSettings.Kind = "Venta";
+        if ((result?.Delivery is null || result.Sale.State is "ANULADA" or "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL") && PrintSettings.DocumentKind == ReceiptKind.Delivery) PrintSettings.Kind = "Venta";
         SaleDetail = result; IsSaleDetailOpen = result is not null;
         if(result is not null)await LoadReturnsAsync(r,result.Sale.Id);
         StatusMessage = result is null ? "La venta no está disponible." : "Detalle actualizado. El PDF es un comprobante interno, sin autorización fiscal DTE.";

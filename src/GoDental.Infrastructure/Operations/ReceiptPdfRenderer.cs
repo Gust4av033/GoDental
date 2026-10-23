@@ -83,7 +83,7 @@ public sealed partial class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> optio
                     c.Item().AlignRight().Text(sale.Number).FontSize(12).Bold();
                     c.Item().AlignRight().Text(sale.Date.ToString("dd/MM/yyyy", Usd));
                     c.Item().PaddingTop(5).AlignRight().Background(Tint).PaddingHorizontal(9).PaddingVertical(4)
-                        .Text(sale.Pending == 0 ? "PAGADO" : "SALDO PENDIENTE").SemiBold().FontColor(Blue);
+                        .Text(sale.State is "ANULADA" or "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL" ? sale.State : sale.Pending == 0 ? "PAGADO" : "SALDO PENDIENTE").SemiBold().FontColor(Blue);
                 });
             });
             page.Content().Column(c =>

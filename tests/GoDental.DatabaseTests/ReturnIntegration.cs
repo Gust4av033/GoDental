@@ -26,7 +26,9 @@ internal static class ReturnIntegration
         var catalogs=(await products.GetCatalogsAsync()).Value!;var warehouse=await c.ExecuteScalarAsync<int>("SELECT TOP(1) IdAlmacen FROM inv.Almacenes WHERE Activo=1 ORDER BY IdAlmacen;");
         async Task<int> Product(string sku,decimal price,bool lot=false,bool decimals=false)
         {
-            var id=(await products.SaveAsync(new(){Sku=sku,Name="Producto "+sku,CategoryId=catalogs.Categories[0].Id,UnitId=(short)catalogs.Units.Single(u=>u.Name==(decimals?"Gramo":"Unidad")).Id,Price=price,TracksLot=lot,TracksExpiry=lot})).Value;
+            var unit=await c.ExecuteScalarAsync<short>("SELECT IdUnidadMedida FROM cat.UnidadesMedida WHERE Codigo=@code;",new{code=decimals?"G":"UND"});
+            var created=await products.SaveAsync(new(){Sku=sku,Name="Producto "+sku,CategoryId=catalogs.Categories[0].Id,UnitId=unit,Price=price,TracksLot=lot,TracksExpiry=lot});
+            if(!created.IsSuccess)throw new InvalidOperationException(created.Message);var id=created.Value;
             Saved(await inventory.InitializeAsync(new(Guid.NewGuid(),(int)id,warehouse,100,4,"Inicial de prueba",lot?"L-RET":null,Expires:lot?DateTime.Today.AddYears(1):null)));return(int)id;
         }
         var p=await Product("RET-A",10);var q=await Product("RET-LOTE",20,true);var fraction=await Product("RET-FRAC",.05m,decimals:true);
@@ -120,6 +122,8 @@ internal static class ReturnIntegration
         var denied=await c.ExecuteScalarAsync<int>("INSERT INTO seg.Usuarios(Usuario,NombreCompleto,PasswordHash,Activo,DebeCambiarClave) OUTPUT INSERTED.IdUsuario VALUES(N'return_denied',N'Sin permiso',N'no-login',1,0);");
         Check((await repo.ResolveReturnAsync(await Resolution(first.Sale.Id,stale.Id,false),denied,identity.Id,identity.WorkstationId,default)).ErrorCode=="FORBIDDEN","SQL exige permiso y administrador vigente al resolver");
         var latest=(await sales.ReadAsync(first.Sale.Id))!;Check((await repo.RequestReturnAsync(requested.Request with{OperationId=Guid.NewGuid(),ExpectedSaleVersion=latest.Sale.RowVersion},denied,identity.WorkstationId,default)).ErrorCode=="FORBIDDEN","SQL revalida permiso de solicitud");
+        await c.ExecuteAsync("INSERT INTO seg.UsuarioRoles(IdUsuario,IdRol) SELECT @denied,IdRol FROM seg.Roles WHERE Nombre=N'Vendedor'; UPDATE rp SET Concedido=1 FROM seg.RolPermisos rp JOIN seg.Roles r ON r.IdRol=rp.IdRol JOIN seg.Permisos p ON p.IdPermiso=rp.IdPermiso WHERE r.Nombre=N'Vendedor' AND p.Codigo=N'VENTAS.DEVOLUCION_AUTORIZAR'; IF NOT EXISTS(SELECT 1 FROM seg.RolPermisos rp JOIN seg.Roles r ON r.IdRol=rp.IdRol JOIN seg.Permisos p ON p.IdPermiso=rp.IdPermiso WHERE r.Nombre=N'Vendedor' AND p.Codigo=N'VENTAS.DEVOLUCION_AUTORIZAR') INSERT INTO seg.RolPermisos(IdRol,IdPermiso,Concedido) SELECT r.IdRol,p.IdPermiso,1 FROM seg.Roles r CROSS JOIN seg.Permisos p WHERE r.Nombre=N'Vendedor' AND p.Codigo=N'VENTAS.DEVOLUCION_AUTORIZAR';",new{denied});
+        Check((await repo.ResolveReturnAsync(await Resolution(first.Sale.Id,stale.Id,false),denied,identity.Id,identity.WorkstationId,default)).ErrorCode=="FORBIDDEN","Tener el permiso de devolución no sustituye el rol Administrador");
         var version=applied.Return.RowVersion;await DevelopmentDatabase.InstallAsync(database,Path.Combine(root,"database"));Check((await service.DetailAsync(first.Sale.Id,requested.Id))!.Return.RowVersion.SequenceEqual(version),"Reaplicar 019 conserva devolución, autorización y compensaciones");
         Check((await service.EvidenceLocationAsync()).Root==evidenceRoot&&await evidence.VerifyAsync(photo,identity.Id),"Reaplicar migración conserva raíz y fotos verificables");
         Directory.Delete(evidenceRoot,true);

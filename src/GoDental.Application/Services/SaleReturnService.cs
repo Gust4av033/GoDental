@@ -18,7 +18,9 @@ public sealed class SaleReturnService(ISaleReturnRepository repository,IUserSess
         if(SaleReturnValidator.Validate(request) is {} error)return Result<MvpReceipt>.Failure("VALIDATION",error);
         if(evidenceStore is null)return Result<MvpReceipt>.Failure("INVALID_STATE","El almacenamiento de evidencias no está disponible.");
         var revision=CurrentSession is ISessionController s?s.Revision:0;var userId=UserId;var station=WorkstationId;
-        await evidenceStore.CheckRootAsync(request.Root,ct);
+        try{await evidenceStore.CheckRootAsync(request.Root,ct);}
+        catch(ArgumentException ex){return Result<MvpReceipt>.Failure("VALIDATION",ex.Message);}
+        catch(Exception ex)when(ex is System.IO.IOException or UnauthorizedAccessException){return Result<MvpReceipt>.Failure("INVALID_STATE","No se pudo escribir en la carpeta central. Revisa la ruta compartida y los permisos de Windows.");}
         if(!CanConfigure || CurrentSession is ISessionController current&&current.Revision!=revision)return Result<MvpReceipt>.Failure("FORBIDDEN","La sesión cambió al configurar evidencias.");
         return await repository.ConfigureEvidenceAsync(request with{Root=request.Root.Trim(),ExpectedVersion=request.ExpectedVersion.ToArray(),Reason=request.Reason.Trim()},userId,station,ct);
     }

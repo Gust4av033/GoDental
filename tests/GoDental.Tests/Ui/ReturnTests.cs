@@ -63,6 +63,14 @@ public sealed class ReturnTests
         repo.Returns=repo.Returns with{ServerNow=repo.Sale.Sale.Date.AddHours(25)};await history.ReloadReturnsCommand.ExecuteAsync(null);Assert.False(history.CanRequestReturn);
         var delayed=new TaskCompletionSource<SaleReturnsSnapshot>();repo.ReturnsReadTask=delayed.Task;var load=history.ReloadReturnsCommand.ExecuteAsync(null);session.Clear();delayed.SetResult(repo.Returns);await load;Assert.Null(history.SaleReturns);Assert.Null(history.SaleDetail);Assert.False(history.CanRequestReturn);
     }
+    [Fact]public async Task UnwritableEvidenceFolderIsDefinitiveAndLeavesNoPendingOperation()
+    {
+        var repo=new MvpUiRepository();var session=Session("VENTAS.VER","AJUSTES.EDITAR");var service=new SaleReturnService(repo,session,DispatchProxy.Create<IIdentityGateway,Admin>(),DispatchProxy.Create<IReturnEvidenceStore,BrokenEvidence>());
+        var operation=new MvpOperationModel(session,new(repo,session),NullLogger.Instance);var request=new ConfigureReturnEvidence(Guid.NewGuid(),"C:\\Evidencias",[1,2,3,4,5,6,7,8],"Carpeta para pruebas");
+        await operation.StartAsync(request,request.OperationId,x=>service.ConfigureAsync(x),_=>Task.CompletedTask);
+        Assert.False(operation.HasPending);Assert.Equal("INVALID_STATE",operation.LastErrorCode);Assert.Empty(repo.Writes);
+    }
+    public class BrokenEvidence:DispatchProxy{protected override object? Invoke(MethodInfo? method,object?[]? args)=>throw new IOException("Sin acceso a la carpeta compartida.");}
     public class Admin:DispatchProxy{protected override object? Invoke(MethodInfo? method,object?[]? args)=>Task.FromResult(Result<UserIdentity>.Success(new(2,"admin","Admin",1,["Administrador"],["VENTAS.DEVOLUCION_AUTORIZAR"],false)));}
     public class DelayedAdmin:DispatchProxy{public TaskCompletionSource<Result<UserIdentity>> Pending{get;}=new();protected override object? Invoke(MethodInfo? method,object?[]? args)=>Pending.Task;}
     private sealed class Dialogs:IMvpDialogService{public Task<bool> ShowAsync(MvpFormModel form)=>Task.FromResult(false);}

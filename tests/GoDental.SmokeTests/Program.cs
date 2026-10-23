@@ -756,6 +756,10 @@ internal static class Program
                             mvpRepository.ReceiptReadTask = Task.FromResult<SaleSnapshot?>(mvpRepository.Sale with { Delivery = mvpRepository.Order.Order });
                             await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
                             var document = historyMvp.ReceiptPreview!;
+                            var normalizedPhoto=ReturnPhotoPicker.NormalizeInput(document.Pages[0]);
+                            var normalizedImage=GoDental.Wpf.Common.ReceiptPageImage.Load(normalizedPhoto,preview:false);
+                            Check(normalizedImage.PixelWidth<=1600&&normalizedImage.PixelHeight<=1600,"El selector de evidencias limita la dimensión mayor sin ampliar fotos pequeñas");
+                            var invalidPhoto=false;try{ReturnPhotoPicker.NormalizeInput([1,2,3]);}catch(ArgumentException){invalidPhoto=true;}Check(invalidPhoto,"El selector rechaza contenido que no es una foto PNG/JPEG");
                             Check(historyMvp.IsReceiptPreviewOpen && document.Pages.Count > 0, "Previsualizar genera PDF y páginas reales de la venta confirmada");
                             await RenderAsync(shell, 1366, 768, Path.Combine(output, $"comprobante-vista-previa-{theme}.png"));
                             await RenderAsync(shell, 1093, 614, Path.Combine(output, $"comprobante-vista-previa-compacto-{theme}.png"));
