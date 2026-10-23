@@ -25,7 +25,7 @@ public sealed partial class OnlineViewModel
     private Task ZoneForm(OnlineZone? z)
     {
         var id=z?.Id??0;var version=z?.RowVersion.ToArray()??[];
-        var draft=new OnlinePlanningDraftModel{IsZone=true,Location=new(new(){Department=z?.Department,Municipality=z?.Municipality}),Priority=(z?.Priority??100).ToString(),Active=z?.Active??true};
+        var draft=new OnlinePlanningDraftModel{IsZone=true,Location=new(new(){Department=z?.Department??(MapDepartments.Contains(MapDepartment)?MapDepartment:null),Municipality=z?.Municipality}),Priority=(z?.Priority??100).ToString(),Active=z?.Active??true};
         return Show(new MvpFormModel("Zona de prospección","Guardar zona",Operation,f=>{var l=draft.Location.Apply(new());return PlanningCommit(new SaveOnlineZone(Guid.NewGuid(),id,version,l.Department??"",l.Municipality,draft.PriorityValue(),draft.Active,f.Text("reason")),LoadZones);}){Body=draft,Description="Organiza el territorio de El Salvador y su prioridad. No inicia búsquedas externas."}.Input("reason","Motivo"));
     }
     [RelayCommand]private Task NewSegmentAsync()=>CanManage?SegmentForm(null):Task.CompletedTask;

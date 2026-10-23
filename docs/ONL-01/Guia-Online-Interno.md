@@ -1,11 +1,18 @@
 # Usar Comercial / Online
 
 Online organiza la búsqueda de nuevos negocios y la preparación de campañas. La versión
-interna permite trabajar con datos registrados manualmente; no busca contactos en Internet
-ni envía WhatsApp, mensajes de redes o correos. La referencia visual es `Imagenes/221200`.
+actual permite altas manuales y consultar negocios públicos de OpenStreetMap; todavía no
+envía WhatsApp, mensajes de redes o correos. La referencia visual es `Imagenes/221200`.
 
 1. **Zonas de prospección:** crea una zona con departamento, municipio opcional y prioridad.
    Menor número aparece primero. El conteo corresponde a prospectos guardados en ese territorio.
+   El mapa de los 14 departamentos funciona sin Internet; selecciona uno con clic/teclado o con
+   el desplegable. Puedes ampliar y desplazar el mapa. **Buscar negocios** consulta OpenStreetMap
+   y requiere Internet y permiso de prospección. Espera un minuto entre consultas; devuelve hasta
+   100 negocios dentales y la cobertura puede ser incompleta. Cancelar no guarda datos.
+   Selecciona un resultado y pulsa **Revisar negocio**: comprueba datos, municipio y coincidencias,
+   confirma el origen y guarda si corresponde. Fuente y fecha se conservan. Teléfono no implica
+   WhatsApp ni autorización comercial. Cambiar departamento o sesión descarta estos resultados.
 2. **Prospectos:** registra el nombre del negocio, contactos públicos, ubicación y fuente con
    fecha. Usa Comparar coincidencias para revisar si ya existe como prospecto o cliente.
    Para campañas de WhatsApp, registra su campo WhatsApp explícitamente: un teléfono publicado
@@ -39,7 +46,8 @@ Los listados se consultan con Buscar/Consultar y tienen paginación. Si dos pers
 el mismo registro, vuelve a consultarlo antes de reintentar. Si queda una operación pendiente,
 resuélvela desde Operaciones pendientes antes de crear otra equivalente.
 
-La imagen también muestra mapa, bandeja remota, programación y envíos. Esas funciones necesitan
-fuentes/proveedores oficiales y reglas de consentimiento; siguen pendientes. La preparación
-interna no acredita consentimiento comercial. El detalle de alcance y continuación está en
-[DEV-47](../DEV-47-Online-Referencia.md).
+La bandeja remota, programación y envíos siguen pendientes. Se necesitan Cloud API, autorización
+comercial por canal, plantillas oficiales y un servicio central HTTPS con almacenamiento durable
+y controles S1. Aprobar internamente no envía ni acredita consentimiento. Usar la app del teléfono
+no habilita por sí solo Cloud API: consulta [Configuración Meta](Configuracion-Meta.md).
+El detalle vigente está en [DEV-48](../DEV-48-Online-Conectores.md).

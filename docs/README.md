@@ -1,6 +1,6 @@
 # Documentación de GoDental
 
-Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), Fiscal interno y primer bloque de Online interno ([DEV-46](DEV-46-Online-Interno.md)); después escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025**.
+Prioridad del 23/10/2026: [DEV-44](DEV-44-Fiscal-Interno.md), Fiscal interno y Online ampliado ([DEV-47](DEV-47-Online-Referencia.md), [DEV-48](DEV-48-Online-Conectores.md)); después escalas/listas/promociones. [DEV-45](DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**.
 
 Los documentos fuente vigentes se organizan por código dentro de este directorio. Los resúmenes Markdown históricos en la raíz de `docs/` se conservan como material de consulta y trazabilidad del repositorio inicial.
 
@@ -77,3 +77,6 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-46 · Primer bloque Online](DEV-46-Online-Interno.md): prospectos, fuente, exclusiones y vínculo por compra confirmada (025).
 - [DEV-47 · Online conforme a referencia](DEV-47-Online-Referencia.md): zonas, segmentos, plantillas, campañas/aprobación y seguimiento manual (026); mapa y conectores externos pendientes.
 - [Guía de uso de Online interno](ONL-01/Guia-Online-Interno.md). Pendiente local vigente: **021 → 022 → 023 → 024 → 025 → 026**, en orden.
+
+- [DEV-48 · Mapa, descubrimiento y preparación Meta](DEV-48-Online-Conectores.md): mapa sin red, búsqueda pública con revisión y componentes de servidor probados, sin activar transmisiones. Sin migración nueva.
+- [Configuración Meta / requisitos de HTTPS](ONL-01/Configuracion-Meta.md): iniciar con el número de prueba; Cloud API, autorización por canal y servicio central seguro pendientes.

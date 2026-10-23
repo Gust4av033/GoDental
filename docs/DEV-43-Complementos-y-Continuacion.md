@@ -82,3 +82,17 @@ Validación de DEV-47: [CI Windows #183](https://github.com/Gust4av033/GoDental/
 interno validado, siguiente bloque independiente: escalas/listas/promociones (VEN-01A), cerrando
 reglas de mantenimiento antes de SQL/UI. Mapa, bandeja remota, proveedores, consentimiento y
 DTE real mantienen sus requisitos/bloqueos previos: no se declaran terminados por este incremento.
+
+## Continuación externa priorizada · DEV-48
+
+Por solicitud posterior del usuario, mapa y descubrimiento público preceden a escalas/listas/
+promociones. [DEV-48](DEV-48-Online-Conectores.md) implementa estos dos recorridos y prepara
+componentes de transporte oficial/verificación Meta sin activar envío ni chat. No necesita nueva
+migración: la secuencia pendiente local sigue **021 → 022 → 023 → 024 → 025 → 026**.
+
+Próximo bloque Online: servicio central HTTPS, identidad de operador confiable y SQL mínimo,
+inbox/outbox durables con deduplicación y resolución de envíos inciertos; configurar Cloud API
+primero con número de prueba. El usuario sólo usa la app del teléfono. Consentimiento por canal
+sigue sin respuesta y no se infiere de fuente pública, compra ni aprobación interna. Resolver S1
+antes de transmisiones. Después se retoma escalas/listas/promociones, conservando el orden global.
+Instalador/actualizaciones/respaldos y piloto formal permanecen al final.

@@ -1,6 +1,6 @@
 # GoDental
 
-Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), Fiscal interno y Online interno conforme a referencia ([DEV-47](docs/DEV-47-Online-Referencia.md)); después escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**.
+Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), Fiscal interno y Online conforme a referencia ([DEV-47](docs/DEV-47-Online-Referencia.md)), continuado con mapa/descubrimiento público y preparación Meta ([DEV-48](docs/DEV-48-Online-Conectores.md)); después escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**.
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 
@@ -10,7 +10,7 @@ La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-3
 el alcance implementado de lo pendiente de DM-01. El MVP conecta inventario/conteos,
 proveedores/clientes, POS/caja/crédito/pedidos y comprobantes; ya incluye compras/recepciones,
 importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes operativos.
-Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zonas, segmentos, plantillas, campañas con aprobación interna, seguimiento manual, exclusiones y vínculo por compra confirmada. Emisión DTE, mapa, descubrimiento y envíos mediante conectores oficiales siguen pendientes.
+Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zonas, segmentos, plantillas, campañas con aprobación interna, seguimiento manual, exclusiones y vínculo por compra confirmada. Online → Zonas incluye mapa local de los 14 departamentos y búsqueda pública acotada de negocios dentales en OpenStreetMap, con revisión antes de guardar. Emisión DTE y envío/chat reales siguen pendientes. [Configuración Meta](docs/ONL-01/Configuracion-Meta.md) distingue la app del teléfono de Cloud API y detalla los requisitos del servicio HTTPS.
 El orden vigente y los controles de seguridad están en DEV-43/45/47; [guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
 Rama activa: **`feature/desarrollo`**. [CI Windows #183](https://github.com/Gust4av033/GoDental/actions/runs/39974506383) valida `c6c26aa`: Release sin advertencias/errores, **375 xUnit / 789 SQL / 1087 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos. Parser de PowerShell del instalador correcto.

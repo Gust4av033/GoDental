@@ -172,7 +172,7 @@ internal static class Program
             var reportFiles=new VisualPdfFiles();
             var reportService=new ReportService(stageTwoRepository,new OperationalReportRenderer(Options.Create(new ReceiptPdfOptions())),session);
             var onlineRepository=new OnlineUiRepository();
-            var onlineMvp=new OnlineViewModel(new(onlineRepository,session),mvpDialogs,session,operationService,NullLogger<OnlineViewModel>.Instance);
+            var onlineMvp=new OnlineViewModel(new(onlineRepository,session,new OnlineDiscoveryTestProvider()),mvpDialogs,session,operationService,NullLogger<OnlineViewModel>.Instance);
             var fiscalRepository=new FiscalUiRepository();
             var fiscalMvp=new FiscalViewModel(new(fiscalRepository,session),new(fiscalRepository,session),mvpDialogs,session,operationService,NullLogger<FiscalViewModel>.Instance);
             var reportsMvp=new ReportsViewModel(reportService,reportFiles,reportFiles,session,operationService,NullLogger<ReportsViewModel>.Instance);
@@ -942,6 +942,9 @@ internal static class Program
                     await onlineMvp.FindFollowUpsCommand.ExecuteAsync(null);onlineMvp.SelectedFollowUp=onlineMvp.FollowUps.Single();
                     Check(onlineMvp.CanPlanCampaign&&onlineMvp.CanApproveCampaign&&onlineMvp.Preview.Count==1&&onlineMvp.Recipients.Count==1,"Online conecta segmentación y aprobación sin transporte externo");
                     Check(onlineMvp.CampaignPreview.Contains("Negocio de prueba")&&onlineMvp.SelectedTemplate.Preview.Contains("Negocio de ejemplo"),"Online revisa contenido y marcadores como texto plano");
+                    onlineMvp.SelectMapDepartmentCommand.Execute("San Salvador");await onlineMvp.DiscoverCommand.ExecuteAsync(null);onlineMvp.SelectedDiscovered=onlineMvp.Discovered.Single();
+                    Check(onlineMvp.MapRegions.Count==14&&onlineMvp.MapRegions.Count(r=>r.Selected)==1&&onlineMvp.Discovered.Count==1,"Mapa selecciona departamento y muestra descubrimiento sintético sin red");
+                    Check(onlineRepository.Writes.Count==0,"Descubrir no guarda ni contacta prospectos automáticamente");
                     await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online",theme,output);
                     await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online-compacto",theme,output,1093,614);
                     var onlineRenderer=mvpDialogs.Render;var onlineFormIndex=0;
@@ -956,7 +959,7 @@ internal static class Program
                     await onlineMvp.NewTemplateCommand.ExecuteAsync(null);await onlineMvp.EditTemplateCommand.ExecuteAsync(null);
                     await onlineMvp.NewCampaignCommand.ExecuteAsync(null);await onlineMvp.PrepareCampaignCommand.ExecuteAsync(null);
                     await onlineMvp.ApproveCampaignCommand.ExecuteAsync(null);await onlineMvp.ReturnCampaignCommand.ExecuteAsync(null);await onlineMvp.CancelCampaignCommand.ExecuteAsync(null);
-                    await onlineMvp.RecordFollowUpCommand.ExecuteAsync(null);mvpDialogs.Render=onlineRenderer;
+                    await onlineMvp.RecordFollowUpCommand.ExecuteAsync(null);await onlineMvp.ReviewDiscoveredCommand.ExecuteAsync(null);mvpDialogs.Render=onlineRenderer;
                     nav.Navigate(SetupPage.Fiscal);await fiscalMvp.ReloadCommand.ExecuteAsync(null);
                     fiscalMvp.Selected=fiscalMvp.Documents.Single();await fiscalMvp.OpenCommand.ExecuteAsync(null);
                     await fiscalMvp.FindSalesCommand.ExecuteAsync(null);fiscalMvp.SelectedSale=fiscalMvp.Candidates.Single();

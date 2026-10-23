@@ -113,3 +113,18 @@ modificadas incluso después de aprobar. Futuro envío deberá volver a comproba
 exclusiones y contacto vigente inmediatamente antes del transporte; la aprobación interna actual
 no autoriza ese envío. Se mantienen abiertos SEC-01 y demás bloqueos S1: no es certificación
 productiva ni sustituto de pruebas de penetración o de permisos efectivos del despliegue.
+
+## Mapa / preparación Meta · DEV-48
+
+Consulta pública sin credenciales a un host HTTPS fijo, sin redirecciones ni visitas a enlaces de
+resultados, con límites de bytes/tiempo/frecuencia/cantidad y revalidación SQL antes/después.
+Resultados sólo en memoria hasta revisión humana; no infiere WhatsApp ni consentimiento.
+Los adaptadores Meta prueban firma sobre bytes originales, cuenta/número, carga acotada,
+respuesta ambigua sin reintento y bearer sólo en cabecera. No están registrados en WPF ni
+publicados como servidor; las pruebas usan respuestas sintéticas, sin cuentas ni mensajes reales.
+
+SEC-01/S1 sigue abierto: estos componentes no resuelven identidad confiable, mínimo privilegio,
+inbox/outbox durable ni despliegue HTTPS. Son previos a activar transmisiones y no se posponen
+al endurecimiento final. La autorización por canal continúa pendiente. Evitar logs de query del
+alta webhook (hub.verify_token), cabeceras, cuerpos y tokens en el futuro host. Ver DEV-48 y
+[Configuración Meta](ONL-01/Configuracion-Meta.md).
