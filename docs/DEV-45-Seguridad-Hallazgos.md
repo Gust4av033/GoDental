@@ -93,3 +93,12 @@ consentimiento. Sin API para levantar opt-out; reingreso/edición/vínculo conse
 Permisos separados, versiones, ledger y bitácora; conversión exige compra confirmada y no
 modifica venta/cliente/caja/stock. Las entradas históricas no se reescriben para normalizarlas.
 SEC-01–06 siguen abiertos según sus fases; esta entrega interna no cierra S1 ni certifica producción.
+
+
+Validación de DEV-46: [CI Windows #177](https://github.com/Gust4av033/GoDental/actions/runs/39961747381)
+sobre `f46d530`, job `120441191089`: Release sin advertencias/errores, **364 xUnit / 761 SQL /
+1011 WPF**, sin errores de binding, auditoría NuGet de siete proyectos sin avisos conocidos.
+Las pruebas nuevas incluyen preservación de opt-out ante reingreso/edición/vínculo, permisos revocados,
+URLs documentales sin consultas externas y rollback/recuperación. Los hallazgos SEC-01–06 siguen
+abiertos en sus fases: estas comprobaciones no cierran mínimo privilegio/identidad SQL, custodia,
+sesión, distribución o restauración real. Sólo cambios documentales posteriores al código validado.

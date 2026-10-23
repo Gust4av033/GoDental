@@ -13,7 +13,7 @@ importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes o
 Fiscal incorpora preparación/revisión interna; Online conecta prospectos/fuentes/exclusiones y vínculo por compra confirmada. Emisión DTE, campañas y conectores siguen pendientes.
 El orden vigente y los controles de seguridad están en DEV-44/45.
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #171](https://github.com/Gust4av033/GoDental/actions/runs/39912832720) valida `e8cab1a`: Release sin advertencias/errores, **347 xUnit / 721 SQL / 965 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos sin avisos conocidos.
+Rama activa: **`feature/desarrollo`**. [CI Windows #177](https://github.com/Gust4av033/GoDental/actions/runs/39961747381) valida `f46d530`: Release sin advertencias/errores, **364 xUnit / 761 SQL / 1011 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos sin avisos conocidos.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack

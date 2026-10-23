@@ -67,11 +67,30 @@ insertar/modificar; no usar locks locales para integridad entre PCs.
 
 ## Validación y continuación
 
-Release local con Windows targeting: 0 advertencias y 0 errores. Solución xUnit: **364 aprobadas**,
-0 fallidas/omitidas; validación/URLs, identidades congeladas, datos heredados, permisos, sesión,
-filtros/selección y reintento con el mismo GUID. Linux no ejecuta SQL/WPF. Resultado Windows
-pendiente de registrar: SQL aislado (duplicados/formatos, fuentes, exclusiones, conversión, carreras,
-permisos, rollback/recuperación y reaplicación) y smoke WPF Light/Dark/compacto.
+[CI Windows #177](https://github.com/Gust4av033/GoDental/actions/runs/39961747381), correcto sobre
+**`f46d5307c2b7669b253cbdb1f25080db97ff0e4f`**, job `120441191089`:
+Release con **0 advertencias / 0 errores**, **364 xUnit / 761 SQL / 1011 WPF**, sin errores de binding.
+Auditoría NuGet ejecutada en siete proyectos, sin avisos conocidos. Release local y 364 pruebas también
+pasan con Windows targeting; Linux no ejecuta SQL Server/WPF.
+
+- **40 comprobaciones SQL Online nuevas**: GUID/unicidad, fuente atómica e inmutable/paginada,
+  formatos equivalentes de teléfono/correo/perfil/dominio y nombre+municipio; distinción entre sitio
+  empresarial y procedencia; datos generales/contactos de clientes, carrera entre estaciones y fuentes
+  que invalidan versión. Exclusión global/por canal, reingreso/reactivación restrictiva y edición de
+  bloqueados; datos/territorios/fechas históricos conservados sin reconstrucción.
+- Conversión con compra real conserva origen, referencia y exclusiones sin crear otro cliente ni
+  modificar nuevamente caja/inventario. Rechaza doble vínculo, venta modificada/anulada y atajo de
+  estado. Rollback de fuente/prospecto/ledger ante fallo de bitácora; resolución terminal, revocación
+  de permisos y reaplicación sin alterar versiones ni restaurar concesiones.
+- Unitarias cubren URL documental, identidades congeladas/normalización, datos heredados, permisos,
+  sesión/filtros/selección cambiados, comparación tardía y reintento del mismo GUID de exclusión.
+- Smoke captura cuatro pestañas en Light/Dark y 1366×768/compacto; siete formularios por tema,
+  comparación previa, confirmación fija visible y cierre sin guardar. Mantiene las regresiones anteriores.
+  Se consultaron registros de CI; las capturas automáticas no equivalen a inspección humana de monitor,
+  LAN, impresora ni dos estaciones físicas. No se modificó la BD personal desde cloud.
+
+Las confirmaciones posteriores sólo registran documentación; no cambian el código validado.
+
 Mantener controles y hallazgos de DEV-45 abiertos según fase; este módulo no certifica seguridad productiva.
 Después del bloque interno, cerrar ONL-01 v0.2 antes de campañas/conectores y continuar trabajo independiente
 por escalas/listas/promociones mientras siguen pendientes acceso y especificaciones DTE verificables.

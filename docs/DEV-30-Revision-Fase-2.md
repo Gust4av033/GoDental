@@ -192,3 +192,11 @@ Captura empresarial/fuente, coincidencias, supresión central/versiones/ledger e
 comunicaciones externas ni creación/crédito de clientes. Migración 025 sobre tablas existentes.
 Sigue escalas/listas/promociones; campañas, consentimiento/proveedores, descubrimiento y DTE real
 conservan requisitos pendientes. En la PC falta **021 → 022 → 023 → 024 → 025**, incluida 021.
+
+
+DEV-46 validado en [CI Windows #177](https://github.com/Gust4av033/GoDental/actions/runs/39961747381)
+sobre `f46d530`: Release sin advertencias/errores, **364 xUnit / 761 SQL / 1011 WPF**, sin errores
+de binding. Auditoría NuGet en siete proyectos sin avisos conocidos. Incluye 40 comprobaciones SQL
+Online nuevas y pestañas/formularios Light/Dark/compacto; no certifica despliegue físico ni cierra
+las brechas S1/S2 de DEV-45. Continuar por escalas/listas/promociones; Online externo y DTE
+mantienen requisitos pendientes. La PC sigue pendiente desde 021, incluida, hasta 025.

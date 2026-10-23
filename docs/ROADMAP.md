@@ -42,7 +42,7 @@ esperan requisitos/acceso verificables. No se declaran módulos externos complet
 | 2.2C · Reparto contra entrega | Implementado; CI #163 correcto, DEV-41 | Custodia, entrega completa, incidencia/retorno y rendición de efectivo/transferencia (022) |
 | 2.3 · Reportes operativos | Implementado; CI #163 correcto, DEV-42 | Ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras aplicadas (023) |
 | Fiscal interno | Implementado; CI #171 correcto: 347 xUnit / 721 SQL / 965 WPF | DEV-44, migración 024; sin emisión/firma/transmisión |
-| Online interno · primer bloque | Implementado; validación Windows pendiente de registrar | DEV-46, 025: manual/fuentes/coincidencias/exclusiones/vínculo con compra; campañas/conectores pendientes |
+| Online interno · primer bloque | Implementado; CI #177: 364 xUnit / 761 SQL / 1011 WPF | DEV-46, 025: manual/fuentes/coincidencias/exclusiones/vínculo con compra; campañas/conectores pendientes |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

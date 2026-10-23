@@ -101,3 +101,9 @@ No se aplicó SQL a la PC personal ni se habilitó Hacienda. Siguiente bloque fu
 **Online interno**, según ONL-01 y la secuencia vigente; no repetir este incremento fiscal.
 Integración fiscal externa requiere FIS-01 v0.2 y los controles S1 de DEV-45.
 Las confirmaciones posteriores que sólo registran documentación no cambian el código validado.
+
+
+Continuación posterior: [DEV-46](DEV-46-Online-Interno.md) implementa el primer bloque Online
+interno y registra CI #177. Siguiente trabajo independiente: escalas/listas/promociones; DTE externo
+y campañas siguen sujetos a requisitos. Pendiente local actualizado: **021 → 022 → 023 → 024 → 025**,
+incluida 021; no se aplicó SQL a la base personal desde cloud.
