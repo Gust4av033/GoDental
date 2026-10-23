@@ -24,6 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Integridad de fuentes fiscales aportadas
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests/tooling -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/verify-fiscal-sources.py --report TestResults/fiscal-sources.json
+
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:

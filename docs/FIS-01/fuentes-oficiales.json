@@ -1,0 +1,183 @@
+{
+  "format_version": 1,
+  "reviewed_on": "2026-10-23",
+  "scope": "Integridad del material aportado; no acredita vigencia, autenticidad de origen ni habilita emisión.",
+  "permitted_documentation_host": "factura.gob.sv",
+  "live_official_access": "NO_DISPONIBLE_EN_ESTE_ENTORNO",
+  "sources": [
+    {
+      "id": "F01",
+      "title": "Aviso mandatario referente a ventas con factura",
+      "path": "DTEPDF/Aviso mandatario referente a ventas con factura.pdf",
+      "original_path": "DTEPDF./Aviso mandatario referente a ventas con factura.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "56a03574fd89991eee24f0591492fa794288b0bf",
+      "bytes": 72321,
+      "sha256": "57604ef15227b5edcb2da490d51324b9b1493860f34a19e89ebb41f7b28cee2d",
+      "pdf_pages": 1,
+      "printed_version": null,
+      "printed_date": "2024-09-05",
+      "edition_pdf_page": 1,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F02",
+      "title": "Guía del Proceso de Incorporación para ser Emisor de Documentos Tributarios Electrónicos",
+      "path": "DTEPDF/Guía del Proceso de Incorporación para ser Emisor de Documentos Tributarios Electrónicos.pdf",
+      "original_path": "DTEPDF./Guía del Proceso de Incorporación para ser Emisor de Documentos Tributarios Electrónicos.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "8aa765e6ed9a4d0743dce79a5f5f06d8da9920a6",
+      "bytes": 993071,
+      "sha256": "bae5aa10c01725952afc884244bf339ad18cf013e2fb8e044ca2813da8e2578a",
+      "pdf_pages": 8,
+      "printed_version": "1.3",
+      "printed_date": "2025-12",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F03",
+      "title": "Manual de Usuario de Consulta Pública de los DTE y Eventos",
+      "path": "DTEPDF/Manual de Usuario de Consulta Pública de los DTE y Eventos.pdf",
+      "original_path": "DTEPDF./Manual de Usuario de Consulta Pública de los DTE y Eventos.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "e2f31a31c31e50ef1a2d7a4dcc452eec17a7a607",
+      "bytes": 1608406,
+      "sha256": "d2de737f439f3c0b2bcf92eb9fd56a7bf4044969ad7ae571da4337c06dc5103a",
+      "pdf_pages": 17,
+      "printed_version": "1.1",
+      "printed_date": "2026-05",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F04",
+      "title": "Manual de Usuario del Sitio de Emisores DTE 1.4",
+      "path": "DTEPDF/Manual de Usuario del Sitio de Emisores DTE 1.4.pdf",
+      "original_path": "DTEPDF./Manual de Usuario del Sitio de Emisores DTE 1.4.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "086c41725459decabf9ece12736b06cba7789f5c",
+      "bytes": 2223269,
+      "sha256": "790e9d25e23a8ba809e9b5b1e89f5ea2727c5b5d650ed90c4b897b9170a18504",
+      "pdf_pages": 19,
+      "printed_version": "1.4",
+      "printed_date": "2026-10",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F05",
+      "title": "Manual de acreditamiento y obtención de certificado de firma electrónica",
+      "path": "DTEPDF/Manual de acreditamiento y obtención de certificado de firma electrónica.pdf",
+      "original_path": "DTEPDF./Manual de acreditamiento y obtención de certificado de firma electrónica.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "8cdb2da305b5de15fe6371eb4b26eab00dff46ac",
+      "bytes": 2453956,
+      "sha256": "88878eb12b117a20a4c62b3cd5cbb58d4703f36a2fad6662972fda351c6e9da2",
+      "pdf_pages": 25,
+      "printed_version": "1.1",
+      "printed_date": "2026-05",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F06",
+      "title": "Manual de usuario para la Solicitud de Ingreso al ambiente para pruebas",
+      "path": "DTEPDF/Manual de usuario para la Solicitud de Ingreso al ambiente para pruebas.pdf",
+      "original_path": "DTEPDF./Manual de usuario para la Solicitud de Ingreso al ambiente para pruebas.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "24510e3343339cd0777ec6123fcac9ac26dbb079",
+      "bytes": 1712734,
+      "sha256": "ec54d4b4ebb6bbc3b004c530fca53b019c2d21df34350a022c6c17542592dbb3",
+      "pdf_pages": 14,
+      "printed_version": "2.1",
+      "printed_date": "2026-09",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F07",
+      "title": "Manual para la obtención  de la Autorización como Emisor de DTE",
+      "path": "DTEPDF/Manual para la obtención  de la Autorización como Emisor de DTE.pdf",
+      "original_path": "DTEPDF./Manual para la obtención  de la Autorización como Emisor de DTE.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "11ef74fd997111d5fdc93ecfffc63adfe8b1a972",
+      "bytes": 1565076,
+      "sha256": "b4f2ae55cbc7043f901ad1cf5e4f497f78ac1b138a64d013710360f96b86abc7",
+      "pdf_pages": 13,
+      "printed_version": "1.0",
+      "printed_date": "2026-05",
+      "edition_pdf_page": 2,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    },
+    {
+      "id": "F08",
+      "title": "Normativa de Cumplimiento de los Documentos Tributarios Electrónicos_Versión 2.0",
+      "path": "DTEPDF/Normativa de Cumplimiento de los Documentos Tributarios Electrónicos_Versión 2.0.pdf",
+      "original_path": "DTEPDF./Normativa de Cumplimiento de los Documentos Tributarios Electrónicos_Versión 2.0.pdf",
+      "import_commit": "bf2d4b980448facc08fe8ec6b4514390c765e03b",
+      "git_blob": "e1f016e87534477f1fe8c204d80a9f79d846a338",
+      "bytes": 6229219,
+      "sha256": "89b275140f8090d9641925ad3c66951e91318d357cda6d42a7451529ab840abf",
+      "pdf_pages": 137,
+      "printed_version": "2.0",
+      "printed_date": "2026-05-25",
+      "edition_pdf_page": 1,
+      "official_download_url": null,
+      "provenance": "APORTADO_EN_REPOSITORIO_ATRIBUIDO_A_MH",
+      "current_official_version_verified": false
+    }
+  ],
+  "missing_contracts": [
+    {
+      "id": "T01",
+      "title": "Manual Tecnológico para la Integración del Sistema de Transmisión",
+      "needed_for": "Autenticación, ambientes, recepción, consulta/reconciliación, errores, lotes y límites.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    },
+    {
+      "id": "T02",
+      "title": "Manual Funcional del Sistema de Transmisión",
+      "needed_for": "Reglas FE/CCFE/eventos y anexo de pruebas mínimas vigente.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    },
+    {
+      "id": "T03",
+      "title": "Catálogos de Facturación Electrónica vigentes",
+      "needed_for": "Códigos oficiales y vigencia de cada catálogo utilizado.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    },
+    {
+      "id": "T04",
+      "title": "JSON Schemas vigentes de FE, CCFE y eventos requeridos",
+      "needed_for": "Archivos originales, dependencias locales, versiones y compatibilidad.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    },
+    {
+      "id": "T05",
+      "title": "DTE – Firmador",
+      "needed_for": "Paquete/documentación oficial, versión, términos, instalación y seguridad.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    },
+    {
+      "id": "T06",
+      "title": "SVFE-API-Firmador",
+      "needed_for": "Contrato del firmador, formato de certificado, entrada/salida y errores.",
+      "status": "PENDIENTE_DE_DOCUMENTACION_OFICIAL"
+    }
+  ]
+}
