@@ -15,7 +15,7 @@
 <DataGridTextColumn Header="Solicitud" Binding="{Binding Id}" Width="85"/>
 <DataGridTextColumn Header="Venta" Binding="{Binding SaleNumber}" Width="145"/>
 <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="85"/>
-<DataGridTextColumn Header="Estado fiscal" Binding="{Binding State}" Width="120"/>
+<DataGridTextColumn Header="Estado de solicitud" Binding="{Binding State}" Width="160"/>
 <DataGridTextColumn Header="Revisión interna" Binding="{Binding ReviewState}" Width="140"/>
 <DataGridTextColumn Header="Revisor" Binding="{Binding Reviewer}" Width="180"/>
 </DataGrid.Columns></DataGrid><TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}"/>
