@@ -1,6 +1,7 @@
 # DEV-42 — 2.3: reportes operativos e Inicio
 
-Fecha local: 22/10/2026 (El Salvador). Diseño previo a implementación.
+Fecha local: 22/10/2026 (El Salvador). **Estado: implementado y validado automáticamente.**
+Aceptación entre estaciones/impresora y migración local pendientes. Diseño registrado antes del SQL.
 Fuentes: DM-01 §14.1, DB-01 snapshots de venta/costo y recepciones, ARQ-01, SEC-01, DEV-30/38/41.
 
 ## Indicadores definidos
@@ -65,8 +66,22 @@ históricos se identifican y no se rellenan.
 
 ## Verificación y continuación
 
-Pruebas de fechas/grupos/permisos, PDF real, consultas tardías, invalidación de documentos,
-SQL aislado de reparto/posventa/compras y smoke WPF. CI definitivo pendiente de registrar.
+- Código validado: `287557d7919eb8dad7e28f4de3a40cbafb8778c1` en `feature/desarrollo`.
+  [CI Windows #163](https://github.com/Gust4av033/GoDental/actions/runs/39908151107)
+  completado correctamente; registro del job `120264859605` consultado.
+- Release con **0 advertencias / 0 errores**, **335 xUnit**, sin fallos ni omitidas.
+  Build Release y las mismas 335 pruebas pasan también localmente con Windows targeting.
+- **687 comprobaciones SQL** en bases aisladas: 60 nuevas de reparto/reportes y las 627
+  de regresión existentes. Incluye doble despacho/rendición, caja sin turno previo con custodia,
+  turno cerrado/nuevo turno, transferencia sin efectivo, retorno completo y lote bloqueado en ruta,
+  fallo de auditoría con rollback/recuperación, permisos revocados, fechas en medianoche local,
+  devoluciones reales con impuesto por centavos, recepción aplicada/histórica y reaplicación 022/023.
+- **949 comprobaciones WPF**, sin errores de binding. Inicio vuelve a caber en 1366×768;
+  reportes de los cuatro tipos, formularios de reparto y estados de rendición/custodia en
+  Light/Dark/compacto. PDF real, guardar/imprimir el mismo documento y bloqueo tras cambiar medidas.
+- No se aplicaron 022/023 a la BD personal ni se ejecutó aceptación manual entre las dos PCs.
+  El smoke automatizado y su impresión simulada no certifican impresora, monitor/DPI o LAN físicos.
+
 
 Sigue **2.4: piloto y preparación de despliegue**: ejecutar aceptación entre las dos PCs sobre
 una base de prueba, implementar DEV-36 (versiones/migrador/compatibilidad, instalación del motor

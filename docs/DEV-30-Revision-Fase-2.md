@@ -155,3 +155,9 @@ y [DEV-42](DEV-42-Reportes-Operativos.md) implementa **2.3**, reportes por perí
 con costo histórico y compensaciones de posventa. Migraciones **022–023**, 79 tablas / 8 vistas
 / 18 procedimientos. No se aplica SQL a la base personal desde cloud. La siguiente etapa es
 **2.4** y la implementación de DEV-36 para instalación/actualizaciones/respaldos y piloto.
+
+DEV-41/42 cerrados en su alcance: [CI Windows #163](https://github.com/Gust4av033/GoDental/actions/runs/39908151107)
+valida `287557d`, Release sin advertencias/errores, **335 xUnit / 687 SQL / 949 WPF**.
+El recorrido financiero de reparto y los reportes con posventa/costos/centavos están conectados.
+Sigue **2.4**, aceptación manual en dos estaciones e implementación de DEV-36; no se declara
+instalador productivo, restauración real ni LAN/impresora certificados por completar estos módulos.

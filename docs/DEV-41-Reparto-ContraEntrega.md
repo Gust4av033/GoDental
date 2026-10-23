@@ -1,6 +1,7 @@
 # DEV-41 — 2.2C: reparto y cobro contra entrega
 
-Fecha local: 22/10/2026 (El Salvador). Diseño previo a implementación.
+Fecha local: 22/10/2026 (El Salvador). **Estado: implementado y validado automáticamente.**
+Aceptación en estaciones y aplicación local de 022/023 pendientes. El diseño se registró antes del SQL.
 Fuentes: DM-01 §12, DB-01 inventario/ventas/caja, VEN-01, SEC-01, ARQ-01 y DEV-30/38/40.
 El usuario confirmó entrega completa o retorno completo, efectivo o transferencia y rendición.
 
@@ -103,5 +104,18 @@ pendientes de su complemento de resolución; no declararlos recuperados.
 
 ## Verificación
 
-Pruebas de contratos/recuperación, SQL real aislado y smoke WPF en ambos temas/compacto.
-Resultado definitivo de CI pendiente de registrar.
+- Código validado: `287557d7919eb8dad7e28f4de3a40cbafb8778c1` en `feature/desarrollo`.
+  [CI Windows #163](https://github.com/Gust4av033/GoDental/actions/runs/39908151107)
+  completado correctamente; registro del job `120264859605` consultado.
+- Release con **0 advertencias / 0 errores**, **335 xUnit**, sin fallos ni omitidas.
+  Build Release y las mismas 335 pruebas pasan también localmente con Windows targeting.
+- **687 comprobaciones SQL** en bases aisladas: 60 nuevas de reparto/reportes y las 627
+  de regresión existentes. Incluye doble despacho/rendición, caja sin turno previo con custodia,
+  turno cerrado/nuevo turno, transferencia sin efectivo, retorno completo y lote bloqueado en ruta,
+  fallo de auditoría con rollback/recuperación, permisos revocados, fechas en medianoche local,
+  devoluciones reales con impuesto por centavos, recepción aplicada/histórica y reaplicación 022/023.
+- **949 comprobaciones WPF**, sin errores de binding. Inicio vuelve a caber en 1366×768;
+  reportes de los cuatro tipos, formularios de reparto y estados de rendición/custodia en
+  Light/Dark/compacto. PDF real, guardar/imprimir el mismo documento y bloqueo tras cambiar medidas.
+- No se aplicaron 022/023 a la BD personal ni se ejecutó aceptación manual entre las dos PCs.
+  El smoke automatizado y su impresión simulada no certifican impresora, monitor/DPI o LAN físicos.
