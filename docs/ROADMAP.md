@@ -21,7 +21,7 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
 | 2.1B · Importaciones y costeo | Implementado y validado automáticamente | DEV-37, migración 018, CI #136: 255 xUnit / 520 SQL / 767 WPF |
 | 2.2A · Posventa | Implementado y validado automáticamente | DEV-38, migración 019, CI #142: 272 xUnit / 574 SQL / 817 WPF |
-| 2.2B · Cobranza y documentos | Implementado; validación en DEV-40 | Avisos, recibo de abono y estado de cuenta con posventa trazable (021) |
+| 2.2B · Cobranza y documentos | Implementado; CI #155 correcto, detalle en DEV-40 | Avisos, recibo de abono y estado de cuenta con posventa trazable (021) |
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
@@ -97,3 +97,7 @@ DEV-40 continúa la secuencia después del paréntesis de formularios: cobranza,
 de cuenta. 021 deja 77 tablas / 8 vistas / 18 procedimientos. Después corresponde **2.2C**
 si se confirma cobro contra entrega (diseño pendiente), y luego **2.3**, reportes. No automatizar
 bloqueos por mora ni enviar avisos externos por inferencia de esta fase.
+
+2.2B validado sobre `987b98b`: [CI Windows #155](https://github.com/Gust4av033/GoDental/actions/runs/39904041587),
+Release sin advertencias/errores, **315 xUnit / 627 SQL / 897 WPF**. DEV-40 deja los pasos
+de actualización y aceptación local; 021 no se ha aplicado desde cloud a la BD personal.

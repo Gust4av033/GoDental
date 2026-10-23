@@ -140,3 +140,11 @@ Continuación 22/10/2026 (fecha local El Salvador): **DEV-40**, 2.2B, seguimient
 recibo independiente de abono y estado de cuenta con efectos de posventa. Migración 021:
 77 tablas / 8 vistas / 18 procedimientos; nuevos snapshots no rellenan históricos.
 Sigue 2.2C si se requiere entrega contra cobro, después de definir el flujo, y luego 2.3 reportes.
+
+DEV-40 cerrado en su alcance implementado: [CI Windows #155](https://github.com/Gust4av033/GoDental/actions/runs/39904041587)
+valida `987b98b`, con Release sin advertencias/errores y **315 xUnit / 627 SQL / 897 WPF**.
+Incluye concurrencia/rollback de avisos, snapshots de abonos, estado con posventa y formulario
+con reintento del mismo GUID; vista previa/guardado/impresión en ambos temas y compacto.
+Aplicar 021 a la BD personal y comprobar el recorrido entre estaciones siguen siendo pasos
+locales pendientes; el CI utiliza SQL aislado. La continuación conserva 2.2C (diseño COD)
+y después 2.3; no se abre automáticamente otro módulo ni se declara listo el despliegue DEV-36.

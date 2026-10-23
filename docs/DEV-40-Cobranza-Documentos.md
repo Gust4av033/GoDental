@@ -1,6 +1,7 @@
 # DEV-40 — 2.2B: cobranza y documentos de crédito
 
-**Fecha local:** 22/10/2026 (El Salvador). **Estado:** diseño e implementación en curso.
+**Fecha local:** 22/10/2026 (El Salvador). **Estado:** implementado y validado automáticamente;
+aceptación en estaciones/impresora y aplicación de 021 a la BD personal pendientes.
 Continúa DEV-38/39; fuentes DM-01 §12.9–12.10, DB-01 CxC/abonos, VEN-01, SEC-01 y ARQ-01.
 
 ## Alcance y reglas
@@ -86,8 +87,38 @@ ejecutar sólo migraciones faltantes en orden, por ejemplo con `sqlcmd -S <insta
 No se ha aplicado la migración a la BD personal desde cloud. No forzar el marcador de desarrollo
 sobre una base productiva; DEV-36 sigue siendo necesario para despliegue/actualización productivos.
 
+## Aceptación en las estaciones
+
+Después de actualizar la BD y ambas aplicaciones, iniciar sesión otra vez y comprobar:
+
+- En una cuenta con aviso pendiente, registrar una revisión interna y consultar su historial
+  desde la segunda estación. La cuenta debe dejar de aparecer en avisos por atender hasta
+  la fecha programada; una pantalla con versión anterior debe pedir actualizar.
+- Registrar un abono de prueba, seleccionar su recibo y comparar sus saldos antes/después con
+  el estado de cuenta. Si después se aplica una devolución, el recibo original debe conservar
+  esos saldos y el estado de cuenta debe mostrar la reducción de deuda correspondiente.
+- Revisar Carta y un tamaño de ticket, guardar el PDF y abrirlo. Cambiar las medidas exige
+  regenerar antes de guardar/imprimir. La impresora física y su escala se comprueban cuando
+  esté disponible el equipo; el smoke automatizado no certifica el hardware.
+
 ## Verificación
 
-Release local y pruebas unitarias/servicios/PDF/UI; suite SQL nueva `--run-collections`,
-regresión real posventa→estado/recibo, y smoke Light/Dark/compacto/vista previa/impresión.
-Resultado definitivo de CI pendiente de registrar.
+- Código validado: `987b98bd798f68113be214d1e2654bcc7a73f853` en `feature/desarrollo`.
+  [CI Windows #155](https://github.com/Gust4av033/GoDental/actions/runs/39904041587)
+  completado correctamente; registro del job `120251791163` consultado.
+- Release con **0 advertencias / 0 errores** y **315 xUnit**, sin fallos ni omitidas.
+  Build Release y las mismas 315 pruebas también pasan localmente con Windows targeting;
+  Linux no ejecuta WPF ni SQL Server.
+- **627 comprobaciones SQL** en bases aisladas: inventario 40, cobranza 31, posventa 56,
+  seguridad/catálogo 51, conteos 67, proveedores 43, clientes 48, MVP 128, códigos 18,
+  recuperación 24, complementos 39, compras 39 e importaciones 43.
+  Incluye avisos concurrentes/idempotentes, fallo de auditoría con rollback, permisos
+  revocados, reaplicación de 001–021 sin cambiar historia y regresión real
+  devolución → reducción de deuda/efectivo → estado de cuenta/recibo original.
+- **897 comprobaciones WPF**: pestañas de Crédito en Light/Dark/compacto, formulario de
+  avisos, PDF real/vista previa de estado y recibo, mismo documento al guardar/imprimir,
+  y bloqueo de documento anterior tras cambiar medidas; sin errores de binding.
+  La prueba de formulario comprueba etiquetas legibles y reintento con el mismo GUID
+  después de perder la respuesta. Se conservan las comprobaciones de módulos anteriores.
+- No se aplicó 021 a la BD personal ni se ejecutó aceptación manual entre las dos PCs.
+  Capturas/impresión simulada no certifican el monitor, DPI o impresora física.
