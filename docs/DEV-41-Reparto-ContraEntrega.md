@@ -26,6 +26,7 @@ El usuario confirmó entrega completa o retorno completo, efectivo o transferenc
   registra Kardex y cierra CANCELADO/RETORNADO. No vende ni cobra cargo de entrega fallida.
   Producto faltante/dañado no se declara retornado: queda INCIDENCIA/custodia hasta resolución
   específica posterior, sin crear existencias ficticias. No se permite segundo despacho del mismo pedido.
+  Una caja con custodia conserva código y almacén aunque aún no tenga turno ni venta.
 - Antes de rendir, posventa de la venta queda bloqueada para impedir reintegrar dinero aún no
   rendido o pendiente de verificación. Tras rendir usa DEV-38 sin cambiar originales. El plazo
   de devolución cuenta desde la confirmación de entrega/venta, no desde despacho.

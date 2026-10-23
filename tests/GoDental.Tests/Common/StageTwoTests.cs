@@ -33,6 +33,12 @@ public sealed class StageTwoTests
             var hidden=data with{CostsVisible=false};Assert.Null(hidden.Cost);Assert.Null(hidden.Margin);Assert.All(ReportService.Group(hidden),x=>Assert.Null(x.Cost));
         }
     }
+    [Fact]public void EqualNamesDoNotMergeDifferentProductCategoryOrCustomerIdentities()
+    {
+        var rows=new[]{new ReportRow{ProductId=1,CategoryId=1,CustomerId=1,Product="Igual",Category="Igual",Party="Igual",Amount=10},new ReportRow{ProductId=2,CategoryId=2,CustomerId=2,Product="Igual",Category="Igual",Party="Igual",Amount=20}};
+        foreach(var group in new[]{ReportGrouping.Product,ReportGrouping.Category,ReportGrouping.Customer})
+            Assert.Equal(2,ReportService.Group(new(new(OperationalReport.Sales,DateTime.Today,DateTime.Today,group),DateTimeOffset.UtcNow,false,rows)).Count);
+    }
     [Fact]public void ReportsBoundPeriodAndRespectLocalMidnight()
     {
         Assert.Throws<ArgumentException>(()=>ReportService.Validate(new(OperationalReport.Sales,new(2025,1,1),new(2026,1,2))));

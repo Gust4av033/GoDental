@@ -20,7 +20,7 @@ public sealed partial class SqlMvpRepository
             return await w.Scalar<long>("INSERT INTO ven.Cajas(Codigo,Nombre,IdAlmacen,Activo) OUTPUT INSERTED.IdCaja VALUES(@Code,@Name,@WarehouseId,@Active);", new { Code=code, r.Name, r.WarehouseId, r.Active });
         var previous = await w.Maybe<CashBoxData>("SELECT IdCaja Id,Codigo Code,Nombre Name,IdAlmacen WarehouseId,Activo Active FROM ven.Cajas WITH(UPDLOCK,HOLDLOCK) WHERE IdCaja=@Id;", r);
         Require(previous is not null, "INVALID_STATE", "La caja no existe.");
-        var inUse = await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.TurnosCaja WITH(HOLDLOCK) WHERE IdCaja=@Id) OR EXISTS(SELECT 1 FROM ven.Ventas WITH(HOLDLOCK) WHERE IdCaja=@Id) THEN 1 ELSE 0 END);", r);
+        var inUse = await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.TurnosCaja WITH(HOLDLOCK) WHERE IdCaja=@Id) OR EXISTS(SELECT 1 FROM ven.Ventas WITH(HOLDLOCK) WHERE IdCaja=@Id) OR EXISTS(SELECT 1 FROM ven.RepartosMvp WITH(HOLDLOCK) WHERE IdCaja=@Id) THEN 1 ELSE 0 END);", r);
         Require(!inUse || previous!.Code == r.Code && previous.WarehouseId == r.WarehouseId, "INVALID_STATE", "Una caja con historial conserva código y almacén.");
         if (!r.Active)
             Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.TurnosCaja WITH(HOLDLOCK) WHERE IdCaja=@Id AND Estado=N'ABIERTO') THEN 1 ELSE 0 END);", r), "INVALID_STATE", "Cierra el turno antes de desactivar la caja.");

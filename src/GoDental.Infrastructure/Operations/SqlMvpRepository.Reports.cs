@@ -38,11 +38,14 @@ public sealed partial class SqlMvpRepository
           UNION ALL
           SELECT v.IdProducto,c.IdCategoria,ISNULL(s.IdCliente,0),r.FechaAplicacion,CONCAT(N'DEV-',r.IdDevolucion),v.DescripcionSnapshot,c.Nombre,
            COALESCE(JSON_VALUE(s.ClienteSnapshotMvp,'$.Name'),cl.NombreRazonSocial,N'Consumidor final'),
-           -d.Cantidad,-d.MontoReintegrado,-ROUND(CASE WHEN v.TotalLinea=0 THEN 0 ELSE d.MontoReintegrado*v.ImpuestoMonto/v.TotalLinea END,2),0,
+           -d.Cantidad,-d.MontoReintegrado,-(ROUND(CASE WHEN v.TotalLinea=0 THEN 0 ELSE (ISNULL(prev.Amount,0)+d.MontoReintegrado)*v.ImpuestoMonto/v.TotalLinea END,2)-ROUND(CASE WHEN v.TotalLinea=0 THEN 0 ELSE ISNULL(prev.Amount,0)*v.ImpuestoMonto/v.TotalLinea END,2)),0,
            CASE WHEN d.ReingresaInventario=1 THEN -d.Cantidad*v.CostoUnitario ELSE 0 END,N'Posventa aplicada'
           FROM ven.DevolucionesVenta r JOIN ven.DevolucionDetalle d ON d.IdDevolucion=r.IdDevolucion JOIN ven.VentaDetalle v ON v.IdDetalle=d.IdVentaDetalle
           JOIN ven.Ventas s ON s.IdVenta=r.IdVenta JOIN inv.Productos p ON p.IdProducto=v.IdProducto JOIN cat.CategoriasProducto c ON c.IdCategoria=p.IdCategoria
-          LEFT JOIN cli.Clientes cl ON cl.IdCliente=s.IdCliente WHERE r.Estado=N'APLICADA' AND r.FechaAplicacion>=@start AND r.FechaAplicacion<@end
+          LEFT JOIN cli.Clientes cl ON cl.IdCliente=s.IdCliente
+          OUTER APPLY(SELECT SUM(dd.MontoReintegrado) Amount FROM ven.DevolucionDetalle dd JOIN ven.DevolucionesVenta rr ON rr.IdDevolucion=dd.IdDevolucion
+           WHERE dd.IdVentaDetalle=d.IdVentaDetalle AND rr.Estado=N'APLICADA' AND (rr.FechaAplicacion<r.FechaAplicacion OR rr.FechaAplicacion=r.FechaAplicacion AND rr.IdDevolucion<r.IdDevolucion))prev
+          WHERE r.Estado=N'APLICADA' AND r.FechaAplicacion>=@start AND r.FechaAplicacion<@end
           UNION ALL
           SELECT 0,0,ISNULL(s.IdCliente,0),r.FechaAplicacion,CONCAT(N'DEV-',r.IdDevolucion),N'Servicio de entrega',N'Entrega',COALESCE(JSON_VALUE(s.ClienteSnapshotMvp,'$.Name'),cl.NombreRazonSocial,N'Consumidor final'),
            0,-(r.MontoReintegro-ISNULL(x.Amount,0)),0,-(r.MontoReintegro-ISNULL(x.Amount,0)),0,N'Anulación de entrega'

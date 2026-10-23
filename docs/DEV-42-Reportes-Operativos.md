@@ -13,6 +13,8 @@ Fuentes: DM-01 §14.1, DB-01 snapshots de venta/costo y recepciones, ARQ-01, SEC
   Entrega se muestra separada de mercadería. No mezclar cobros con ingresos por ventas.
 - Margen bruto de mercadería: total de líneas sin impuesto menos costo histórico vendido,
   menos devolución proporcional de base y más reversión de costo sólo si vuelve inventario.
+  El impuesto devuelto usa diferencias de proporción acumulada: el último parcial consume
+  el remanente exacto de centavos, incluyendo parciales de períodos anteriores.
   Producto dañado/no reingresado conserva costo consumido. No se llama utilidad neta:
   no descuenta gastos generales, sueldos, impuestos de renta ni costos de reparto no registrados.
 - Agrupación por documento/día, producto, categoría y cliente; categoría actual se identifica

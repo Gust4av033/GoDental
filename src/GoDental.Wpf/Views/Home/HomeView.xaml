@@ -13,13 +13,12 @@
     </DockPanel>
     <DockPanel Margin="0,0,0,12">
       <TextBlock DockPanel.Dock="Right" Text="{Binding Home.UpdatedLabel}" Style="{StaticResource MutedText}" FontSize="11" Margin="16,0,0,0" VerticalAlignment="Center"/>
-      <TextBlock Text="Resumen general" Style="{StaticResource SectionHeading}" Margin="0"/>
+      <TextBlock Text="{Binding Home.DailySummary}" ToolTip="{Binding Home.DailySummary}" Style="{StaticResource SectionHeading}" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="0"/>
     </DockPanel>
     <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding Home.IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Actualizando resumen de Inicio"/>
     <ItemsControl ItemsSource="{Binding Home.Metrics}" ItemTemplate="{StaticResource HomeMetricTemplate}" Margin="0,0,-12,0" AutomationProperties.Name="Indicadores de Inicio">
       <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid><UniformGrid.Columns><MultiBinding Converter="{StaticResource HomeColumns}"><Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/><Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/></MultiBinding></UniformGrid.Columns></UniformGrid></ItemsPanelTemplate></ItemsControl.ItemsPanel>
     </ItemsControl>
-    <TextBlock Text="{Binding Home.DailySummary}" Style="{StaticResource SectionHeading}" TextWrapping="Wrap" Margin="0,0,0,12"/>
     <TextBlock Text="{Binding Home.StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
     <StackPanel Margin="0,0,0,8">
       <WrapPanel AutomationProperties.Name="Accesos rápidos de Inicio"><Button Content="Reportes" Style="{StaticResource HomeQuickAction}" Command="{Binding NavigateCommand}" CommandParameter="{x:Static nav:SetupPage.Reports}" Visibility="{Binding CanOpenReports, Converter={StaticResource BoolToVisibility}}"/>

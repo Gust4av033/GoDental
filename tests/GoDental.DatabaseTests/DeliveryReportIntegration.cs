@@ -90,12 +90,29 @@ internal static class DeliveryReportIntegration
         var tr=new SettleDelivery(Guid.NewGuid(),ld.OrderId,lotData.RowVersion,null,lotData.Total,"BANCO-PRUEBA","Referencia verificada en banco");Saved(await delivery.SettleAsync(tr));Saved(await delivery.SettleAsync(tr));
         Check((await cash.ReadAsync(shift))!.Expected==cashBefore,"Rendir transferencia no aumenta efectivo");
         var failedOrder=await Order(2,lotProduct);var fd=await Dispatch(failedOrder);var originalLot=await Stock(lotProduct);Saved(await delivery.DispatchAsync(fd));var failed=(await delivery.ReadAsync(fd.OrderId))!;
+        await c.ExecuteAsync("UPDATE inv.LotesProducto SET Activo=0 WHERE IdProducto=@lotProduct;",new{lotProduct});
+        Check(!(await delivery.CompleteAsync(new(Guid.NewGuid(),fd.OrderId,failed.RowVersion,"ENTREGADO","EFECTIVO",null,failed.Total,false,"Lote bloqueado en ruta"))).IsSuccess,"Lote bloqueado durante reparto no se entrega");
+        await c.ExecuteAsync("UPDATE inv.LotesProducto SET Activo=1 WHERE IdProducto=@lotProduct;",new{lotProduct});
         Saved(await delivery.CompleteAsync(new(Guid.NewGuid(),fd.OrderId,failed.RowVersion,"INCIDENCIA",null,null,0,false,"Cliente ausente; mercadería con repartidor")));failed=(await delivery.ReadAsync(fd.OrderId))!;
         Check(failed.State=="INCIDENCIA"&&await Stock(lotProduct)==originalLot-2,"Entrega fallida conserva custodia hasta recuperación");
         Check(!(await delivery.CompleteAsync(new(Guid.NewGuid(),fd.OrderId,failed.RowVersion,"RETORNADO",null,null,0,false,"Sin recuperar todo"))).IsSuccess,"No fabrica stock con retorno incompleto");
         var ret=new CompleteDelivery(Guid.NewGuid(),fd.OrderId,failed.RowVersion,"RETORNADO",null,null,0,true,"Todo sellado, recuperado y revisado");Saved(await delivery.CompleteAsync(ret));Saved(await delivery.CompleteAsync(ret));
         Check(await Stock(lotProduct)==originalLot&&(await delivery.ReadAsync(fd.OrderId))!.State=="RETORNADO","Retorno completo repone exactamente un lote sin duplicación");
         Check((await orders.ReadAsync(fd.OrderId))!.Order.State=="CANCELADO"&&(await orders.ReadAsync(fd.OrderId))!.Order.SaleId is null,"Retorno fallido no vende ni cobra entrega");
+        var originBox=(int)Saved(await cash.SaveBoxAsync(new(Guid.NewGuid(),0,"COD-SIN-TURNO","Caja sin turno",warehouse,true,"Alta aislada")));
+        var originOrder=await Order(1);var originQuote=await delivery.QuoteAsync(originOrder.Order.Id,originBox);
+        Saved(await delivery.DispatchAsync(new(Guid.NewGuid(),originOrder.Order.Id,originOrder.Order.RowVersion,originBox,originQuote.Token,"Repartidor","Salida sin turno")));
+        Check(!(await cash.SaveBoxAsync(new(Guid.NewGuid(),originBox,"COD-CAMBIO","Caja sin turno",warehouse,true,"Cambiar caja con custodia"))).IsSuccess,"Caja con custodia conserva código y almacén aunque aún no tenga turno ni venta");
+        var originDelivery=(await delivery.ReadAsync(originOrder.Order.Id))!;
+        Saved(await delivery.CompleteAsync(new(Guid.NewGuid(),originDelivery.OrderId,originDelivery.RowVersion,"RETORNADO",null,null,0,true,"Recuperación de prueba")));
+        var midnight=new DateTimeOffset(DateTime.SpecifyKind(today.AddDays(1),DateTimeKind.Unspecified),TimeSpan.FromHours(-6)).ToUniversalTime();
+        await c.ExecuteAsync("UPDATE ven.Ventas SET Fecha=@date WHERE IdVenta=@sale;",new{date=midnight.AddSeconds(-1),sale=lotData.SaleId});
+        var boundaryNumber=(await sales.ReadAsync(lotData.SaleId!.Value))!.Sale.Number;
+        Check((await reports.ReadAsync(new(OperationalReport.Sales,today,today))).Rows.Any(x=>x.Document==boundaryNumber),"Último segundo local pertenece al período inclusivo");
+        await c.ExecuteAsync("UPDATE ven.Ventas SET Fecha=@midnight WHERE IdVenta=@sale;",new{midnight,sale=lotData.SaleId});
+        var transferNumber=(await sales.ReadAsync(lotData.SaleId!.Value))!.Sale.Number;
+        Check(!(await reports.ReadAsync(new(OperationalReport.Sales,today,today))).Rows.Any(x=>x.Document==transferNumber),"Medianoche del día siguiente se excluye sin perder zona horaria");
+        await c.ExecuteAsync("UPDATE ven.Ventas SET Fecha=@date WHERE IdVenta=@sale;",new{date=lotData.Delivered,sale=lotData.SaleId});
         var badOrder=await Order();var bad=await Dispatch(badOrder);var beforeFail=await Stock(product);
         await c.ExecuteAsync("CREATE TRIGGER sis.TR_TestDeliveryAudit ON sis.Bitacora AFTER INSERT AS BEGIN IF EXISTS(SELECT 1 FROM inserted WHERE Accion=N'DESPACHAR_REPARTO') THROW 59998,N'Fallo aislado de auditoría',1; END;");
         var failedWrite=false;try{await delivery.DispatchAsync(bad);}catch(SqlException e)when(e.Number==59998){failedWrite=true;}await c.ExecuteAsync("DROP TRIGGER sis.TR_TestDeliveryAudit;");
@@ -119,6 +136,20 @@ internal static class DeliveryReportIntegration
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM cmp.RecepcionesCompra WHERE IdRecepcion=@rc AND FechaAplicacionMvp IS NOT NULL;",new{rc})==1,"Nueva recepción conserva fecha real de aplicación");
         await c.ExecuteAsync("UPDATE cmp.RecepcionesCompra SET FechaAplicacionMvp=NULL WHERE IdRecepcion=@rc;",new{rc});
         Check((await reports.ReadAsync(Filter(OperationalReport.Purchases))).Rows.Single().Note.Contains("Histórico"),"Recepción antigua indica fecha histórica sin reconstruir aplicación");
+        var centProduct=await Product("COD-CENTAVOS");await c.ExecuteAsync("UPDATE inv.Productos SET PrecioVentaReferencia=0.05 WHERE IdProducto=@centProduct; INSERT INTO inv.ProductoImpuestos(IdProducto,IdImpuesto) SELECT @centProduct,IdImpuesto FROM cat.Impuestos WHERE Codigo=N'IVA';",new{centProduct});
+        var centCart=new SaleCart(box,customer,[new(centProduct,3)]);var centQuote=await sales.QuoteAsync(centCart);
+        var transferMethod=(await sales.PaymentMethodsAsync()).Single(x=>x.Code=="TRANSFERENCIA").Id;
+        var centSale=Saved(await sales.ConfirmAsync(new(Guid.NewGuid(),centCart,centQuote.Token,[new(transferMethod,centQuote.Total,"CENT-PRUEBA")],0,null,"Venta fraccionada para centavos")));
+        var centSaleData=(await sales.ReadAsync(centSale))!;
+        Check(centSaleData.Sale.Tax>0,"Fixture registra impuesto real para comprobar remanentes");
+        for(var n=0;n<3;n++)
+        {
+            var cs=(await sales.ReadAsync(centSale))!;var cr=Saved(await returns.RequestAsync(new(Guid.NewGuid(),centSale,cs.Sale.RowVersion,false,cs.Sale.Number,"Devolución de centavos",[new(cs.Lines[0].Id,1,"SELLADO",true,null,[])])));
+            var detail=(await returns.DetailAsync(centSale,cr))!;
+            Saved(await repo.ResolveReturnAsync(new(Guid.NewGuid(),centSale,cr,detail.Return.RowVersion,true,detail.QuoteToken,shift,"Aplicación de centavos"),identity.Id,identity.Id,identity.WorkstationId,default));
+        }
+        var cents=(await reports.ReadAsync(Filter(OperationalReport.Sales))).Rows.Where(x=>x.ProductId==centProduct).ToArray();
+        Check(cents.Sum(x=>x.Amount)==0&&cents.Sum(x=>x.Tax)==0&&cents.Sum(x=>x.Net)==0,"Devoluciones parciales agotan impuesto y base exactos sin perder centavos");
         var versions=(await orders.ReadAsync(fd.OrderId))!.Order.RowVersion;await DevelopmentDatabase.InstallAsync(database,Path.Combine(root,"database"));
         Check((await orders.ReadAsync(fd.OrderId))!.Order.RowVersion.SequenceEqual(versions)&&(await delivery.ReadAsync(fd.OrderId))!.State=="RETORNADO","Reaplicar 022/023 conserva historia y versiones");
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'INVENTARIO.COSTOS_VER');");
