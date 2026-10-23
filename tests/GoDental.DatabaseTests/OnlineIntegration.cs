@@ -91,6 +91,9 @@ internal static class OnlineIntegration
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'COMERCIAL.EXCLUSIONES');");
         Check((await online.SaveAsync(new ExcludeOnlineContact(Guid.NewGuid(),"EMAIL","nuevo@example.com","Permiso revocado"))).ErrorCode=="FORBIDDEN","SQL revalida permiso de exclusiones revocado pese a caché");
         await DevelopmentDatabase.InstallAsync(database,Path.Combine(root,"database"));Check((await online.SaveAsync(new ExcludeOnlineContact(Guid.NewGuid(),"EMAIL","nuevo@example.com","Sigue revocado"))).ErrorCode=="FORBIDDEN","Reaplicar no concede permiso revocado");
+        await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'COMERCIAL.PROSPECTAR');");
+        var source=new OnlineDiscoveryTestProvider();var searchDenied=false;try{await new OnlineService(repo,session,source).DiscoverAsync("San Salvador");}catch(UnauthorizedAccessException){searchDenied=true;}
+        Check(searchDenied&&source.Calls==0,"Permiso SQL revocado impide consultar la fuente externa pese a sesión cacheada");
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'COMERCIAL.VER');");var denied=false;try{await online.ReadAsync(id);}catch(UnauthorizedAccessException){denied=true;}Check(denied,"Lectura SQL exige permiso actual del módulo");
         Console.WriteLine($"{checks} comprobaciones de Online interno SQL correctas. Base aislada retenida: {database}");
     }

@@ -3,6 +3,7 @@ using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 internal sealed class OnlineUiRepository:IOnlineRepository
 {
+    public bool DiscoveryDenied {get;set;}
     public List<object> Writes{get;}=[];
     public bool LoseResponse{get;set;}
     public Task<MvpPage<OnlineProspectData>>? PendingPreview {get;set;}
@@ -26,5 +27,6 @@ internal sealed class OnlineUiRepository:IOnlineRepository
     public Task<MvpPage<OnlineCampaign>> OnlineCampaignsAsync(string s,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineCampaign>([new(){Id=1,Name="Campaña de prueba",Channel="EMAIL",State="PENDIENTE_APROBACION",SegmentId=1,Segment="Negocios de prueba",CriteriaJson="{}",Content="Hola {nombre}, conoce nuestro catálogo.",Recipients=1,RowVersion=new byte[8]}],1));
     public Task<MvpPage<OnlineRecipient>> OnlineRecipientsAsync(long id,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineRecipient>([new(){Id=1,Name="Negocio de prueba",Contact="negocio@example.com",State="PENDIENTE"}],1));
     public Task<MvpPage<OnlineFollowUp>> OnlineFollowUpsAsync(string s,long? id,MvpFilter f,int u,CancellationToken ct)=>Task.FromResult(new MvpPage<OnlineFollowUp>([new(){Id=1,ProspectId=1,Name="Negocio de prueba",Channel="EMAIL",Result="INTERESADO",Date=DateTimeOffset.UtcNow,NextDate=DateTime.Today.AddDays(2),Note="Solicita información del catálogo, ejemplo sintético.",User="Usuario de prueba"}],1));
+    public Task AuthorizeOnlineDiscoveryAsync(int user,CancellationToken ct)=>DiscoveryDenied?Task.FromException(new UnauthorizedAccessException()):Task.CompletedTask;
     public Task<Result<MvpReceipt>> SaveOnlineAsync(object r,int u,int? station,CancellationToken ct){Writes.Add(r);if(LoseResponse)throw new System.IO.IOException("Respuesta perdida en prueba");return Task.FromResult(Result<MvpReceipt>.Success(new(1,GoDental.Application.Validators.OnlineValidator.Identity(r).Id)));}
 }

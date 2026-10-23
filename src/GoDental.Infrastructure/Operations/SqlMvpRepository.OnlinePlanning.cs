@@ -4,6 +4,7 @@ using GoDental.Application.Validators;
 namespace GoDental.Infrastructure.Operations;
 public sealed partial class SqlMvpRepository
 {
+    public Task AuthorizeOnlineDiscoveryAsync(int user,CancellationToken ct)=>Read(user,[..OnlinePermissions,"COMERCIAL.PROSPECTAR"],_=>Task.FromResult(true),ct);
     private const string SegmentColumns="IdSegmento Id,Nombre Name,Departamento Department,Municipio Municipality,TipoProspecto Type,EstadoProspecto State,TipoFuente Source,Canal Channel,Activo Active,RowVersion";
     private const string TemplateColumns="IdPlantilla Id,Nombre Name,Canal Channel,Contenido Content,Activo Active,RowVersion";
     private const string CampaignSuppressed=OnlineSuppressed+" OR p.Estado IN(N'CONVERTIDO',N'DESCARTADO') OR d.VersionProspecto IS NULL OR d.VersionProspecto<>p.RowVersion";

@@ -1,10 +1,11 @@
+using GoDental.Application.Abstractions.Online;
 using GoDental.Application.Abstractions.Persistence;
 using GoDental.Application.Abstractions.Security;
 using GoDental.Application.Common;
 using GoDental.Application.DTOs;
 using GoDental.Application.Validators;
 namespace GoDental.Application.Services;
-public sealed partial class OnlineService(IOnlineRepository repository,IUserSession session):MvpServiceAccess(session)
+public sealed partial class OnlineService(IOnlineRepository repository,IUserSession session,IOnlineDiscoveryProvider? discovery=null):MvpServiceAccess(session)
 {
     public bool CanRead=>Has("COMERCIAL.VER","CLIENTES.VER");
     public bool CanManage=>CanRead&&Has("COMERCIAL.PROSPECTAR");

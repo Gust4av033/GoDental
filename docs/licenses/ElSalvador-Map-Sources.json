@@ -1,0 +1,121 @@
+{
+  "repository": "https://github.com/whosonfirst-data/whosonfirst-data-admin-sv",
+  "commit": "b8c0ae6f6469102c0dbf33fecdaab0209496ac9b",
+  "sources": [
+    {
+      "path": "data/856/771/39/85677139-alt-quattroshapes.geojson",
+      "blob": "a87e729f46fe0a2d228552a5de766c2045d6fc0d"
+    },
+    {
+      "path": "data/856/771/41/85677141-alt-quattroshapes.geojson",
+      "blob": "215b235ebc0d89265b9a7fa01311a517050bbcb2"
+    },
+    {
+      "path": "data/856/771/45/85677145-alt-quattroshapes.geojson",
+      "blob": "5a20b5f52360380613a703ac971f524d0039487e"
+    },
+    {
+      "path": "data/856/771/51/85677151-alt-quattroshapes.geojson",
+      "blob": "40c15ecb7e5de0d1679315bb935803b06154f1e3"
+    },
+    {
+      "path": "data/856/771/55/85677155-alt-quattroshapes.geojson",
+      "blob": "18ea48bf6175abd647356b918792cc1f2d534a47"
+    },
+    {
+      "path": "data/856/771/59/85677159-alt-quattroshapes.geojson",
+      "blob": "113113887d1911663cfa42f7331ce749c647ae2d"
+    },
+    {
+      "path": "data/856/771/63/85677163-alt-quattroshapes.geojson",
+      "blob": "3948d5d24305f649c80265ad7eb4bb09b6b66eba"
+    },
+    {
+      "path": "data/856/771/69/85677169-alt-quattroshapes.geojson",
+      "blob": "db94d3cd0f16af96496bd9854b7e320c96f23013"
+    },
+    {
+      "path": "data/856/771/73/85677173-alt-quattroshapes.geojson",
+      "blob": "2fe4ac564ebc8827b91fd1551df3d0732decf349"
+    },
+    {
+      "path": "data/856/771/77/85677177-alt-quattroshapes.geojson",
+      "blob": "a411cb5ee4025d970c27d2c8099e1f8a00ee0f07"
+    },
+    {
+      "path": "data/856/771/85/85677185-alt-quattroshapes.geojson",
+      "blob": "29ccfb8fae679f9b952dfa622d2f6e19bcd69921"
+    },
+    {
+      "path": "data/856/771/87/85677187-alt-quattroshapes.geojson",
+      "blob": "55383b843de2494730017a2456473f2705246a69"
+    },
+    {
+      "path": "data/856/771/93/85677193-alt-quattroshapes.geojson",
+      "blob": "ef935ed04265c18f7acf72d5178c9da62f5e772b"
+    },
+    {
+      "path": "data/856/771/95/85677195-alt-quattroshapes.geojson",
+      "blob": "57dd110e57a84b5c79a263897fc53f5807cd4a6d"
+    }
+  ],
+  "nameAndLabelSources": [
+    {
+      "path": "data/856/771/39/85677139.geojson",
+      "blob": "62f3986020f715533dee4e1c477d2901f0ff516f"
+    },
+    {
+      "path": "data/856/771/41/85677141.geojson",
+      "blob": "c417b832348993b70dbaccb40d27420306536450"
+    },
+    {
+      "path": "data/856/771/45/85677145.geojson",
+      "blob": "7157435363d6a6a64c200d0b6f1a166596547283"
+    },
+    {
+      "path": "data/856/771/51/85677151.geojson",
+      "blob": "516f83035c94f640bbbd651cb2ad7b26cb021849"
+    },
+    {
+      "path": "data/856/771/55/85677155.geojson",
+      "blob": "d1e8e1f6fe46aed77e5dd8f26b0e20963da8c443"
+    },
+    {
+      "path": "data/856/771/59/85677159.geojson",
+      "blob": "5ed5a34ee849e1c40da03d0885a2d830e28d9c3d"
+    },
+    {
+      "path": "data/856/771/63/85677163.geojson",
+      "blob": "ea1cd533e1c4053b7a0263937ca9f14e3eedbcc1"
+    },
+    {
+      "path": "data/856/771/69/85677169.geojson",
+      "blob": "3a859d045f20902758c08f4d08bc70c6b786c236"
+    },
+    {
+      "path": "data/856/771/73/85677173.geojson",
+      "blob": "6a7df469f30c44c0b43d83df79cb827f61ee6f5d"
+    },
+    {
+      "path": "data/856/771/77/85677177.geojson",
+      "blob": "78856773a2985f6ffb323539922f2fe7dc478bc1"
+    },
+    {
+      "path": "data/856/771/85/85677185.geojson",
+      "blob": "23bbe088afc9e3df144e0314b969119e6024f461"
+    },
+    {
+      "path": "data/856/771/87/85677187.geojson",
+      "blob": "04b6135330f0cb3f4f9941fa5c588e66e5df8a7e"
+    },
+    {
+      "path": "data/856/771/93/85677193.geojson",
+      "blob": "58a4b80dff1040dbd2e501ae5a5dbded74213a10"
+    },
+    {
+      "path": "data/856/771/95/85677195.geojson",
+      "blob": "fc4b05650f2c4ca39803b67a39f2df9e243d9e8b"
+    }
+  ],
+  "modifications": "Quattroshapes geometries with Who's On First department names and label coordinates. Other properties omitted. Cartographic reference only; no municipality boundaries."
+}

@@ -18,5 +18,6 @@ public interface IOnlineRepository
     Task<MvpPage<OnlineCampaign>> OnlineCampaignsAsync(string search,MvpFilter f,int user,CancellationToken ct);
     Task<MvpPage<OnlineRecipient>> OnlineRecipientsAsync(long campaignId,MvpFilter f,int user,CancellationToken ct);
     Task<MvpPage<OnlineFollowUp>> OnlineFollowUpsAsync(string search,long? prospectId,MvpFilter f,int user,CancellationToken ct);
+    Task AuthorizeOnlineDiscoveryAsync(int user,CancellationToken ct);
     Task<Result<MvpReceipt>> SaveOnlineAsync(object request,int user,int? station,CancellationToken ct);
 }

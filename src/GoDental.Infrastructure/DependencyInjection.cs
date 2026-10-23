@@ -1,3 +1,4 @@
+using GoDental.Application.Abstractions.Online;
 using GoDental.Application.Abstractions.Persistence;
 using GoDental.Application.Abstractions.Configuration;
 using GoDental.Infrastructure.Data;
@@ -42,6 +43,7 @@ public static class DependencyInjection
         services.AddTransient<IFiscalPendingRepository, SqlMvpRepository>();
         services.AddTransient<IFiscalWorkspaceRepository, SqlMvpRepository>();
         services.AddTransient<IOnlineRepository, SqlMvpRepository>();
+        services.AddSingleton<IOnlineDiscoveryProvider>(_ => new GoDental.Infrastructure.Online.OverpassDiscoveryProvider());
         services.AddTransient<IMvpOperationRepository, SqlMvpRepository>();
         services.AddTransient<ICommercialParametersRepository, SqlMvpRepository>();
         services.AddTransient<IPurchaseRepository, SqlMvpRepository>();
