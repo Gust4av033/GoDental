@@ -42,7 +42,9 @@ Fuentes: DM-01 §14.1, DB-01 snapshots de venta/costo y recepciones, ARQ-01, SEC
 Migración 023: añade `cmp.RecepcionesCompra.FechaAplicacionMvp datetimeoffset(0) NULL`;
 las nuevas aplicaciones congelan esa fecha. Recepciones anteriores usan FechaRecepcion y se
 identifican como históricas sin fecha de aplicación disponible, sin rellenarlas.
-No requiere cambiar hechos históricos ni nuevas tablas. Continúa con **2.4**: aceptación real
+No requiere cambiar hechos históricos ni nuevas tablas. La continuación se reordena en
+[DEV-43](DEV-43-Complementos-y-Continuacion.md): complementos existentes, módulos nuevos y
+después **2.4**: aceptación real
 entre estaciones, respaldo/restauración de BD y evidencias, despliegue/actualizaciones de DEV-36,
 identidad SQL de mínimo privilegio y prueba de impresión cuando haya equipo.
 
@@ -83,7 +85,9 @@ históricos se identifican y no se rellenan.
   El smoke automatizado y su impresión simulada no certifican impresora, monitor/DPI o LAN físicos.
 
 
-Sigue **2.4: piloto y preparación de despliegue**: ejecutar aceptación entre las dos PCs sobre
+La prioridad vigente es [DEV-43](DEV-43-Complementos-y-Continuacion.md): completar complementos
+de módulos actuales y luego módulos nuevos. Al final corresponde **2.4: piloto y preparación de
+despliegue**: ejecutar aceptación entre las dos PCs sobre
 una base de prueba, implementar DEV-36 (versiones/migrador/compatibilidad, instalación del motor
 SQL sin SSMS, respaldo/restauración de BD y evidencias), definir identidad SQL y verificar LAN/TLS.
 Fiscal/DTE y Online conservan etapas posteriores; no se habilitan por terminar estos reportes.

@@ -56,7 +56,8 @@ Diseño aditivo e idempotente, sin reconstruir históricos:
   conservar concesiones/denegaciones. Método EFECTIVO_REPARTO exclusivo, no se publica en POS/abonos.
   Total tras 022: 79 tablas / 8 vistas / 18 procedimientos.
 
-Después: DEV-42 (2.3), luego 2.4 piloto/DEV-36 instalación, actualizaciones y respaldos.
+Después de DEV-42 (2.3), la prioridad se revisa en [DEV-43](DEV-43-Complementos-y-Continuacion.md):
+complementos existentes → módulos nuevos → 2.4 piloto/DEV-36 instalación, actualizaciones y respaldos.
 
 ## Uso y límites del incremento
 

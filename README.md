@@ -187,4 +187,6 @@ Validación de 2.0A: [CI Windows #106](https://github.com/Gust4av033/GoDental/ac
 
 Inicio incorpora un panel operativo con indicadores consultados por servicio, actividad reciente y accesos por permiso: [DEV-35 · Inicio](docs/DEV-35-Inicio-Panel-Operativo.md).
 
-[DEV-41](docs/DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](docs/DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). Sigue 2.4, piloto e instalación/actualizaciones/respaldos de DEV-36.
+[DEV-41](docs/DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](docs/DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
+
+Prioridad vigente: [DEV-43](docs/DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.

@@ -68,4 +68,6 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 
 - [DEV-35 · Inicio y panel de operación](DEV-35-Inicio-Panel-Operativo.md): indicadores autorizados, actividad reciente y composición adaptable del Inicio.
 
-[DEV-41](DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). Sigue 2.4, piloto e instalación/actualizaciones/respaldos de DEV-36.
+[DEV-41](DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
+
+Prioridad vigente: [DEV-43](DEV-43-Complementos-y-Continuacion.md): complementos de módulos existentes → módulos nuevos pendientes → instalación/actualizaciones, respaldos y piloto formal entre las dos PCs. Las migraciones se aplican en orden; 023 no incluye 022.

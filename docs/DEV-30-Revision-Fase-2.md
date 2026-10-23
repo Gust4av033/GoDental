@@ -161,3 +161,9 @@ valida `287557d`, Release sin advertencias/errores, **335 xUnit / 687 SQL / 949 
 El recorrido financiero de reparto y los reportes con posventa/costos/centavos están conectados.
 Sigue **2.4**, aceptación manual en dos estaciones e implementación de DEV-36; no se declara
 instalador productivo, restauración real ni LAN/impresora certificados por completar estos módulos.
+
+Aclaración posterior del usuario, 22/10/2026 (El Salvador): [DEV-43](DEV-43-Complementos-y-Continuacion.md)
+sustituye la propuesta de pasar inmediatamente al piloto después de 2.3. Siguen complementos
+de módulos existentes, después módulos nuevos pendientes y, al final, preparación de instalación/
+actualizaciones/respaldos y piloto formal en las dos PCs. «Implementado» no significa que esté
+completo todo DM-01; DEV-43 identifica pendientes, decisiones abiertas y alcance opcional.
