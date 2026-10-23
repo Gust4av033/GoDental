@@ -2,8 +2,14 @@
 
 **Versión vigente:** v0.1
 
+Ampliación versionada de servidor: [DEV-51](../DEV-51-Servidor-Identidad.md) define antes de
+implementar **027_Servidor_Identidad.sql**: seg.SesionesServidor, cuatro procedimientos de
+autenticación/sesiones y rol EXECUTE limitado. Previsto 82 tablas / 8 vistas / 22 procedimientos.
+Es identidad interna GoDental, no el modelo fiscal externo pendiente de contratos.
+
 Propuesta fiscal posterior a 026: [FIS-01 v0.2, modelo y migraciones](../FIS-01/Modelo-y-Migraciones.md).
-Estado PREPARADO, sin DDL 027 aprobado: preservar solicitudes/revisión y tablas históricas;
+Modelo fiscal PREPARADO, sin DDL de emisión aprobado; 027 es identidad interna de DEV-51.
+Preservar solicitudes/revisión y tablas históricas;
 nuevos snapshots/artefactos/intentos/eventos se definirán con contratos oficiales vigentes antes
 de implementar. No reinterpretar ANULADO interno como invalidación MH ni guardar secretos en
 ValorProtegido. El diseño no cambia las 26 migraciones existentes.

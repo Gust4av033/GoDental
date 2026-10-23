@@ -21,6 +21,13 @@ if (args is ["--recovery-journal-probe", var journalFolder, var serializedPendin
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-server-identity"))
+{
+    var db = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db, Path.Combine(root, "database"), includeServerIdentity: false);
+    await ServerIdentityIntegration.RunAsync(new TestConnectionFactory(db), root, db);
+    return;
+}
 if (args.Contains("--run-online"))
 {
     var db="GoDental_Tests_"+Guid.NewGuid().ToString("N");

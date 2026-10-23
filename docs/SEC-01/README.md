@@ -25,6 +25,15 @@ GoDental será multiusuario y multi-PC con roles iniciales Administrador/Vendedo
 
 Las políticas definitivas de expiración, sesiones simultáneas, retención de logs y almacenamiento seguro de secretos se cierran antes de producción.
 
+## Política inicial del servidor · DEV-51
+
+Sesión opaca de 256 bits: máximo ocho horas y veinte minutos sin actividad; una activa por
+usuario/estación. Se revoca al salir, al nuevo acceso del mismo par y al cambiar/desactivar/
+bloquear la credencial o estación. Estado/permisos consultados en SQL por petición. Cambio
+obligatorio de contraseña impide emitir token; se completa por WPF hasta implementar su
+recorrido remoto. Alta de estaciones no disponible por HTTP. Esta política no modifica aún la
+sesión del escritorio; SEC-02 de WPF permanece abierto. Ver [DEV-51](../DEV-51-Servidor-Identidad.md).
+
 
 ## Revisión de implementación y cierre de seguridad
 
