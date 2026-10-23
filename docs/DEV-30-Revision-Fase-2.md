@@ -135,3 +135,8 @@ DEV-39 cerrado: [CI Windows #149](https://github.com/Gust4av033/GoDental/actions
 valida `8c3a54e`: Release 0 advertencias/errores, **300 xUnit / 594 SQL / 872 WPF**.
 Migración 020 preparada; aplicación en la BD personal y comprobación manual entre estaciones
 siguen siendo pasos locales. Continuar por **2.2B**, sin repetir el paréntesis de formularios.
+
+Continuación 22/10/2026 (fecha local El Salvador): **DEV-40**, 2.2B, seguimiento de avisos,
+recibo independiente de abono y estado de cuenta con efectos de posventa. Migración 021:
+77 tablas / 8 vistas / 18 procedimientos; nuevos snapshots no rellenan históricos.
+Sigue 2.2C si se requiere entrega contra cobro, después de definir el flujo, y luego 2.3 reportes.

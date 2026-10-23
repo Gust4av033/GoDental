@@ -51,6 +51,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../Shared/CollectionUiRepository.cs" Link="CollectionUiRepository.cs" />
     <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
   </ItemGroup>
   <ItemGroup>

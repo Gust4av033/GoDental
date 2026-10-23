@@ -137,6 +137,7 @@ public sealed class CreditAccountData
     public string Sale { get; set; } = "";
     public DateTime Due { get; set; }
     public DateTime? NextNotice { get; set; }
+    public bool NoticeDue { get; set; }
     public decimal Original { get; set; }
     public decimal Balance { get; set; }
     public bool Overdue { get; set; }

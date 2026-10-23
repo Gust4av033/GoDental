@@ -164,7 +164,10 @@ internal static class Program
             var customerService = new CustomerService(new CustomerWorkflowRepository(), session);
             var cashMvp = new CashViewModel(cashService, new InventoryService(new VisualInventoryRepository(), session), mvpDialogs, session, operationService, NullLogger<CashViewModel>.Instance);
             var posMvp = new PosViewModel(salesService, cashService, customerService, new OrderService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
-            var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
+            var collectionFiles = new VisualPdfFiles();
+            var collectionRepository = new CollectionUiRepository();
+            var collectionService = new CollectionService(collectionRepository,new CreditDocumentRenderer(Options.Create(new ReceiptPdfOptions())),session);
+            var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance,collectionService,collectionFiles,collectionFiles);
             var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
             var pdfFiles = new VisualPdfFiles();
             var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance,returnService:new SaleReturnService(mvpRepository,session,new FakeIdentityGateway()),returnCash:cashService,returnDialogs:mvpDialogs);
@@ -594,7 +597,7 @@ internal static class Program
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -641,6 +644,9 @@ internal static class Program
                 await posMvp.CalculateCommand.ExecuteAsync(null);
                 await creditMvp.ReloadCommand.ExecuteAsync(null); creditMvp.Selected = creditMvp.Items.First();
                 await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
+                mvpRepository.Account.NoticeDue = true;
+                await creditMvp.LoadNoticesCommand.ExecuteAsync(null); await creditMvp.LoadStatementCommand.ExecuteAsync(null);
+                Check(creditMvp.Notices.Count==1 && creditMvp.Statement is { Difference:0 },"Crédito carga avisos y estado de cuenta con posventa trazable");
                 await ordersMvp.ReloadCommand.ExecuteAsync(null); ordersMvp.Selected = ordersMvp.Items.First();
                 await ordersMvp.DetailCommand.ExecuteAsync(null);
                 await commercialParameters.ReloadCommand.ExecuteAsync(null);
@@ -916,6 +922,21 @@ internal static class Program
                             if (page == SetupPage.Quotations) await historyMvp.OpenQuotationCommand.ExecuteAsync(historyMvp.SelectedQuotation);
                         }
                     }
+                    await creditMvp.LoadNoticesCommand.ExecuteAsync(null); await creditMvp.LoadStatementCommand.ExecuteAsync(null);
+                    await creditMvp.PreviewStatementCommand.ExecuteAsync(null);
+                    Check(creditMvp.ReceiptPreview?.Pages.Count>0 && creditMvp.CanUsePreview,"Estado de cuenta genera PDF real y vista previa con permisos");
+                    var creditPreview=creditMvp.ReceiptPreview;
+                    await creditMvp.ExportCommand.ExecuteAsync(null);await creditMvp.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(collectionFiles.Saved,creditPreview!.Pdf)&&ReferenceEquals(collectionFiles.Printed,creditPreview),"Guardar e imprimir crédito usa el mismo documento revisado");
+                    nav.Navigate(SetupPage.Credit);
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"credito-documento-compacto-{theme}.png"));
+                    creditMvp.CloseReceiptPreviewCommand.Execute(null);creditMvp.SelectedPayment=creditMvp.Payments.FirstOrDefault();
+                    await creditMvp.PreviewPaymentCommand.ExecuteAsync(null);
+                    Check(creditMvp.ReceiptPreview?.Pdf.Length>1000,"Recibo independiente de abono tiene PDF y vista previa");
+                    creditMvp.PrintSettings.Paper="Ticket 80 mm";Check(!creditMvp.CanUsePreview,"Cambiar papel invalida el documento de crédito anterior");
+                    await creditMvp.PreviewPaymentCommand.ExecuteAsync(null);
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"credito-recibo-ticket-{theme}.png"));
+                    creditMvp.CloseReceiptPreviewCommand.Execute(null);creditMvp.PrintSettings.Paper="Carta";
                     Check(creditMvp.IsDetailOpen && ordersMvp.IsDetailOpen && historyMvp.IsSaleDetailOpen && historyMvp.IsQuotationDetailOpen,
                         "Volver al listado y reabrir conserva las fichas de crédito, pedidos, ventas y cotizaciones");
                     mvpDialogs.Render = async form =>
@@ -943,6 +964,7 @@ internal static class Program
                     await posMvp.CheckoutCommand.ExecuteAsync(null);
                     await posMvp.SaveQuotationCommand.ExecuteAsync(null);
                     await posMvp.SelectCustomerCommand.ExecuteAsync(null);
+                    await creditMvp.RegisterNoticeCommand.ExecuteAsync(null);
                     await creditMvp.PayCommand.ExecuteAsync(null);
                     await ordersMvp.CreateCommand.ExecuteAsync(null);
                     await ordersMvp.TransitionCommand.ExecuteAsync(null);

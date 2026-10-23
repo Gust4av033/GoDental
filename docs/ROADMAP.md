@@ -10,7 +10,7 @@ La **segunda etapa** comienza por resolver operaciones inciertas y recuperar pen
 
 CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 WPF** correctas, compilación Release sin advertencias/errores. No confirma instalación/migraciones en la PC del usuario ni prueba manual entre dos estaciones.
 
-El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**. [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
+El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
 ## Secuencia de entrega
 
@@ -21,7 +21,7 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
 | 2.1B · Importaciones y costeo | Implementado y validado automáticamente | DEV-37, migración 018, CI #136: 255 xUnit / 520 SQL / 767 WPF |
 | 2.2A · Posventa | Implementado y validado automáticamente | DEV-38, migración 019, CI #142: 272 xUnit / 574 SQL / 817 WPF |
-| 2.2B · Cobranza y documentos | Siguiente fase funcional | Avisos, recibo de abono y estado de cuenta con posventa trazable |
+| 2.2B · Cobranza y documentos | Implementado; validación en DEV-40 | Avisos, recibo de abono y estado de cuenta con posventa trazable (021) |
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
@@ -92,3 +92,8 @@ con prefijo opcional, máscaras DUI/NIT (incluido DUI como NIT), direcciones de 
 44 municipios con distrito opcional, reutilización de contactos y alta directa de categorías.
 Migración 020 aditiva para distrito y snapshot de pedido; conserva datos históricos sin convertirlos.
 Paréntesis después de 2.2A; la continuación funcional es **2.2B: cobranza y documentos de crédito**.
+
+DEV-40 continúa la secuencia después del paréntesis de formularios: cobranza, recibos y estados
+de cuenta. 021 deja 77 tablas / 8 vistas / 18 procedimientos. Después corresponde **2.2C**
+si se confirma cobro contra entrega (diseño pendiente), y luego **2.3**, reportes. No automatizar
+bloqueos por mora ni enviar avisos externos por inferencia de esta fase.

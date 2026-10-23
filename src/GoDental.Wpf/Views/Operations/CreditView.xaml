@@ -20,7 +20,7 @@
       </DockPanel>
       <DockPanel Margin="0,0,0,16">
         <Button Content="Consultar cuentas" Command="{Binding ReloadCommand}" Style="{StaticResource ActionButton}" DockPanel.Dock="Right"/>
-        <CheckBox Content="Sólo cuentas vencidas" IsChecked="{Binding OverdueOnly}" VerticalAlignment="Center"/>
+        <WrapPanel><CheckBox Content="Sólo cuentas vencidas" IsChecked="{Binding OverdueOnly}" VerticalAlignment="Center" Margin="0,0,16,0"/><CheckBox Content="Avisos por atender" IsChecked="{Binding NoticesDueOnly}" VerticalAlignment="Center"/></WrapPanel>
       </DockPanel>
       <Grid>
         <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="300" AutomationProperties.Name="Items">
@@ -105,7 +105,12 @@
           </StackPanel>
         </Border>
       </UniformGrid>
-      <TabControl>
+      <WrapPanel Margin="0,0,0,16">
+        <Button Content="Registrar aviso" Command="{Binding RegisterNoticeCommand}" IsEnabled="{Binding CanRegisterNotice}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+        <Button Content="Estado de cuenta" Command="{Binding PreviewStatementCommand}" IsEnabled="{Binding CanPrintCredit}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+        <Button Content="Recibo de abono" Command="{Binding PreviewPaymentCommand}" IsEnabled="{Binding CanPrintPayment}" Style="{StaticResource ActionButton}" Margin="0,0,0,8"/>
+      </WrapPanel>
+      <TabControl SelectedIndex="{Binding SelectedDetailTab}">
         <TabItem Header="Cuenta y saldos" Style="{StaticResource CommerceTab}">
           <StackPanel Margin="0,16,0,0">
             <StackPanel Margin="0,0,0,16">
@@ -150,7 +155,7 @@
               <TextBlock Text="Historial de todas sus cuentas. La columna Cuenta identifica cada aplicación." Style="{StaticResource MutedText}"/>
             </StackPanel>
             <Grid>
-              <DataGrid ItemsSource="{Binding Payments}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="270" AutomationProperties.Name="Payments">
+              <DataGrid SelectedItem="{Binding SelectedPayment}" ItemsSource="{Binding Payments}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="270" AutomationProperties.Name="Payments">
                 <DataGrid.Columns>
                   <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="155" ElementStyle="{StaticResource CommerceCell}"/>
                   <DataGridTextColumn Header="Recibo" Binding="{Binding Receipt}" Width="130" ElementStyle="{StaticResource CommerceCell}"/>
@@ -177,6 +182,58 @@
               </StackPanel>
               <TextBlock Text="{Binding HistoryPageLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             </DockPanel>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Avisos de cobranza" Style="{StaticResource CommerceTab}">
+          <StackPanel Margin="0,16,0,0">
+            <TextBlock Text="Gestiones registradas externamente o internas; la aplicación no envía mensajes." Style="{StaticResource MutedText}"/>
+            <Button Content="Consultar avisos" Command="{Binding LoadNoticesCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left" Margin="0,12,0,12"/>
+            <DataGrid ItemsSource="{Binding Notices}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="230" AutomationProperties.Name="Avisos de cobranza">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha" Binding="{Binding LocalDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                <DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="130"/>
+                <DataGridTextColumn Header="Medio" Binding="{Binding Medium}" Width="105"/>
+                <DataGridTextColumn Header="Resultado" Binding="{Binding Outcome}" Width="140"/>
+                <DataGridTextColumn Header="Saldo USD" Binding="{Binding Balance, Converter={StaticResource UsdMoney}}" Width="110"/>
+                <DataGridTextColumn Header="Observación" Binding="{Binding Reason}" Width="250"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding NoticePageLabel}" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
+            <WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousNoticeCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Avisos anteriores"/><Button Content="›" Command="{Binding NextNoticeCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Avisos siguientes"/></WrapPanel>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Estado de cuenta" Style="{StaticResource CommerceTab}">
+          <StackPanel Margin="0,16,0,0">
+            <Button Content="Consultar estado" Command="{Binding LoadStatementCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+            <TextBlock Text="{Binding Statement.RecordedBalance, Converter={StaticResource UsdMoney}, StringFormat=Saldo registrado: {0}}" Style="{StaticResource SectionHeading}"/>
+            <TextBlock Text="{Binding Statement.Difference, Converter={StaticResource UsdMoney}, StringFormat=Diferencia con movimientos: {0}}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+            <DataGrid ItemsSource="{Binding StatementMovements}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="230" AutomationProperties.Name="Movimientos de crédito">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha" Binding="{Binding LocalDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                <DataGridTextColumn Header="Movimiento" Binding="{Binding Type}" Width="120"/>
+                <DataGridTextColumn Header="Documento" Binding="{Binding Document}" Width="150"/>
+                <DataGridTextColumn Header="Cargo USD" Binding="{Binding Charge, Converter={StaticResource UsdMoney}}" Width="100"/>
+                <DataGridTextColumn Header="Reducción USD" Binding="{Binding Reduction, Converter={StaticResource UsdMoney}}" Width="110"/>
+                <DataGridTextColumn Header="Saldo USD" Binding="{Binding RunningBalance, Converter={StaticResource UsdMoney}}" Width="110"/>
+                <DataGridTextColumn Header="Efectivo reintegrado" Binding="{Binding CashRefund, Converter={StaticResource UsdMoney}}" Width="140"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding StatementPageLabel}" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
+            <WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousStatementCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Movimientos anteriores"/><Button Content="›" Command="{Binding NextStatementCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Movimientos siguientes"/></WrapPanel>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Impresión" Style="{StaticResource CommerceTab}">
+          <StackPanel Margin="0,16,0,0">
+            <TextBlock Text="Recibo de abono o estado de cuenta · documentos internos" Style="{StaticResource SectionHeading}"/>
+            <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,8,0,12">
+              <StackPanel Width="160" Margin="0,0,8,0"><TextBlock Text="Papel" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding PrintSettings.Papers}" SelectedItem="{Binding PrintSettings.Paper}" AutomationProperties.Name="Papel de crédito"/></StackPanel>
+              <StackPanel Width="90" Margin="0,0,8,0"><TextBlock Text="Ancho mm" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Width, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Ancho del documento de crédito"/></StackPanel>
+              <StackPanel Width="90" Margin="0,0,8,0"><TextBlock Text="Alto mm" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Height, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Alto del documento de crédito"/></StackPanel>
+              <StackPanel Width="90"><TextBlock Text="Margen mm" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding PrintSettings.Margin, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Margen del documento de crédito"/></StackPanel>
+            </WrapPanel>
+            <TextBlock Text="Genera el estado desde los botones de la cuenta o selecciona un abono y genera su recibo. Al cambiar medidas, actualiza la vista previa. Usa tamaño real (100%)." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+            <Button Content="Ver estado PDF" Command="{Binding PreviewStatementCommand}" IsEnabled="{Binding CanPrintCredit}" Style="{StaticResource ActionButton}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+            <local:ReceiptPreviewView Visibility="{Binding IsReceiptPreviewOpen, Converter={StaticResource BoolToVisibility}}"/>
           </StackPanel>
         </TabItem>
       </TabControl>

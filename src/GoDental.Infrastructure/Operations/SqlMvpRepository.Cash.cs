@@ -58,7 +58,23 @@ public sealed partial class SqlMvpRepository
         await w.Execute("EXEC ven.sp_CerrarTurnoCaja @IdTurno=@ShiftId,@IdUsuario=@userId,@EfectivoContado=@Counted,@Observaciones=@Reason;", new { r.ShiftId, userId, r.Counted, r.Reason });
         return r.ShiftId;
     }, ct);
-    public Task<MvpPage<CreditAccountData>> AccountsAsync(bool overdueOnly, MvpFilter f, int userId, CancellationToken ct) => Read(userId, ["CLIENTES.VER", "VENTAS.VER"], w => Page<CreditAccountData>(w, "ven.CuentasPorCobrar a JOIN cli.Clientes c ON c.IdCliente=a.IdCliente JOIN ven.Ventas v ON v.IdVenta=a.IdVenta", "a.IdCuenta Id,a.IdCliente CustomerId,c.NombreRazonSocial Customer,v.NumeroVenta Sale,a.FechaVencimiento Due,a.ProximoAviso NextNotice,a.MontoOriginal Original,a.Saldo Balance,a.Estado State,a.RowVersion,CONVERT(bit,CASE WHEN a.Saldo>0 AND a.FechaVencimiento<CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time') AND a.Estado<>N'CASTIGADA' THEN 1 ELSE 0 END) Overdue", "(@overdueOnly=0 OR (a.Saldo>0 AND a.FechaVencimiento<CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time') AND a.Estado<>N'CASTIGADA'))", "a.FechaVencimiento,a.IdCuenta", new { overdueOnly, Offset = checked((f.Page - 1) * f.PageSize), f.PageSize }), ct);
+    public Task<MvpPage<CreditAccountData>> AccountsAsync(bool overdueOnly, MvpFilter f, int userId, CancellationToken ct) => CreditAccountsAsync(overdueOnly, false, f, userId, ct);
+    public Task<MvpPage<CreditAccountData>> DueAccountsAsync(bool overdueOnly, MvpFilter f, int userId, CancellationToken ct) => CreditAccountsAsync(overdueOnly, true, f, userId, ct);
+    private Task<MvpPage<CreditAccountData>> CreditAccountsAsync(bool overdueOnly, bool noticesOnly, MvpFilter f, int userId, CancellationToken ct) => Read(userId, ["CLIENTES.VER", "VENTAS.VER"], w => Page<CreditAccountData>(w,
+        """
+        ven.CuentasPorCobrar a JOIN cli.Clientes c ON c.IdCliente=a.IdCliente JOIN ven.Ventas v ON v.IdVenta=a.IdVenta
+        OUTER APPLY(SELECT COALESCE(a.ProximoAviso,DATEADD(day,COALESCE(c.IntervaloAvisoDias,
+         (SELECT TRY_CONVERT(int,Valor) FROM sis.Configuracion WHERE Clave=N'Credito.IntervaloAvisoDias'),5),a.FechaEmision)) NextDate) n
+        OUTER APPLY(SELECT CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time') Today) d
+        """,
+        """
+        a.IdCuenta Id,a.IdCliente CustomerId,c.NombreRazonSocial Customer,v.NumeroVenta Sale,a.FechaVencimiento Due,n.NextDate NextNotice,
+        a.MontoOriginal Original,a.Saldo Balance,a.Estado State,a.RowVersion,
+        CONVERT(bit,CASE WHEN a.Saldo>0 AND a.FechaVencimiento<d.Today AND a.Estado<>N'CASTIGADA' THEN 1 ELSE 0 END) Overdue,
+        CONVERT(bit,CASE WHEN a.Saldo>0 AND a.Estado IN(N'PENDIENTE',N'PARCIAL',N'VENCIDA') AND n.NextDate<=d.Today THEN 1 ELSE 0 END) NoticeDue
+        """,
+        "(@overdueOnly=0 OR (a.Saldo>0 AND a.FechaVencimiento<d.Today AND a.Estado<>N'CASTIGADA')) AND (@noticesOnly=0 OR (a.Saldo>0 AND a.Estado IN(N'PENDIENTE',N'PARCIAL',N'VENCIDA') AND n.NextDate<=d.Today))",
+        "a.FechaVencimiento,a.IdCuenta", new { overdueOnly, noticesOnly, Offset = checked((f.Page - 1) * f.PageSize), f.PageSize }), ct);
     public Task<Result<MvpReceipt>> PayAccountAsync(AccountPayment r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "ABONO_CLIENTE", r, userId, workstationId, ["CAJA.VER", "CLIENTES.VER", "VENTAS.VER", "CAJA.MOVIMIENTO"], async w =>
     {
         Check(r);
@@ -77,7 +93,20 @@ public sealed partial class SqlMvpRepository
         await w.Execute("SELECT IdVenta FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@saleId;",new{saleId});
         var version = await w.Scalar<byte[]?>("SELECT RowVersion FROM ven.CuentasPorCobrar WITH(UPDLOCK,HOLDLOCK) WHERE IdCuenta=@AccountId;", r);
         Version(version, r.ExpectedVersion);
+        var balanceBefore = await w.Scalar<decimal>("SELECT Saldo FROM ven.CuentasPorCobrar WHERE IdCuenta=@AccountId;", r);
         var id = await w.Scalar<long>("EXEC ven.sp_RegistrarAbono @IdCuenta=@AccountId,@IdMetodoPago=@MethodId,@Monto=@Amount,@IdUsuario=@userId,@Referencia=@Reference,@IdTurno=@ShiftId;", new { r.AccountId, r.MethodId, r.Amount, userId, r.Reference, r.ShiftId });
+        await w.Execute("""
+            UPDATE a SET ProximoAviso=CASE WHEN a.Saldo=0 THEN NULL ELSE
+              DATEADD(day,COALESCE(c.IntervaloAvisoDias,(SELECT TRY_CONVERT(int,Valor) FROM sis.Configuracion WHERE Clave=N'Credito.IntervaloAvisoDias'),5),
+              CONVERT(date,SYSDATETIMEOFFSET() AT TIME ZONE 'Central America Standard Time')) END
+            FROM ven.CuentasPorCobrar a JOIN cli.Clientes c ON c.IdCliente=a.IdCliente WHERE a.IdCuenta=@AccountId;
+            """, r);
+        await w.Execute("""
+            UPDATE p SET ClienteNombreSnapshot=c.NombreRazonSocial,MetodoSnapshot=@methodName,UsuarioSnapshot=u.NombreCompleto,
+             SaldoAntes=@balanceBefore,SaldoDespues=a.Saldo
+            FROM ven.AbonosCliente p JOIN ven.CuentasPorCobrar a ON a.IdCuenta=p.IdCuenta JOIN cli.Clientes c ON c.IdCliente=a.IdCliente
+            JOIN seg.Usuarios u ON u.IdUsuario=p.RegistradoPor WHERE p.IdAbono=@id;
+            """, new { id, methodName = method.Name, balanceBefore });
         if (method.AffectsCash)
             await TouchShift(w, r.ShiftId!.Value);
         return id;

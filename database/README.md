@@ -112,3 +112,12 @@ la dirección seleccionada. No convierte municipios históricos, no rellena dato
 contratos JSON recuperables; 76 tablas / 8 vistas / 18 procedimientos. Reaplicable.
 Aplicar después de 019, con respaldo y ambas estaciones cerradas/actualizadas.
 El catálogo territorial se distribuye con la aplicación, sin tablas fiscales nuevas.
+
+## Cobranza y documentos · 021
+
+`021_Cobranza_Documentos.sql` (DEV-40) añade historial inmutable de avisos `ven.AvisosCobranza`,
+con cuenta/fecha/usuario/estación/saldo/gestión y unicidad por cuenta/día, y snapshots opcionales de
+nombres y saldo antes/después en abonos nuevos. Históricos siguen NULL, sin reconstruir datos.
+Añade CLIENTES.COBRANZA_GESTIONAR y concesión Administrador sólo cuando falta. **77/8/18**.
+Aplicar después de 020 y actualizar/reiniciar ambas estaciones. Se conserva el JSON de solicitudes
+recuperables anteriores; la nueva solicitud AVISO_COBRANZA usa el mismo diario/ledger transaccional.

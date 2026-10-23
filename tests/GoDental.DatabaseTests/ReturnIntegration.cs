@@ -87,6 +87,11 @@ internal static class ReturnIntegration
         Saved(await Resolve(await Resolution(creditSale.Sale.Id,cr.Id)));account=(await cash.AccountsAsync(false,new())).Items.Single(x=>x.Id==account.Id);
         Check(account.Balance==0&&account.Original==30&&account.State=="PAGADA"&&(await sales.ReadAsync(creditSale.Sale.Id))!.Sale.Pending==0,"CxC salda sin reescribir monto original ni abono");
         Check(await c.ExecuteScalarAsync<decimal>("SELECT SUM(Monto) FROM ven.AbonosCliente WHERE IdCuenta=@Id;",account)==25,"El abono original permanece íntegro");
+        var statement=(await repo.StatementAsync(customer,false,identity.Id,default))!;
+        Check(statement.RecordedBalance==0&&statement.Difference==0&&statement.Movements.Single(x=>x.Type=="DEVOLUCION").Delta==-5&&statement.Movements.Single(x=>x.Type=="DEVOLUCION").CashRefund==5,"Estado de cuenta refleja deuda reducida y efectivo informativo sin doble descuento");
+        var paidId=await c.ExecuteScalarAsync<long>("SELECT IdAbono FROM ven.AbonosCliente WHERE IdCuenta=@Id;",account);
+        var creditReceipt=(await repo.PaymentReceiptAsync(paidId,identity.Id,default))!;
+        Check(creditReceipt.BalanceBefore==30&&creditReceipt.BalanceAfter==5&&creditReceipt.CurrentBalance==0,"Posventa no reescribe saldos históricos del recibo de abono");
         var raceCredit=await Sale(customer:customer,onCredit:true);var rc=await Request(raceCredit.Sale.Id);var rcAction=await Resolution(raceCredit.Sale.Id,rc.Id);
         var rcAccount=(await cash.AccountsAsync(false,new())).Items.Single(x=>x.Sale==raceCredit.Sale.Number);var payment=new AccountPayment(Guid.NewGuid(),rcAccount.Id,rcAccount.RowVersion,effective,10,null,shift,"Abono concurrente");
         var competition=await Task.WhenAll(Resolve(rcAction),cash.PayAsync(payment));Check(competition.Any(x=>x.IsSuccess),"Abono y devolución concurrentes se serializan sin inversión de bloqueos");

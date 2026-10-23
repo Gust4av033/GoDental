@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddTransient<ICustomerRepository, SqlCustomerRepository>();
         services.AddTransient<ISalesRepository, SqlMvpRepository>();
         services.AddTransient<ICashRepository, SqlMvpRepository>();
+        services.AddTransient<ICollectionRepository, SqlMvpRepository>();
+        services.AddTransient<ICreditDocumentRenderer, CreditDocumentRenderer>();
         services.AddTransient<IOrderRepository, SqlMvpRepository>();
         services.AddTransient<IInventorySetupRepository, SqlMvpRepository>();
         services.AddTransient<IFiscalPendingRepository, SqlMvpRepository>();

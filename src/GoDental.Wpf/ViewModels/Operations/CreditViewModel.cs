@@ -46,14 +46,14 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
     });
     public override bool CanRead => Has("CLIENTES.VER", "VENTAS.VER");
     public bool CanPay => CanEdit && Has("CAJA.VER", "CAJA.MOVIMIENTO") && Selected?.Balance > 0;
-    partial void OnSelectedChanged(CreditAccountData? value) { Payments.Clear(); Balance = null; historyCustomer = null; HasLoadedHistory = false; if (value is null) IsDetailOpen = false; PermissionsChanged(); }
-    protected override void PermissionsChanged() => OnPropertyChanged(nameof(CanPay));
-    public CreditViewModel(CashService cash, SalesService sales, CustomerService customers, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<CreditViewModel> logger) : base(session, operations, logger) { this.cash = cash; this.sales = sales; this.customers = customers; this.dialogs = dialogs; }
-    protected override void Reset() { IsDetailOpen = false; HasLoadedHistory = false; Items.Clear(); Payments.Clear(); Selected = null; Page = HistoryPage = 1; Total = HistoryTotal = 0; Balance = null; }
+    partial void OnSelectedChanged(CreditAccountData? value) { ResetCollectionDetail(); Payments.Clear(); Balance = null; historyCustomer = null; HasLoadedHistory = false; if (value is null) IsDetailOpen = false; PermissionsChanged(); }
+    protected override void PermissionsChanged() { OnPropertyChanged(nameof(CanPay)); CollectionPermissionsChanged(); }
+    public CreditViewModel(CashService cash, SalesService sales, CustomerService customers, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<CreditViewModel> logger, CollectionService? collections = null, IPdfFileService? files = null, IPdfPrintService? printer = null) : base(session, operations, logger) { this.cash = cash; this.sales = sales; this.customers = customers; this.dialogs = dialogs; this.collections = collections; this.files = files; this.printer = printer; PrintSettings.PropertyChanged += (_, _) => OnPropertyChanged(nameof(CanUsePreview)); }
+    protected override void Reset() { ResetCollectionDetail(); IsDetailOpen = false; HasLoadedHistory = false; Items.Clear(); Payments.Clear(); Selected = null; Page = HistoryPage = 1; Total = HistoryTotal = 0; Balance = null; }
     [RelayCommand] private Task ReloadAsync() { Page = 1; return ReadAsync(LoadCoreAsync); }
     private async Task LoadCoreAsync(long r)
     {
-        var result = await cash.AccountsAsync(OverdueOnly, new(Page)); if (!Current(r)) return;
+        var result = NoticesDueOnly && collections is not null ? await collections.DueAccountsAsync(OverdueOnly, new(Page)) : await cash.AccountsAsync(OverdueOnly, new(Page)); if (!Current(r)) return;
         var wasDetailOpen = IsDetailOpen; var id = Selected?.Id; Items.Clear(); foreach (var a in result.Items) Items.Add(a); Selected = Items.FirstOrDefault(a => a.Id == id); Total = result.Total; IsDetailOpen = wasDetailOpen && Selected is not null;
         StatusMessage = Total == 0 ? "No hay cuentas para este filtro." : $"{Total} cuentas · Página {Page}. Selecciona una cuenta para registrar un abono.";
     }
@@ -83,10 +83,11 @@ public sealed partial class CreditViewModel : MvpWorkspaceViewModel
                 if (method.AffectsCash) shift = await cash.CurrentAsync(f.Choice<CashBoxData>("box").Id);
                 if (!Current(revision)) return;
                 var id = Guid.NewGuid(); var request = new AccountPayment(id, account.Id, account.RowVersion.ToArray(), method.Id, f.Number("amount"), f.Text("reference"), shift?.Id, f.Text("reason"));
-                await Operation.StartAsync(request, id, q => cash.PayAsync(q), async _ =>
+                await Operation.StartAsync(request, id, q => cash.PayAsync(q), async receipt =>
                 {
                     // The opening read has already finished by the time a recovery command runs.
                     var current = Session.Revision; await LoadCoreAsync(current); historyCustomer = account.CustomerId; HistoryPage = 1; await HistoryCoreAsync(current);
+                    if (Current(current)) SelectedPayment = Payments.FirstOrDefault(p => p.Id == receipt.Id);
                     if (shift is not null) await cash.ReadAsync(shift.Id);
                 });
             }) { Description = $"Venta {account.Sale} · Saldo leído {account.Balance:N2}. La cuenta se vuelve a validar al registrar." };
