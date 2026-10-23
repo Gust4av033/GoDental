@@ -183,6 +183,7 @@
                   </DataGridTemplateColumn>
                   <DataGridTextColumn Header="Departamento" Binding="{Binding Department}" Width="110"/>
                   <DataGridTextColumn Header="Municipio" Binding="{Binding Municipality}" Width="110"/>
+                  <DataGridTextColumn Header="Distrito" Binding="{Binding District}" Width="110"/>
                   <DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="120"/>
                   <DataGridTemplateColumn Header="Principal" Width="75">
                     <DataGridTemplateColumn.CellTemplate>

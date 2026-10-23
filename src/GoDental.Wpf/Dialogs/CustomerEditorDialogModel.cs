@@ -1,5 +1,7 @@
 using System.Globalization;
 using GoDental.Application.DTOs;
+using GoDental.Application.Validators;
+using GoDental.Domain.Rules;
 namespace GoDental.Wpf.Dialogs;
 
 public enum CustomerEditorKind { General, Contact, Address, Credit }
@@ -13,8 +15,8 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
     public bool IsCredit => Kind == CustomerEditorKind.Credit;
     public override string Title => Kind switch { CustomerEditorKind.General => "Ficha del cliente", CustomerEditorKind.Contact => "Contacto del cliente", CustomerEditorKind.Address => "Dirección del cliente", _ => "Configurar crédito del cliente" };
     public CustomerData Customer { get; }
-    public CustomerContactData Contact { get; }
-    public CustomerAddressData Address { get; }
+    public CustomerContactData Contact { get; private set; }
+    public CustomerAddressData Address { get; private set; }
     public CustomerCreditData Credit { get; }
     public IReadOnlyList<CatalogOption> Types { get; }
     public IReadOnlyList<CatalogOption> PriceLists { get; }
@@ -27,11 +29,19 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
     public string NoticeDays { get; set; }
     public CustomerEditorDialogModel(CustomerEditorKind kind, CustomerData customer, CustomerContactData? contact,
         CustomerAddressData? address, CustomerCreditData? credit, CustomerCatalogs catalogs,
-        Func<OperationDialogModel, Task<bool>> save) : base(save)
+        Func<OperationDialogModel, Task<bool>> save, IReadOnlyList<CustomerContactData>? contacts = null) : base(save)
     {
+        originalCustomer = customer with { };
         Kind = kind; Customer = customer with { RowVersion = customer.RowVersion.ToArray() };
         if (kind == CustomerEditorKind.General && customer.Id == 0) Reason = "Alta de cliente";
         Contact = (contact ?? new()) with { }; Address = (address ?? new()) with { }; Credit = (credit ?? new()) with { };
+        Location = new(Address); originalAddress = Address with { };
+        NitDigits = IdentityFormat.Digits(Customer.Nit).Length == 9 ? 9 : 14;
+        var sources = (contacts ?? []).Select(c => new ContactSource($"Registrado: {c.Name}" + (c.Primary ? " · principal" : ""), c with { })).ToList();
+        if (contact is not null && sources.All(x => x.Contact.Id != contact.Id)) sources.Add(new($"Registrado: {contact.Name}", contact with { }));
+        var general = new ContactSource("Usar datos generales del cliente (nuevo contacto)", new() { Name = customer.Name, Phone = customer.Phone, WhatsApp = customer.WhatsApp, Email = customer.Email });
+        sources.Add(general); sources.Add(new("Otro contacto (nuevo)", new())); ContactSources = sources;
+        SelectedContactSource = contact is not null ? sources.First(x => x.Contact.Id == contact.Id) : sources.FirstOrDefault(x => x.Contact.Id > 0 && x.Contact.Active && x.Contact.Primary) ?? sources.FirstOrDefault(x => x.Contact.Id > 0 && x.Contact.Active) ?? general;
         var types = catalogs.Types.ToList();
         if (Customer.TypeId > 0 && types.All(t => t.Id != Customer.TypeId)) types.Add(new() { Id = Customer.TypeId, Name = Customer.Type });
         Types = types;
@@ -43,6 +53,43 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
         Days = Credit.Days?.ToString(CultureInfo.InvariantCulture) ?? "";
         NoticeDays = Credit.NoticeDays?.ToString(CultureInfo.InvariantCulture) ?? "";
     }
+    private readonly CustomerData originalCustomer;
+    private CustomerContactData? originalContact;
+    private readonly CustomerAddressData originalAddress;
+    public AddressSelectionModel Location { get; }
+    public IReadOnlyList<int> NitFormats { get; } = [14, 9];
+    private int nitDigits;
+    public int NitDigits { get => nitDigits; set => SetProperty(ref nitDigits, value); }
+    public IReadOnlyList<ContactSource> ContactSources { get; }
+    private ContactSource? selectedContactSource;
+    public ContactSource? SelectedContactSource
+    {
+        get => selectedContactSource;
+        set
+        {
+            if (value is null || !SetProperty(ref selectedContactSource, value)) return;
+            Contact = value.Contact with { }; originalContact = Contact.Id == 0 ? null : Contact with { };
+            OnPropertyChanged(nameof(Contact)); OnPropertyChanged(nameof(ContactSourceHint));
+        }
+    }
+    public string ContactSourceHint => Contact.Id > 0 ? "Se actualizará este contacto registrado; conserva su código. Elige Otro contacto para agregar uno." : "Se agregará otro contacto sin sustituir los registrados. Los datos opcionales pueden quedar vacíos.";
+    public bool PrepareFields()
+    {
+        string? error = null;
+        if (IsGeneral)
+        {
+            if (Customer.Nit != originalCustomer.Nit && !string.IsNullOrWhiteSpace(Customer.Nit) && IdentityFormat.Digits(Customer.Nit).Length != NitDigits) error = $"El formato de NIT seleccionado requiere {NitDigits} dígitos.";
+            error ??= DirectoryFields.CustomerError(Customer, Customer.Id == 0 ? null : originalCustomer);
+        }
+        if (IsContact) error = DirectoryFields.ContactError(Contact, originalContact);
+        if (IsAddress) { Address = Location.Apply(Address); error = DirectoryFields.AddressError(Address, Address.Id == 0 ? null : originalAddress); }
+        if (error is null) return true;
+        StatusMessage = error; return false;
+    }
+    public sealed record ContactSource(string Name, CustomerContactData Contact);
+    public string? DuiText { get => DisplayIdentity(Customer.Dui, false); set => Customer.Dui = value; }
+    public string? NitText { get => DisplayIdentity(Customer.Nit, true); set => Customer.Nit = value; }
+    private static string? DisplayIdentity(string? value, bool nit) => IdentityFormat.IsValid(value, nit) ? IdentityFormat.Normalize(value, nit) : value;
     public CustomerData BuildCustomer() => Customer with { PriceListId = PriceListId == 0 ? null : PriceListId };
     public CustomerCreditData? BuildCredit()
     {

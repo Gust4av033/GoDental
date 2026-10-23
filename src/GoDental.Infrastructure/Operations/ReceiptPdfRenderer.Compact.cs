@@ -35,7 +35,7 @@ public sealed partial class ReceiptPdfRenderer
                     c.Item().Text($"Pedido #{delivery.Id}").Bold();
                     Optional(c, delivery.Contact, "Recibe: "); Optional(c, delivery.Phone, "Tel. ");
                     Optional(c, delivery.Address);
-                    Optional(c, string.Join(", ", new[] { delivery.Municipality, delivery.Department }.Where(x => !string.IsNullOrWhiteSpace(x))));
+                    Optional(c, string.Join(", ", new[] { delivery.District, delivery.Municipality, delivery.Department }.Where(x => !string.IsNullOrWhiteSpace(x))));
                     Optional(c, delivery.Reference, "Referencia: "); Optional(c, delivery.Responsible, "Responsable: ");
                     Optional(c, delivery.Scheduled?.ToString("dd/MM/yyyy", Usd), "Prevista: ");
                 }

@@ -6,6 +6,7 @@ namespace GoDental.Application.Validators;
 
 public static class SupplierValidator
 {
+    public static string? ValidateFields(SupplierData supplier, SupplierData? previous) => DirectoryFields.SupplierError(supplier, previous);
     public static string? Validate(SupplierChange request)
     {
         var s = request.Supplier;

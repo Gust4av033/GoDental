@@ -96,7 +96,13 @@ public sealed partial class CommercialHistoryViewModel
         await ReadAsync(async r=>
         {
             var sale=await sales.ReadAsync(saleId);if(!Current(r)||SelectedSale?.Id!=saleId)return;
-            ClearPreview();if(PrintSettings.DocumentKind==ReceiptKind.Delivery&&sale?.Sale.State is "ANULADA" or "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL")PrintSettings.Kind="Venta";SaleDetail=sale;if(sale is not null)await LoadReturnsAsync(r,saleId,returnId:returnId);
+            ClearPreview();if(PrintSettings.DocumentKind==ReceiptKind.Delivery&&sale?.Sale.State is "ANULADA" or "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL")PrintSettings.Kind="Venta";
+            if(sale is not null)
+            {
+                var index=Sales.ToList().FindIndex(x=>x.Id==saleId);if(index>=0)Sales[index]=sale.Sale;
+                SelectedSale=sale.Sale;
+            }
+            SaleDetail=sale;if(sale is not null)await LoadReturnsAsync(r,saleId,returnId:returnId);
         });
     }
     private async Task ReturnDialogAsync(MvpFormModel form){if(returnDialogs is null)return;IsEditing=true;try{await returnDialogs.ShowAsync(form);}finally{IsEditing=false;}}

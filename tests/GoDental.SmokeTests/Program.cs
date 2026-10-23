@@ -151,9 +151,9 @@ internal static class Program
             var commercialParameters = new CommercialParametersViewModel(new CommercialParametersService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<CommercialParametersViewModel>.Instance);
             var visualInventory = new VisualInventoryRepository();
             var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock, barcodes);
-            var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
             var productRepository = new FakeProductRepository();
             var productService = new ProductService(productRepository, session);
+            var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance, productService);
             var dialogHarness = new FakeDialogService();
             var editorFactory = new ProductEditorFactory(productService, session, NullLogger<ProductEditorViewModel>.Instance);
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
@@ -308,6 +308,11 @@ internal static class Program
                     await categories.ReloadAsync();
                     using (var categoryModel = new CategoryDialogModel(categories))
                         await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-dialogo-{theme}.png"));
+                    categories.NewCategoryCommand.Execute(null);
+                    Check(categories.IsCreating && categories.CanCreate, "Administrar categorías permite alta directa con permiso");
+                    using (var categoryModel = new CategoryDialogModel(categories))
+                        await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-nueva-{theme}.png"));
+                    categories.DiscardChangesCommand.Execute(null);
                     await users.ReloadCommand.ExecuteAsync(null);
                     var createView = new UserCreateDialogView { DataContext = users };
                     using (var createModel = new UserDialogModel(users, true, createView.ReadPasswords, createView.ClearPasswords, createView.HasPasswords))
@@ -562,6 +567,13 @@ internal static class Program
                     {
                         var form = new CustomerEditorDialogModel(kind, shell.Customers.Detail!, shell.Customers.Contacts.First(), shell.Customers.Addresses.First(), shell.Customers.Credit, new([new() { Id = 1, Name = "Clínica" }], []), _ => Task.FromResult(false));
                         await RenderDialogAsync(form, new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = form }, Path.Combine(output, $"cliente-{kind}-{theme}.png"));
+                        if (kind == CustomerEditorKind.General)
+                        {
+                            var fiscalView = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = form };
+                            fiscalView.Measure(new Size(1000,700)); fiscalView.Arrange(new Rect(0,0,1000,700)); fiscalView.UpdateLayout();
+                            FindChildren<TabControl>(fiscalView).Single().SelectedIndex = 1;
+                            await RenderDialogAsync(form, fiscalView, Path.Combine(output, $"cliente-fiscal-{theme}.png"));
+                        }
                     }
                 }
                 session.Begin(new(4, "lector_clientes", "Lector clientes", 1, [], ["CLIENTES.VER"], false));
@@ -1030,6 +1042,40 @@ internal static class Program
                 typeSelector.GetBindingExpression(System.Windows.Controls.Primitives.Selector.SelectedValueProperty)!.UpdateSource();
                 Check(!Validation.GetHasError(typeSelector) && customerForm.BuildCustomer().TypeId == 2,
                     "Cambiar el tipo de cliente no produce error de conversión ni borde rojo");
+                customerEditorTabs.SelectedIndex = 1; customerEditor.UpdateLayout();
+                var duiInput = FindChildren<TextBox>(customerEditor).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "DUI");
+                void PasteIdentity(TextBox target, string value)
+                {
+                    var data = new DataObject(DataFormats.UnicodeText, value);
+                    target.RaiseEvent(new DataObjectPastingEventArgs(data, false, DataFormats.UnicodeText) { RoutedEvent = DataObject.PastingEvent });
+                }
+                PasteIdentity(duiInput, "123456789");
+                Check(duiInput.Text == "12345678-9" && customerForm.Customer.Dui == "12345678-9", "Pegado de DUI aplica máscara y conserva binding");
+                PasteIdentity(duiInput, "1"); Check(duiInput.Text == "12345678-9", "Captura de DUI rechaza dígitos sobrantes");
+                duiInput.SelectAll(); PasteIdentity(duiInput, "987654321");
+                Check(duiInput.Text == "98765432-1", "Seleccionar todo permite reemplazar un DUI completo");
+                var nitInput = FindChildren<TextBox>(customerEditor).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "NIT");
+                PasteIdentity(nitInput, "06140101001010");
+                Check(nitInput.Text == "0614-010100-101-0", "NIT de catorce dígitos se presenta con sus tres guiones");
+                var nitSelector = FindChildren<ComboBox>(customerEditor).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Dígitos del NIT");
+                nitSelector.SelectedItem = 9; customerEditor.UpdateLayout();
+                nitInput.SelectAll(); PasteIdentity(nitInput, "123456789");
+                Check(nitInput.Text == "12345678-9" && customerForm.NitDigits == 9, "Cambiar a DUI como NIT actualiza la máscara sin errores de binding");
+                var locationForm = new CustomerEditorDialogModel(CustomerEditorKind.Address, new(), null, null, null, new([], []), _ => Task.FromResult(false));
+                var locationView = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = locationForm };
+                locationView.Measure(new Size(1000,700)); locationView.Arrange(new Rect(0,0,1000,700)); locationView.UpdateLayout();
+                ComboBox LocationBox(string name) => FindChildren<ComboBox>(locationView).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == name);
+                LocationBox("Departamento").SelectedItem = "San Salvador"; locationView.UpdateLayout();
+                LocationBox("Municipio").SelectedItem = "San Salvador Centro"; locationView.UpdateLayout();
+                LocationBox("Distrito").SelectedItem = "Mejicanos"; locationView.UpdateLayout();
+                Check(locationForm.PrepareFields() && locationForm.Address.District == "Mejicanos", "Selectores reales guardan departamento, municipio actual y distrito opcional");
+                LocationBox("Departamento").SelectedItem = "La Libertad"; locationView.UpdateLayout();
+                Check(locationForm.Location.Municipality == AddressSelectionModel.Unspecified && locationForm.Location.District == AddressSelectionModel.Unspecified,
+                    "Cambiar departamento limpia municipio y distrito en la vista");
+                var phoneControl = new GoDental.Wpf.Controls.PhoneInput { Region = "CN", Text = "13800138000" };
+                Check(phoneControl.Hint.Contains("China") && !phoneControl.Text.StartsWith("+"), "Teléfono nacional chino se reconoce sin forzar prefijo");
+                phoneControl.Text = "+50370000001";
+                Check(phoneControl.Hint.Contains("El Salvador"), "Código explícito identifica teléfono de otro país");
                 session.Clear();
                 var loginWindow = new LoginWindow(shell) { ShowActivated = false };
                 var workspaceWindow = new MainWindow(shell) { ShowActivated = false };

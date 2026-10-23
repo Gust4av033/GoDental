@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/CategoriesViewModel.cs" Link="Ui/CategoriesViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/HomeViewModel.cs" Link="Ui/HomeViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/WorkflowViewModel.cs" Link="Ui/WorkflowViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/InventoryCountsViewModel.cs" Link="Ui/InventoryCountsViewModel.cs" />
@@ -20,6 +21,7 @@
     <Compile Include="../../src/GoDental.Wpf/Dialogs/SupplierEditorDialogModel.cs" Link="Ui/SupplierEditorDialogModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/CustomersViewModel.cs" Link="Ui/CustomersViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/ICustomerDialogService.cs" Link="Ui/ICustomerDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/AddressSelectionModel.cs" Link="Ui/AddressSelectionModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/CustomerEditorDialogModel.cs" Link="Ui/CustomerEditorDialogModel.cs" />
     <Compile Include="../Shared/CustomerWorkflowRepository.cs" Link="Ui/CustomerWorkflowRepository.cs" />
     <Compile Include="../Shared/WorkflowRepositories.cs" Link="Ui/WorkflowRepositories.cs" />

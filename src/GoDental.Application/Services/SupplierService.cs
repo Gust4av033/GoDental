@@ -36,8 +36,8 @@ public sealed class SupplierService(ISupplierRepository repository, IUserSession
         if (SupplierValidator.Validate(request) is { } error) return Invalid(error);
         var s = request.Supplier;
         return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Supplier = s with
-            { Code = s.Code?.Trim() ?? "", Name = s.Name.Trim(), Country = Optional(s.Country), Address = Optional(s.Address),
-                Email = Optional(s.Email), Phone = Optional(s.Phone), Website = Optional(s.Website) } }, UserId, WorkstationId, ct);
+            { Code = s.Code?.Trim() ?? "", Name = s.Name.Trim(), Country = s.Id == 0 ? Optional(s.Country) : s.Country, Address = Optional(s.Address),
+                Email = Optional(s.Email), Phone = s.Id == 0 ? Optional(s.Phone) : s.Phone, Website = Optional(s.Website) } }, UserId, WorkstationId, ct);
     }
     public Task<Result<int>> SaveContactAsync(SupplierContactChange request, CancellationToken ct = default)
     {
@@ -45,7 +45,7 @@ public sealed class SupplierService(ISupplierRepository repository, IUserSession
         if (SupplierValidator.Validate(request) is { } error) return Invalid(error);
         var c = request.Contact;
         return repository.SaveContactAsync(request with { Reason = request.Reason.Trim(), Contact = c with
-            { Name = c.Name.Trim(), Position = Optional(c.Position), Email = Optional(c.Email), Phone = Optional(c.Phone) } }, UserId, WorkstationId, ct);
+            { Name = c.Name.Trim(), Position = Optional(c.Position), Email = Optional(c.Email), Phone = c.Id == 0 ? Optional(c.Phone) : c.Phone } }, UserId, WorkstationId, ct);
     }
     public Task<Result<int>> SaveProductAsync(SupplierProductChange request, CancellationToken ct = default)
     {

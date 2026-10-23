@@ -29,19 +29,19 @@ public sealed class CustomerService(ICustomerRepository repository, IUserSession
         if (!(request.Customer?.Id == 0 ? CanCreate : CanEdit)) return Denied();
         if (CustomerValidator.Validate(request) is { } error) return Invalid(error);
         var c = request.Customer!;
-        return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Customer = c with { Code = c.Code?.Trim() ?? "", Name = c.Name.Trim(), CommercialName = Optional(c.CommercialName), Nit = Optional(c.Nit), Nrc = Optional(c.Nrc), Dui = Optional(c.Dui), BusinessActivity = Optional(c.BusinessActivity), Phone = Optional(c.Phone), WhatsApp = Optional(c.WhatsApp), Email = Optional(c.Email), RowVersion = c.RowVersion.ToArray() } }, UserId, WorkstationId, ct);
+        return repository.SaveAsync(request with { Reason = request.Reason.Trim(), Customer = c with { Code = c.Code?.Trim() ?? "", Name = c.Name.Trim(), CommercialName = Optional(c.CommercialName), Nit = c.Id == 0 ? Optional(c.Nit) : c.Nit, Nrc = Optional(c.Nrc), Dui = c.Id == 0 ? Optional(c.Dui) : c.Dui, BusinessActivity = Optional(c.BusinessActivity), Phone = c.Id == 0 ? Optional(c.Phone) : c.Phone, WhatsApp = c.Id == 0 ? Optional(c.WhatsApp) : c.WhatsApp, Email = Optional(c.Email), RowVersion = c.RowVersion.ToArray() } }, UserId, WorkstationId, ct);
     }
     public Task<Result<long>> SaveContactAsync(CustomerContactChange request, CancellationToken ct = default)
     {
         if (!CanEdit) return Denied(); if (CustomerValidator.Validate(request) is { } error) return Invalid(error);
         var c = request.Contact;
-        return repository.SaveContactAsync(request with { Reason = request.Reason.Trim(), ExpectedVersion = request.ExpectedVersion.ToArray(), Contact = c with { Name = c.Name.Trim(), Position = Optional(c.Position), Phone = Optional(c.Phone), WhatsApp = Optional(c.WhatsApp), Email = Optional(c.Email) } }, UserId, WorkstationId, ct);
+        return repository.SaveContactAsync(request with { Reason = request.Reason.Trim(), ExpectedVersion = request.ExpectedVersion.ToArray(), Contact = c with { Name = c.Name.Trim(), Position = Optional(c.Position), Phone = c.Id == 0 ? Optional(c.Phone) : c.Phone, WhatsApp = c.Id == 0 ? Optional(c.WhatsApp) : c.WhatsApp, Email = Optional(c.Email) } }, UserId, WorkstationId, ct);
     }
     public Task<Result<long>> SaveAddressAsync(CustomerAddressChange request, CancellationToken ct = default)
     {
         if (!CanEdit) return Denied(); if (CustomerValidator.Validate(request) is { } error) return Invalid(error);
         var a = request.Address;
-        return repository.SaveAddressAsync(request with { Reason = request.Reason.Trim(), ExpectedVersion = request.ExpectedVersion.ToArray(), Address = a with { Address = a.Address.Trim(), Department = Optional(a.Department), Municipality = Optional(a.Municipality), Reference = Optional(a.Reference) } }, UserId, WorkstationId, ct);
+        return repository.SaveAddressAsync(request with { Reason = request.Reason.Trim(), ExpectedVersion = request.ExpectedVersion.ToArray(), Address = a with { Address = a.Address.Trim(), Department = a.Id == 0 ? Optional(a.Department) : a.Department, Municipality = a.Id == 0 ? Optional(a.Municipality) : a.Municipality, District = a.Id == 0 ? Optional(a.District) : a.District, Reference = Optional(a.Reference) } }, UserId, WorkstationId, ct);
     }
     public Task<Result<long>> SaveCreditAsync(CustomerCreditChange request, CancellationToken ct = default)
     {

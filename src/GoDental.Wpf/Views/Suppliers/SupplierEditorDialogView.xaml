@@ -1,4 +1,4 @@
-<UserControl x:Class="GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shared="clr-namespace:GoDental.Wpf.Views.Shared">
+<UserControl x:Class="GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:GoDental.Wpf.Controls" xmlns:shared="clr-namespace:GoDental.Wpf.Views.Shared">
   <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Directory.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
   <StackPanel IsEnabled="{Binding CanEdit}">
     <TextBlock Text="{Binding Supplier.Name}" Style="{StaticResource SectionHeading}" Margin="0,0,0,4"/>
@@ -10,7 +10,7 @@
             <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Código automático" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding CodeDisplay, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="Código"/></StackPanel>
             <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Nombre comercial / Razón social" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nombre"/></StackPanel>
           </UniformGrid>
-          <StackPanel Margin="0,0,0,16"><TextBlock Text="País" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Country, UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="País"/></StackPanel>
+          <StackPanel Margin="0,0,0,16"><TextBlock Text="País" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Countries}" SelectedItem="{Binding SelectedCountry}" DisplayMemberPath="Name" IsTextSearchEnabled="True" AutomationProperties.Name="País"/></StackPanel>
           <StackPanel><TextBlock Text="Dirección" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Address, UpdateSourceTrigger=PropertyChanged}" MaxLength="400" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="66" AutomationProperties.Name="Dirección"/></StackPanel>
         </StackPanel>
       </TabItem>
@@ -18,7 +18,7 @@
         <StackPanel Style="{StaticResource DirectorySection}">
           <UniformGrid Columns="2" Margin="0,0,-16,0">
             <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Correo electrónico" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Email, UpdateSourceTrigger=PropertyChanged}" MaxLength="254" AutomationProperties.Name="Correo"/></StackPanel>
-            <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Phone, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" AutomationProperties.Name="Teléfono"/></StackPanel>
+            <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/><controls:PhoneInput Text="{Binding Supplier.Phone, UpdateSourceTrigger=PropertyChanged}" Region="{Binding PhoneRegion}" MaxLength="40" Label="Teléfono"/></StackPanel>
           </UniformGrid>
           <StackPanel Margin="0,0,0,16"><TextBlock Text="Sitio web" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Supplier.Website, UpdateSourceTrigger=PropertyChanged}" MaxLength="300" AutomationProperties.Name="Sitio web"/><TextBlock Text="Dirección completa con https:// o http://." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0"/></StackPanel>
           <CheckBox Content="Proveedor activo" IsChecked="{Binding Supplier.Active}"/>
@@ -32,7 +32,7 @@
         <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Nombre" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Contact.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" AutomationProperties.Name="Nombre del contacto"/></StackPanel>
         <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Cargo" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Contact.Position, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Cargo"/></StackPanel>
         <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Correo electrónico" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Contact.Email, UpdateSourceTrigger=PropertyChanged}" MaxLength="254" AutomationProperties.Name="Correo del contacto"/></StackPanel>
-        <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Contact.Phone, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" AutomationProperties.Name="Teléfono del contacto"/></StackPanel>
+        <StackPanel Style="{StaticResource DirectoryEditorField}"><TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/><controls:PhoneInput Text="{Binding Contact.Phone, UpdateSourceTrigger=PropertyChanged}" Region="{Binding PhoneRegion}" MaxLength="40" Label="Teléfono del contacto"/></StackPanel>
       </UniformGrid>
       <WrapPanel><CheckBox Content="Contacto principal" IsChecked="{Binding Contact.Primary}" Margin="0,0,24,8"/><CheckBox Content="Contacto activo" IsChecked="{Binding Contact.Active}" Margin="0,0,0,8"/></WrapPanel>
       <Border Style="{StaticResource DirectoryNote}"><TextBlock Text="Para cambiar el contacto principal, desmarca primero el actual, guarda y después selecciona el nuevo." Style="{StaticResource MutedText}"/></Border>

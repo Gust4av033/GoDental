@@ -103,6 +103,7 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
         {
             if (!Current(revision)) return false;
             var editor = (SupplierEditorDialogModel)form;
+            if (!editor.PrepareFields()) return false;
             var product = kind == SupplierEditorKind.Product ? editor.BuildProduct() : null;
             if (kind == SupplierEditorKind.Product && product is null) return false;
             bool saved = false; bool answered = false;

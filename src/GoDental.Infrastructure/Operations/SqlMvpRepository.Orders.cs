@@ -5,7 +5,7 @@ using GoDental.Domain.Rules;
 namespace GoDental.Infrastructure.Operations;
 public sealed partial class SqlMvpRepository
 {
-    private const string OrderColumns = "p.IdPedido Id,p.IdCliente CustomerId,p.ClienteSnapshot Customer,p.Contacto Contact,p.Telefono Phone,p.Direccion Address,p.Departamento Department,p.Municipio Municipality,p.Referencia Reference,p.FechaPrevista Scheduled,p.Responsable Responsible,p.IdResponsable ResponsibleUserId,p.CargoEntrega DeliveryCharge,p.IdVenta SaleId,p.Estado State,p.FechaEntrega Delivered,p.EntregadoPor DeliveredBy,p.RowVersion,v.SaldoPendiente Pending,CASE WHEN v.IdVenta IS NULL THEN N'SIN_VENTA' WHEN v.SaldoPendiente=0 THEN N'PAGADO' WHEN v.SaldoPendiente<v.Total THEN N'PARCIAL' ELSE N'PENDIENTE' END PaymentState";
+    private const string OrderColumns = "p.IdPedido Id,p.IdCliente CustomerId,p.ClienteSnapshot Customer,p.Contacto Contact,p.Telefono Phone,p.Direccion Address,p.Departamento Department,p.Municipio Municipality,p.Distrito District,p.Referencia Reference,p.FechaPrevista Scheduled,p.Responsable Responsible,p.IdResponsable ResponsibleUserId,p.CargoEntrega DeliveryCharge,p.IdVenta SaleId,p.Estado State,p.FechaEntrega Delivered,p.EntregadoPor DeliveredBy,p.RowVersion,v.SaldoPendiente Pending,CASE WHEN v.IdVenta IS NULL THEN N'SIN_VENTA' WHEN v.SaldoPendiente=0 THEN N'PAGADO' WHEN v.SaldoPendiente<v.Total THEN N'PARCIAL' ELSE N'PENDIENTE' END PaymentState";
     public Task<Result<MvpReceipt>> PlaceOrderAsync(PlaceOrder r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CREAR_PEDIDO", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
@@ -22,12 +22,12 @@ public sealed partial class SqlMvpRepository
         };
         if (r.CustomerAddressId is { } addressId)
         {
-            var saved = await w.Maybe<CustomerAddressData>("SELECT Direccion Address,Departamento Department,Municipio Municipality,Referencia Reference FROM cli.ClienteDirecciones WITH(HOLDLOCK) WHERE IdDireccion=@addressId AND IdCliente=@CustomerId AND Activo=1;", new { addressId, r.CustomerId });
+            var saved = await w.Maybe<CustomerAddressData>("SELECT Direccion Address,Departamento Department,Municipio Municipality,Distrito District,Referencia Reference FROM cli.ClienteDirecciones WITH(HOLDLOCK) WHERE IdDireccion=@addressId AND IdCliente=@CustomerId AND Activo=1;", new { addressId, r.CustomerId });
             Require(saved is not null, "VALIDATION", "La dirección no pertenece al cliente o está inactiva.");
             address = saved!;
         }
 
-        var id = await w.Scalar<long>("INSERT INTO ven.PedidosMvp(IdCliente,ClienteSnapshot,Contacto,Telefono,Direccion,Departamento,Municipio,Referencia,FechaPrevista,Responsable,IdResponsable,CargoEntrega) OUTPUT INSERTED.IdPedido VALUES(@CustomerId,@customer,@Contact,@Phone,@Address,@Department,@Municipality,@Reference,@Scheduled,@Responsible,@ResponsibleUserId,@DeliveryCharge);", new { r.CustomerId, customer, Contact = r.Contact.Trim(), Phone = r.Phone.Trim(), Address = address.Address.Trim(), address.Department, address.Municipality, address.Reference, r.Scheduled, r.Responsible, r.ResponsibleUserId, r.DeliveryCharge });
+        var id = await w.Scalar<long>("INSERT INTO ven.PedidosMvp(IdCliente,ClienteSnapshot,Contacto,Telefono,Direccion,Departamento,Municipio,Distrito,Referencia,FechaPrevista,Responsable,IdResponsable,CargoEntrega) OUTPUT INSERTED.IdPedido VALUES(@CustomerId,@customer,@Contact,@Phone,@Address,@Department,@Municipality,@District,@Reference,@Scheduled,@Responsible,@ResponsibleUserId,@DeliveryCharge);", new { r.CustomerId, customer, Contact = r.Contact.Trim(), Phone = r.Phone.Trim(), Address = address.Address.Trim(), address.Department, address.Municipality, address.District, address.Reference, r.Scheduled, r.Responsible, r.ResponsibleUserId, r.DeliveryCharge });
         foreach (var line in r.Items.OrderBy(i => i.ProductId))
         {
             var changed = await w.Execute("INSERT INTO ven.PedidoLineasMvp(IdPedido,IdProducto,SKU,Nombre,Cantidad) SELECT @id,p.IdProducto,p.SKU,p.Nombre,@Quantity FROM inv.Productos p WITH(HOLDLOCK) JOIN cat.UnidadesMedida u WITH(HOLDLOCK) ON u.IdUnidadMedida=p.IdUnidadMedida WHERE p.IdProducto=@ProductId AND p.Activo=1 AND p.ControlaSerie=0 AND (u.PermiteDecimales=1 OR FLOOR(@Quantity)=@Quantity);", new { id, line.ProductId, line.Quantity });

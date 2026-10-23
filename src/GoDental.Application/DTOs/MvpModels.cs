@@ -159,6 +159,7 @@ public sealed class OrderData
     public string Address { get; set; } = "";
     public string? Department { get; set; }
     public string? Municipality { get; set; }
+    public string? District { get; set; }
     public string? Reference { get; set; }
     public DateTime? Scheduled { get; set; }
     public string? Responsible { get; set; }

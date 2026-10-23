@@ -30,6 +30,13 @@ internal static class SupplierIntegration
         Check((await service.SaveAsync(new(new() { Code = "SUP-001", Name = "Duplicado" }, "Duplicado"))).ErrorCode == "DUPLICATE_CODE", "Rechaza código duplicado");
         Check((await service.SearchAsync(new("China"))).Total == 1 && (await service.SearchAsync(new("%"))).Total == 0, "Búsqueda literal por país sin comodines inesperados");
         Check((await service.SearchAsync(new("' OR 1=1 --"))).Total == 0, "La búsqueda se parametriza");
+        Check((await service.SaveAsync(new(new() { Name = "País inválido", Country = "País inexistente" }, "Catálogo"))).ErrorCode == "VALIDATION", "Proveedor nuevo requiere país de catálogo si lo especifica");
+        Check((await service.SaveAsync(new(snapshot.Supplier with { Phone = "13800138000" }, "Teléfono chino nacional"))).IsSuccess, "País China permite teléfono sin prefijo");
+        snapshot = await Read();
+        Check(!snapshot.Supplier.Phone!.StartsWith("+"), "No fuerza el código internacional del proveedor");
+        Check((await service.SaveAsync(new(snapshot.Supplier with { Phone = "+50370000001" }, "Número de otro país"))).IsSuccess, "Prefijo explícito distingue región del teléfono de país comercial");
+        snapshot = await Read();
+        Check(snapshot.Supplier.Country == "China" && snapshot.Supplier.Phone!.StartsWith("+503"), "Detección telefónica no cambia país comercial");
         var original = snapshot.Supplier;
         Check((await service.SaveContactAsync(new(id, original.RowVersion, new() { Name = "Contacto principal", Email = "compras@example.test", Primary = true }, "Primer contacto"))).IsSuccess,
             "Crea contacto principal");
@@ -40,8 +47,8 @@ internal static class SupplierIntegration
             "Rechaza dos contactos principales activos");
         Check((await Read()).Supplier.RowVersion.SequenceEqual(snapshot.Supplier.RowVersion), "Solicitud rechazada no modifica versión ni datos");
         var contact = snapshot.Contacts.Single();
-        var request = new SupplierContactChange(id, snapshot.Supplier.RowVersion, contact with { Phone = "123" }, "Cambio concurrente");
-        var concurrent = await Task.WhenAll(service.SaveContactAsync(request), service.SaveContactAsync(request with { Contact = contact with { Phone = "456" } }));
+        var request = new SupplierContactChange(id, snapshot.Supplier.RowVersion, contact with { Phone = "13800138000" }, "Cambio concurrente");
+        var concurrent = await Task.WhenAll(service.SaveContactAsync(request), service.SaveContactAsync(request with { Contact = contact with { Phone = "13900139000" } }));
         Check(concurrent.Count(r => r.IsSuccess) == 1 && concurrent.Count(r => r.ErrorCode == "CONCURRENCY_CONFLICT") == 1, "Dos estaciones editan contacto sin perder cambios");
         snapshot = await Read(); contact = snapshot.Contacts.Single();
         Check((await service.SaveContactAsync(new(id, snapshot.Supplier.RowVersion, contact with { Active = false, Primary = false }, "Baja de contacto"))).IsSuccess, "Desactiva contacto sin eliminarlo");

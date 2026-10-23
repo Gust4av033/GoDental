@@ -62,12 +62,12 @@ internal static class MvpIntegration
         var transfer = methods.Single(m => m.Code == "TRANSFERENCIA").Id;
         Check(methods.Any(m => m.Code == "TARJETA" && m.RequiresReference && !m.AffectsCash), "Ofrece tarjeta manual con referencia y sin afectar efectivo");
         var type = checked((short)(await customers.CatalogsAsync()).Types.First().Id);
-        var createdCustomer = await customers.SaveAsync(new(new() { Code = "MVP-CLIENTE", Name = "Cliente aislado", TypeId = type, Nit = "MVP-NIT", Nrc = "MVP-NRC" }, "Alta cliente"));
+        var createdCustomer = await customers.SaveAsync(new(new() { Code = "MVP-CLIENTE", Name = "Cliente aislado", TypeId = type, Nit = "0614-010100-102-0", Nrc = "MVP-NRC" }, "Alta cliente"));
         Check(createdCustomer.IsSuccess, "Crea cliente para ventas y entregas"); var customerId = createdCustomer.Value;
         var customer = (await customers.ReadAsync(customerId))!;
         Check((await customers.SaveCreditAsync(new(customerId, customer.Customer.RowVersion, new() { Enabled = true, Limit = 1000, Days = 15, NoticeDays = 5 }, "Crédito de prueba"))).IsSuccess, "Habilita crédito mediante contrato administrativo");
         customer = (await customers.ReadAsync(customerId))!;
-        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, new() { Type = "ENTREGA", Address = "Dirección original", Reference = "Portón" }, "Dirección de entrega"))).IsSuccess, "Registra dirección de entrega");
+        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, new() { Type = "ENTREGA", Address = "Dirección original", Department = "San Salvador", Municipality = "San Salvador Centro", District = "San Salvador", Reference = "Portón" }, "Dirección de entrega"))).IsSuccess, "Registra dirección de entrega");
         customer = (await customers.ReadAsync(customerId))!;
         var address = customer.Addresses.Single();
 
@@ -203,8 +203,8 @@ internal static class MvpIntegration
         var orderId = Saved(await orders.PlaceAsync(placed));
         var order = (await orders.ReadAsync(orderId))!;
         customer = (await customers.ReadAsync(customerId))!;
-        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, address with { Address = "Dirección nueva" }, "Cambio de domicilio"))).IsSuccess, "Edita dirección de cliente después de crear pedido");
-        Check((await orders.ReadAsync(orderId))!.Order.Address == "Dirección original", "Pedido conserva snapshot de entrega");
+        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, address with { Address = "Dirección nueva", District = "Mejicanos" }, "Cambio de domicilio"))).IsSuccess, "Edita dirección de cliente después de crear pedido");
+        Check((await orders.ReadAsync(orderId))!.Order is { Address: "Dirección original", District: "San Salvador" }, "Pedido conserva snapshot de entrega y distrito después de editar cliente");
         Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "ENTREGADO", "Salto inválido"))).IsSuccess, "Pedido recibido no pasa directamente a entregado");
         Saved(await orders.LinkSaleAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, saleId, "Vincular venta correspondiente")));
         Check((await sales.ReadAsync(saleId))!.Delivery is { Id: var linkedOrder, Address: "Dirección original" } && linkedOrder == orderId,
@@ -339,7 +339,7 @@ internal static class MvpIntegration
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Bitacora WHERE DatosDespuesJson LIKE '%'+@password+'%';", new { password }) == 0, "Reautenticación no persiste contraseña en auditoría");
         var salesBeforeInstall = await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;");
         await DevelopmentDatabase.InstallAsync(database, Path.Combine(root, "database"));
-        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;") == salesBeforeInstall && (await orders.ReadAsync(orderId))!.Order.State == "ENTREGADO", "Reaplicar migraciones conserva ventas y entregas");
+        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;") == salesBeforeInstall && (await orders.ReadAsync(orderId))!.Order is { State: "ENTREGADO", District: "San Salvador" }, "Reaplicar migraciones 001–020 conserva ventas, entregas y distrito");
         Console.WriteLine($"{checks} comprobaciones MVP SQL correctas. Base aislada retenida: {database}");
     }
 }

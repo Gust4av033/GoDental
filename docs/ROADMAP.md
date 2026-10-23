@@ -84,3 +84,11 @@ Correcciones de usabilidad autorizadas por separado e implementadas sobre servic
 Bloqueo por mora y excepciones; costos posteriores al cierre y recepción con costos incompletos (no admitidos en 2.1B); series de productos; conciliación del registro manual y terminal de tarjeta; ubicación compartida de evidencias; datos fiscales; DTE; canales Online autorizados; instancia SQL y red; retención y restauración de backups; plantillas restantes. La precedencia y acumulación básica ya están resueltas en VEN-01A; combos y reglas no soportadas siguen como ampliación. La marca del usuario ya se incorporó en DEV-28.
 
 DB-01 v0.1 documenta la baseline de 72 tablas, ya materializada en 001–008. Las ampliaciones aprobadas en DEV-17/20 y 012–014 dejan 76 tablas, 8 vistas y 18 procedimientos. Cada cambio posterior requiere diseño/migración aditiva; tener DDL no implica implementar un módulo ni aprobar decisiones comerciales pendientes.
+
+## Complemento de captura · 23/10/2026
+
+[DEV-39](DEV-39-Formularios-Datos.md) añade país de proveedor, teléfono nacional/internacional
+con prefijo opcional, máscaras DUI/NIT (incluido DUI como NIT), direcciones de 14 departamentos /
+44 municipios con distrito opcional, reutilización de contactos y alta directa de categorías.
+Migración 020 aditiva para distrito y snapshot de pedido; conserva datos históricos sin convertirlos.
+Paréntesis después de 2.2A; la continuación funcional es **2.2B: cobranza y documentos de crédito**.

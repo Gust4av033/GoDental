@@ -11,5 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="libphonenumber-csharp" />
   </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Localization/Data/*.json" WithCulture="false" LogicalName="GoDental.Application.Localization.Data.%(Filename)%(Extension)" /></ItemGroup>
 </Project>

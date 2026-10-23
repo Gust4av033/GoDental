@@ -103,3 +103,12 @@ no calcula reversos para filas antiguas ni mueve stock/caja al instalarse. Conse
 Aplicar después de 018, con respaldo y todas las estaciones cerradas/actualizadas. El instalador
 de desarrollo incluye 019 para bases marcadas; no sustituye el migrador productivo de DEV-36.
 El respaldo SQL **no incluye fotos**: respaldar también la carpeta central y probar restauración conjunta.
+
+## Localización de formularios · 020
+
+`020_Distritos_Formularios.sql` (DEV-39) añade `Distrito NVARCHAR(100) NULL` a
+`cli.ClienteDirecciones` y `ven.PedidosMvp`. El pedido conserva el distrito como snapshot de
+la dirección seleccionada. No convierte municipios históricos, no rellena datos ni cambia
+contratos JSON recuperables; 76 tablas / 8 vistas / 18 procedimientos. Reaplicable.
+Aplicar después de 019, con respaldo y ambas estaciones cerradas/actualizadas.
+El catálogo territorial se distribuye con la aplicación, sin tablas fiscales nuevas.

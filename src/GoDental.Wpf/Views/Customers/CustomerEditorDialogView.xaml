@@ -1,4 +1,4 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Customers.CustomerEditorDialogView">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:GoDental.Wpf.Controls" xmlns:behaviors="clr-namespace:GoDental.Wpf.Behaviors" x:Class="GoDental.Wpf.Views.Customers.CustomerEditorDialogView">
   <UserControl.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
@@ -23,23 +23,23 @@
         <UniformGrid Columns="2" Margin="0,16,-16,0">
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Nombre / Razón social" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre / Razón social"/>
+            <TextBox MaxLength="200" Text="{Binding Customer.Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre / Razón social"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Nombre comercial" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.CommercialName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre comercial"/>
+            <TextBox MaxLength="200" Text="{Binding Customer.CommercialName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre comercial"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Phone, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Teléfono"/>
+            <controls:PhoneInput Text="{Binding Customer.Phone, UpdateSourceTrigger=PropertyChanged}" Label="Teléfono"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="WhatsApp" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.WhatsApp, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="WhatsApp"/>
+            <controls:PhoneInput Text="{Binding Customer.WhatsApp, UpdateSourceTrigger=PropertyChanged}" Label="WhatsApp"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Correo" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Email, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Correo"/>
+            <TextBox MaxLength="254" Text="{Binding Customer.Email, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Correo"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Código automático" Style="{StaticResource FieldLabel}"/>
@@ -51,19 +51,23 @@
         <UniformGrid Columns="2" Margin="0,16,-16,0">
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="NIT" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Nit, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="NIT"/>
+            <ComboBox ItemsSource="{Binding NitFormats}" SelectedItem="{Binding NitDigits}" AutomationProperties.Name="Dígitos del NIT"/>
+            <TextBlock Text="14: NIT · 9: DUI como NIT" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,6"/>
+            <TextBox Text="{Binding NitText, UpdateSourceTrigger=PropertyChanged}" behaviors:IdentityMask.Digits="{Binding NitDigits}" AutomationProperties.Name="NIT"/>
+            <TextBlock Text="0000-000000-000-0 o 00000000-0" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="NRC" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Nrc, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="NRC"/>
+            <TextBox MaxLength="30" Text="{Binding Customer.Nrc, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="NRC"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="DUI" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.Dui, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="DUI"/>
+            <TextBox Text="{Binding DuiText, UpdateSourceTrigger=PropertyChanged}" behaviors:IdentityMask.Digits="9" AutomationProperties.Name="DUI"/>
+            <TextBlock Text="00000000-0 · opcional" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0"/>
           </StackPanel>
           <StackPanel Margin="0,0,16,16">
             <TextBlock Text="Giro / Actividad económica" Style="{StaticResource FieldLabel}"/>
-            <TextBox Text="{Binding Customer.BusinessActivity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Giro / Actividad económica"/>
+            <TextBox MaxLength="250" Text="{Binding Customer.BusinessActivity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Giro / Actividad económica"/>
           </StackPanel>
         </UniformGrid>
       </TabItem>
@@ -85,26 +89,29 @@
     </TabControl>
     <StackPanel Visibility="{Binding IsContact, Converter={StaticResource BoolToVisibility}}">
       <TextBlock Text="Datos del contacto" Style="{StaticResource SectionHeading}"/>
+      <TextBlock Text="Cargar contacto" Style="{StaticResource FieldLabel}" Margin="0,12,0,4"/>
+      <ComboBox ItemsSource="{Binding ContactSources}" SelectedItem="{Binding SelectedContactSource}" DisplayMemberPath="Name" AutomationProperties.Name="Cargar contacto"/>
+      <TextBlock Text="{Binding ContactSourceHint}" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
       <UniformGrid Columns="2" Margin="0,16,-16,0">
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Nombre" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Contact.Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre"/>
+          <TextBox MaxLength="150" Text="{Binding Contact.Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Cargo" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Contact.Position, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cargo"/>
+          <TextBox MaxLength="100" Text="{Binding Contact.Position, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cargo"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Teléfono" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Contact.Phone, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Teléfono"/>
+          <controls:PhoneInput Text="{Binding Contact.Phone, UpdateSourceTrigger=PropertyChanged}" Label="Teléfono"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="WhatsApp" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Contact.WhatsApp, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="WhatsApp"/>
+          <controls:PhoneInput Text="{Binding Contact.WhatsApp, UpdateSourceTrigger=PropertyChanged}" Label="WhatsApp"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Correo" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Contact.Email, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Correo"/>
+          <TextBox MaxLength="254" Text="{Binding Contact.Email, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Correo"/>
         </StackPanel>
       </UniformGrid>
       <WrapPanel>
@@ -114,6 +121,8 @@
     </StackPanel>
     <StackPanel Visibility="{Binding IsAddress, Converter={StaticResource BoolToVisibility}}">
       <TextBlock Text="Ubicación del cliente" Style="{StaticResource SectionHeading}"/>
+      <TextBlock Text="Dirección histórica: conserva sus valores o selecciona la división actual completa." Style="{StaticResource MutedText}" Visibility="{Binding Location.HasLegacyLocation, Converter={StaticResource BoolToVisibility}}"/>
+      <TextBlock Text="14 departamentos · 44 municipios · distrito opcional" Style="{StaticResource MutedText}"/>
       <UniformGrid Columns="2" Margin="0,16,-16,0">
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Tipo de dirección" Style="{StaticResource FieldLabel}"/>
@@ -121,20 +130,24 @@
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Departamento" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Address.Department, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Departamento"/>
+          <ComboBox ItemsSource="{Binding Location.Departments}" SelectedItem="{Binding Location.Department}" IsTextSearchEnabled="True" AutomationProperties.Name="Departamento"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Municipio" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Address.Municipality, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Municipio"/>
+          <ComboBox ItemsSource="{Binding Location.Municipalities}" SelectedItem="{Binding Location.Municipality}" IsTextSearchEnabled="True" AutomationProperties.Name="Municipio"/>
+        </StackPanel>
+        <StackPanel Margin="0,0,16,16">
+          <TextBlock Text="Distrito (opcional)" Style="{StaticResource FieldLabel}"/>
+          <ComboBox ItemsSource="{Binding Location.Districts}" SelectedItem="{Binding Location.District}" IsTextSearchEnabled="True" AutomationProperties.Name="Distrito"/>
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Referencia" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Address.Reference, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Referencia"/>
+          <TextBox MaxLength="300" Text="{Binding Address.Reference, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Referencia"/>
         </StackPanel>
       </UniformGrid>
       <StackPanel Margin="0,0,16,16">
         <TextBlock Text="Dirección" Style="{StaticResource FieldLabel}"/>
-        <TextBox Text="{Binding Address.Address, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Dirección" AcceptsReturn="True" MinHeight="64" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+        <TextBox MaxLength="500" Text="{Binding Address.Address, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Dirección" AcceptsReturn="True" MinHeight="64" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
       <WrapPanel>
         <CheckBox Content="Dirección principal" IsChecked="{Binding Address.Primary}" Margin="0,0,24,16"/>
@@ -162,7 +175,7 @@
         </StackPanel>
         <StackPanel Margin="0,0,16,16">
           <TextBlock Text="Motivo del bloqueo" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Credit.BlockReason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del bloqueo"/>
+          <TextBox MaxLength="500" Text="{Binding Credit.BlockReason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del bloqueo"/>
         </StackPanel>
       </UniformGrid>
       <TextBlock Text="Cada venta valida las condiciones del cliente al confirmarla." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
@@ -172,7 +185,7 @@
         <TextBlock Text="Confirmación del cambio" Style="{StaticResource SectionHeading}"/>
         <StackPanel Margin="0,12,0,16">
           <TextBlock Text="Motivo del cambio" Style="{StaticResource FieldLabel}"/>
-          <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
+          <TextBox MaxLength="500" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
         </StackPanel>
         <CheckBox Content="He revisado los datos y el estado del registro" IsChecked="{Binding Confirmed}" Margin="0,0,0,12"/>
         <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>

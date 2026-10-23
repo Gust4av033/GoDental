@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="../../docs/licenses/*" Link="ThirdPartyNotices/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

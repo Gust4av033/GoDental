@@ -129,7 +129,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
         var model = new CustomerEditorDialogModel(kind, customer, create ? null : SelectedContact, create ? null : SelectedAddress, Credit, catalogs, async form =>
         {
             if (!Current(revision)) return false;
-            var editor = (CustomerEditorDialogModel)form; var credit = kind == CustomerEditorKind.Credit ? editor.BuildCredit() : null;
+            var editor = (CustomerEditorDialogModel)form; if (!editor.PrepareFields()) return false; var credit = kind == CustomerEditorKind.Credit ? editor.BuildCredit() : null;
             if (kind == CustomerEditorKind.Credit && credit is null) return false;
             bool saved = false, answered = false;
             await RunAsync(async (r, ct) =>
@@ -154,7 +154,7 @@ public sealed partial class CustomersViewModel : WorkflowViewModel
             if (saved && Detail is null) StatusMessage = "El cambio se guardó, pero falló la recarga. Consulta de nuevo antes de editar.";
             if (!answered) { form.CanSubmit = false; form.StatusMessage = "No se pudo confirmar el resultado. Cierra y consulta el cliente antes de repetir el guardado."; }
             return saved;
-        });
+        }, Contacts.ToArray());
         IsEditing = true; try { await dialogs.ShowCustomerEditorAsync(model); } finally { IsEditing = false; }
     }
     [RelayCommand] private async Task LoadSalesAsync() { SalesPage = 1; await RunAsync(SalesCoreAsync); }

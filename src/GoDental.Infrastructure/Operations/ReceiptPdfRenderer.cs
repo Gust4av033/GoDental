@@ -104,7 +104,7 @@ public sealed partial class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> optio
                         {
                             Heading(info, $"ENTREGA · PEDIDO #{delivery.Id}");
                             Optional(info, delivery.Contact, "Recibe: "); Optional(info, delivery.Phone, "Tel. "); Optional(info, delivery.Address);
-                            Optional(info, string.Join(", ", new[] { delivery.Municipality, delivery.Department }.Where(x => !string.IsNullOrWhiteSpace(x))));
+                            Optional(info, string.Join(", ", new[] { delivery.District, delivery.Municipality, delivery.Department }.Where(x => !string.IsNullOrWhiteSpace(x))));
                             Optional(info, delivery.Reference, "Referencia: "); Optional(info, delivery.Scheduled?.ToString("dd/MM/yyyy", Usd), "Prevista: ");
                             Optional(info, delivery.Responsible, "Responsable: ");
                         });
