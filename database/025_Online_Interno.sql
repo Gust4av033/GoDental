@@ -6,6 +6,7 @@ IF COL_LENGTH(N'com.Prospectos',N'RowVersion') IS NULL
  SitioWebPublico nvarchar(1000) NULL,DominioWeb nvarchar(253) NULL,FechaRegistro datetimeoffset(0) NULL,IdVentaConversion bigint NULL;
 IF COL_LENGTH(N'com.ListaNoContactar',N'RowVersion') IS NULL
  ALTER TABLE com.ListaNoContactar ADD RowVersion rowversion NOT NULL;
+GO
 IF NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name=N'FK_Prospecto_VentaConversion')
  ALTER TABLE com.Prospectos ADD CONSTRAINT FK_Prospecto_VentaConversion FOREIGN KEY(IdVentaConversion) REFERENCES ven.Ventas(IdVenta);
 IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE object_id=OBJECT_ID(N'com.Prospectos') AND name=N'IX_Prospectos_DominioWeb')
