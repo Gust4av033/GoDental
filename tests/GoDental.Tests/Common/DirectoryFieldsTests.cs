@@ -97,6 +97,13 @@ public sealed class DirectoryFieldsTests
         Assert.Equal("12345678-9", model.DuiText); Assert.Equal("0614-010100-101-0", model.NitText);
         Assert.Equal(customer.Dui, model.BuildCustomer().Dui); Assert.Equal(customer.Nit, model.BuildCustomer().Nit);
     }
+    [Fact] public void AddressSaveAttemptsKeepTheBoundObjectEditableAfterFailure()
+    {
+        var model = new CustomerEditorDialogModel(CustomerEditorKind.Address, new(), null, null, null, new([], []), _ => Task.FromResult(false));
+        var boundAddress = model.Address;
+        Assert.True(model.PrepareFields()); boundAddress.Address = "Calle corregida después de guardar";
+        Assert.True(model.PrepareFields()); Assert.Same(boundAddress, model.Address); Assert.Equal(boundAddress.Address, model.Address.Address);
+    }
     [Fact] public void NitChoicePreventsAcceptingIncompleteFourteenDigitNitAsDui()
     {
         var model = new CustomerEditorDialogModel(CustomerEditorKind.General, new(), null, null, null, new([], []), _ => Task.FromResult(false));

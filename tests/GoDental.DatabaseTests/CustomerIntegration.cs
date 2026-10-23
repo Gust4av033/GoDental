@@ -46,6 +46,11 @@ internal static class CustomerIntegration
         snapshot = await Read();
         Check(snapshot.Contacts.Count == 1 && !snapshot.Customer.RowVersion.SequenceEqual(original.RowVersion), "Contacto avanza versión del cliente");
         Check((await service.SaveAsync(new(original with { Name = "Obsoleto" }, "Concurrencia"))).ErrorCode == "CONCURRENCY_CONFLICT", "Ficha obsoleta no sobrescribe subregistros");
+        await c.ExecuteAsync("UPDATE cli.ClienteContactos SET Telefono=N' 123 ' WHERE IdCliente=@id;", new { id });
+        snapshot = await Read();
+        Check((await service.SaveContactAsync(new(id, snapshot.Customer.RowVersion, snapshot.Contacts.Single() with { Name = "Contacto corregido" }, "Nombre de contacto"))).IsSuccess, "Contacto histórico permite editar nombre sin cambiar teléfono inválido");
+        snapshot = await Read();
+        Check(snapshot.Contacts.Single().Phone == " 123 ", "Conserva teléfono histórico exacto del contacto");
         var contact = snapshot.Contacts.Single(); var request = new CustomerContactChange(id, snapshot.Customer.RowVersion, contact with { Phone = "7000-0001" }, "Dos estaciones");
         var concurrent = await Task.WhenAll(service.SaveContactAsync(request), service.SaveContactAsync(request with { Contact = contact with { Phone = "7000-0002" } }));
         Check(concurrent.Count(r => r.IsSuccess) == 1 && concurrent.Count(r => r.ErrorCode == "CONCURRENCY_CONFLICT") == 1, "Dos estaciones editan sin pérdida de cambios");
@@ -61,6 +66,13 @@ internal static class CustomerIntegration
         Check((await Read()).Customer.RowVersion.SequenceEqual(addressVersion), "Dirección territorial inválida no altera versión");
         snapshot = await Read();
         Check(snapshot.Addresses.Count == 3 && snapshot.Contacts.Count == 1, "No reemplaza contactos ni otras direcciones");
+        var legacyAddressId = snapshot.Addresses.First().Id;
+        await c.ExecuteAsync("UPDATE cli.ClienteDirecciones SET Departamento=N'Departamento antiguo',Municipio=N'Municipio antiguo',Distrito=NULL WHERE IdDireccion=@legacyAddressId;", new { legacyAddressId });
+        snapshot = await Read(); var legacyAddress = snapshot.Addresses.Single(a => a.Id == legacyAddressId);
+        Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, legacyAddress with { Reference = "Nueva referencia" }, "Referencia histórica"))).IsSuccess, "Dirección histórica admite referencia nueva sin convertir territorio");
+        snapshot = await Read();
+        Check(snapshot.Addresses.Single(a => a.Id == legacyAddressId) is { Department: "Departamento antiguo", Municipality: "Municipio antiguo", District: null }, "Conserva territorio histórico y distrito nulo");
+
         Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, snapshot.Addresses.First() with { Id = long.MaxValue }, "Ajena"))).ErrorCode == "VALIDATION", "Rechaza dirección ajena o inexistente");
         Check((await service.SaveContactAsync(new(id, snapshot.Customer.RowVersion, contact with { Id = long.MaxValue }, "Ajeno"))).ErrorCode == "VALIDATION", "Rechaza contacto ajeno o inexistente");
         var version = snapshot.Customer.RowVersion;

@@ -1231,7 +1231,7 @@ internal static class Program
                     window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
                 }
             }
-            if (model is SupplierEditorDialogModel or UserDialogModel)
+            if (model is SupplierEditorDialogModel or CustomerEditorDialogModel or UserDialogModel)
             {
                 void CheckDirectoryDialog()
                 {

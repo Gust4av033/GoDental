@@ -185,7 +185,7 @@
         <TextBlock Text="Confirmación del cambio" Style="{StaticResource SectionHeading}"/>
         <StackPanel Margin="0,12,0,16">
           <TextBlock Text="Motivo del cambio" Style="{StaticResource FieldLabel}"/>
-          <TextBox MaxLength="500" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
+          <TextBox MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="66" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivo del cambio"/>
         </StackPanel>
         <CheckBox Content="He revisado los datos y el estado del registro" IsChecked="{Binding Confirmed}" Margin="0,0,0,12"/>
         <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>

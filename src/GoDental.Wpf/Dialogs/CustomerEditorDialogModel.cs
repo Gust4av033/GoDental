@@ -82,7 +82,12 @@ public sealed class CustomerEditorDialogModel : OperationDialogModel
             error ??= DirectoryFields.CustomerError(Customer, Customer.Id == 0 ? null : originalCustomer);
         }
         if (IsContact) error = DirectoryFields.ContactError(Contact, originalContact);
-        if (IsAddress) { Address = Location.Apply(Address); error = DirectoryFields.AddressError(Address, Address.Id == 0 ? null : originalAddress); }
+        if (IsAddress)
+        {
+            var localized = Location.Apply(Address);
+            Address.Department = localized.Department; Address.Municipality = localized.Municipality; Address.District = localized.District;
+            error = DirectoryFields.AddressError(Address, Address.Id == 0 ? null : originalAddress);
+        }
         if (error is null) return true;
         StatusMessage = error; return false;
     }
