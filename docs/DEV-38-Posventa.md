@@ -1,6 +1,6 @@
 # DEV-38 — 2.2A · Devoluciones y anulaciones
 
-**Fecha:** 23/10/2026 · **Estado:** implementado; validación automatizada en curso.
+**Fecha:** 23/10/2026 · **Estado:** implementado y validado automáticamente.
 
 Fuentes: DM-01 §12.7, DB-01 devoluciones/costeo, VEN-01/VEN-01A, INV-01,
 SEC-01 y ARQ-01. Continúa DEV-37; no cambia costos de importaciones cerradas.
@@ -113,7 +113,12 @@ SQL aislado `--run-returns` y smoke de vistas/formularios Light/Dark y compacto.
 cubre reintegros de contado/crédito/abonos, parciales y centavos, costo histórico/promedio,
 no vendible, foto alterada, lote bloqueado, autorización, concurrencia, rollback, turnos,
 anulación antes/en ruta/después de entrega y reaplicación conservando datos.
-Resultados y CI se registrarán al terminar la ejecución.
+[CI Windows #142 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39878696320),
+código **`08507a8715da834debfcbba7f243f885b43eadda`**, job `120170550581`:
+Release **0 advertencias/errores**, **272 xUnit**, **574 comprobaciones SQL** (54 de posventa)
+y **817 WPF**, sin fallos de binding. Localmente también pasó Release con Windows targeting
+sin advertencias/errores y las 271 pruebas anteriores; el nuevo caso de carpeta inaccesible
+quedó cubierto por las 272 de CI. No certifica hardware/SMB entre las PCs ni la BD personal.
 
 Sigue **2.2B · cobranza y documentos de crédito**: avisos/seguimiento consultables, recibo de abono
  y estado de cuenta, con saldo y efectos de posventa trazables. Sin envío automático a terceros.

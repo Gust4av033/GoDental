@@ -123,6 +123,6 @@ Continuación 22/10/2026: [DEV-37](DEV-37-Importaciones-Costeo.md) implementa 2.
 
 Continuación 23/10/2026: DEV-38 implementa **2.2A** con migración 019. El usuario confirmó deuda
 primero/efectivo después, carpeta central y anulación también en ruta/entregado. Se conservan
-originales y entrega histórica, con compensaciones atómicas y recuperación. Validación en curso.
+originales y entrega histórica, con compensaciones atómicas y recuperación. CI #142 correcto: 272 xUnit, 574 SQL y 817 WPF.
 La siguiente fase funcional es **2.2B: cobranza y documentos de crédito**. Saldo a favor reutilizable,
 DTE/Online, entregas fallidas/COD y despliegue productivo de DEV-36 conservan su alcance pendiente.

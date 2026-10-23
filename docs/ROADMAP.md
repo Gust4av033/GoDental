@@ -20,7 +20,7 @@ El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), 
 | 2.0B · Complementos MVP | Implementado y validado automáticamente | DEV-32, migración 016, CI #110 |
 | 2.1A · Compras y recepción directa | Implementado y validado automáticamente | DEV-33, migración 017, CI #116: 218 xUnit / 477 SQL / 625 WPF |
 | 2.1B · Importaciones y costeo | Implementado y validado automáticamente | DEV-37, migración 018, CI #136: 255 xUnit / 520 SQL / 767 WPF |
-| 2.2A · Posventa | Implementado; validación automatizada en curso | DEV-38, migración 019; conserva originales y compensa stock/caja/CxC |
+| 2.2A · Posventa | Implementado y validado automáticamente | DEV-38, migración 019, CI #142: 272 xUnit / 574 SQL / 817 WPF |
 | 2.2B · Cobranza y documentos | Siguiente fase funcional | Avisos, recibo de abono y estado de cuenta con posventa trazable |
 | Impresión configurable | Implementado y validado automáticamente; hardware pendiente | DEV-34, medidas en mm, CI #128 |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
