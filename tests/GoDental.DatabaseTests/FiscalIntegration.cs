@@ -26,7 +26,7 @@ internal static class FiscalIntegration
         var cash=new CashService(repo,session);var box=(int)Saved(await cash.SaveBoxAsync(new(Guid.NewGuid(),0,"FISCAL-CAJA","Caja fiscal aislada",warehouse,true,"Alta aislada")));
         var shift=Saved(await cash.OpenAsync(new(Guid.NewGuid(),box,100,"Apertura aislada")));var sales=new SalesService(repo,session,gateway);
         var method=(await sales.PaymentMethodsAsync()).Single(x=>x.Code=="EFECTIVO").Id;
-        async Task<long> Sale(){var cart=new SaleCart(box,customer,[new(product,1)]);var q=await sales.QuoteAsync(cart);return Saved(await sales.ConfirmAsync(new(Guid.NewGuid(),cart,q.Token,[new(method,q.Total)],0,null,"Venta fiscal aislada")));}
+        async Task<long> Sale(){var cart=new SaleCart(box,customer,[new(product,1)]);var q=await sales.QuoteAsync(cart);return Saved(await sales.ConfirmAsync(new(Guid.NewGuid(),cart,q.Token,[new(method,q.Total)],q.Total,shift,"Venta fiscal aislada")));}
         async Task<FiscalDetail> Detail(long id)=>(await fiscal.DetailAsync(id))!;
         ReviewFiscalInternal Review(FiscalDetail d,string outcome="REVISADO")=>new(Guid.NewGuid(),d.Document.Id,d.Document.RowVersion,d.ReviewToken,outcome,"Revisión sintética");
         var sale=await Sale();var sale2=await Sale();var original=(await sales.ReadAsync(sale))!;
