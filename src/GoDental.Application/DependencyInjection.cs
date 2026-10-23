@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddTransient<CommercialParametersService>();
         services.AddTransient<PurchaseService>();
         services.AddTransient<ImportService>();
+        services.AddTransient<SaleReturnService>();
         services.AddTransient<CashService>();
         services.AddTransient<OrderService>();
         services.AddTransient<InventorySetupService>();

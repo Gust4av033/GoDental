@@ -21,6 +21,13 @@ if (args is ["--recovery-journal-probe", var journalFolder, var serializedPendin
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-returns"))
+{
+    var returnDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(returnDatabase, Path.Combine(root, "database"));
+    await ReturnIntegration.RunAsync(new TestConnectionFactory(returnDatabase), root, returnDatabase);
+    return;
+}
 if (args.Contains("--run-imports"))
 {
     var importDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");

@@ -49,7 +49,7 @@ public sealed partial class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> optio
         QuestPDF.Settings.License = license;
         layout.Validate(narrow: layout.WidthMm < 140);
         if (!Enum.IsDefined(kind)) throw new ArgumentException("Tipo de documento no válido.");
-        if (kind == ReceiptKind.Delivery && snapshot.Delivery is null) throw new ArgumentException("La nota de entrega requiere una venta con pedido asociado.");
+        if (kind == ReceiptKind.Delivery && (snapshot.Delivery is null || snapshot.Sale.State is "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL" or "ANULADA")) throw new ArgumentException("La nota de entrega requiere una venta vigente con pedido asociado.");
         if (kind == ReceiptKind.Delivery || layout.WidthMm < 140) return ComposeCompact(snapshot, layout, kind);
         var sale = snapshot.Sale;
         var customer = CustomerFields(sale.CustomerSnapshot);
@@ -136,6 +136,7 @@ public sealed partial class ReceiptPdfRenderer(IOptions<ReceiptPdfOptions> optio
                         table.Cell().Element(Cell).AlignRight().Text(Money(item.Tax)); table.Cell().Element(Cell).AlignRight().Text(Money(item.Total)).SemiBold();
                     }
                 });
+                if(sale.State is "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL" or "ANULADA") c.Item().Text("ESTADO: " + sale.State + " · Importes originales; consultar posventa para compensaciones.").Bold();
                 c.Item().Text("Precios y subtotal netos. Los descuentos informados ya están aplicados.").FontSize(7).FontColor(Muted);
                 c.Item().Row(row =>
                 {

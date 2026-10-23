@@ -4,7 +4,7 @@ Los documentos fuente vigentes se organizan por código dentro de este directori
 
 Estado funcional vigente, hallazgos y plan de la segunda etapa: [DEV-30 · Revisión del proyecto](DEV-30-Revision-Fase-2.md), 21/10/2026. Los avances posteriores están en [DEV-31 · Recuperación](DEV-31-Recuperacion-Operaciones.md), [DEV-32 · Complementos MVP](DEV-32-Complementos-MVP.md) y [DEV-33 · Compras y recepciones](DEV-33-Compras-Recepciones.md). [DEV-34](DEV-34-Impresion-Formatos.md) implementa barras/etiquetas, formatos configurables de comprobantes y notas de entrega, con vista previa/PDF/impresión al 100%. Consultarlos junto con [ROADMAP](ROADMAP.md) para distinguir resultados históricos de pendientes actuales.
 
-[DEV-37](DEV-37-Importaciones-Costeo.md) conecta importaciones, eventos manuales, gastos y cierre/prorrateo con recepciones parciales (018). La siguiente fase funcional es 2.2A.
+[DEV-37](DEV-37-Importaciones-Costeo.md) conecta importaciones, eventos manuales, gastos y cierre/prorrateo con recepciones parciales (018). [DEV-38](DEV-38-Posventa.md) implementa 2.2A: devoluciones/anulaciones autorizadas, evidencias centrales y compensaciones de stock/caja/CxC (019). Sigue 2.2B: cobranza y documentos de crédito.
 
 Preparación de instalador y actualizaciones con conservación de datos: [DEV-36](DEV-36-Instalador-Actualizaciones.md). Es un diseño propuesto; aún no hay instalador productivo ni migrador con historial.
 

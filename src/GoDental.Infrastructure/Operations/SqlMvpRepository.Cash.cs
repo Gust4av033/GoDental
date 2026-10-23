@@ -71,6 +71,10 @@ public sealed partial class SqlMvpRepository
             await LockShift(w, r.ShiftId!.Value);
         }
 
+        // Posventa y abonos toman venta antes de CxC para evitar invertir el orden de bloqueos.
+        var saleId = await w.Scalar<long?>("SELECT IdVenta FROM ven.CuentasPorCobrar WHERE IdCuenta=@AccountId;", r);
+        Require(saleId is not null,"INVALID_STATE","La cuenta por cobrar no existe.");
+        await w.Execute("SELECT IdVenta FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@saleId;",new{saleId});
         var version = await w.Scalar<byte[]?>("SELECT RowVersion FROM ven.CuentasPorCobrar WITH(UPDLOCK,HOLDLOCK) WHERE IdCuenta=@AccountId;", r);
         Version(version, r.ExpectedVersion);
         var id = await w.Scalar<long>("EXEC ven.sp_RegistrarAbono @IdCuenta=@AccountId,@IdMetodoPago=@MethodId,@Monto=@Amount,@IdUsuario=@userId,@Referencia=@Reference,@IdTurno=@ShiftId;", new { r.AccountId, r.MethodId, r.Amount, userId, r.Reference, r.ShiftId });

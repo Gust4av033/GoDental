@@ -29,12 +29,13 @@ $scripts = @(
     '015_Resolucion_Operaciones.sql',
     '016_Parametros_Comerciales.sql',
     '017_Compras_Recepciones.sql',
-    '018_Importaciones_Costeo.sql'
+    '018_Importaciones_Costeo.sql',
+    '019_Posventa.sql'
 )
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if (-not $sqlcmd) {
-    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-018 manualmente desde SSMS.'
+    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-019 manualmente desde SSMS.'
 }
 
 foreach ($scriptName in $scripts) {
@@ -46,7 +47,7 @@ foreach ($scriptName in $scripts) {
 
 Write-Host "Servidor: $ServerInstance"
 Write-Host 'Autenticación: Windows integrada'
-Write-Host 'Ejecutando baseline y migraciones en orden 001 -> 018...'
+Write-Host 'Ejecutando baseline y migraciones en orden 001 -> 019...'
 
 foreach ($scriptName in $scripts) {
     $scriptPath = Join-Path $databaseDir $scriptName

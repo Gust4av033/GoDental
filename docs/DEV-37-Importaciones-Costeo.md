@@ -50,3 +50,6 @@ El instalador de desarrollo requiere `GoDental_Development` con marcador reconoc
 SQL comprueba guía nullable, reenvíos, permisos/estación, gastos y cambio histórico, anulación conservando historial, vista de gastos activos, cierre congelado, rechazo de gastos posteriores, reparto exacto de centavos, parciales/multilote, concurrencia de aplicación, promedio/Kardex, rollback del cierre/auditoría, recuperación durable y reaplicación de 018. El smoke renderiza pestaña, formularios y cierre con revisión de costos en ambos temas y tamaño compacto, además de las regresiones existentes. No se modificó la base personal ni se probaron hardware o DHL real.
 
 Sigue **2.2A · posventa** según DEV-30: devoluciones/anulaciones con autorización, referencia a venta original y reversos atómicos de inventario/caja/CxC. DEV-36 conserva antes del uso productivo el trabajo pendiente de respaldos, migrador e instalación. Costos incompletos/posteriores al cierre, cancelación/reversión de importaciones ya registradas, documentos de courier y cuentas por pagar requieren un diseño posterior; no se habilitan silenciosamente en este bloque.
+
+Continuación 23/10/2026: [DEV-38](DEV-38-Posventa.md) implementa 2.2A (019); conserva sin cambios
+el cierre y costeo de importaciones. La siguiente fase funcional pasa a 2.2B.

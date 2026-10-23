@@ -120,3 +120,9 @@ El usuario autorizó continuar el orden propuesto. [DEV-31](DEV-31-Recuperacion-
 El usuario autorizó 2.1A: [DEV-33](DEV-33-Compras-Recepciones.md) registra diseño, implementación, recorrido y validación de compras directas/recepciones con costo completo. La siguiente fase sigue siendo 2.1B; su prorrateo y tratamiento de costo incompleto no se dan por resueltos. La impresión configurable solicitada se implementa como complemento separado en DEV-34, después de compras directas y antes de continuar 2.1B.
 
 Continuación 22/10/2026: [DEV-37](DEV-37-Importaciones-Costeo.md) implementa 2.1B (018), con reparto por valor neto y cierre antes de recibir confirmados por el usuario. CI #136: 255 xUnit, 520 SQL y 767 WPF. Sigue 2.2A; DEV-36 mantiene pendiente el despliegue/respaldo para uso productivo.
+
+Continuación 23/10/2026: DEV-38 implementa **2.2A** con migración 019. El usuario confirmó deuda
+primero/efectivo después, carpeta central y anulación también en ruta/entregado. Se conservan
+originales y entrega histórica, con compensaciones atómicas y recuperación. Validación en curso.
+La siguiente fase funcional es **2.2B: cobranza y documentos de crédito**. Saldo a favor reutilizable,
+DTE/Online, entregas fallidas/COD y despliegue productivo de DEV-36 conservan su alcance pendiente.

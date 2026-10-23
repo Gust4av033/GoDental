@@ -22,6 +22,7 @@ public sealed partial class ReceiptPdfRenderer
                 c.Item().Text(options.Value.IssuerName).Bold().FontSize(14);
                 c.Item().Text(deliveryOnly ? "NOTA INTERNA DE ENTREGA" : "COMPROBANTE INTERNO").SemiBold();
                 c.Item().Text(sale.Number).Bold();
+                if(sale.State is "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL" or "ANULADA") c.Item().Text("ESTADO: "+sale.State+" · Importes originales.").Bold();
                 c.Item().Text(sale.Date.ToString("dd/MM/yyyy HH:mm", Usd));
                 Optional(c, options.Value.Address); Optional(c, options.Value.Phone, "Tel. "); Optional(c, options.Value.Email);
             });

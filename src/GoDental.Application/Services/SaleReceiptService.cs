@@ -15,8 +15,8 @@ public sealed class SaleReceiptService(ISalesRepository repository, IReceiptRend
         Id(saleId);
         var revision = CurrentSession is ISessionController start ? start.Revision : 0;
         var snapshot = await repository.ReadReceiptAsync(saleId, UserId, ct);
-        if (snapshot is null || snapshot.Sale.State != "CONFIRMADA")
-            throw new ArgumentException("El comprobante requiere una venta confirmada.");
+        if (snapshot is null || snapshot.Sale.State is not ("CONFIRMADA" or "DEVUELTA_PARCIAL" or "DEVUELTA_TOTAL" or "ANULADA"))
+            throw new ArgumentException("El comprobante requiere una venta con historial confirmado.");
         void CheckSession()
         {
             if (!Has("VENTAS.VER", "VENTAS.REIMPRIMIR") || CurrentSession is ISessionController current && current.Revision != revision)

@@ -88,3 +88,18 @@ DEV-32 agrega `RowVersion` a `sis.Configuracion`; conserva las 76 tablas, 8 vist
 ## Compras y recepciones · 017
 
 DEV-33 amplía el estado de OC con RECIBIDA_PARCIAL y agrega snapshots SKU/nombre al detalle de OC, versión/cambio real/costo completo a la recepción y fabricación a sus líneas. La migración conserva datos y deriva el estado de OC históricas con cantidades recibidas; una reejecución no cambia versiones ya coherentes. Recepciones históricas aplicadas permanecen aplicadas y no se presume confirmado un costo sin evidencia. Total: 76 tablas, 8 vistas, 18 procedimientos. La ruta nueva usa transacciones Dapper y el ledger; no invoca el procedimiento histórico de recepción sin sus validaciones adicionales.
+
+## Importaciones · 018
+
+DEV-37 añade cierre de costos, presupuestos y gastos congelados por valor neto antes de recibir;
+parciales consumen su proporción y remanente exacto. Conserva historia y 76/8/18 objetos.
+
+## Posventa · 019
+
+`019_Posventa.sql`, definido en DEV-38, agrega trazabilidad/versionado de devoluciones y su
+compensación de deuda/efectivo, detalle→movimiento, raíz central de fotos y conservación de la
+entrega histórica cuando un pedido termina cancelado por posventa. Es aditivo e idempotente;
+no calcula reversos para filas antiguas ni mueve stock/caja al instalarse. Conserva **76/8/18**.
+Aplicar después de 018, con respaldo y todas las estaciones cerradas/actualizadas. El instalador
+de desarrollo incluye 019 para bases marcadas; no sustituye el migrador productivo de DEV-36.
+El respaldo SQL **no incluye fotos**: respaldar también la carpeta central y probar restauración conjunta.
