@@ -48,6 +48,7 @@ no Cloud API habilitada. No se declara chat conectado ni DTE emitido.
 | Online interno · primer bloque | Implementado; CI #177: 364 xUnit / 761 SQL / 1011 WPF | DEV-46, 025: manual/fuentes/coincidencias/exclusiones/vínculo con compra; campañas/conectores pendientes |
 | Online · planificación interna | Implementado; CI #183: 375 xUnit / 789 SQL / 1087 WPF | DEV-47, 026; aprobación no envía |
 | Online · mapa/descubrimiento | Implementado; CI #189: 406 xUnit / 790 SQL / 1097 WPF | Sin migración; transporte/verificador Meta preparados, servicio/envío/chat pendientes |
+| Paréntesis · búsqueda y acceso | Implementado; CI #193: 418 xUnit / 790 SQL / 1106 WPF | DEV-49; servidores manuales y visibilidad de contraseña, sin migración |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

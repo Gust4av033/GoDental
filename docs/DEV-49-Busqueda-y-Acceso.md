@@ -46,3 +46,26 @@ Sin migración nueva; siguen pendientes en la PC las que falten de **021 → 022
 025 → 026**, en orden. Después de este paréntesis continúa el servicio central HTTPS, identidad
 confiable/mínimo privilegio e inbox/outbox durables de DEV-48/S1; Cloud API, autorización comercial
 y plantillas oficiales antes de transmitir. Registrar pruebas y limitaciones al cerrar.
+
+## Validación
+
+[CI Windows #193](https://github.com/Gust4av033/GoDental/actions/runs/40009637064), evento push
+sobre **7c6efa80e1fbbab27f510e065b5b9f4be31a8dfb**, job **120606382817**: Release **0 advertencias /
+0 errores**, **418 xUnit / 790 SQL / 1106 WPF**, sin errores de enlaces. NuGet: 7 proyectos
+consultados y 0 avisos altos/críticos; parser PowerShell del instalador correcto.
+
+Doce casos unitarios adicionales cubren coordenadas node/centro way, distinción HTTP, elección
+fija del alternativo, espera Retry-After compartida, resultado tardío tras cambiar servidor,
+campos vacíos, confirmación, doble envío y conservación del cambio obligatorio. Nueve comprobaciones
+WPF adicionales prueban mostrar/editar/ocultar, ausencia de undo, limpieza por contexto/
+deshabilitación/modo y vaciado anterior al IO del gateway. Las pantallas existentes continúan
+renderizando en Light/Dark/compacto. Capturas de acceso Light 920×660 y Dark compacto 760×540
+revisadas: Mostrar disponible, campos alineados y acción principal visible. Build y 418 pruebas
+también correctos localmente.
+
+El error HTTP original no se reprodujo en vivo: la política cloud no habilita los servidores
+Overpass. Las pruebas HTTP usan respuestas simuladas y no acreditan disponibilidad del servicio.
+En la estación: actualizar la app, elegir departamento y consultar; si el principal falla,
+elegir Private.coffee y respetar la espera. El nuevo código HTTP permite distinguir saturación,
+denegación de red y consulta rechazada. No se modificó la BD personal ni se activó Meta/chat.
+Las confirmaciones posteriores sólo documentan resultados; conservan el código validado.

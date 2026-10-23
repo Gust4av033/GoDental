@@ -108,3 +108,7 @@ nodes, distingue errores HTTP y permite otro servidor explícito sin eludir espe
 Mejora el acceso con mostrar/ocultar contraseña, Bloq Mayús y validación de campos vacíos.
 No cambia el orden de continuación Meta/S1 de DEV-48 ni añade migración. Pendientes locales:
 **021 → 022 → 023 → 024 → 025 → 026**. No hay envío/chat activados por este paréntesis.
+
+DEV-49 validado en [CI Windows #193](https://github.com/Gust4av033/GoDental/actions/runs/40009637064),
+`7c6efa8`: Release sin advertencias/errores, **418 xUnit / 790 SQL / 1106 WPF**. Disponibilidad
+real de Overpass pendiente de comprobar en la estación; no se usó tráfico externo en fixtures.

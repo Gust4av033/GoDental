@@ -6,14 +6,14 @@ GoDental es una aplicación de escritorio para la operación comercial de un dep
 
 ## Estado actual y siguiente etapa
 
-La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-31–47 distinguen
+La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-31–49 distinguen
 el alcance implementado de lo pendiente de DM-01. El MVP conecta inventario/conteos,
 proveedores/clientes, POS/caja/crédito/pedidos y comprobantes; ya incluye compras/recepciones,
 importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes operativos.
 Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zonas, segmentos, plantillas, campañas con aprobación interna, seguimiento manual, exclusiones y vínculo por compra confirmada. Online → Zonas incluye mapa local de los 14 departamentos y búsqueda pública acotada de negocios dentales en OpenStreetMap, con revisión antes de guardar. Emisión DTE y envío/chat reales siguen pendientes. [Configuración Meta](docs/ONL-01/Configuracion-Meta.md) distingue la app del teléfono de Cloud API y detalla los requisitos del servicio HTTPS.
-El orden vigente y los controles de seguridad están en DEV-43/45/47; [guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
+El orden vigente y los controles de seguridad están en DEV-43/45/48/49; [guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #183](https://github.com/Gust4av033/GoDental/actions/runs/39974506383) valida `c6c26aa`: Release sin advertencias/errores, **375 xUnit / 789 SQL / 1087 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos. Parser de PowerShell del instalador correcto.
+Rama activa: **`feature/desarrollo`**. [CI Windows #193](https://github.com/Gust4av033/GoDental/actions/runs/40009637064) valida `7c6efa8`: Release sin advertencias/errores, **418 xUnit / 790 SQL / 1106 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos. Parser de PowerShell del instalador correcto.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack
