@@ -1,6 +1,6 @@
 # DEV-39 — Paréntesis: captura y localización de datos
 
-**Fecha:** 23/10/2026 · **Estado:** implementado; validación Windows/SQL en curso.
+**Fecha:** 23/10/2026 · **Estado:** implementado y validado en Windows/SQL/WPF (CI #149).
 
 Se atiende después de 2.2A (DEV-38, CI #142) y antes de continuar 2.2B. Fuentes:
 DM-01/DB-01/ARQ-01, DEV-10/13/24/29, UX-01 y solicitud del usuario del 23/10/2026.
@@ -96,3 +96,27 @@ mediante `sqlcmd -S <instancia> -d <base> -E -b -i database/020_Distritos_Formul
 Este complemento no reemplaza 2.2A y no abre un módulo nuevo. Después continúa **2.2B: cobranza y
 documentos de crédito** (DEV-30). Instalador/actualizador productivo y respaldo automatizado siguen
 pendientes en DEV-36; no se declara la etapa 2 terminada.
+
+## Verificación · 23/10/2026
+
+[CI Windows #149](https://github.com/Gust4av033/GoDental/actions/runs/39883444740),
+código `8c3a54e9405bf6aa389f0bb2ff22ce036a7ad46a`: **correcto**.
+
+- Release: **0 advertencias / 0 errores**; **300 pruebas xUnit**.
+- **594 comprobaciones SQL** en bases aisladas: incluye 48 de clientes y 43 de proveedores.
+  Comprueba formatos nuevos, NIT con/sin guiones, conservación exacta de identificadores/
+  teléfonos/territorios históricos sin cambios, rowversion/concurrencia y rollback. El pedido
+  conserva distrito después de editar el cliente y de reaplicar 001–020.
+- **872 comprobaciones WPF**, sin fallos de binding: ambos temas, captura/pegado/límite DUI/NIT,
+  cambio a DUI como NIT, selección territorial dependiente, detección telefónica, nueva categoría
+  y formularios de clientes/proveedores a tamaño normal y compacto. Artefactos del workflow
+  contienen imágenes automáticas; no se declara prueba manual de hardware o entre las laptops.
+- El formulario conserva el mismo objeto de dirección al reintentar un guardado; las correcciones
+  posteriores siguen enlazadas. Números de otra región requieren `+` para conservar su país al
+  formatearse. Los teléfonos nacionales no reciben prefijo automáticamente.
+- La lista de ventas refresca el estado tras solicitar/resolver posventa. Se mantiene la regresión
+  completa de devoluciones, compras/importaciones, caja/crédito y recuperación durable.
+
+Compilación Release y 300 pruebas locales también correctas. No se aplicó 020 a la base personal
+desde cloud. Las instrucciones de actualización anteriores siguen siendo el paso local necesario.
+La siguiente entrega funcional continúa siendo **2.2B**; este complemento queda cerrado.

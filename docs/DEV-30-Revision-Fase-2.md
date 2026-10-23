@@ -130,3 +130,8 @@ DTE/Online, entregas fallidas/COD y despliegue productivo de DEV-36 conservan su
 Paréntesis solicitado 23/10/2026: **DEV-39**, captura/localización de datos y categorías, con
 migración **020**. El usuario confirmó 14 departamentos, 44 municipios y distrito opcional.
 Se atiende después de 2.2A y antes de 2.2B; no cambia la secuencia funcional pendiente.
+
+DEV-39 cerrado: [CI Windows #149](https://github.com/Gust4av033/GoDental/actions/runs/39883444740)
+valida `8c3a54e`: Release 0 advertencias/errores, **300 xUnit / 594 SQL / 872 WPF**.
+Migración 020 preparada; aplicación en la BD personal y comprobación manual entre estaciones
+siguen siendo pasos locales. Continuar por **2.2B**, sin repetir el paréntesis de formularios.
