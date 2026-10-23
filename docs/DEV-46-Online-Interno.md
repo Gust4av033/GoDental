@@ -112,3 +112,11 @@ dotnet run --project src/GoDental.Wpf -c Release
 
 Para otra base, ejecutar sólo archivos faltantes en orden sobre su instancia/base, con respaldo previo.
 El migrador productivo y restauración automatizada siguen pendientes en DEV-36.
+
+## Continuación posterior conforme a referencia
+
+El usuario pidió ampliar las funciones según Imagenes/221200. DEV-47 sustituye el límite del
+primer bloque para zonas/segmentos/plantillas/campañas/seguimiento **internos**, ya conectados
+y validados en CI #183 (`c6c26aa`). Añade 026; pendiente personal vigente: **021 → 022 → 023 →
+024 → 025 → 026**. [Guía del recorrido](ONL-01/Guia-Online-Interno.md). Conectores, mapa y
+envíos siguen pendientes; aprobación interna no acredita consentimiento.

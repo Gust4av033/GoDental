@@ -71,3 +71,9 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-35 · Inicio y panel de operación](DEV-35-Inicio-Panel-Operativo.md): indicadores autorizados, actividad reciente y composición adaptable del Inicio.
 
 [DEV-41](DEV-41-Reparto-ContraEntrega.md) implementa reparto contra entrega con custodia y rendición (022). [DEV-42](DEV-42-Reportes-Operativos.md) conecta Reportes e Inicio: ventas/posventa, margen histórico, inventario/custodia, vencimientos y compras recibidas (023). La continuación vigente se detalla en DEV-43; el piloto y DEV-36 quedan después de los complementos y módulos nuevos.
+
+- [DEV-44 · Fiscal interno](DEV-44-Fiscal-Interno.md): preparación/revisión administrativa, sin emisión DTE.
+- [DEV-45 · Seguridad](DEV-45-Seguridad-Hallazgos.md): hallazgos abiertos y controles previos por fase.
+- [DEV-46 · Primer bloque Online](DEV-46-Online-Interno.md): prospectos, fuente, exclusiones y vínculo por compra confirmada (025).
+- [DEV-47 · Online conforme a referencia](DEV-47-Online-Referencia.md): zonas, segmentos, plantillas, campañas/aprobación y seguimiento manual (026); mapa y conectores externos pendientes.
+- [Guía de uso de Online interno](ONL-01/Guia-Online-Interno.md). Pendiente local vigente: **021 → 022 → 023 → 024 → 025 → 026**, en orden.

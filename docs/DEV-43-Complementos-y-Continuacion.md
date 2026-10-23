@@ -76,3 +76,9 @@ La herramienta de desarrollo recorre 009–026 al actualizar una base completa r
 no equivale a aplicar sólo 026. 025 añade el primer bloque Online y 026 la planificación.
 Después del recorrido interno: escalas/listas/promociones y los requisitos externos pendientes;
 instalador/actualizaciones/respaldos antes del piloto formal de dos PCs. No se aplicó la BD personal.
+
+Validación de DEV-47: [CI Windows #183](https://github.com/Gust4av033/GoDental/actions/runs/39974506383),
+`c6c26aa`, Release 0 advertencias/errores, 375 xUnit / 789 SQL / 1087 WPF. Después del recorrido
+interno validado, siguiente bloque independiente: escalas/listas/promociones (VEN-01A), cerrando
+reglas de mantenimiento antes de SQL/UI. Mapa, bandeja remota, proveedores, consentimiento y
+DTE real mantienen sus requisitos/bloqueos previos: no se declaran terminados por este incremento.

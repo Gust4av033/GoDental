@@ -31,6 +31,7 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 23. `023_Reportes_Operativos.sql`
 24. `024_Fiscal_Revision_Interna.sql`
 25. `025_Online_Interno.sql`
+26. `026_Online_Planificacion.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
@@ -158,3 +159,18 @@ No crea comunicaciones ni campañas ni transforma datos históricos. Reaplicable
 Actualización pendiente personal **021 → 022 → 023 → 024 → 025**, incluida 021. Respaldar BD
 /evidencias, ejecutar incrementales en orden y actualizar/reiniciar todas las estaciones.
 La base personal no se modificó desde cloud. Comandos y límites: [DEV-46](../docs/DEV-46-Online-Interno.md).
+
+## Planificación comercial conforme a referencia · 026
+
+`026_Online_Planificacion.sql` (DEV-47) añade SegmentosProspecto, SeguimientosProspecto,
+versiones de zonas/plantillas/campañas y snapshots de criterios, mensajes y destinatarios.
+Estado actual **81 tablas / 8 vistas / 18 procedimientos**, más la función de 025. No reconstruye
+ni reescribe campañas/seguimientos históricos. Aprobación interna sin envío ni consentimiento.
+
+**Pendiente personal vigente: 021 → 022 → 023 → 024 → 025 → 026, incluida 021.**
+Ejecutar incrementales en orden con respaldo y ambas estaciones actualizadas/cerradas.
+`install-database.ps1` usa master para crear la base en 001 y GoDental explícito desde 002,
+pues cada sqlcmd abre una sesión nueva. Esa herramienta instala la base GoDental de la baseline;
+para GoDental_Development reconocida usar --install-development según DEV-46. No forzar
+marcadores ni usar el instalador de desarrollo como migrador productivo. La BD personal
+no se modifica desde cloud. [Guía de Online](../docs/ONL-01/Guia-Online-Interno.md).

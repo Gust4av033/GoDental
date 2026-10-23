@@ -6,14 +6,14 @@ GoDental es una aplicación de escritorio para la operación comercial de un dep
 
 ## Estado actual y siguiente etapa
 
-La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-31–44 distinguen
+La revisión de [DEV-30](docs/DEV-30-Revision-Fase-2.md) y los incrementos DEV-31–47 distinguen
 el alcance implementado de lo pendiente de DM-01. El MVP conecta inventario/conteos,
 proveedores/clientes, POS/caja/crédito/pedidos y comprobantes; ya incluye compras/recepciones,
 importaciones con costeo, posventa/cobranza, reparto contra entrega y reportes operativos.
 Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zonas, segmentos, plantillas, campañas con aprobación interna, seguimiento manual, exclusiones y vínculo por compra confirmada. Emisión DTE, mapa, descubrimiento y envíos mediante conectores oficiales siguen pendientes.
-El orden vigente y los controles de seguridad están en DEV-44/45.
+El orden vigente y los controles de seguridad están en DEV-43/45/47; [guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #177](https://github.com/Gust4av033/GoDental/actions/runs/39961747381) valida `f46d530`: Release sin advertencias/errores, **364 xUnit / 761 SQL / 1011 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos sin avisos conocidos.
+Rama activa: **`feature/desarrollo`**. [CI Windows #183](https://github.com/Gust4av033/GoDental/actions/runs/39974506383) valida `c6c26aa`: Release sin advertencias/errores, **375 xUnit / 789 SQL / 1087 WPF**, sin errores de binding. Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos. Parser de PowerShell del instalador correcto.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack

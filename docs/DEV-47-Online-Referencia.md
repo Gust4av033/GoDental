@@ -86,7 +86,28 @@ por convertir un contacto comercial.
 
 ## Comprobación del incremento
 
-Release local sin advertencias/errores y 375 pruebas unitarias correctas. Se amplían la suite
-SQL Online y las capturas WPF para las diez secciones, formularios de mantenimiento/revisión
-y Light/Dark/compacto. Resultado Windows pendiente de registrar antes de cerrar el bloque.
-Linux no ejecuta SQL Server ni WPF; ninguna de estas comprobaciones instala la BD personal.
+[CI Windows #183](https://github.com/Gust4av033/GoDental/actions/runs/39974506383), evento push,
+correcto sobre **`c6c26aa35bc55b5f415024bbdf091189df22bcbb`**, job `120485611196`:
+Release **0 advertencias / 0 errores**, **375 xUnit / 789 comprobaciones SQL / 1087 WPF**.
+El flujo PR #184 también pasó sobre la misma cabeza. No hay errores de binding en la suite.
+Auditoría NuGet: siete proyectos consultados, cero avisos altos/críticos reportados.
+El instalador básico pasa el parser de PowerShell; no se ejecutó sobre la BD personal.
+
+- 28 comprobaciones SQL nuevas de planificación: zona/GUID/duplicado y versión entre estaciones;
+  segmentos con origen sin multiplicar destinatarios; exclusiones y formatos al preparar;
+  canales compatibles y copias inmutables del contenido/criterios; estados controlados,
+  aprobación humana, devolución/cancelación, cambio de ficha/exclusión posterior; seguimiento
+  inmutable paginado, reintentos, permisos revocados, rollback/recuperación y reaplicación.
+  Online acumula 68 comprobaciones SQL con el bloque anterior.
+- 11 casos unitarios nuevos: límites de filtros/fechas/marcadores, identidades congeladas,
+  separación de permisos, respuesta tardía/cambio de sesión, misma solicitud de aprobación
+  ante respuesta perdida y selectores territoriales dependientes.
+- 76 comprobaciones WPF adicionales: capturas de diez secciones en Light/Dark y tamaño normal/
+  compacto; formularios de zonas/segmentos/plantillas/campañas/revisión/seguimiento y recorridos
+  anteriores. Vista previa de texto y acciones de confirmación/cierre conservadas. No se envían
+  comunicaciones durante las pruebas ni se confunde una gestión manual con entrega remota.
+
+Release local y 375 pruebas también pasan con Windows targeting. Linux no ejecuta SQL Server
+ni WPF. Se revisaron registros automáticos: las capturas no equivalen a aceptación humana del
+monitor/impresora/LAN ni al piloto físico en dos estaciones. La confirmación posterior sólo
+registra documentación, sin cambiar el código validado ni aplicar SQL a la PC personal.
