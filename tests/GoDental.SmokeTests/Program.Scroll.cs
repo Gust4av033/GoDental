@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GoDental.Wpf;
+using GoDental.Wpf.Behaviors;
 using GoDental.Wpf.Navigation;
 using GoDental.Wpf.Themes;
 using GoDental.Wpf.ViewModels;
@@ -93,12 +94,22 @@ internal static partial class Program
                 await ScrollLayoutAsync(window);
                 Check(page.VerticalOffset > 0, "Las tablas con scroll lógico también continúan en la página al llegar al final");
                 var notesScroll = FindChildren<ScrollViewer>(notes).Single();
+                ScrollBoundary.SetContinueAtBoundary(page, false);
                 notesScroll.ScrollToEnd();
                 page.ScrollToHome();
                 await ScrollLayoutAsync(window);
                 SendWheel(notesScroll, -120);
                 await ScrollLayoutAsync(window);
-                Check(page.VerticalOffset < 1, "La rueda dentro de un campo de notas conserva su comportamiento de edición");
+                var nativePageOffset = page.VerticalOffset;
+                var nativeNotesOffset = notesScroll.VerticalOffset;
+                ScrollBoundary.SetContinueAtBoundary(page, true);
+                notesScroll.ScrollToEnd();
+                page.ScrollToHome();
+                await ScrollLayoutAsync(window);
+                SendWheel(notesScroll, -120);
+                await ScrollLayoutAsync(window);
+                Check(Math.Abs(page.VerticalOffset - nativePageOffset) < 1 && Math.Abs(notesScroll.VerticalOffset - nativeNotesOffset) < 1,
+                    "La rueda dentro de un campo de notas conserva su comportamiento nativo de edición");
 
                 navigation.Navigate(SetupPage.Connection);
                 await ScrollLayoutAsync(window);
