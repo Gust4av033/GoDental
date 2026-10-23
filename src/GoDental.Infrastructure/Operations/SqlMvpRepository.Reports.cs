@@ -43,7 +43,7 @@ public sealed partial class SqlMvpRepository
           FROM ven.DevolucionesVenta r JOIN ven.DevolucionDetalle d ON d.IdDevolucion=r.IdDevolucion JOIN ven.VentaDetalle v ON v.IdDetalle=d.IdVentaDetalle
           JOIN ven.Ventas s ON s.IdVenta=r.IdVenta JOIN inv.Productos p ON p.IdProducto=v.IdProducto JOIN cat.CategoriasProducto c ON c.IdCategoria=p.IdCategoria
           LEFT JOIN cli.Clientes cl ON cl.IdCliente=s.IdCliente
-          OUTER APPLY(SELECT SUM(dd.MontoReintegrado) Amount FROM ven.DevolucionDetalle dd JOIN ven.DevolucionesVenta rr ON rr.IdDevolucion=dd.IdDevolucion
+          OUTER APPLY(SELECT CONVERT(decimal(18,2),SUM(dd.MontoReintegrado)) Amount FROM ven.DevolucionDetalle dd JOIN ven.DevolucionesVenta rr ON rr.IdDevolucion=dd.IdDevolucion
            WHERE dd.IdVentaDetalle=d.IdVentaDetalle AND rr.Estado=N'APLICADA' AND (rr.FechaAplicacion<r.FechaAplicacion OR rr.FechaAplicacion=r.FechaAplicacion AND rr.IdDevolucion<r.IdDevolucion))prev
           WHERE r.Estado=N'APLICADA' AND r.FechaAplicacion>=@start AND r.FechaAplicacion<@end
           UNION ALL
