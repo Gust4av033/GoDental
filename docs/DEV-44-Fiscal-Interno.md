@@ -7,6 +7,12 @@ no tiene ambiente de pruebas de Hacienda: preparar módulo interno. Solicita rev
 
 ## Secuencia vigente
 
+**Sustituida para continuación DTE** por [DEV-50](DEV-50-Preparacion-DTE.md) /
+[FIS-01 v0.2](FIS-01/README.md). Esta página conserva alcance/evidencia del módulo interno.
+El nuevo orden exige servidor confiable, fuentes oficiales y S1 antes de transmisión; preparar/
+revisar no emite DTE. Migraciones personales pendientes actuales: **021 → 022 → 023 → 024 →
+025 → 026**, sin nueva migración en esta iteración.
+
 1. Fiscal interno: bandeja de solicitudes, venta asociada, revisión de datos y observaciones.
 2. Online interno según ONL-01: fuentes/prospectos, exclusiones/deduplicación y trazabilidad;
    cerrar consentimiento, fuentes/canales y conversión antes de habilitar acciones externas.

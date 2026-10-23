@@ -2,6 +2,12 @@
 
 **Versión vigente:** v0.1
 
+Propuesta fiscal posterior a 026: [FIS-01 v0.2, modelo y migraciones](../FIS-01/Modelo-y-Migraciones.md).
+Estado PREPARADO, sin DDL 027 aprobado: preservar solicitudes/revisión y tablas históricas;
+nuevos snapshots/artefactos/intentos/eventos se definirán con contratos oficiales vigentes antes
+de implementar. No reinterpretar ANULADO interno como invalidación MH ni guardar secretos en
+ValorProtegido. El diseño no cambia las 26 migraciones existentes.
+
 DB-01 define la estructura formal de datos de GoDental. La transcripción histórica completa se conserva en `../DB-01.md` y el documento Word original en `../referencias/GoDental_DB-01_ModeloDatos_DiccionarioSQL_v0.1(1).docx`.
 
 La baseline ejecutable 001–008 y las migraciones posteriores viven en `../../database/`. Las ampliaciones se documentan antes de implementarlas: [DEV-03](../DEV-03-Inventario-operativo.md) define 010 y [DEV-09](../DEV-09-Conteos.md) define 011 sobre las tablas de conteos existentes. No inventar tablas, columnas o procedimientos desde C# sin una definición versionada.

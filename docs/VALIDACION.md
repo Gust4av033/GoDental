@@ -1,5 +1,16 @@
 # Validación de baseline v0.1
 
+## Preparación del nuevo plan DTE · 23/10/2026
+
+[DEV-50](DEV-50-Preparacion-DTE.md) registra fetch/HEAD/PR y auditoría del estado real antes
+de cambiarlo. Baseline inicial `657d836`: restore/Release con SDK 8.0.426 y Windows targeting,
+cero warnings/errores y **418 xUnit**. Sin LocalDB/WPF ejecutables en Linux.
+FIS-01 pasa a v0.2 de especificación; ocho PDF incorporados sin cambiar bytes y con inventario
+SHA-256, más verificador documental. Contratos técnicos externos, servidor y credenciales siguen
+pendientes; no hay DTE real, pruebas MH ni migración nueva. Resultado final del bloque en DEV-50.
+
+Las secciones siguientes son evidencia histórica de sus respectivos commits.
+
 ## Compras y recepciones · etapa 2.1A · 21/10/2026
 
 [DEV-33](DEV-33-Compras-Recepciones.md), código `c9a7ae5`, [CI Windows #116 correcto](https://github.com/Gust4av033/GoDental/actions/runs/39684813213): Release sin advertencias/errores, **218 xUnit**, **477 comprobaciones SQL** y **625 WPF**, sin errores de binding. Agrega 39 comprobaciones SQL de OC/recepción, concurrencia, costo/FX, lotes, rollback y recuperación, con UI conectada y formularios en ambos temas. Localmente pasaron Release y test de solución (218) con Windows targeting.

@@ -2,12 +2,15 @@
 
 ## Prioridad vigente · 23/10/2026
 
-Por instrucción del usuario, [DEV-44](DEV-44-Fiscal-Interno.md) sustituye el orden de DEV-43:
-**módulos nuevos (Fiscal interno → Online interno) → escalas/listas/promociones y demás
-complementos → endurecimiento final, instalador/actualizaciones/respaldos → piloto formal en las
-PCs**. No hay acceso de pruebas de Hacienda todavía; la emisión real requiere FIS-01 v0.2.
-[DEV-45](DEV-45-Seguridad-Hallazgos.md) registra la revisión y sus fases: seguridad con cada
-incremento y antes de conectores; riesgos altos/críticos no esperan al cierre del programa.
+El usuario sustituyó los planes DTE previos por [DEV-50](DEV-50-Preparacion-DTE.md) y
+[FIS-01 v0.2](FIS-01/README.md): **A especificación/fuentes → B servidor seguro → C contratos →
+D generación → E firma → F Hacienda TEST/reconciliación → G eventos → H representación →
+I certificación → J producción**. Esta primera iteración entrega diseño/auditoría, no transmisión.
+Faltan T01–T06 oficiales y acceso TEST. Mientras se obtienen, sigue B1/B2 sin emisión externa.
+Online actual se conserva; conectores pendientes y escalas/listas/promociones quedan después
+de esta prioridad. Instalador/actualizaciones/respaldos y piloto siguen posteriores, salvo backup/
+restauración y controles de seguridad que son requisitos previos al uso productivo.
+[DEV-45](DEV-45-Seguridad-Hallazgos.md) conserva hallazgos abiertos; riesgos altos no esperan al final.
 
 **Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024 → 025 → 026.**
 Cada archivo es incremental; el último no incluye los anteriores. No aplicadas desde cloud.
@@ -24,7 +27,7 @@ CI Windows #98 del código revisado: **173 xUnit, 374 comprobaciones SQL y 570 W
 
 El primer bloque se implementa en [DEV-31](DEV-31-Recuperacion-Operaciones.md), con migración 015: recuperación terminal y diario previo al envío. Los complementos de **2.0B** se implementan en [DEV-32](DEV-32-Complementos-MVP.md), con migración 016. 2.0B pasó CI Windows #110 sobre `f34b1a3` (202 xUnit, 438 SQL y 593 WPF). El bloque **2.1A: compras y recepción** se implementa en [DEV-33](DEV-33-Compras-Recepciones.md), con migración 017. [DEV-37](DEV-37-Importaciones-Costeo.md) implementa **2.1B: importaciones y costeo**, con reparto por valor neto y costos cerrados antes de recibir, aprobados por el usuario. [DEV-38](DEV-38-Posventa.md) implementa **2.2A: posventa** (019), con reintegro en efectivo tras reducir deuda y evidencias en carpeta central. Sigue **2.2B: cobranza y documentos de crédito**, implementado en [DEV-40](DEV-40-Cobranza-Documentos.md) (021). [DEV-34](DEV-34-Impresion-Formatos.md) implementa el complemento de impresión configurable; CI Windows #128 pasó con 241 xUnit, 477 SQL y 725 WPF. 2.0A pasó CI Windows #106 sobre `c3d3445` (187 xUnit, 399 SQL y 575 WPF), con detalle en DEV-31; no completa los bloques de compras/posventa/reportes ni el piloto.
 
-Continuación vigente: [DEV-47](DEV-47-Online-Referencia.md) amplía el bloque manual con
+Continuación histórica de Online: [DEV-47](DEV-47-Online-Referencia.md) amplía el bloque manual con
 planificación interna; [DEV-48](DEV-48-Online-Conectores.md) añade mapa local y descubrimiento
 público con revisión. El usuario priorizó este avance externo antes de escalas/listas/promociones.
 Sigue servicio HTTPS central, identidad confiable/S1 y bandejas durables; Cloud API, autorización
@@ -49,11 +52,12 @@ no Cloud API habilitada. No se declara chat conectado ni DTE emitido.
 | Online · planificación interna | Implementado; CI #183: 375 xUnit / 789 SQL / 1087 WPF | DEV-47, 026; aprobación no envía |
 | Online · mapa/descubrimiento | Implementado; CI #189: 406 xUnit / 790 SQL / 1097 WPF | Sin migración; transporte/verificador Meta preparados, servicio/envío/chat pendientes |
 | Paréntesis · búsqueda y acceso | Implementado; CI #193: 418 xUnit / 790 SQL / 1106 WPF | DEV-49; servidores manuales y visibilidad de contraseña, sin migración |
+| Nuevo plan DTE · especificación/preparación | PREPARADO; contratos externos pendientes | DEV-50, FIS-01 v0.2; ocho fuentes preservadas/verificables, servidor y modelo diseñados; sin transmisión ni migración nueva |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.
 
-La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores conservan la prioridad vigente de DEV-44.
+La aceptación física entre dos estaciones y hardware no se sustituye por estas pruebas automáticas. Las fases posteriores siguen la prioridad de DEV-50/FIS-01.
 
 ## Fases históricas de DM-01
 

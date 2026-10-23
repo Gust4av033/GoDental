@@ -35,6 +35,14 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
 
+## Preparación DTE · DEV-50
+
+[FIS-01 v0.2](../docs/FIS-01/README.md) define el nuevo plan, con [modelo y migraciones](../docs/FIS-01/Modelo-y-Migraciones.md)
+aditivas futuras. Esta iteración **no añade 027** ni modifica scripts históricos. `005` son cimientos;
+`024` sólo revisión interna, no emisión/sello. No almacenar credenciales fiscales en SQL plano.
+En la PC personal faltan **021 → 022 → 023 → 024 → 025 → 026**, todas, desde 021 incluida;
+la última no contiene las anteriores. No se aplicaron desde este entorno.
+
 ## Contenido de la baseline
 
 - `001`–`006`: **72 tablas**, coincidentes con el diccionario DB-01 v0.1.
@@ -54,7 +62,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–025.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–026.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 

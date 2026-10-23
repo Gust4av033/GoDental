@@ -2,6 +2,12 @@
 
 **Versión:** v0.1
 
+Ampliación de diseño DTE (PREPARADO, sin cierre S1): [seguridad fiscal](../FIS-01/Seguridad-Fiscal.md),
+[servidor](../FIS-01/Arquitectura-y-Servidor.md) y [secretos](../FIS-01/Secretos-y-Certificados.md).
+Identidad desde contexto autenticado, permiso actual del servidor y SQL mínimo; IdUsuario del
+cliente no prueba identidad. Sólo se añaden permisos de emisión/eventos/reintento al existir
+su funcionalidad real. Los tres permisos fiscales actuales conservan alcance interno.
+
 GoDental será multiusuario y multi-PC con roles iniciales Administrador/Vendedor y permisos granulares. La UI mejora la experiencia, pero la autorización real se valida también en Application/Service y la integridad final en SQL Server.
 
 ## Reglas vigentes

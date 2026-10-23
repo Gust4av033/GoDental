@@ -7,6 +7,15 @@ Es una consolidación de pendientes documentados, no una nueva auditoría exhaus
 
 ## Orden vigente solicitado
 
+Actualización: [DEV-50](DEV-50-Preparacion-DTE.md) y [FIS-01 v0.2](FIS-01/README.md) sustituyen
+la prioridad DTE anterior: especificación/fuentes → arquitectura segura → contratos/generación/
+firma/TEST → eventos/representación/certificación → PROD con preflight. Online actual se conserva;
+sus conectores pendientes y escalas/listas/promociones quedan después de esta prioridad.
+La primera iteración no habilita emisión. Migraciones personales pendientes: **021 → 022 → 023 →
+024 → 025 → 026**; ninguna nueva en DEV-50.
+
+El orden siguiente se conserva como antecedente:
+
 Prioridad sustituida por instrucción del 23/10/2026; ver [DEV-44](DEV-44-Fiscal-Interno.md)
 y [DEV-45](DEV-45-Seguridad-Hallazgos.md):
 

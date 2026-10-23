@@ -54,6 +54,12 @@ corregir antes de habilitar su recorrido, aunque cambie la prioridad funcional s
 
 ## Fases de seguridad
 
+Actualización DTE: [DEV-50](DEV-50-Preparacion-DTE.md) y [seguridad FIS-01 v0.2](FIS-01/Seguridad-Fiscal.md)
+fijan servidor autenticado, identidad SQL limitada, custodia/rotación y separación TEST/PROD como
+requisitos de S1. **SEC-01/03 no están cerrados** por esta especificación ni por el inventario PDF.
+El nuevo plan DTE sustituye la continuación funcional histórica descrita debajo. Próximo bloque
+independiente: servidor/autenticación B1 y diseño B2; contratos externos detenidos sin T01–T06.
+
 - **S0 — ahora, con cada módulo:** revisión de permisos/entradas, secretos/logs, dependencias,
   amenazas y pruebas de fallos/concurrencia; corregir regresiones antes de integrar. Fiscal interno
   sin emisión real y con revisión separada; sin importación de tokens/certificados ni JSON fiscal.
