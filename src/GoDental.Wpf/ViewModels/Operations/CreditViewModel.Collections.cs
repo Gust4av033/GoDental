@@ -52,13 +52,15 @@ public sealed partial class CreditViewModel
         if (collections?.CanManage != true || Selected is not { NoticeDue: true } account) return;
         using var form = new MvpFormModel("Registrar aviso de cobranza", "Registrar aviso", Operation, async f =>
         {
-            var id = Guid.NewGuid(); var request = new RegisterCollectionNotice(id, account.Id, account.RowVersion.ToArray(), f.Choice<string>("medium"), f.Choice<string>("outcome"), f.Text("reason"));
+            var id = Guid.NewGuid(); var request = new RegisterCollectionNotice(id, account.Id, account.RowVersion.ToArray(), f.Choice<NoticeChoice>("medium").Code, f.Choice<NoticeChoice>("outcome").Code, f.Text("reason"));
             await Operation.StartAsync(request, id, q => collections.RegisterAsync(q), async _ =>
             {
                 var revision = Session.Revision; await LoadCoreAsync(revision); if (!Current(revision)) return; NoticePage = 1; await LoadNoticesCoreAsync(revision);
             });
         }) { Description = $"Cuenta {account.Id} · {account.Sale} · Saldo consultado {account.Balance:N2}. Registra sólo la gestión que realizaste; no se enviará ningún mensaje." };
-        form.Select("medium", "Medio de la gestión", CollectionValidator.Media, "INTERNO").Select("outcome", "Resultado", CollectionValidator.Outcomes, "GESTION_INTERNA").Input("reason", "Observación / motivo");
+        NoticeChoice[] media = [new("INTERNO", "Revisión interna"), new("LLAMADA", "Llamada"), new("WHATSAPP", "WhatsApp"), new("EMAIL", "Correo electrónico"), new("PRESENCIAL", "Presencial")];
+        NoticeChoice[] outcomes = [new("GESTION_INTERNA", "Gestión interna"), new("CONTACTADO", "Contacto registrado"), new("SIN_RESPUESTA", "Sin respuesta")];
+        form.Select("medium", "Medio de la gestión", media, media[0]).Select("outcome", "Resultado", outcomes, outcomes[0]).Input("reason", "Observación / motivo");
         IsEditing = true; try { await dialogs.ShowAsync(form); } finally { IsEditing = false; }
     });
     [RelayCommand] private Task LoadStatementAsync() => ReadAsync(async r =>
@@ -73,6 +75,7 @@ public sealed partial class CreditViewModel
     [RelayCommand] private void NextStatement() { if (IsBusy || StatementPage * 30 >= Statement?.Movements.Count) return; StatementPage++; FillStatementPage(); }
     [RelayCommand] private void PreviousStatement() { if (IsBusy || StatementPage == 1) return; StatementPage--; FillStatementPage(); }
 
+    public sealed record NoticeChoice(string Code, string Name);
     public ReceiptPrintSettingsModel PrintSettings { get; } = new();
     private PrintLayout? previewLayout;
     private long previewCustomer;
