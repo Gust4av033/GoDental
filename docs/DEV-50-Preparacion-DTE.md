@@ -1,5 +1,9 @@
 # DEV-50 — Auditoría y preparación del nuevo plan DTE
 
+Continuación posterior: [DEV-51](DEV-51-Servidor-Identidad.md) implementa B1 de servidor e
+identidad con migración 027. Esta página conserva la auditoría previa y sus SHA/resultados;
+el estado actual y siguiente bloque se consultan en DEV-51 y el backlog FIS-01.
+
 23/10/2026, El Salvador. Primera iteración solicitada: doce entregables de especificación,
 auditoría, arquitectura/modelos, seguridad y backlog antes de integración externa.
 Fuentes de diseño consultadas: DM-01, DB-01, ARQ-01, SEC-01, DEV-44/45 y PDFs aportados.

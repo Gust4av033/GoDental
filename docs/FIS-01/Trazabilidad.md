@@ -24,6 +24,13 @@ y ARQ-01; no se presentan como campos o estados exigidos por Hacienda.
   comprobaciones de preparación/revisión sobre SQL aislado, no transmisión MH.
 - **P3**: [Smoke WPF](../../tests/GoDental.SmokeTests/Program.cs), fiscal interno y PDF
   comercial; sin firma, sello, QR fiscal ni llamadas MH.
+- **C5 / P4 (DEV-51)**: [host](../../src/GoDental.Server/Program.cs),
+  [servicio de identidad](../../src/GoDental.Application/Services/ServerAuthenticationService.cs),
+  [repositorio](../../src/GoDental.Infrastructure/Security/SqlServerAuthenticationRepository.cs),
+  [conexión limitada](../../src/GoDental.Infrastructure/Data/ServerSqlConnectionFactory.cs),
+  [22 pruebas HTTP](../../tests/GoDental.Server.Tests/ServerHttpTests.cs) y
+  [35 comprobaciones SQL](../../tests/GoDental.DatabaseTests/ServerIdentityIntegration.cs).
+  Identidad GoDental, no autenticación/credencial de Hacienda.
 
 ## Requisitos
 
@@ -53,7 +60,7 @@ y ARQ-01; no se presentan como campos o estados exigidos por Hacienda.
 | R22 Entrega al receptor | F08 §11 pp.23–26, anexo I §4 p.42; T02/T04 | Descarga/impresión comercial | Archivo oficial+RG, evidencia, acceso sin correo obligatorio pendientes | PREPARADO diseño |
 | R23 Consulta pública | F03 pp.6–17; F08 §14; mecanismo vigente T01 | No acción fiscal conectada | URL/parámetros oficiales y distinción frente a API pendientes | PENDIENTE_DE_CONTRATO_OFICIAL |
 | R24 TEST/PROD y autorizaciones por tipo | F05 pp.7–14; F07 pp.7/11; F08 anexo I §3.1 p.41 | Sin activación externa | Credenciales cruzadas, tipo no autorizado y preflight pendientes | PREPARADO diseño; credenciales pendientes |
-| R25 Custodia, permisos y auditoría | F08 §12.2 p.27; plan §§8–12/25/26; SEC-01/DEV-45 | C1/C2 controles internos; S1 abierto | P2 revocación/rollback; servidor/SQL mínimo/secreto/logs pendientes | IMPLEMENTADO interno; S1 pendiente |
+| R25 Custodia, permisos y auditoría | F08 §12.2 p.27; plan §§8–12/25/26; SEC-01/DEV-45/51 | C1/C2 internos; C5 host/identidad/rol limitado; S1 global abierto | P2 y P4 revocación/rollback/logs/SQL limitado; custodia fiscal y despliegue pendientes | IMPLEMENTADO interno / B1; S1 pendiente |
 | R26 Pruebas mínimas/certificación | F06 p.8; F07 p.7; anexo 1 de T02 faltante | Ninguna prueba real MH | No fijar cantidades. Checklist por tipo/evento, respuesta real y autorización pendientes | PENDIENTE_DE_DOCUMENTACION_OFICIAL |
 | R27 Integridad de fuentes | Plan §§2/4/5 | Inventario y verificador local de archivos | Ocho pruebas de hash/ausencia/extra/rutas/duplicado/JSON/bloqueo documental | IMPLEMENTADO / VALIDADO_LOCALMENTE; DEV-50 |
 

@@ -23,11 +23,12 @@ Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zona
 El orden vigente está en DEV-50/FIS-01; DEV-43/45 conservan pendientes y fases de seguridad.
 [Guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #199](https://github.com/Gust4av033/GoDental/actions/runs/40025528003)
-valida `f805dac`: Release sin advertencias/errores, **418 xUnit / 790 SQL / 1106 WPF**, más
-ocho pruebas del verificador documental y ocho PDF intactos. Sin errores de binding reportados.
-NuGet: siete proyectos, cero avisos altos/críticos; parser PowerShell correcto. El CI del PR #200
-también pasó. [DEV-50](docs/DEV-50-Preparacion-DTE.md) conserva evidencia y límites; sin validación MH.
+Rama activa: **`feature/desarrollo`**. [CI Windows #203](https://github.com/Gust4av033/GoDental/actions/runs/40029963174)
+valida `c9b9710`: Release sin advertencias/errores, **440 xUnit / 825 SQL / 1106 WPF**, más
+ocho pruebas del verificador y ocho PDF intactos. Incluye 22 HTTP y 35 SQL nuevas de identidad.
+Sin errores de binding reportados. NuGet: nueve proyectos, cero avisos altos/críticos; parser
+PowerShell correcto. CI del PR #204 también pasó. [DEV-51](docs/DEV-51-Servidor-Identidad.md)
+conserva evidencia y límites; sin validación MH ni provisión en las PCs personales.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack
@@ -52,7 +53,10 @@ GoDental/
 │   ├── GoDental.Server/
 │   └── GoDental.Wpf/
 ├── tests/
-│   └── GoDental.Tests/
+│   ├── GoDental.Tests/
+│   ├── GoDental.Server.Tests/
+│   ├── GoDental.DatabaseTests/
+│   └── GoDental.SmokeTests/
 ├── database/
 ├── docs/
 ├── scripts/

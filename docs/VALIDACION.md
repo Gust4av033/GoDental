@@ -1,5 +1,20 @@
 # Validación de baseline v0.1
 
+## Servidor B1 e identidad · 23/10/2026
+
+[DEV-51](DEV-51-Servidor-Identidad.md), código `c9b9710`, [CI Windows #203](https://github.com/Gust4av033/GoDental/actions/runs/40029963174):
+Release cero warnings/errores, **440 xUnit (418 existentes + 22 HTTP) / 825 SQL (35 nuevas) /
+1106 WPF**, sin errores de binding reportados. Ocho pruebas documentales/fuentes intactas;
+parser PowerShell correcto. NuGet: nueve proyectos, cero avisos altos/críticos. CI PR #204 correcto.
+Baseline nueva previa a cambios en `9600e15`: Release sin warnings/errores y 418 xUnit.
+
+027 agrega 82ª tabla y cuatro procedimientos (22 totales), sin modificar 001–026. Prueba de
+actualización desde 026 con datos, rol SQL limitado, revocación/expiración, concurrencia y rollback.
+HTTP usa TestServer e identidad sintética; SQL usa usuario limitado real en LocalDB aislado.
+No se certifica TLS/provisión de las PCs ni cierre global S1, secretos fiscales o emisión MH.
+Pendientes personales **021 → 022 → 023 → 024 → 025 → 026 → 027**. Guía en
+[configuración del servidor](Servidor-Configuracion.md). El cierre sólo cambia documentación.
+
 ## Preparación del nuevo plan DTE · 23/10/2026
 
 [DEV-50](DEV-50-Preparacion-DTE.md) registra fetch/HEAD/PR y auditoría del estado real antes

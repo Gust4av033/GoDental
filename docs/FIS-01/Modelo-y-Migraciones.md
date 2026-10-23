@@ -1,6 +1,7 @@
 # Modelo fiscal, estados y migraciones
 
-**PREPARADO — modelo conceptual y plan aditivo; no DDL nuevo aprobado.**
+**PREPARADO — modelo fiscal conceptual y plan aditivo; no DDL de emisión aprobado.**
+Identidad interna del servidor implementada aparte en 027 / DEV-51.
 Los nombres de atributos de esta página son conceptos internos, no campos JSON de Hacienda.
 Tipos, longitudes, precisión, literales y relaciones finales dependen de T01–T06. DB-01 conserva
 la baseline histórica; no modificar `005` ni `024` para aparentar compatibilidad fiscal.
@@ -116,7 +117,7 @@ Retención y eliminación sólo desde política legal verificada; no inventar a�
 ## Plan aditivo de migraciones
 
 1. Inventariar estado instalado y backup; aplicar todos los scripts pendientes **021, 022, 023,
-   024, 025, 026**, sin saltos. Esta iteración no ejecuta cambios en la BD personal.
+   024, 025, 026, 027**, sin saltos. No se ejecutaron cambios en la BD personal desde cloud.
 2. Fase B: definir identidad SQL, permisos reales y esquema de sesiones/revocación. Aprobación
    en DB-01/SEC-01 antes de DDL. Scripts de provisión de identidades sin contraseñas en Git.
 3. Fase C: cerrar fuentes, modelo relacional, tipos/precisión y compatibilidad. Añadir perfiles,

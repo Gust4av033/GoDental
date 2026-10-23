@@ -70,7 +70,20 @@ certificado SQL local sólo en Development, instancia local y BD de desarrollo/p
 Código B1 implementado: host, servicio Application, repositorio SQL y procedimientos 027.
 Local: restore y Release sin warnings/errores; **418 xUnit existentes + 22 HTTP = 440** correctas.
 Auditoría NuGet: nueve proyectos consultados, sin problemas ni vulnerabilidades conocidas.
-La evidencia SQL/WPF actual se añadirá al terminar CI Windows; no es validación Hacienda.
+Evidencia final: [CI Windows #203](https://github.com/Gust4av033/GoDental/actions/runs/40029963174)
+en **c9b97108d5138ec115fee851971afe72f4850a39**, job `120675490376`: Release cero warnings/
+errores; **440 xUnit (418 + 22 HTTP) / 825 SQL (35 nuevas) / 1106 WPF**, sin errores de
+binding reportados. Ocho pruebas del verificador y ocho fuentes intactas. Parser PowerShell
+correcto; NuGet consultó nueve proyectos y reportó cero avisos altos/críticos. SQL incluye
+actualización real desde 026 con usuario previo, rol limitado, denegaciones, permisos revocados,
+logout/reinicio, estado de credencial/estación, inactividad, expiración, concurrencia, versión
+obsoleta, rollback de auditoría y reaplicación preservando sesiones/revocaciones.
+[CI del PR #204](https://github.com/Gust4av033/GoDental/actions/runs/40029969565) también correcto.
+El cierre posterior sólo actualiza documentación. No es validación Hacienda ni instalación LAN.
+
+Persisten avisos Node `DEP0169` de herramientas Actions (SEC-06 de DEV-45), sin warnings C#
+ni nueva vulnerabilidad confirmada por esta revisión. La búsqueda limitada en cambios no añadió
+marcadores de clave privada; no equivale a una auditoría exhaustiva de secretos o pentest.
 
 Baseline previa `9600e15`: restore/Release cero warnings/errores y 418 xUnit en Linux con Windows
 targeting. No asumir resultados SQL/WPF históricos como evidencia de esta iteración.
