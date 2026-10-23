@@ -1,6 +1,6 @@
 # GoDental
 
-Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), Fiscal interno y Online conforme a referencia ([DEV-47](docs/DEV-47-Online-Referencia.md)), continuado con mapa/descubrimiento público y preparación Meta ([DEV-48](docs/DEV-48-Online-Conectores.md)); después escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**.
+Prioridad del 23/10/2026: [DEV-44](docs/DEV-44-Fiscal-Interno.md), Fiscal interno y Online conforme a referencia ([DEV-47](docs/DEV-47-Online-Referencia.md)), continuado con mapa/descubrimiento público y preparación Meta ([DEV-48](docs/DEV-48-Online-Conectores.md)); después escalas/listas/promociones. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) registra seguridad y fases de corrección. Paréntesis actual: [DEV-49](docs/DEV-49-Busqueda-y-Acceso.md), corrección de consulta/servidores de búsqueda y mostrar/ocultar contraseña en acceso. En la PC faltan migraciones **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026**.
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.
 

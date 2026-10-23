@@ -5,8 +5,9 @@ using GoDental.Application.DTOs;
 
 internal sealed class FakeIdentityGateway : IIdentityGateway
 {
+    public Task<GoDental.Application.Common.Result<UserIdentity>>? PendingAccess { get; set; }
     public Task<bool> NeedsAdministratorAsync(CancellationToken ct = default) => Task.FromResult(true);
-    public Task<Result<UserIdentity>> CreateAdministratorAsync(string u, string d, string p, string w, CancellationToken ct = default) => Task.FromResult(Result<UserIdentity>.Failure("TEST", "Sin acceso SQL en smoke visual."));
+    public Task<Result<UserIdentity>> CreateAdministratorAsync(string u, string d, string p, string w, CancellationToken ct = default) => PendingAccess ?? Task.FromResult(Result<UserIdentity>.Failure("TEST", "Sin acceso SQL en smoke visual."));
     public Task<Result<UserIdentity>> SignInAsync(string u, string p, string w, CancellationToken ct = default) => Task.FromResult(Result<UserIdentity>.Failure("TEST", "Sin acceso SQL en smoke visual."));
     public Task<Result> ChangePasswordAsync(int id, string p, string n, CancellationToken ct = default) => Task.FromResult(Result.Success());
     public Task SignOutAsync(int id, int? w, CancellationToken ct = default) => Task.CompletedTask;

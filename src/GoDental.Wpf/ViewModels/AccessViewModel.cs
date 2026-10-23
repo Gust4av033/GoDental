@@ -25,7 +25,7 @@ public sealed partial class AccessViewModel : ObservableObject
     public bool NeedsConfirmation => IsBootstrap || MustChangePassword;
     public bool ShowSignIn => !session.IsAuthenticated;
     public bool ShowPrepareAction => !IsReady && !IsBusy && !IsAuthenticated;
-    public string PrimaryActionLabel => MustChangePassword ? "Cambiar contraseña" : IsBootstrap ? "Crear administrador" : "Iniciar sesión";
+    public string PrimaryActionLabel => IsSubmitting ? "Procesando acceso…" : MustChangePassword ? "Cambiar contraseña" : IsBootstrap ? "Crear administrador" : "Iniciar sesión";
     public string FormDescription => IsAuthenticated ? "Administra el acceso de tu cuenta en este equipo." : MustChangePassword ? "Elige una nueva contraseña para continuar con tu cuenta." : IsBootstrap ? "Configura la cuenta que administrará tu depósito dental." : "Ingresa con tu cuenta para continuar con la operación.";
     public string FormTitle => session.IsAuthenticated ? "Sesión iniciada" : MustChangePassword ? "Actualiza tu contraseña" : IsBootstrap ? "Crea el primer administrador" : "Iniciar sesión";
 
@@ -56,12 +56,16 @@ public sealed partial class AccessViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    [ObservableProperty] private bool isSubmitting;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool isSubmitting;
 
     // Las contraseñas se reciben sólo durante el envío; no son propiedades persistentes del ViewModel.
     public async Task SubmitAsync(string password, string confirmation, string currentPassword)
     {
         if (IsBusy || !IsReady || IsAuthenticated) return;
+        if (string.IsNullOrWhiteSpace(UserName)) { StatusMessage = "Escribe tu usuario de GoDental."; return; }
+        if (string.IsNullOrEmpty(password)) { StatusMessage = NeedsConfirmation ? "Escribe la nueva contraseña." : "Escribe tu contraseña."; return; }
+        if (MustChangePassword && string.IsNullOrEmpty(currentPassword)) { StatusMessage = "Escribe tu contraseña actual."; return; }
+        if (IsBootstrap && string.IsNullOrWhiteSpace(DisplayName)) { StatusMessage = "Escribe el nombre completo del primer administrador."; return; }
         if (NeedsConfirmation && password != confirmation) { StatusMessage = "Las contraseñas no coinciden."; return; }
         IsBusy = true; IsSubmitting = true;
         try
@@ -87,6 +91,14 @@ public sealed partial class AccessViewModel : ObservableObject
         }
         catch (Exception ex) { Fail(ex); }
         finally { IsSubmitting = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task CancelPasswordChangeAsync()
+    {
+        if (IsBusy || !MustChangePassword || IsAuthenticated) return;
+        pendingIdentity = null; MustChangePassword = false;
+        await PrepareAsync(CancellationToken.None);
     }
 
     [RelayCommand]

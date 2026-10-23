@@ -37,10 +37,14 @@
     <TextBlock Text="Límites departamentales de referencia. El municipio se elige con el catálogo vigente." Style="{StaticResource MutedText}" Margin="0,8,0,4"/>
     <TextBlock Style="{StaticResource MutedText}"><Run Text="Datos: Who’s On First / foursquare Quattroshapes · CC-BY 2.0 · "/><Hyperlink NavigateUri="https://github.com/whosonfirst-data/whosonfirst-data-admin-sv/blob/b8c0ae6f6469102c0dbf33fecdaab0209496ac9b/LICENSE.md" RequestNavigate="LicenseRequested">Licencia</Hyperlink><Run Text=" · "/><Hyperlink NavigateUri="https://github.com/foursquare/quattroshapes/" RequestNavigate="LicenseRequested">foursquare Quattroshapes</Hyperlink></TextBlock>
     <TextBlock Text="{Binding MapMessage}" Style="{StaticResource StatusMessage}" Margin="0,12,0,8" AutomationProperties.LiveSetting="Polite"/>
+    <StackPanel MaxWidth="320" HorizontalAlignment="Left" Margin="0,0,0,12">
+      <Label Content="Servidor de búsqueda de OpenStreetMap" Target="{Binding ElementName=DiscoveryServerInput}"/>
+      <ComboBox x:Name="DiscoveryServerInput" ItemsSource="{Binding DiscoveryServers}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding DiscoveryServer}" AutomationProperties.Name="Servidor comunitario para buscar negocios"/>
+    </StackPanel>
     <WrapPanel>
-      <Button Content="Buscar negocios dentales" Command="{Binding DiscoverCommand}" IsEnabled="{Binding CanManage}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+      <Button Content="Buscar negocios dentales" Command="{Binding DiscoverCommand}" IsEnabled="{Binding CanManage}" Style="{StaticResource ActionButton}" Width="Auto" MinWidth="210" Margin="0,0,8,8"/>
       <Button Content="Cancelar búsqueda" Command="{Binding DiscoverCancelCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
-      <Button Content="Revisar para registrar" Command="{Binding ReviewDiscoveredCommand}" IsEnabled="{Binding CanManage}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+      <Button Content="Revisar para registrar" Command="{Binding ReviewDiscoveredCommand}" IsEnabled="{Binding CanManage}" Style="{StaticResource ActionButton}" Width="Auto" MinWidth="185" Margin="0,0,8,8"/>
     </WrapPanel>
     <DataGrid ItemsSource="{Binding Discovered}" SelectedItem="{Binding SelectedDiscovered}" Height="200" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" AutomationProperties.Name="Negocios públicos encontrados sin guardar">
       <DataGrid.Columns><DataGridTextColumn Header="Negocio" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Teléfono publicado" Binding="{Binding Phone}" Width="150"/><DataGridTextColumn Header="Dirección publicada" Binding="{Binding Address}" Width="*"/></DataGrid.Columns>

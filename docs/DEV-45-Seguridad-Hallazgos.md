@@ -128,3 +128,14 @@ inbox/outbox durable ni despliegue HTTPS. Son previos a activar transmisiones y 
 al endurecimiento final. La autorización por canal continúa pendiente. Evitar logs de query del
 alta webhook (hub.verify_token), cabeceras, cuerpos y tokens en el futuro host. Ver DEV-48 y
 [Configuración Meta](ONL-01/Configuracion-Meta.md).
+
+## Acceso / servidor público alternativo · DEV-49
+
+Mostrar contraseña sólo añade un control visual temporal sin binding del secreto al ViewModel.
+El campo visible no conserva undo ni corrector; se vacía al ocultar/desactivar la ventana y ambas
+representaciones se limpian antes de esperar el gateway, al cambiar modo/contexto o salir. No
+es borrado criptográfico de strings .NET ni modifica hash, bloqueo o política de sesiones.
+Campos vacíos no llaman al gateway; volver al acceso no omite el cambio obligatorio.
+El servidor público alternativo procede de una lista fija HTTPS documentada, se elige de forma
+manual y conserva el límite común/Retry-After; sin URL libre, redirecciones ni cuerpos HTTP en UI.
+SEC-01/S1, expiración S2 y demás hallazgos abiertos mantienen su fase; no se declaran resueltos.

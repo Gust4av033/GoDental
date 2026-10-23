@@ -10,6 +10,9 @@ Git, archivos de la aplicación de escritorio o campos de una plantilla.
 En Online → Zonas, el mapa de departamentos funciona sin Internet. Selecciona departamento y
 pulsa Buscar negocios dentales para consultar OpenStreetMap mediante Overpass. La fuente es
 comunitaria y puede estar incompleta; la consulta es acotada y espera un minuto entre búsquedas.
+Si el servidor falla, DEV-49 muestra el código HTTP y permite seleccionar Private.coffee como
+alternativo. La selección es manual y mantiene la espera común entre consultas y Retry-After;
+no hay reintentos automáticos. No se garantiza disponibilidad de ninguno de los servidores.
 Los resultados no se guardan ni contactan: selecciona uno, pulsa Revisar para registrar y verifica
 su municipio/contactos/fuente. Guardar vuelve a comprobar duplicados. La consulta no asigna
 WhatsApp a cualquier teléfono ni crea una autorización de publicidad.

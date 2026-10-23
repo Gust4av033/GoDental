@@ -10,6 +10,11 @@ envía WhatsApp, mensajes de redes o correos. La referencia visual es `Imagenes/
    el desplegable. Puedes ampliar y desplazar el mapa. **Buscar negocios** consulta OpenStreetMap
    y requiere Internet y permiso de prospección. Espera un minuto entre consultas; devuelve hasta
    100 negocios dentales y la cobertura puede ser incompleta. Cancelar no guarda datos.
+   Si falla, el mensaje indica el código HTTP: 403 es acceso denegado, 429 es límite de consultas
+   y 504 es espera agotada/servidor ocupado. En **Servidor de búsqueda de OpenStreetMap** puedes
+   elegir **Private.coffee · alternativo** y volver a consultar después de la espera indicada.
+   Cambiar servidor descarta los resultados anteriores; conserva la espera mínima de un minuto
+   y cualquier espera adicional indicada por la fuente. No se reintenta automáticamente.
    Selecciona un resultado y pulsa **Revisar para registrar**: comprueba datos, municipio y coincidencias,
    confirma el origen y guarda si corresponde. Fuente y fecha se conservan. Teléfono no implica
    WhatsApp ni autorización comercial. Cambiar departamento o sesión descarta estos resultados.

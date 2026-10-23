@@ -221,6 +221,7 @@ internal static class Program
             try
             {
                 vm.Server = "";
+                await VerifyPasswordEntryAsync();
                 vm.Database = "";
                 vm.IsDark = false;
                 shell.IsSidebarCompact = false;
@@ -1432,6 +1433,45 @@ internal static class Program
     {
         public int OpenCount { get; private set; }
         public void Show() => OpenCount++;
+    }
+
+    private static async Task VerifyPasswordEntryAsync()
+    {
+        var entry = new GoDental.Wpf.Controls.PasswordEntry { Label = "Contraseña de prueba" };
+        var masked = (PasswordBox)entry.FindName("MaskedInput");
+        var visible = (TextBox)entry.FindName("VisibleInput");
+        var reveal = (Button)entry.FindName("RevealButton");
+        masked.Password = "frase sintética";
+        Check(!entry.IsRevealed && visible.Text.Length == 0, "La contraseña inicia enmascarada sin copia en el campo visible");
+        reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(entry.IsRevealed && visible.Text == entry.Password, "Mostrar contraseña revela sólo el valor del control visual");
+        visible.Text = "frase sintética editada";
+        reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(entry.Password == "frase sintética editada" && visible.Text.Length == 0 && !visible.CanUndo, "Ocultar conserva la edición y elimina el texto visible y su historial");
+        Check(entry.ReadAndClear() == "frase sintética editada" && entry.Password.Length == 0 && !entry.IsRevealed, "Leer para enviar vacía los controles y vuelve a enmascarar");
+        masked.Password = "otra frase sintética"; reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); entry.IsEnabled = false;
+        Check(entry.Password.Length == 0 && visible.Text.Length == 0 && !entry.IsRevealed, "Deshabilitar el campo limpia ambas representaciones de la contraseña");
+        entry.IsEnabled = true; masked.Password = "sintética sin persistir"; entry.DataContext = new object();
+        Check(entry.Password.Length == 0, "Cambiar contexto no conserva contraseñas de la identidad anterior");
+
+        var pending = new TaskCompletionSource<GoDental.Application.Common.Result<UserIdentity>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var model = new AccessViewModel(new FakeIdentityGateway { PendingAccess = pending.Task }, new UserSession(), NullLogger<AccessViewModel>.Instance) { UserName = "prueba", DisplayName = "Persona sintética" };
+        await model.PrepareCommand.ExecuteAsync(null);
+        var view = new AccessView { DataContext = model }; view.Measure(new Size(520, 900)); view.Arrange(new Rect(0, 0, 520, 900)); view.UpdateLayout();
+        await view.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.DataBind);
+        var password = (GoDental.Wpf.Controls.PasswordEntry)view.FindName("PasswordInput");
+        var confirmation = (GoDental.Wpf.Controls.PasswordEntry)view.FindName("ConfirmationInput");
+        ((PasswordBox)password.FindName("MaskedInput")).Password = "frase sintética";
+        ((PasswordBox)confirmation.FindName("MaskedInput")).Password = "frase sintética";
+        ((Button)password.FindName("RevealButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        FindChildren<Button>(view).Single(b => b.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(model.IsSubmitting && password.Password.Length == 0 && confirmation.Password.Length == 0 && !password.IsRevealed, "El acceso limpia y oculta las claves antes de esperar la respuesta del gateway");
+        pending.SetResult(GoDental.Application.Common.Result<UserIdentity>.Failure("TEST", "Intento sintético rechazado."));
+        await view.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Check(!model.IsSubmitting && password.Password.Length == 0, "Un acceso rechazado permite reintentar con los campos vacíos");
+        ((PasswordBox)password.FindName("MaskedInput")).Password = "otra sintética"; model.MustChangePassword = true;
+        Check(password.Password.Length == 0, "Cambiar al formulario de actualización no conserva la contraseña de acceso");
+        view.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
     }
 
     private static async Task RenderCommerceTabsAsync(ShellViewModel shell, Type viewType, string page, string theme, string output, double width = 1366, double height = 768)

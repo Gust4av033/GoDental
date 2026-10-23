@@ -19,11 +19,14 @@ public sealed partial class OnlineMapRegion:ObservableObject
     public double LabelY {get;init;}
     [ObservableProperty]private bool selected;
 }
+public sealed record OnlineDiscoveryServerChoice(OnlineDiscoveryServer Value,string Label);
 public sealed partial class OnlineViewModel
 {
     public ObservableCollection<OnlineMapRegion> MapRegions {get;}=BuildMap();
     public IReadOnlyList<string> MapDepartments {get;}=DirectoryCatalog.Departments.Select(d=>d.Name).ToArray();
     public ObservableCollection<OnlineDiscoveredBusiness> Discovered {get;}=[];
+    public IReadOnlyList<OnlineDiscoveryServerChoice> DiscoveryServers {get;}=Array.AsReadOnly(new[]{new OnlineDiscoveryServerChoice(OnlineDiscoveryServer.Main,"Overpass API · principal"),new OnlineDiscoveryServerChoice(OnlineDiscoveryServer.Alternative,"Private.coffee · alternativo")});
+    [ObservableProperty]private OnlineDiscoveryServer discoveryServer;
     [ObservableProperty]private string mapDepartment="";
     [ObservableProperty]private string mapMessage="Elige un departamento en el mapa o en la lista. El mapa funciona sin conexión.";
     [ObservableProperty]private double mapZoom=1;
@@ -37,9 +40,14 @@ public sealed partial class OnlineViewModel
     public string DiscoveryAttribution=>"© OpenStreetMap contributors · ODbL 1.0 · www.openstreetmap.org/copyright";
     partial void OnSelectedZoneChanged(OnlineZone? value){if(value is not null&&MapDepartments.Contains(value.Department))MapDepartment=value.Department;}
     partial void OnMapZoomChanged(double value){OnPropertyChanged(nameof(MapWidth));OnPropertyChanged(nameof(MapHeight));}
+    partial void OnDiscoveryServerChanged(OnlineDiscoveryServer value)
+    {
+        ClearDiscovered();MapMessage="Servidor cambiado. Selecciona el departamento y pulsa Buscar negocios dentales; la espera entre consultas se mantiene.";
+    }
+    private void ClearDiscovered(){currentDiscovery?.Cancel();Discovered.Clear();SelectedDiscovered=null;discoveryDate=null;discoveryDepartment=null;}
     partial void OnMapDepartmentChanged(string value)
     {
-        currentDiscovery?.Cancel();Discovered.Clear();SelectedDiscovered=null;discoveryDate=null;discoveryDepartment=null;
+        ClearDiscovered();
         foreach(var region in MapRegions)region.Selected=region.Name==value;
         MapMessage=string.IsNullOrEmpty(value)?"Elige un departamento para consultar su territorio.":$"{value} · límites departamentales de referencia. Verifica el municipio al registrar un negocio.";
     }
@@ -49,20 +57,20 @@ public sealed partial class OnlineViewModel
     [RelayCommand]private void ResetMapZoom()=>MapZoom=1;
     [RelayCommand(IncludeCancelCommand=true)]private Task DiscoverAsync(CancellationToken ct)=>!CanManage?Task.CompletedTask:ReadAsync(async revision=>
     {
-        var area=MapDepartment;if(!MapDepartments.Contains(area)){MapMessage="Elige primero un departamento.";return;}
+        var area=MapDepartment;var server=DiscoveryServer;if(!MapDepartments.Contains(area)){MapMessage="Elige primero un departamento.";return;}
         Discovered.Clear();SelectedDiscovered=null;discoveryDate=null;discoveryDepartment=null;
         using var cancel=CancellationTokenSource.CreateLinkedTokenSource(ct);currentDiscovery=cancel;MapMessage="Consultando negocios públicos de OpenStreetMap…";
         try
         {
-            var result=await service.DiscoverAsync(area,cancel.Token);
-            if(!Current(revision)||MapDepartment!=area||cancel.IsCancellationRequested)return;
+            var result=await service.DiscoverAsync(area,cancel.Token,server);
+            if(!Current(revision)||MapDepartment!=area||DiscoveryServer!=server||cancel.IsCancellationRequested)return;
             foreach(var item in result.Items)Discovered.Add(item);discoveryDate=result.Obtained;discoveryDepartment=area;
             MapMessage=$"{result.Items.Count} negocios encontrados en {area}. "+(result.Limited?"La fuente alcanzó su límite; la cobertura puede estar incompleta. ":"")+"Selecciona uno y revisa sus datos antes de guardarlo.";
         }
-        catch(OperationCanceledException)when(cancel.IsCancellationRequested){if(Current(revision)&&MapDepartment==area)MapMessage="Búsqueda cancelada. No se guardaron prospectos.";}
-        catch(ArgumentException ex){if(Current(revision)&&MapDepartment==area)MapMessage=ex.Message;}
-        catch(UnauthorizedAccessException){if(Current(revision)&&MapDepartment==area)MapMessage="Tu sesión cambió o no tiene permiso para consultar la fuente.";}
-        catch(Exception){if(Current(revision)&&MapDepartment==area)MapMessage="No se pudo consultar la fuente. Revisa la conexión e inténtalo más tarde.";}
+        catch(OperationCanceledException)when(cancel.IsCancellationRequested){if(Current(revision)&&MapDepartment==area&&DiscoveryServer==server)MapMessage="Búsqueda cancelada. No se guardaron prospectos.";}
+        catch(ArgumentException ex){if(Current(revision)&&MapDepartment==area&&DiscoveryServer==server)MapMessage=ex.Message;}
+        catch(UnauthorizedAccessException){if(Current(revision)&&MapDepartment==area&&DiscoveryServer==server)MapMessage="Tu sesión cambió o no tiene permiso para consultar la fuente.";}
+        catch(Exception){if(Current(revision)&&MapDepartment==area&&DiscoveryServer==server)MapMessage="No se pudo consultar la fuente. Revisa la conexión e inténtalo más tarde.";}
         finally{if(ReferenceEquals(currentDiscovery,cancel))currentDiscovery=null;}
     });
     [RelayCommand]private Task ReviewDiscoveredAsync()
@@ -76,7 +84,7 @@ public sealed partial class OnlineViewModel
         if(b.Website is {} site&&OnlineValidator.PublicUrl(site,out _))draft.Data.Website=site;
         return Show(new MvpFormModel("Revisar negocio encontrado","Guardar prospecto",Operation,f=>Commit(new SaveOnlineProspect(Guid.NewGuid(),0,[],draft.Snapshot(),draft.Source(),f.Text("reason")))){Body=draft,Description="Verifica nombre, contacto y municipio. Se conservan fuente y fecha; guardar comprueba coincidencias. Un dato publicado no acredita autorización comercial."}.Input("reason","Motivo / revisión del origen"));
     }
-    private void ResetMap(){currentDiscovery?.Cancel();MapDepartment="";Discovered.Clear();SelectedDiscovered=null;discoveryDate=null;discoveryDepartment=null;MapZoom=1;}
+    private void ResetMap(){ClearDiscovered();DiscoveryServer=OnlineDiscoveryServer.Main;MapDepartment="";MapZoom=1;}
     private static ObservableCollection<OnlineMapRegion> BuildMap()
     {
         var areas=OnlineMapCatalog.Departments;var west=areas.Min(d=>d.Bounds.West);var north=areas.Max(d=>d.Bounds.North);var east=areas.Max(d=>d.Bounds.East);var south=areas.Min(d=>d.Bounds.South);

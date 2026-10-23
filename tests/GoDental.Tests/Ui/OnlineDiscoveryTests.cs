@@ -35,7 +35,7 @@ public sealed class OnlineDiscoveryTests
     {
         string? query=null;var handler=new Handler(async r=>{Assert.Equal(OverpassDiscoveryProvider.Endpoint,r.RequestUri!.AbsoluteUri);Assert.Equal(HttpMethod.Post,r.Method);Assert.Null(r.Headers.Authorization);Assert.NotEmpty(r.Headers.UserAgent);query=Uri.UnescapeDataString((await r.Content!.ReadAsStringAsync()).Replace('+',' '));return Json(Response(Row(1),Row(1),Row(2,-87,15),"null","{\"type\":\"node\",\"id\":\"malformed\"}"));});
         using var provider=new OverpassDiscoveryProvider(new HttpClient(handler),TimeProvider.System);var result=await provider.DiscoverAsync(OnlineMapCatalog.Departments.Single(d=>d.Name=="San Salvador"),default);
-        Assert.Single(result.Items);Assert.Equal("https://www.openstreetmap.org/node/1",result.Items[0].SourceUrl);Assert.Null(result.Items[0].WhatsApp);Assert.Contains("timeout:20",query);Assert.Contains("out center tags 101",query);Assert.DoesNotContain("SECRET",query);
+        Assert.Single(result.Items);Assert.Equal("https://www.openstreetmap.org/node/1",result.Items[0].SourceUrl);Assert.Null(result.Items[0].WhatsApp);Assert.Contains("timeout:20",query);Assert.Contains("out body center 101",query);Assert.DoesNotContain("out center tags",query);
     }
     [Fact]public async Task ProviderCapsResultsAndDoesNotRetryOrInventWhatsApp()
     {
@@ -48,7 +48,35 @@ public sealed class OnlineDiscoveryTests
     {
         var handler=new Handler(_=>Task.FromResult(new HttpResponseMessage(code){Content=new StringContent("No imprimir datos del proveedor")}));using var p=new OverpassDiscoveryProvider(new HttpClient(handler),TimeProvider.System);
         var error=await Assert.ThrowsAsync<ArgumentException>(()=>p.DiscoverAsync(OnlineMapCatalog.Departments[0],default));Assert.DoesNotContain("No imprimir",error.Message);Assert.Equal(1,handler.Calls);
+        Assert.Contains("HTTP "+(int)code,error.Message);
     }
+    [Fact]public async Task AlternativeUsesAllowlistedEndpointAndCannotBypassRetryAfter()
+    {
+        var clock=new Clock();var handler=new Handler(r=>{Assert.Equal(OverpassDiscoveryProvider.AlternativeEndpoint,r.RequestUri!.AbsoluteUri);var response=new HttpResponseMessage(HttpStatusCode.TooManyRequests);response.Headers.RetryAfter=new(TimeSpan.FromMinutes(3));return Task.FromResult(response);});
+        using var provider=new OverpassDiscoveryProvider(new HttpClient(handler),clock);var area=OnlineMapCatalog.Departments[0];
+        var error=await Assert.ThrowsAsync<ArgumentException>(()=>provider.DiscoverAsync(area,default,OnlineDiscoveryServer.Alternative));Assert.Contains("HTTP 429",error.Message);
+        clock.Now=clock.Now.AddMinutes(2);error=await Assert.ThrowsAsync<ArgumentException>(()=>provider.DiscoverAsync(area,default,OnlineDiscoveryServer.Main));Assert.Contains("60 segundos",error.Message);Assert.Equal(1,handler.Calls);
+        await Assert.ThrowsAsync<ArgumentException>(()=>provider.DiscoverAsync(area,default,(OnlineDiscoveryServer)999));Assert.Equal(1,handler.Calls);
+    }
+    [Theory][InlineData(HttpStatusCode.BadRequest,"rechazó")][InlineData(HttpStatusCode.Forbidden,"denegó")][InlineData(HttpStatusCode.GatewayTimeout,"tiempo")]
+    public async Task ProviderDistinguishesHttpFailuresWithoutExposingBody(HttpStatusCode code,string expected)
+    {
+        var handler=new Handler(_=>Task.FromResult(new HttpResponseMessage(code){Content=new StringContent("private debug")}));using var provider=new OverpassDiscoveryProvider(new HttpClient(handler),TimeProvider.System);
+        var error=await Assert.ThrowsAsync<ArgumentException>(()=>provider.DiscoverAsync(OnlineMapCatalog.Departments[0],default));Assert.Contains(expected,error.Message);Assert.Contains("HTTP "+(int)code,error.Message);Assert.DoesNotContain("private debug",error.Message);Assert.Equal(1,handler.Calls);
+    }
+    [Fact]public async Task NodeCoordinatesAndWayCenterArePreserved()
+    {
+        var way="{\"type\":\"way\",\"id\":42,\"center\":{\"lat\":13.7,\"lon\":-89.19},\"tags\":{\"name\":\"Negocio en edificio\",\"healthcare\":\"dentist\"}}";
+        var handler=new Handler(_=>Task.FromResult(Json(Response(Row(1),way))));using var provider=new OverpassDiscoveryProvider(new HttpClient(handler),TimeProvider.System);var result=await provider.DiscoverAsync(OnlineMapCatalog.Departments.Single(d=>d.Name=="San Salvador"),default);
+        Assert.Equal(2,result.Items.Count);Assert.Contains(result.Items,x=>x.SourceId=="node/1"&&x.Latitude==13.7);Assert.Contains(result.Items,x=>x.SourceId=="way/42"&&x.Longitude==-89.19);
+    }
+    [Fact]public async Task ServerChangeCancelsAndDiscardsPreviousResults()
+    {
+        var(vm,_,_,source,_)=Create();vm.MapDepartment="San Salvador";var pending=new TaskCompletionSource<OnlineDiscoveryResult>(TaskCreationOptions.RunContinuationsAsynchronously);source.Pending=pending.Task;
+        var task=vm.DiscoverCommand.ExecuteAsync(null);vm.DiscoveryServer=OnlineDiscoveryServer.Alternative;pending.SetResult(OnlineDiscoveryTestProvider.Data);await task;Assert.Empty(vm.Discovered);
+        source.Pending=null;await vm.DiscoverCommand.ExecuteAsync(null);Assert.Equal(OnlineDiscoveryServer.Alternative,source.LastServer);Assert.Single(vm.Discovered);
+    }
+    private sealed class Clock:TimeProvider{public DateTimeOffset Now=new(2026,10,23,12,0,0,TimeSpan.Zero);public override DateTimeOffset GetUtcNow()=>Now;}
     [Fact]public async Task OversizedAndIncompleteResponsesAreRejected()
     {
         foreach(var body in new[]{new string('x',2*1024*1024+1),"{\"elements\":[],\"remark\":\"private debug\"}"})

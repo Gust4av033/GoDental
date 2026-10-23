@@ -100,3 +100,11 @@ Instalador/actualizaciones/respaldos y piloto formal permanecen al final.
 DEV-48 validado: [CI Windows #189](https://github.com/Gust4av033/GoDental/actions/runs/39983746556),
 código `e3cbe55`, Release 0 advertencias/errores, **406 xUnit / 790 SQL / 1097 WPF** correctas.
 Conectores probados con respuestas sintéticas; sin aceptación real del proveedor ni mensajes.
+
+## Paréntesis solicitado · DEV-49
+
+[DEV-49](DEV-49-Busqueda-y-Acceso.md) corrige la consulta pública para conservar coordenadas de
+nodes, distingue errores HTTP y permite otro servidor explícito sin eludir espera/Retry-After.
+Mejora el acceso con mostrar/ocultar contraseña, Bloq Mayús y validación de campos vacíos.
+No cambia el orden de continuación Meta/S1 de DEV-48 ni añade migración. Pendientes locales:
+**021 → 022 → 023 → 024 → 025 → 026**. No hay envío/chat activados por este paréntesis.
