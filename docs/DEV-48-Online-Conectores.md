@@ -10,7 +10,7 @@ La pregunta de autorización comercial por canal sigue pendiente; ningún envío
 
 Mapa vectorial de los 14 departamentos con geometría real de Who's On First / foursquare Quattroshapes (CC-BY 2.0),
 referencia cartográfica, no certificación de límites legales. Datos fijados a revisión y blobs
-verificables en docs/licenses/ElSalvador-Map-Sources.json; licencia completa distribuida y
+verificables en docs/licenses/ElSalvador-Map-Sources.json; licencias originales distribuidas sin modificar su texto/espaciado y
 atribución/enlace visibles. Se extraen geometría, nombre, ID y posición de rótulo, sin datos personales.
 No usa tiles, cuentas ni llamadas de red. Clic/teclado selecciona departamento; selector textual
 alternativo y catálogo de 44 municipios vigente permanecen. No inventa límites municipales.
@@ -64,7 +64,7 @@ Este bloque independiente no requiere migración; siguen pendientes localmente *
 No se aplica la base personal desde cloud. Después del mapa/descubrimiento, cerrar configuración
 Meta y S1 antes de transmisiones reales; documentar límites exactos y pruebas sin mensajes reales.
 
-## Contratos Meta implementables sin activar el servicio
+## Componentes Meta preparados sin activar el servicio
 
 `MetaCloudTemplateTransport` usa exclusivamente POST al host fijo graph.facebook.com, ruta
 con versión/PhoneNumberId validados y bearer en cabecera; texto de plantilla oficial/nombre,
@@ -96,5 +96,14 @@ Release local de la solución, incluyendo compilación WPF para Windows: 0 adver
 Pruebas unitarias de geometría real, huecos/islas, permisos, cancelación, cambios de sesión,
 respuesta pública acotada y firma/transporte Meta con respuestas sintéticas. La consulta real
 Overpass y aceptación Meta no se verificaron en vivo en este entorno; no se enviaron mensajes.
-La validación Windows/SQL/WPF del código se registra al finalizar CI; no confundir sus fixtures
-sin red con aceptación del proveedor o despliegue en las PCs.
+Validación final: [CI Windows #189](https://github.com/Gust4av033/GoDental/actions/runs/39983746556),
+evento push sobre **e3cbe551379ce1bdfc5de4a3d2426c41634bb5ff**, job **120517441236**:
+Release **0 advertencias/errores**, **406 xUnit / 790 SQL / 1097 WPF**, sin errores de enlaces.
+Incluye 31 casos unitarios adicionales; Online SQL acumula 69 y prueba revocación real antes de
+consultar la fuente. WPF valida selección/descubrimiento sin escrituras y renderiza las diez
+secciones y formularios, incluido el de revisión del negocio, en Light/Dark/compacto. NuGet:
+7 proyectos consultados, 0 avisos altos/críticos; parser PowerShell del instalador correcto.
+Revisión visual de capturas CI: mapa en Light 1366×768 y Dark compacto 1093×614, más formulario
+de revisión en Dark; geometría, selección y recursos del tema visibles.
+No confundir fixtures sin red con aceptación del proveedor o despliegue en las PCs. Las
+confirmaciones posteriores sólo actualizan documentación, conservando el código validado.

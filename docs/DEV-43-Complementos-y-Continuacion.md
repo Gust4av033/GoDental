@@ -96,3 +96,7 @@ primero con número de prueba. El usuario sólo usa la app del teléfono. Consen
 sigue sin respuesta y no se infiere de fuente pública, compra ni aprobación interna. Resolver S1
 antes de transmisiones. Después se retoma escalas/listas/promociones, conservando el orden global.
 Instalador/actualizaciones/respaldos y piloto formal permanecen al final.
+
+DEV-48 validado: [CI Windows #189](https://github.com/Gust4av033/GoDental/actions/runs/39983746556),
+código `e3cbe55`, Release 0 advertencias/errores, **406 xUnit / 790 SQL / 1097 WPF** correctas.
+Conectores probados con respuestas sintéticas; sin aceptación real del proveedor ni mensajes.

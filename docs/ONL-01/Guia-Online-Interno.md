@@ -10,7 +10,7 @@ envía WhatsApp, mensajes de redes o correos. La referencia visual es `Imagenes/
    el desplegable. Puedes ampliar y desplazar el mapa. **Buscar negocios** consulta OpenStreetMap
    y requiere Internet y permiso de prospección. Espera un minuto entre consultas; devuelve hasta
    100 negocios dentales y la cobertura puede ser incompleta. Cancelar no guarda datos.
-   Selecciona un resultado y pulsa **Revisar negocio**: comprueba datos, municipio y coincidencias,
+   Selecciona un resultado y pulsa **Revisar para registrar**: comprueba datos, municipio y coincidencias,
    confirma el origen y guarda si corresponde. Fuente y fecha se conservan. Teléfono no implica
    WhatsApp ni autorización comercial. Cambiar departamento o sesión descarta estos resultados.
 2. **Prospectos:** registra el nombre del negocio, contactos públicos, ubicación y fuente con

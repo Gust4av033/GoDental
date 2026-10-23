@@ -24,6 +24,10 @@ OpenStreetMap (ODbL). No requiere comprar mapas ni una cuenta cartográfica.
    con el producto WhatsApp habilitado. Confirmar las condiciones actuales de alta, número,
    permisos y pruebas. El proceso puede variar según la cuenta; no asumir que activar la app
    del teléfono habilitó Cloud API ni que su número puede migrarse sin comprobar compatibilidad.
+   Comienza en https://developers.facebook.com/apps/ con la aplicación del negocio y el
+   **número de prueba oficial** del producto WhatsApp. Obtén de ese ambiente los identificadores
+   del paso 2 y prepara únicamente destinatarios propios de prueba según el panel. Después se
+   verifica la elegibilidad del número habitual y su proceso de coexistencia/migración en Meta.
 2. Obtener **Business Account ID (WABA)** y **Phone Number ID** del producto WhatsApp. Son
    identificadores, no el teléfono escrito ni la contraseña de Facebook. Mantener el negocio,
    número y ambiente de pruebas/producción identificados antes de configurar el servicio.
