@@ -1,7 +1,7 @@
 <UserControl x:Class="GoDental.Wpf.Views.Suppliers.SuppliersView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Directory.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
   <StackPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando proveedores"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" AutomationProperties.Name="Cargando proveedores"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
       <DockPanel Margin="0,0,0,20">
         <Button DockPanel.Dock="Right" Content="Nuevo proveedor" Command="{Binding NewCommand}" Style="{StaticResource PrimaryActionButton}" Tag="&#xE710;" Margin="16,0,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/>

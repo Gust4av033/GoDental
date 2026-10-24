@@ -7,7 +7,7 @@
     </ResourceDictionary>
   </UserControl.Resources>
   <StackPanel>
-    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
     <local:OperationStatusView DataContext="{Binding Operation}"/>
     <local:ReceiptPrintSettingsView Visibility="{Binding IsReceiptPreviewOpen, Converter={StaticResource BoolToVisibility}}"/>

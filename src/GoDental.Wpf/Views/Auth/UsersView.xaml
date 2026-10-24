@@ -7,7 +7,7 @@
       <StackPanel><TextBlock Text="Usuarios" Style="{StaticResource Heading}"/><TextBlock Text="Administra las cuentas y el acceso de tu equipo." Style="{StaticResource MutedText}"/></StackPanel>
     </DockPanel>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,12"/>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando usuarios"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" AutomationProperties.Name="Cargando usuarios"/>
     <Grid>
       <DataGrid MouseDoubleClick="OnUserDoubleClick" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" RowHeight="48" SelectionMode="Single" AutomationProperties.Name="Usuarios">
         <DataGrid.Columns>

@@ -40,7 +40,7 @@
               <Button Content="Comprobar conexión" Style="{StaticResource ActionButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8"/>
               <Button Content="Cancelar" Style="{StaticResource ActionButton}" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8"/>
             </WrapPanel>
-            <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0"/>
+            <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" Margin="0,8,0,0"/>
             <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,8,0,0">
               <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
             </Border>

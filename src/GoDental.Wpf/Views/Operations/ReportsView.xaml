@@ -1,7 +1,7 @@
 <UserControl x:Class="GoDental.Wpf.Views.Operations.ReportsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations">
 <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
 <StackPanel><TextBlock Text="Reportes operativos" Style="{StaticResource Heading}"/><TextBlock Text="Ventas y compensaciones por fecha local. Inventario actual y compras recibidas. Importes en USD." Style="{StaticResource MutedText}"/>
-<ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+<ProgressBar Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
 <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
 <StackPanel Width="210" Margin="0,0,8,8"><TextBlock Text="Reporte" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de reporte"/></StackPanel>
 <StackPanel Width="145" Margin="0,0,8,8"><TextBlock Text="Desde (El Salvador)" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding From}" AutomationProperties.Name="Fecha inicial del reporte"/></StackPanel>

@@ -7,7 +7,7 @@
       <Button Content="Agregar código" Command="{Binding AddCommand}" IsEnabled="{Binding CanManage}" Style="{StaticResource PrimaryActionButton}" Margin="0,0,8,8"/>
       <Button Content="Activar / desactivar" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" Style="{StaticResource ActionButton}" Margin="0,0,0,8"/>
     </WrapPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,12"/>
     <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" MinHeight="160" MaxHeight="300" AutomationProperties.Name="Códigos de barras del producto">
       <DataGrid.Columns>

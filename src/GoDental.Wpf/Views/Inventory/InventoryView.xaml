@@ -31,7 +31,7 @@
         </StackPanel>
       </StackPanel>
     </DockPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando inventario"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" AutomationProperties.Name="Cargando inventario"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
     <operations:OperationStatusView DataContext="{Binding InitialInventory.Operation}"/>
     <DockPanel Margin="0,0,0,16" IsEnabled="{Binding IsNotBusy}">

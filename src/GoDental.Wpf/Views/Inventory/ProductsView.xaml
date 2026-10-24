@@ -27,7 +27,7 @@
           <TextBlock Text="Tu catálogo, precios y existencias en un solo lugar." Style="{StaticResource MutedText}"/>
         </StackPanel>
       </DockPanel>
-      <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando productos"/>
+      <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" AutomationProperties.Name="Cargando productos"/>
       <DockPanel Margin="0,0,0,12" IsEnabled="{Binding IsNotBusy}">
         <Button DockPanel.Dock="Right" Content="" Style="{StaticResource InventoryIconButton}" Command="{Binding ReloadCommand}" ToolTip="Actualizar catálogo" AutomationProperties.Name="Actualizar catálogo" Margin="8,0,0,0"/>
         <Button DockPanel.Dock="Right" Content="Filtros" Tag="" Style="{StaticResource ActionButton}" Command="{Binding ToggleFiltersCommand}" Margin="8,0,0,0"/>

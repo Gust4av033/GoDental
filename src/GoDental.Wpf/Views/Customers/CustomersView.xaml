@@ -7,7 +7,7 @@
     </ResourceDictionary>
   </UserControl.Resources>
   <StackPanel>
-    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando clientes"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True" AutomationProperties.Name="Cargando clientes"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
       <DockPanel Margin="0,0,0,20">
         <Button DockPanel.Dock="Right" Content="Nuevo cliente" Command="{Binding NewCommand}" Style="{StaticResource PrimaryActionButton}" Tag="" IsEnabled="{Binding CanCreate}" Margin="16,0,0,0"/>

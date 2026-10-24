@@ -4,7 +4,7 @@
       <Button DockPanel.Dock="Right" Content="Nueva orden" Command="{Binding NewCommand}" IsEnabled="{Binding CanCreate}" Style="{StaticResource PrimaryActionButton}" Margin="12,0,0,0"/>
       <StackPanel><TextBlock Text="Compras y recepciones" Style="{StaticResource Heading}"/><TextBlock Text="Órdenes a proveedores y entradas físicas con costo en USD." Style="{StaticResource MutedText}"/></StackPanel>
     </DockPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,12"/>
     <local:OperationStatusView DataContext="{Binding Operation}"/>
     <StackPanel Visibility="{Binding IsListOpen, Converter={StaticResource BoolToVisibility}}">

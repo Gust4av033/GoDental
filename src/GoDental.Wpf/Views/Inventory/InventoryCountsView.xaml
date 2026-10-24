@@ -7,7 +7,7 @@
     </ResourceDictionary>
   </UserControl.Resources>
   <StackPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando conteos"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" AutomationProperties.Name="Cargando conteos"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
       <DockPanel Margin="0,0,0,20">
         <Button DockPanel.Dock="Right" Content="Abrir conteo" Tag="" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Style="{StaticResource PrimaryActionButton}" Margin="16,0,0,0"/>

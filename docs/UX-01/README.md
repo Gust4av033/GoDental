@@ -116,3 +116,7 @@ Colores sugeridos como tokens nuevos (con par Dark): borde fuerte de controles `
 ## Scroll del espacio de trabajo
 
 El menú lateral y el contenido se desplazan por separado. Marca y pie del lateral permanecen fijos; su opción activa se mantiene visible al navegar o cambiar el tamaño. Cada cambio de módulo comienza arriba, sin alterar la posición al refrescar datos en la misma sección. Las listas/tablas continúan la rueda hacia el contenedor de página al alcanzar un extremo; campos y desplegables conservan su interacción. Ver [DEV-52](../DEV-52-Scroll-Navegacion.md).
+
+## Navegación local y carga persistente
+
+Las páginas con menú interno largo pueden usar `WorkspaceNavigationTabs` y el alto heredado de `WorkspaceViewport` para desplazar contenido y opciones por separado. La carga del módulo activo permanece en la cabecera; `InlineLoadingIndicator` se oculta únicamente donde el host ofrece el mismo estado. Selectores independientes conservan su indicador propio. Todas las barras usan el azul del tema, incluidos los diálogos. Ver [DEV-54](../DEV-54-Online-Navegacion-Carga.md).

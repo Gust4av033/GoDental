@@ -34,7 +34,7 @@
             <TextBlock Text="¿Olvidaste tu contraseña? Solicita un restablecimiento al administrador." Style="{StaticResource MutedText}" FontSize="12" Margin="0,14,0,0"/>
           </StackPanel>
         </StackPanel>
-        <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,16,0,0" />
+        <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" Margin="0,16,0,0" />
         <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="12" Margin="0,16,0,0">
           <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" LineHeight="21" AutomationProperties.LiveSetting="Polite" />
         </Border>

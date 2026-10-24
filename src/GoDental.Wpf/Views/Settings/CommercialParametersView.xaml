@@ -7,7 +7,7 @@
         <Button Content="Actualizar parámetros" Command="{Binding ReloadCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
         <Button Content="Editar parámetros" Command="{Binding ChangeCommand}" IsEnabled="{Binding CanChange}" Style="{StaticResource PrimaryActionButton}" Margin="0,0,0,8"/>
       </WrapPanel>
-      <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+      <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3"/>
       <StackPanel DataContext="{Binding Parameters}" Margin="0,0,0,12">
         <TextBlock Text="Motivo obligatorio por encima de" Style="{StaticResource MutedText}"/>
         <TextBlock Text="{Binding Justification, StringFormat='{}{0:0.####} %', TargetNullValue='Sin consultar'}" FontWeight="SemiBold" FontSize="20" Margin="0,4,0,12"/>

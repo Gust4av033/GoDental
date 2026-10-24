@@ -4,7 +4,7 @@
     <TextBlock Text="Solicitudes guardadas antes del envío, de tu cuenta, estación y base actuales. Nunca se reenvían automáticamente al iniciar." Style="{StaticResource MutedText}" Margin="0,8,0,16"/>
     <Button Content="Actualizar" Command="{Binding ReloadCommand}" HorizontalAlignment="Left" Style="{StaticResource ActionButton}"/>
     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3"/>
     <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" MinHeight="100" MaxHeight="280" Margin="0,12,0,12" AutomationProperties.Name="Solicitudes pendientes de recuperar">
       <DataGrid.Columns>
         <DataGridTextColumn Header="Fecha (UTC)" Binding="{Binding Created, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="150"/>

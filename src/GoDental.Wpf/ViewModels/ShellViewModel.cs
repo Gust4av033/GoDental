@@ -64,6 +64,30 @@ public sealed partial class ShellViewModel : ObservableObject
             if (Products.Inventory?.InitialInventory is { } initial) yield return initial;
         }
     }
+    public bool IsPageBusy => navigation.CurrentPage switch
+    {
+        SetupPage.Home => Home.IsBusy,
+        SetupPage.Connection => Connection.IsBusy || IsLoading(CommercialParameters),
+        SetupPage.Access => Access.IsBusy,
+        SetupPage.Products => Products.IsBusy || Products.Inventory?.IsBusy == true || Products.CategoryManager?.IsBusy == true
+            || IsLoading(Products.Inventory?.Barcodes) || IsLoading(Products.Inventory?.InitialInventory),
+        SetupPage.Users => Users.IsBusy,
+        SetupPage.Counts => Counts.IsBusy,
+        SetupPage.Suppliers => Suppliers.IsBusy,
+        SetupPage.Customers => Customers.IsBusy,
+        SetupPage.Cash => IsLoading(Cash),
+        SetupPage.Pos => IsLoading(Pos),
+        SetupPage.Credit => IsLoading(Credit),
+        SetupPage.Orders => IsLoading(Orders),
+        SetupPage.Sales or SetupPage.Quotations => IsLoading(CommercialHistory),
+        SetupPage.PendingOperations => PendingOperations?.IsBusy == true,
+        SetupPage.Purchases => IsLoading(Purchases),
+        SetupPage.Reports => IsLoading(Reports),
+        SetupPage.Fiscal => IsLoading(Fiscal),
+        SetupPage.Online => IsLoading(Online),
+        _ => false
+    };
+    private static bool IsLoading(MvpWorkspaceViewModel? model) => model?.IsBusy == true || model?.Operation.IsBusy == true;
     public bool HasPendingMvp => MvpWorkspaces.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
     public bool CanCloseWorkspace => PendingOperations?.IsBusy != true && MvpWorkspaces.All(m => m.Operation.CanClose && !m.IsBusy && !m.IsEditing) && !Products.IsBusy && Products.Inventory?.IsBusy != true && Products.CategoryManager?.IsBusy != true && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
     public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
@@ -126,7 +150,7 @@ public sealed partial class ShellViewModel : ObservableObject
         foreach (var model in MvpWorkspaces)
         {
             model.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
-            model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+            model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsPageBusy)); OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         }
         customers.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         counts.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
@@ -134,6 +158,14 @@ public sealed partial class ShellViewModel : ObservableObject
         users.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         products.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         access.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        var loadingSources = MvpWorkspaces.Cast<ObservableObject>().Concat(
+            new ObservableObject?[] { Home, Connection, Access, Products, Products.Inventory, Products.CategoryManager,
+                Users, Counts, Suppliers, Customers, PendingOperations }.OfType<ObservableObject>()).Distinct();
+        foreach (var source in loadingSources)
+            source.PropertyChanged += (_, e) =>
+            {
+                if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == "IsBusy") OnPropertyChanged(nameof(IsPageBusy));
+            };
         session.Changed += (_, _) =>
         {
             OnPropertyChanged(nameof(CanOpenOnline));
@@ -152,6 +184,7 @@ public sealed partial class ShellViewModel : ObservableObject
         navigation.PageChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(IsPageBusy));
             OnPropertyChanged(nameof(IsOnline));
             OnPropertyChanged(nameof(IsFiscal));
             OnPropertyChanged(nameof(IsReports));

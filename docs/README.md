@@ -86,3 +86,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-52 · Scroll y navegación](DEV-52-Scroll-Navegacion.md): lateral fijo, opción activa visible y continuidad de la rueda en tablas/listas.
 
 - [DEV-53 · Custodia genérica de candidatos secretos](DEV-53-Custodia-Secretos.md): base B3 Windows, sin importación ni activación fiscal y sin migración nueva.
+
+- [DEV-54 · Online: navegación y carga](DEV-54-Online-Navegacion-Carga.md): menú interno independiente e indicadores azules visibles durante el desplazamiento.

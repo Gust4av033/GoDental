@@ -1,25 +1,28 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.OnlineView">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:behaviors="clr-namespace:GoDental.Wpf.Behaviors" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.OnlineView">
   <UserControl.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/>
       </ResourceDictionary.MergedDictionaries>
-      <Style x:Key="OnlineNavigationTab" TargetType="TabItem" BasedOn="{StaticResource CommerceTab}">
+      <Style x:Key="OnlineNavigationTab" TargetType="TabItem" BasedOn="{StaticResource WorkspaceNavigationItem}">
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="MinWidth" Value="162"/>
         <Setter Property="Padding" Value="10,12"/>
       </Style>
     </ResourceDictionary>
   </UserControl.Resources>
-  <StackPanel>
+  <Grid Height="{Binding Path=(behaviors:WorkspaceViewport.Height), RelativeSource={RelativeSource Self}}">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <StackPanel Grid.Row="0">
     <TextBlock Text="Comercial / Online" Style="{StaticResource Heading}"/>
     <TextBlock Text="Organiza prospectos y prepara campañas con revisión humana." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
-    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy,Converter={StaticResource BoolToVisibility}}"/>
-    <local:OperationStatusView DataContext="{Binding Operation}"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"/>
-    <TabControl TabStripPlacement="Left" SelectedIndex="{Binding SectionIndex,Mode=TwoWay}" AutomationProperties.Name="Secciones de Comercial Online">
+    </StackPanel>
+    <ProgressBar Grid.Row="1" Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
+    <local:OperationStatusView Grid.Row="2" DataContext="{Binding Operation}"/>
+    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"/>
+    <TabControl Grid.Row="4" Style="{StaticResource WorkspaceNavigationTabs}" TabStripPlacement="Left" SelectedIndex="{Binding SectionIndex,Mode=TwoWay}" AutomationProperties.Name="Secciones de Comercial Online">
       <TabItem Header="Zonas de prospección" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Zonas de prospección" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <TextBlock Text="Organiza departamentos y municipios de El Salvador. La prioridad ordena el trabajo; cada zona muestra su conteo real de prospectos." Style="{StaticResource MutedText}" Margin="0,0,0,12"/><TextBlock Text="Mapa y búsqueda de negocios" Style="{StaticResource SectionHeading}" Margin="0,20,0,12"/><local:OnlineMapView/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -49,7 +52,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Prospectos" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,0,0,12">
             <TextBox Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar prospectos por nombre teléfono correo o ID"/>
             <ComboBox ItemsSource="{Binding States}" SelectedItem="{Binding State}" Width="160" Margin="0,0,8,8" AutomationProperties.Name="Estado de prospecto"/>
@@ -75,7 +78,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Ficha y origen" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="{Binding DetailMessage}" Style="{StaticResource StatusMessage}"/>
           <Grid Margin="0,12,0,16">
             <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
@@ -153,7 +156,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Segmentación" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Segmentación de prospectos" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <TextBlock Text="Combina territorio, negocio, estado, origen y canal. Selecciona un segmento para revisar sus candidatos y después preparar una campaña." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -198,7 +201,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Plantillas de mensaje" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Plantillas de mensaje" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
             <TextBox Text="{Binding TemplateSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar plantilla de mensaje"/>
@@ -228,7 +231,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Campañas" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Campañas comerciales" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <TextBlock Text="Selecciona un segmento y una plantilla del mismo canal en sus secciones. Crea un borrador, prepara sus destinatarios y revisa el mensaje en Aprobación." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -258,7 +261,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Aprobación" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Revisión y aprobación" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <TextBlock Text="{Binding CampaignMessage}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
           <TextBlock Text="1. Revisa el contenido    2. Consulta destinatarios    3. Aprueba la preparación" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
@@ -288,7 +291,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Respuestas / seguimiento" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Respuestas y seguimiento" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
           <TextBlock Text="Registra interacciones ya ocurridas fuera de GoDental. Consulta primero la ficha del prospecto; las notas conservan fecha, canal y usuario, sin fabricar una conversación remota." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}">
@@ -324,7 +327,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="Conversión a cliente" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Selecciona primero el prospecto y consulta su ficha. Busca una venta confirmada de un cliente activo y verifica que corresponde al mismo negocio. Si falta cliente, regístralo desde Clientes y confirma su compra en POS." Style="{StaticResource MutedText}"/>
           <TextBlock Text="{Binding DetailMessage}" Style="{StaticResource StatusMessage}"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
@@ -349,7 +352,7 @@
         </StackPanel>
       </TabItem>
       <TabItem Header="No contactar" Style="{StaticResource OnlineNavigationTab}">
-        <StackPanel Margin="20,12,0,0">
+        <StackPanel Margin="0,4,0,0">
           <TextBlock Text="Lista central por canal. Permite registrar o reactivar una exclusión; levantarla requiere una política futura de consentimiento. No hay envío de mensajes." Style="{StaticResource MutedText}"/>
           <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
             <TextBox Text="{Binding ExclusionSearch,UpdateSourceTrigger=PropertyChanged}" Width="260" MaxLength="200" AutomationProperties.Name="Buscar exclusión comercial" Margin="0,0,8,8"/>
@@ -373,5 +376,5 @@
         </StackPanel>
       </TabItem>
     </TabControl>
-  </StackPanel>
+  </Grid>
 </UserControl>

@@ -2,7 +2,7 @@
 <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
 <StackPanel><TextBlock Text="Fiscal · preparación interna" Style="{StaticResource Heading}"/>
 <TextBlock Text="Solicitudes y revisión de datos. La emisión, firma y transmisión a Hacienda aún no están habilitadas." Style="{StaticResource MutedText}"/>
-<ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+<ProgressBar Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
 <local:OperationStatusView DataContext="{Binding Operation}"/>
 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,12"/>
 <TabControl>

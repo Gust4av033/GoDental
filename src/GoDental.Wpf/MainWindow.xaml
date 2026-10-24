@@ -122,9 +122,10 @@
           </StackPanel>
         </Grid>
       </Border>
+      <ProgressBar x:Name="WorkspaceLoading" Grid.Row="0" VerticalAlignment="Bottom" Height="3" IsIndeterminate="True" IsHitTestVisible="False" Visibility="{Binding IsPageBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Procesando la sección actual"/>
       <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="{StaticResource CardRadius}" Margin="12,4,12,8" Padding="{StaticResource ShellPagePadding}">
       <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" behaviors:ScrollBoundary.ContinueAtBoundary="True" AutomationProperties.Name="Contenido del módulo">
-        <Grid x:Name="PageHost" Margin="{StaticResource PagePadding}">
+        <Grid x:Name="PageHost" behaviors:WorkspaceViewport.Height="{Binding ActualHeight, ElementName=PageScroll}" behaviors:WorkspaceViewport.HasPinnedLoading="True" Margin="{StaticResource PagePadding}">
           <operations:OnlineView DataContext="{Binding Online}" Visibility="{Binding DataContext.IsOnline, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:FiscalView DataContext="{Binding Fiscal}" Visibility="{Binding DataContext.IsFiscal, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>
           <operations:ReportsView DataContext="{Binding Reports}" Visibility="{Binding DataContext.IsReports, ElementName=PageHost, Converter={StaticResource BoolToVisibility}}"/>

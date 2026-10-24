@@ -7,4 +7,6 @@
     <CornerRadius x:Key="BadgeRadius">10</CornerRadius>
     <CornerRadius x:Key="IconRadius">8</CornerRadius>
     <Thickness x:Key="ShellPagePadding">24,20</Thickness>
+    <sys:Double x:Key="SectionNavigationWidth" xmlns:sys="clr-namespace:System;assembly=mscorlib">196</sys:Double>
+    <Thickness x:Key="SectionContentGap">16,0,0,0</Thickness>
 </ResourceDictionary>

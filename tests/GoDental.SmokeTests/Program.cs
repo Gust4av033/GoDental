@@ -609,6 +609,7 @@ internal static partial class Program
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
                 session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMERCIAL.CAMPANIAS_CREAR","COMERCIAL.CAMPANIAS_APROBAR","COMERCIAL.VER","COMERCIAL.PROSPECTAR","COMERCIAL.EXCLUSIONES","FISCAL.VER","FISCAL.CONFIGURAR","FISCAL.REVISAR_INTERNO","REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
                 await VerifyWorkspaceScrollingAsync(shell, nav, themes);
+                await VerifyOnlineWorkspaceAsync(shell, nav, themes, output);
                 mvpRepository.Products.AddRange([
                     new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
                     new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
@@ -1647,7 +1648,7 @@ internal static partial class Program
                 }
                 var actions = FindChildren<Button>(view).Where(button => ReferenceEquals(button.Style, view.FindResource("HomeQuickAction")) && IsLayoutVisible(button));
                 Check(actions.All(button => button.ActualWidth == 152 && button.ActualHeight == 36), "Los accesos rápidos de Inicio comparten tamaño");
-                var progress = FindChildren<ProgressBar>(view).Single();
+                var progress = FindChildren<ProgressBar>(root).Single(bar => bar.Name == "WorkspaceLoading");
                 Check((progress.Visibility == Visibility.Visible) == homeShell.Home.IsBusy, "Inicio refleja el estado real de carga");
                 if (!homeShell.Home.CanReadSales)
                     Check(activity.Visibility == Visibility.Collapsed && homeShell.Home.RecentSales.Count == 0, "Inicio oculta la actividad comercial sin permiso");
