@@ -165,3 +165,15 @@ formato/firmador oficial, pertenencia/vigencia, permisos/reautenticación/audito
 restauración en otro host y anti-rollback de backups aún pendientes. Administrador/SYSTEM y
 compromiso de la propia cuenta del servicio quedan fuera del aislamiento que ofrece DPAPI/ACL;
 proteger el host, perfil, respaldos y dumps sigue siendo necesario antes de material real.
+
+## Preparación B2 y permisos runtime · DEV-55 · 24/10/2026
+
+La revisión del guard B1 detectó cobertura incompleta de grants adicionales sobre vistas y
+columnas: escanear sólo tablas/permisos del objeto no basta para imponer EXECUTE limitado.
+DEV-55 amplía el control a vistas/funciones de datos, columnas SELECT/UPDATE, funciones escalares
+ejecutables y demás roles fijos privilegiados de servidor. Pruebas SQL con grant de columna,
+grant de vista y EXECUTE 027 retirado. No se modifican grants reales ni scripts históricos;
+la cuenta incorrectamente provisionada falla, sin ampliar permisos para hacerla funcionar.
+Barrera de arranque por SID/TLS/SQL y comando de diagnóstico. Evidencia final en DEV-55.
+SEC-01/03 globales siguen abiertos: provisión física, estaciones y operaciones/evidencias
+fiscales, reautenticación/aprobación de secretos y contratos oficiales pendientes.

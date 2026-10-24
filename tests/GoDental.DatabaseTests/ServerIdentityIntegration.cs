@@ -69,6 +69,20 @@ internal static class ServerIdentityIntegration
         Check(broadRejected, "Un grant directo adicional invalida la identidad runtime");
         await owner.ExecuteAsync("REVOKE SELECT ON OBJECT::seg.Usuarios FROM ServerIdentityTests;");
 
+        await owner.ExecuteAsync("GRANT SELECT ON OBJECT::seg.Usuarios(PasswordHash) TO ServerIdentityTests;");
+        var columnRejected = false;
+        try { await using var unused = await limited.OpenConnectionAsync(); }
+        catch (UnauthorizedAccessException) { columnRejected = true; }
+        Check(columnRejected, "Un grant sólo sobre la columna de hash también invalida la identidad");
+        await owner.ExecuteAsync("REVOKE SELECT ON OBJECT::seg.Usuarios(PasswordHash) FROM ServerIdentityTests;");
+        var quotedView = await owner.ExecuteScalarAsync<string>("SELECT TOP(1) QUOTENAME(s.name)+N'.'+QUOTENAME(v.name) FROM sys.views v JOIN sys.schemas s ON s.schema_id=v.schema_id WHERE v.is_ms_shipped=0 ORDER BY v.object_id;");
+        await owner.ExecuteAsync($"GRANT SELECT ON OBJECT::{quotedView} TO ServerIdentityTests;");
+        var viewRejected = false;
+        try { await using var unused = await limited.OpenConnectionAsync(); }
+        catch (UnauthorizedAccessException) { viewRejected = true; }
+        Check(viewRejected, "Un grant sobre una vista no elude el rechazo de acceso directo a datos");
+        await owner.ExecuteAsync($"REVOKE SELECT ON OBJECT::{quotedView} FROM ServerIdentityTests;");
+
         await owner.ExecuteAsync("DENY EXECUTE ON OBJECT::seg.ServidorSesionRevocar TO ServerIdentityTests;");
         var incompleteRejected = false;
         try { await using var unused = await limited.OpenConnectionAsync(); }

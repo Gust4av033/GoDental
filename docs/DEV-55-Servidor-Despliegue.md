@@ -57,3 +57,9 @@ Baseline Linux: 429 aplicación + 23 HTTP correctas, 16 Windows omitidas explíc
 Después del bloque: 429 aplicación + 56 servidor = **485** correctas; 18 Windows omitidas.
 Ocho pruebas del verificador y ocho PDF intactos. Compilación Release previa sin warnings/errores;
 compilación final y Windows/SQL/WPF pendientes de evidencia nueva, no reutilizar CI de DEV-54.
+
+Revisión adicional del guard: se incluyen vistas y funciones de datos, SELECT/UPDATE por
+columna, funciones escalares con EXECUTE y roles fijos privilegiados de servidor. La revisión
+B1 sólo cubría permisos completos sobre tablas y procedimientos; se añade prueba de grant
+sobre PasswordHash y sobre una vista real instalada. No basta la pertenencia al rol ni ocultar
+botones. SEC-01 global sigue abierto; este control no equivale a pentest o aislamiento completo.
