@@ -59,7 +59,7 @@ no Cloud API habilitada. No se declara chat conectado ni DTE emitido.
 | Nuevo plan DTE · especificación/preparación | PREPARADO; contratos externos pendientes | DEV-50, FIS-01 v0.2; ocho fuentes preservadas/verificables, servidor y modelo diseñados; sin transmisión ni migración nueva |
 | Servidor B1 · identidad | IMPLEMENTADO; validación y límites DEV-51 | HTTPS, sesiones durables, permisos actuales y rol EXECUTE limitado; 027; sin emisión ni cambio del login WPF |
 | Custodia B3 · candidatos secretos | Base implementada; CI #215 correcto: 468 xUnit / 825 SQL / 1170 WPF; sin importador/activación fiscal | DEV-53, DPAPI CurrentUser/ACL, sin migración nueva |
-| Preparación de despliegue B2 | Implementada; validación nativa pendiente | DEV-55: barrera de arranque, diagnóstico SID/TLS/SQL; provisión real y cierre global pendientes |
+| Preparación de despliegue B2 | Implementada; CI #231 correcto: 503 xUnit / 829 SQL / 1268 WPF | DEV-55: barrera de arranque, diagnóstico SID/TLS/SQL; provisión real y cierre global pendientes |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

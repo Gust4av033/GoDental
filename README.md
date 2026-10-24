@@ -27,14 +27,14 @@ Fiscal incorpora preparación/revisión interna; Online conecta prospectos, zona
 El orden vigente está en DEV-50/FIS-01; DEV-43/45 conservan pendientes y fases de seguridad.
 [Guía de Online interno](docs/ONL-01/Guia-Online-Interno.md).
 
-Rama activa: **`feature/desarrollo`**. [CI Windows #215](https://github.com/Gust4av033/GoDental/actions/runs/40113142251)
-valida `ba6ca34`: Release sin advertencias/errores, **468 xUnit / 825 SQL / 1170 WPF**, cero
-pruebas omitidas y sin errores de binding reportados. Incluye 16 pruebas Windows reales de
-DPAPI/ACL, otra identidad, aislamiento, versiones/revocación y comandos locales sin material MH.
-Nueve proyectos NuGet, cero avisos altos/críticos; ocho pruebas documentales y ocho PDF intactos.
-[DEV-53](docs/DEV-53-Custodia-Secretos.md) conserva evidencia y límites; ninguna migración nueva,
-importación/activación fiscal ni provisión en las PCs personales. DEV-51 y DEV-52 conservan
-la evidencia previa de identidad y navegación.
+Rama activa: **`feature/desarrollo`**. [CI Windows #231](https://github.com/Gust4av033/GoDental/actions/runs/40141630582)
+valida `3a2c907`: Release sin advertencias/errores, **503 xUnit / 829 SQL / 1268 WPF**, cero
+pruebas omitidas y sin errores de binding reportados. Incluye 35 xUnit nuevas y cuatro casos
+SQL de despliegue/identidad; HTTPS real con certificado TLS sintético y validación normal del
+cliente. Nueve proyectos NuGet, cero avisos altos/críticos; ocho pruebas documentales y ocho
+PDF intactos. [DEV-55](docs/DEV-55-Servidor-Despliegue.md) conserva evidencia/límites; sin nueva
+migración, provisión de las PCs ni firma/transmisión fiscal. DEV-51/53/54 conservan evidencia
+previa de identidad, custodia y navegación/carga de Online.
 La aceptación física entre dos estaciones, restauración real y despliegue productivo siguen pendientes.
 
 ## Stack

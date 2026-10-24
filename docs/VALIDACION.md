@@ -1,5 +1,28 @@
 # Validación de baseline v0.1
 
+## Preparación verificable de despliegue B2 · 24/10/2026
+
+[DEV-55](DEV-55-Servidor-Despliegue.md), código `3a2c90710b9b4c8c09a169843fb23e8f07c32b50`:
+[CI Windows #231](https://github.com/Gust4av033/GoDental/actions/runs/40141630582) correcto,
+job `121014404366`. Release cero warnings/errores; **503 xUnit (429 aplicación + 74 servidor),
+cero omitidas; 829 comprobaciones SQL / 1268 WPF**, sin errores de binding reportados.
+35 xUnit nuevas incluyen arranque bloqueado antes de escuchar, configuración/TLS, diagnóstico
+CLI sanitizado y HTTPS real con validación estándar de certificado/hostname. Cuatro casos SQL
+nuevos: grants de columna y vista, EXECUTE 027 retirado y restaurado (39 de identidad totales).
+Dieciocho pruebas Windows reales ejecutadas. CA TLS sintética en almacén de máquina del runner,
+retirada al terminar; sin material MH. Pruebas bloqueadas: límite dos minutos sin dumps.
+Nueve proyectos NuGet, cero avisos altos/críticos; ocho pruebas documentales y ocho fuentes
+intactas. 001–027 sin cambios; usuario confirma 027 aplicada. No hay migración nueva.
+
+Local Linux: Release cero warnings/errores y 485 pruebas correctas, 18 Windows omitidas de
+forma explícita; auditoría NuGet sin vulnerabilidades conocidas. Mantener abiertos despliegue
+real, servicio Windows, identidad fuerte de estaciones y operaciones/evidencias fiscales con
+reautenticación/aprobación de secretos. Sin emisión/firma/transmisión/PROD, ni validación MH.
+DEP0040/DEP0169 y aviso de Node 20 forzado a Node 24 pertenecen a herramientas Actions (SEC-06).
+CI del PR #232 también correcta en un runner independiente. El fixture espera confirmación
+de confianza de la CA sintética y usa una CA nunca instalada para el caso negativo, sin
+omitir validación TLS. El cierre posterior sólo documenta evidencia.
+
 ## Custodia genérica B3 · 24/10/2026
 
 [DEV-53](DEV-53-Custodia-Secretos.md), código `ba6ca34f388618a0f0a9701a735c96ad1d8503de`:

@@ -177,3 +177,8 @@ la cuenta incorrectamente provisionada falla, sin ampliar permisos para hacerla 
 Barrera de arranque por SID/TLS/SQL y comando de diagnóstico. Evidencia final en DEV-55.
 SEC-01/03 globales siguen abiertos: provisión física, estaciones y operaciones/evidencias
 fiscales, reautenticación/aprobación de secretos y contratos oficiales pendientes.
+
+Evidencia DEV-55: CI Windows #231 / `3a2c907` correcto, 503 xUnit / 829 SQL / 1268 WPF.
+El runner ejecutó los cuatro casos SQL de grants incompletos/adicionales y dos TLS nativos.
+Actions también reporta DEP0040 y Node 20 forzado a Node 24, además de DEP0169: quedan en
+SEC-06 para actualización controlada de acciones; no se atribuyen a una dependencia C# nueva.

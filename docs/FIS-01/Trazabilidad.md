@@ -79,3 +79,12 @@ R14/R24/R25 (según alcance de custodia): contrato Application `IFiscalSecretCan
 pruebas `FiscalSecretModelsTests`/`WindowsSecretStoreTests` y frontera `ServerHttpTests`. Cubre
 candidatos opacos, no aprobación, certificado, interoperabilidad ni contrato de firma oficial.
 Evidencia final y límites en DEV-53; no cambiar estos requisitos a cumplimiento fiscal completo.
+
+## Preparación de despliegue B2 · DEV-55
+
+R25: `ServerDeploymentPolicy`/`ServerDeploymentCheck`/`ServerStartupGate`/`ServerTlsCertificate`,
+comando local en Program y guard ampliado de ServerSqlConnectionFactory. `ServerDeploymentTests`,
+`ServerCommandTests`, `WindowsServerTlsTests` y cuatro casos SQL adicionales de identidad.
+CI #231 / 3a2c90710b9b4c8c09a169843fb23e8f07c32b50: 503 xUnit / 829 SQL / 1268 WPF.
+TLS del host y permisos SQL, no validación de certificado fiscal ni despliegue LAN completo.
+R24/autorización TEST/PROD fiscal no cambia: transmisión/producción siguen bloqueadas.
