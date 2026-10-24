@@ -20,8 +20,38 @@ Ejecutar los scripts en una base nueva exactamente en este orden:
 12. `012_MVP_Operativo.sql`
 13. `013_Pedidos_MVP.sql`
 14. `014_Codigos_Automaticos.sql`
+15. `015_Resolucion_Operaciones.sql`
+16. `016_Parametros_Comerciales.sql`
+17. `017_Compras_Recepciones.sql`
+18. `018_Importaciones_Costeo.sql`
+19. `019_Posventa.sql`
+20. `020_Distritos_Formularios.sql`
+21. `021_Cobranza_Documentos.sql`
+22. `022_Reparto_ContraEntrega.sql`
+23. `023_Reportes_Operativos.sql`
+24. `024_Fiscal_Revision_Interna.sql`
+25. `025_Online_Interno.sql`
+26. `026_Online_Planificacion.sql`
+27. `027_Servidor_Identidad.sql`
 
 Los scripts incluyen validaciones de dependencias y finalización para detectar instalaciones parciales.
+
+## Identidad del servidor · DEV-51
+
+027 agrega `seg.SesionesServidor`, cuatro procedimientos de autenticación y rol
+`GoDentalServerRuntime` con EXECUTE limitado: **82 tablas / 8 vistas / 22 procedimientos**.
+No crea login ni asigna operadores al rol; provisión de cuenta Windows dedicada en
+[configuración del servidor](../docs/Servidor-Configuracion.md). Ningún secreto fiscal ni emisión.
+Actualizar todas las pendientes **021 → 022 → 023 → 024 → 025 → 026 → 027** antes de usar
+GoDental.Server. Las siguientes notas DEV-50 describen la iteración previa, que no agregó SQL.
+
+## Preparación DTE · DEV-50
+
+[FIS-01 v0.2](../docs/FIS-01/README.md) define el nuevo plan, con [modelo y migraciones](../docs/FIS-01/Modelo-y-Migraciones.md)
+aditivas futuras. Esta iteración **no añade 027** ni modifica scripts históricos. `005` son cimientos;
+`024` sólo revisión interna, no emisión/sello. No almacenar credenciales fiscales en SQL plano.
+En la PC personal faltan **021 → 022 → 023 → 024 → 025 → 026**, todas, desde 021 incluida;
+la última no contiene las anteriores. No se aplicaron desde este entorno.
 
 ## Contenido de la baseline
 
@@ -42,7 +72,7 @@ Las promociones no son acumulables por defecto (`Acumulable = 0`).
 
 ## Instalación local
 
-Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–014.
+Puede ejecutarse la secuencia con `scripts/install-database.ps1` cuando `sqlcmd` esté disponible, o manualmente desde SQL Server Management Studio respetando el orden 001–027.
 
 La baseline 001→008 se ejecutó el 17/10/2026 en SQL Server 2022 local, dentro de una base separada de desarrollo: 72 tablas, 8 vistas y 12 procedimientos. Se añadieron pruebas reales de autenticación, catálogo, permisos, concurrencia y rollback; consultar `docs/DEV-02-Seguridad-Catalogo.md`. Esto no certifica todavía ventas, recepciones, fiscalidad ni operación multi-PC completa.
 
@@ -73,3 +103,92 @@ Una vez que esta baseline haya sido aplicada sobre una base compartida o product
 `014_Codigos_Automaticos.sql` agrega códigos automáticos de clientes, productos, proveedores y cajas, y `CodigoEmpleado` derivado del ID de las cuentas del personal. El procedimiento específico usa los correlativos existentes dentro de la transacción del alta y evita colisiones históricas. No renumera registros previos ni modifica accesos/contraseñas. Total vigente: **76 tablas, 8 vistas y 18 procedimientos**. Contratos, formato y validación: [DEV-20](../docs/DEV-20-Codigos-Cierre.md).
 
 La suite aislada `--run-codes` comprueba concurrencia, colisiones, auditoría, rollback, agotamiento y reaplicación. El instalador de desarrollo incorpora automáticamente 014 al ejecutar `--install-development` sobre una base local marcada; no actualiza bases sin ese marcador.
+
+## Migración 015 · resolución de operaciones
+
+Aplicar después de 014 y actualizar todas las estaciones antes de volver a operar. Agrega EstadoResolucion y HashRecuperacion al ledger sis.OperacionesMvp, conservando recibos confirmados anteriores. Los cierres RECHAZADA_DEFINITIVA usan EntidadId=0 y nunca se devuelven como recibos. Las escrituras actuales consultan el cierre bajo el mismo applock; una versión anterior de la app no conoce ese estado y no debe seguir operando tras la actualización. No agrega tablas/vistas/procedimientos: siguen **76/8/18**. Diseño y pruebas en DEV-31. La herramienta de desarrollo incluye 015; no instala sobre una base no marcada.
+
+## Parámetros comerciales · 016
+
+DEV-32 agrega `RowVersion` a `sis.Configuracion`; conserva las 76 tablas, 8 vistas y 18 procedimientos. Cambia únicamente etiquetas de los tres permisos de descuento para describir sus tramos configurables, conservando códigos y concesiones. Aplicar después de 015 y actualizar todas las estaciones. La pestaña Comercial requiere `AJUSTES.EDITAR`; no ejecutar de nuevo 001–008 sobre una base con datos para actualizarla.
+
+## Compras y recepciones · 017
+
+DEV-33 amplía el estado de OC con RECIBIDA_PARCIAL y agrega snapshots SKU/nombre al detalle de OC, versión/cambio real/costo completo a la recepción y fabricación a sus líneas. La migración conserva datos y deriva el estado de OC históricas con cantidades recibidas; una reejecución no cambia versiones ya coherentes. Recepciones históricas aplicadas permanecen aplicadas y no se presume confirmado un costo sin evidencia. Total: 76 tablas, 8 vistas, 18 procedimientos. La ruta nueva usa transacciones Dapper y el ledger; no invoca el procedimiento histórico de recepción sin sus validaciones adicionales.
+
+## Importaciones · 018
+
+DEV-37 añade cierre de costos, presupuestos y gastos congelados por valor neto antes de recibir;
+parciales consumen su proporción y remanente exacto. Conserva historia y 76/8/18 objetos.
+
+## Posventa · 019
+
+`019_Posventa.sql`, definido en DEV-38, agrega trazabilidad/versionado de devoluciones y su
+compensación de deuda/efectivo, detalle→movimiento, raíz central de fotos y conservación de la
+entrega histórica cuando un pedido termina cancelado por posventa. Es aditivo e idempotente;
+no calcula reversos para filas antiguas ni mueve stock/caja al instalarse. Conserva **76/8/18**.
+Aplicar después de 018, con respaldo y todas las estaciones cerradas/actualizadas. El instalador
+de desarrollo incluye 019 para bases marcadas; no sustituye el migrador productivo de DEV-36.
+El respaldo SQL **no incluye fotos**: respaldar también la carpeta central y probar restauración conjunta.
+
+## Localización de formularios · 020
+
+`020_Distritos_Formularios.sql` (DEV-39) añade `Distrito NVARCHAR(100) NULL` a
+`cli.ClienteDirecciones` y `ven.PedidosMvp`. El pedido conserva el distrito como snapshot de
+la dirección seleccionada. No convierte municipios históricos, no rellena datos ni cambia
+contratos JSON recuperables; 76 tablas / 8 vistas / 18 procedimientos. Reaplicable.
+Aplicar después de 019, con respaldo y ambas estaciones cerradas/actualizadas.
+El catálogo territorial se distribuye con la aplicación, sin tablas fiscales nuevas.
+
+## Cobranza y documentos · 021
+
+`021_Cobranza_Documentos.sql` (DEV-40) añade historial inmutable de avisos `ven.AvisosCobranza`,
+con cuenta/fecha/usuario/estación/saldo/gestión y unicidad por cuenta/día, y snapshots opcionales de
+nombres y saldo antes/después en abonos nuevos. Históricos siguen NULL, sin reconstruir datos.
+Añade CLIENTES.COBRANZA_GESTIONAR y concesión Administrador sólo cuando falta. **77/8/18**.
+Aplicar después de 020 y actualizar/reiniciar ambas estaciones. Se conserva el JSON de solicitudes
+recuperables anteriores; la nueva solicitud AVISO_COBRANZA usa el mismo diario/ledger transaccional.
+
+`022_Reparto_ContraEntrega.sql`: custodia de reparto y rendición, dos tablas nuevas (79 tablas / 8 vistas / 18 procedimientos). `023_Reportes_Operativos.sql`: fecha de aplicación nullable para recepciones nuevas, sin reconstruir históricos. Aplicar en orden después de 021. Diseño, uso y límites: DEV-41/42.
+
+
+## Preparación fiscal interna · 024
+
+`024_Fiscal_Revision_Interna.sql` (DEV-44) agrega versión, resultado/observación/autor/fecha
+ y huella de revisión interna a `fis.DocumentosFiscales`, con CHECK/FK y permiso
+`FISCAL.REVISAR_INTERNO`. No genera DTE, cambia estados fiscales ni mueve caja/inventario.
+Conserva **79 tablas / 8 vistas / 18 procedimientos**. Reaplicar conserva revisiones y denegaciones.
+
+**Pendiente en la PC personal desde 021, incluida: 021 → 022 → 023 → 024.** Son incrementales;
+024 no contiene las anteriores. Respaldar BD y evidencias, cerrar/actualizar ambas estaciones y
+volver a iniciar sesión tras migrar. El instalador de desarrollo recorre la secuencia para la base
+marcada; el migrador productivo y restauración automatizada continúan pendientes en DEV-36.
+No se aplicaron migraciones a la BD personal desde este entorno.
+
+
+## Online interno · 025
+
+`025_Online_Interno.sql` (DEV-46) extiende Prospectos/ListaNoContactar con versiones y datos
+operativos, sitio/dominio, distrito y referencia a venta de conversión; fecha nullable sólo para
+nuevas altas. Añade `com.fn_ClaveOnline` para comparación de formatos heredados sin reescritura,
+y permiso de exclusiones, preservando denegaciones. Conserva **79/8/18** objetos y agrega una función.
+No crea comunicaciones ni campañas ni transforma datos históricos. Reaplicable.
+
+Actualización pendiente personal **021 → 022 → 023 → 024 → 025**, incluida 021. Respaldar BD
+/evidencias, ejecutar incrementales en orden y actualizar/reiniciar todas las estaciones.
+La base personal no se modificó desde cloud. Comandos y límites: [DEV-46](../docs/DEV-46-Online-Interno.md).
+
+## Planificación comercial conforme a referencia · 026
+
+`026_Online_Planificacion.sql` (DEV-47) añade SegmentosProspecto, SeguimientosProspecto,
+versiones de zonas/plantillas/campañas y snapshots de criterios, mensajes y destinatarios.
+Estado actual **81 tablas / 8 vistas / 18 procedimientos**, más la función de 025. No reconstruye
+ni reescribe campañas/seguimientos históricos. Aprobación interna sin envío ni consentimiento.
+
+**Pendiente personal vigente: 021 → 022 → 023 → 024 → 025 → 026, incluida 021.**
+Ejecutar incrementales en orden con respaldo y ambas estaciones actualizadas/cerradas.
+`install-database.ps1` usa master para crear la base en 001 y GoDental explícito desde 002,
+pues cada sqlcmd abre una sesión nueva. Esa herramienta instala la base GoDental de la baseline;
+para GoDental_Development reconocida usar --install-development según DEV-46. No forzar
+marcadores ni usar el instalador de desarrollo como migrador productivo. La BD personal
+no se modifica desde cloud. [Guía de Online](../docs/ONL-01/Guia-Online-Interno.md).

@@ -19,36 +19,67 @@ internal static class CustomerIntegration
         var session = new UserSession(); session.Begin(identity);
         var repo = new SqlCustomerRepository(factory); var service = new CustomerService(repo, session);
         var catalogs = await service.CatalogsAsync(); var type = checked((short)catalogs.Types.First().Id);
-        var result = await service.SaveAsync(new(new() { Code = " CLI-001 ", Name = " Cliente aislado ", TypeId = type, CommercialName = " ", Nit = "NIT-TEST", Nrc = "NRC-TEST" }, "Alta aislada"));
+        var result = await service.SaveAsync(new(new() { Code = " CLI-001 ", Name = " Cliente aislado ", TypeId = type, CommercialName = " ", Nit = "0614-010100-101-0", Nrc = "NRC-TEST" }, "Alta aislada"));
         Check(result.IsSuccess, "Crea cliente con auditoría usando esquema aprobado"); var id = result.Value;
         async Task<CustomerSnapshot> Read() => (await service.ReadAsync(id))!;
         var snapshot = await Read();
         Check(snapshot.Customer.Code == "CLI-001" && snapshot.Customer.CommercialName is null && !snapshot.Credit.Enabled && snapshot.Customer.RowVersion.Length == 8, "Normaliza ficha y conserva crédito deshabilitado en alta");
         Check((await service.SearchAsync(new("aislado"))).Total == 1 && (await service.SearchAsync(new("%"))).Total == 0 && (await service.SearchAsync(new("' OR 1=1 --"))).Total == 0, "Busca literalmente y con parámetros");
         Check((await service.SaveAsync(new(new() { Code = "CLI-001", Name = "Duplicado", TypeId = type }, "Duplicado"))).ErrorCode == "DUPLICATE_IDENTITY", "Rechaza código duplicado");
-        Check((await service.SaveAsync(new(new() { Code = "CLI-002", Name = "Duplicado fiscal", TypeId = type, Nit = "NIT-TEST" }, "Duplicado"))).ErrorCode == "DUPLICATE_IDENTITY", "Rechaza NIT duplicado");
+        Check((await service.SaveAsync(new(new() { Code = "CLI-002", Name = "Duplicado fiscal", TypeId = type, Nit = "0614-010100-101-0" }, "Duplicado"))).ErrorCode == "DUPLICATE_IDENTITY", "Rechaza NIT duplicado");
+        // DEV-39: formatos nuevos, duplicados canónicos y conservación exacta de históricos.
+        Check((await service.SaveAsync(new(new() { Name = "DUI incompleto", TypeId = type, Dui = "1234567890" }, "Formato"))).ErrorCode == "VALIDATION", "Rechaza DUI con dígitos sobrantes desde el repositorio");
+        Check((await service.SaveAsync(new(new() { Name = "Teléfono incompleto", TypeId = type, Phone = "123" }, "Formato"))).ErrorCode == "VALIDATION", "Rechaza teléfono nuevo imposible");
+        await c.ExecuteAsync("UPDATE cli.Clientes SET NIT=N'06140101001010',DUI=N'DUI histórico',Telefono=N' 123 ' WHERE IdCliente=@id;", new { id });
+        snapshot = await Read();
+        Check((await service.SaveAsync(new(snapshot.Customer with { Name = "Cliente aislado histórico" }, "Nombre únicamente"))).IsSuccess, "Editar nombre conserva formatos históricos sin exigir corrección");
+        snapshot = await Read();
+        Check(snapshot.Customer.Dui == "DUI histórico" && snapshot.Customer.Phone == " 123 " && snapshot.Customer.Nit == "06140101001010", "Históricos sin cambios se preservan exactamente");
+        Check((await service.SaveAsync(new(new() { Name = "Duplicado con guiones", TypeId = type, Nit = "0614-010100-101-0" }, "Duplicado canónico"))).ErrorCode == "DUPLICATE_IDENTITY", "NIT con guiones no duplica el histórico sin guiones");
+        var unchangedVersion = snapshot.Customer.RowVersion;
+        Check((await service.SaveAsync(new(snapshot.Customer with { Dui = "incompleto" }, "Cambio inválido"))).ErrorCode == "VALIDATION" && (await Read()).Customer.RowVersion.SequenceEqual(unchangedVersion), "Edición inválida no avanza versión");
+        Check((await service.SaveAsync(new(snapshot.Customer with { Dui = "123456789", Phone = "+8613800138000", WhatsApp = "70000001" }, "Corregir datos"))).IsSuccess, "Guarda DUI y teléfono internacional con nacional opcional");
+        snapshot = await Read();
+        Check(snapshot.Customer.Dui == "12345678-9" && snapshot.Customer.Phone!.StartsWith("+86") && !snapshot.Customer.WhatsApp!.StartsWith("+"), "Normaliza DUI y conserva decisión de usar prefijo");
         var original = snapshot.Customer;
         Check((await service.SaveContactAsync(new(id, original.RowVersion, new() { Name = "Contacto", Phone = "00000000", WhatsApp = "11111111", Primary = true }, "Alta contacto"))).IsSuccess, "Crea contacto individual");
         snapshot = await Read();
         Check(snapshot.Contacts.Count == 1 && !snapshot.Customer.RowVersion.SequenceEqual(original.RowVersion), "Contacto avanza versión del cliente");
         Check((await service.SaveAsync(new(original with { Name = "Obsoleto" }, "Concurrencia"))).ErrorCode == "CONCURRENCY_CONFLICT", "Ficha obsoleta no sobrescribe subregistros");
-        var contact = snapshot.Contacts.Single(); var request = new CustomerContactChange(id, snapshot.Customer.RowVersion, contact with { Phone = "123" }, "Dos estaciones");
-        var concurrent = await Task.WhenAll(service.SaveContactAsync(request), service.SaveContactAsync(request with { Contact = contact with { Phone = "456" } }));
+        await c.ExecuteAsync("UPDATE cli.ClienteContactos SET Telefono=N' 123 ' WHERE IdCliente=@id;", new { id });
+        snapshot = await Read();
+        Check((await service.SaveContactAsync(new(id, snapshot.Customer.RowVersion, snapshot.Contacts.Single() with { Name = "Contacto corregido" }, "Nombre de contacto"))).IsSuccess, "Contacto histórico permite editar nombre sin cambiar teléfono inválido");
+        snapshot = await Read();
+        Check(snapshot.Contacts.Single().Phone == " 123 ", "Conserva teléfono histórico exacto del contacto");
+        var contact = snapshot.Contacts.Single(); var request = new CustomerContactChange(id, snapshot.Customer.RowVersion, contact with { Phone = "7000-0001" }, "Dos estaciones");
+        var concurrent = await Task.WhenAll(service.SaveContactAsync(request), service.SaveContactAsync(request with { Contact = contact with { Phone = "7000-0002" } }));
         Check(concurrent.Count(r => r.IsSuccess) == 1 && concurrent.Count(r => r.ErrorCode == "CONCURRENCY_CONFLICT") == 1, "Dos estaciones editan sin pérdida de cambios");
         foreach (var addressType in new[] { "FISCAL", "ENTREGA", "OTRA" })
         {
             snapshot = await Read();
-            Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, new() { Type = addressType, Address = "Calle de prueba", Department = "Departamento", Municipality = "Municipio", Reference = "Referencia", Primary = true }, "Alta dirección"))).IsSuccess, "Conserva dirección " + addressType);
+            Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, new() { Type = addressType, Address = "Calle de prueba", Department = "San Salvador", Municipality = "San Salvador Centro", District = "San Salvador", Reference = "Referencia", Primary = true }, "Alta dirección"))).IsSuccess, "Conserva dirección " + addressType);
         }
         snapshot = await Read();
+        var addressVersion = snapshot.Customer.RowVersion;
+        Check(snapshot.Addresses.All(a => a.District == "San Salvador"), "Distrito opcional persiste y se consulta");
+        Check((await service.SaveAddressAsync(new(id, addressVersion, new() { Address = "Calle", Department = "San Salvador", Municipality = "San Salvador Centro", District = "Santa Tecla" }, "Distrito ajeno"))).ErrorCode == "VALIDATION", "Rechaza distrito fuera del municipio");
+        Check((await Read()).Customer.RowVersion.SequenceEqual(addressVersion), "Dirección territorial inválida no altera versión");
+        snapshot = await Read();
         Check(snapshot.Addresses.Count == 3 && snapshot.Contacts.Count == 1, "No reemplaza contactos ni otras direcciones");
+        var legacyAddressId = snapshot.Addresses.First().Id;
+        await c.ExecuteAsync("UPDATE cli.ClienteDirecciones SET Departamento=N'Departamento antiguo',Municipio=N'Municipio antiguo',Distrito=NULL WHERE IdDireccion=@legacyAddressId;", new { legacyAddressId });
+        snapshot = await Read(); var legacyAddress = snapshot.Addresses.Single(a => a.Id == legacyAddressId);
+        Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, legacyAddress with { Reference = "Nueva referencia" }, "Referencia histórica"))).IsSuccess, "Dirección histórica admite referencia nueva sin convertir territorio");
+        snapshot = await Read();
+        Check(snapshot.Addresses.Single(a => a.Id == legacyAddressId) is { Department: "Departamento antiguo", Municipality: "Municipio antiguo", District: null }, "Conserva territorio histórico y distrito nulo");
+
         Check((await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, snapshot.Addresses.First() with { Id = long.MaxValue }, "Ajena"))).ErrorCode == "VALIDATION", "Rechaza dirección ajena o inexistente");
         Check((await service.SaveContactAsync(new(id, snapshot.Customer.RowVersion, contact with { Id = long.MaxValue }, "Ajeno"))).ErrorCode == "VALIDATION", "Rechaza contacto ajeno o inexistente");
         var version = snapshot.Customer.RowVersion;
         Check((await service.SaveCreditAsync(new(id, version, new() { Enabled = true, Limit = 250.15m, Days = 20, NoticeDays = 5, Blocked = true, BlockReason = "Prueba manual" }, "Configurar crédito"))).IsSuccess, "Crédito se configura mediante contrato separado");
         snapshot = await Read();
         Check(snapshot.Credit.Limit == 250.15m && snapshot.Credit.Blocked && !snapshot.Customer.RowVersion.SequenceEqual(version), "Crédito conserva precisión y avanza versión");
-        Check((await service.SaveAsync(new(snapshot.Customer with { Phone = "789" }, "Cambiar teléfono"))).IsSuccess && (await Read()).Credit.Limit == 250.15m, "Editar ficha no sobrescribe configuración de crédito");
+        Check((await service.SaveAsync(new(snapshot.Customer with { Phone = "7000-0003" }, "Cambiar teléfono"))).IsSuccess && (await Read()).Credit.Limit == 250.15m, "Editar ficha no sobrescribe configuración de crédito");
         snapshot = await Read();
         var failed = false;
         try { await repo.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, new() { Address = "No persistir" }, "Fallo auditoría"), identity.Id, int.MaxValue); }
@@ -73,7 +104,7 @@ internal static class CustomerIntegration
         Check((await service.SaveAsync(new(snapshot.Customer with { Code = "CAMBIADO" }, "Código con historial"))).ErrorCode == "IN_USE", "Conserva código con historial comercial");
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'CLIENTES.CREDITO_CONFIGURAR')");
         Check((await service.SaveCreditAsync(new(id, snapshot.Customer.RowVersion, new(), "Sin permiso real"))).ErrorCode == "FORBIDDEN", "Servidor revalida permiso de crédito pese a sesión cacheada");
-        Check((await service.SaveAsync(new(snapshot.Customer with { Phone = "456" }, "Ficha independiente"))).IsSuccess && (await Read()).Credit.Limit == 250.15m, "Permiso de ficha no concede crédito ni lo sobrescribe");
+        Check((await service.SaveAsync(new(snapshot.Customer with { Phone = "7000-0002" }, "Ficha independiente"))).IsSuccess && (await Read()).Credit.Limit == 250.15m, "Permiso de ficha no concede crédito ni lo sobrescribe");
         snapshot = await Read();
         await c.ExecuteAsync("UPDATE seg.RolPermisos SET Concedido=0 WHERE IdPermiso=(SELECT IdPermiso FROM seg.Permisos WHERE Codigo=N'CLIENTES.EDITAR')");
         Check((await service.SaveContactAsync(new(id, snapshot.Customer.RowVersion, contact, "Sin permiso"))).ErrorCode == "FORBIDDEN" && (await service.SaveAddressAsync(new(id, snapshot.Customer.RowVersion, snapshot.Addresses.First(), "Sin permiso"))).ErrorCode == "FORBIDDEN", "SQL revalida edición de subregistros");
@@ -84,7 +115,7 @@ internal static class CustomerIntegration
         denied = false; try { await Read(); } catch (UnauthorizedAccessException) { denied = true; }
         Check(denied, "SQL revalida lectura de clientes");
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Bitacora WHERE Entidad=N'Clientes' AND EntidadId=CONVERT(nvarchar(100),@id) AND Accion=N'CREAR_CLIENTE'", new { id }) == 1, "Auditoría registra alta una sola vez");
-        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 76 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 18, "Conserva la baseline y las cuatro extensiones documentadas del MVP");
+        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.tables") == 82 && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sys.procedures") == 22, "Conserva baseline y extensiones documentadas, incluida identidad del servidor");
         Console.WriteLine($"{count} comprobaciones de clientes correctas.");
     }
 }

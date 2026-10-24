@@ -1,7 +1,8 @@
-<UserControl x:Class="GoDental.Wpf.Views.Auth.AccessView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<UserControl x:Class="GoDental.Wpf.Views.Auth.AccessView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:GoDental.Wpf.Controls" PreviewKeyDown="EntryKeyDown">
   <StackPanel MinWidth="0" MaxWidth="520" HorizontalAlignment="Center">
+    <TextBlock Text="BIENVENIDO A GODENTAL" Style="{StaticResource PageEyebrow}" Margin="0,0,0,8"/>
     <TextBlock Text="{Binding FormTitle}" Style="{StaticResource Heading}" />
-    <TextBlock Text="Cada operación quedará asociada a tu usuario y a este equipo." Style="{StaticResource MutedText}" Margin="0,0,0,20" />
+    <TextBlock Text="{Binding FormDescription}" Style="{StaticResource MutedText}" Margin="0,0,0,20" />
     <Border Style="{StaticResource Card}">
       <StackPanel>
         <StackPanel Visibility="{Binding IsAuthenticated, Converter={StaticResource BoolToVisibility}}">
@@ -19,20 +20,22 @@
             </StackPanel>
             <StackPanel Visibility="{Binding MustChangePassword, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
               <Label Content="Contraseña _actual" Target="{Binding ElementName=CurrentPasswordInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,6" />
-              <PasswordBox x:Name="CurrentPasswordInput" MaxLength="128" AutomationProperties.Name="Contraseña actual" />
+              <controls:PasswordEntry x:Name="CurrentPasswordInput" Label="Contraseña actual" />
             </StackPanel>
             <Label Content="_Contraseña" Target="{Binding ElementName=PasswordInput}" Foreground="{DynamicResource TextBrush}" Padding="0,12,0,6" />
-            <PasswordBox x:Name="PasswordInput" MaxLength="128" AutomationProperties.Name="Contraseña" />
+            <controls:PasswordEntry x:Name="PasswordInput" Label="Contraseña" />
             <StackPanel Visibility="{Binding NeedsConfirmation, Converter={StaticResource BoolToVisibility}}">
               <Label Content="_Repite la contraseña" Target="{Binding ElementName=ConfirmationInput}" Foreground="{DynamicResource TextBrush}" Padding="0,12,0,6" />
-              <PasswordBox x:Name="ConfirmationInput" MaxLength="128" AutomationProperties.Name="Confirmación de contraseña" />
+              <controls:PasswordEntry x:Name="ConfirmationInput" Label="Confirmación de contraseña" />
               <TextBlock Text="Puedes usar una frase de 10 a 128 caracteres." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0" />
             </StackPanel>
-            <Button Content="{Binding PrimaryActionLabel}" Style="{StaticResource PrimaryButton}" Click="SubmitClicked" IsEnabled="{Binding IsReady}" HorizontalAlignment="Stretch" Margin="0,20,0,0" />
+            <Button Content="{Binding PrimaryActionLabel}" Style="{StaticResource PrimaryButton}" IsDefault="True" Height="44" Click="SubmitClicked" IsEnabled="{Binding IsReady}" HorizontalAlignment="Stretch" Margin="0,20,0,0" />
+            <Button Content="Volver al acceso" Command="{Binding CancelPasswordChangeCommand}" Visibility="{Binding MustChangePassword, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+            <TextBlock Text="¿Olvidaste tu contraseña? Solicita un restablecimiento al administrador." Style="{StaticResource MutedText}" FontSize="12" Margin="0,14,0,0"/>
           </StackPanel>
         </StackPanel>
-        <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,16,0,0" />
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="16" Margin="0,20,0,0">
+        <ProgressBar Style="{StaticResource InlineLoadingIndicator}" IsIndeterminate="True" Height="3" Margin="0,16,0,0" />
+        <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="12" Margin="0,16,0,0">
           <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" LineHeight="21" AutomationProperties.LiveSetting="Polite" />
         </Border>
       </StackPanel>

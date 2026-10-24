@@ -1,0 +1,380 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:behaviors="clr-namespace:GoDental.Wpf.Behaviors" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations" x:Class="GoDental.Wpf.Views.Operations.OnlineView">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+      <Style x:Key="OnlineNavigationTab" TargetType="TabItem" BasedOn="{StaticResource WorkspaceNavigationItem}">
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="MinWidth" Value="162"/>
+        <Setter Property="Padding" Value="10,12"/>
+      </Style>
+    </ResourceDictionary>
+  </UserControl.Resources>
+  <Grid Height="{Binding Path=(behaviors:WorkspaceViewport.Height), RelativeSource={RelativeSource Self}}">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <StackPanel Grid.Row="0">
+    <TextBlock Text="Comercial / Online" Style="{StaticResource Heading}"/>
+    <TextBlock Text="Organiza prospectos y prepara campañas con revisión humana." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+    </StackPanel>
+    <ProgressBar Grid.Row="1" Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
+    <local:OperationStatusView Grid.Row="2" DataContext="{Binding Operation}"/>
+    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"/>
+    <TabControl Grid.Row="4" Style="{StaticResource WorkspaceNavigationTabs}" TabStripPlacement="Left" SelectedIndex="{Binding SectionIndex,Mode=TwoWay}" AutomationProperties.Name="Secciones de Comercial Online">
+      <TabItem Header="Zonas de prospección" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Zonas de prospección" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <TextBlock Text="Organiza departamentos y municipios de El Salvador. La prioridad ordena el trabajo; cada zona muestra su conteo real de prospectos." Style="{StaticResource MutedText}" Margin="0,0,0,12"/><TextBlock Text="Mapa y búsqueda de negocios" Style="{StaticResource SectionHeading}" Margin="0,20,0,12"/><local:OnlineMapView/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <TextBox Text="{Binding ZoneSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar zona por departamento o municipio"/>
+            <Button Content="Buscar / actualizar" Command="{Binding FindZonesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel>
+            <Button Content="+ Nueva zona" Command="{Binding NewZoneCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Editar zona" Command="{Binding EditZoneCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Zones}" SelectedItem="{Binding SelectedZone}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="260" AutomationProperties.Name="Zonas configuradas">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Departamento" Binding="{Binding Department}" Width="*"/>
+              <DataGridTextColumn Header="Municipio" Binding="{Binding Municipality}" Width="*"/>
+              <DataGridTextColumn Header="Prioridad" Binding="{Binding Priority}" Width="80"/>
+              <DataGridTextColumn Header="Prospectos" Binding="{Binding Prospects}" Width="90"/>
+              <DataGridTextColumn Header="Activa" Binding="{Binding Active}" Width="70"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding ZonePageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousZoneCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextZoneCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Zones.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Prospectos" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,0,0,12">
+            <TextBox Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar prospectos por nombre teléfono correo o ID"/>
+            <ComboBox ItemsSource="{Binding States}" SelectedItem="{Binding State}" Width="160" Margin="0,0,8,8" AutomationProperties.Name="Estado de prospecto"/>
+            <Button Content="Consultar" Command="{Binding ReloadCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="Nuevo prospecto" Command="{Binding CreateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Consultar ficha" Command="{Binding OpenCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="260" AutomationProperties.Name="Prospectos públicos registrados">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="65"/>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="210"/>
+              <DataGridTemplateColumn Header="Estado" Width="115"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Margin="0,4"><TextBlock Text="{Binding State}" FontSize="11"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+              <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="130"/>
+              <DataGridTextColumn Header="Contacto" Binding="{Binding SuppressionLabel}" Width="270"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Items.Count}" Content="Busca prospectos o registra el primer negocio con su fuente pública."/>
+          <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de prospectos" Command="{Binding PreviousCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de prospectos" Command="{Binding NextCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Ficha y origen" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="{Binding DetailMessage}" Style="{StaticResource StatusMessage}"/>
+          <Grid Margin="0,12,0,16">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CommerceSummary}" Margin="0,0,12,0"><StackPanel>
+              <DockPanel><Border Style="{StaticResource CommerceAvatar}" Margin="0,0,12,0"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel><TextBlock Text="{Binding Detail.Name,TargetNullValue=Selecciona un prospecto}" Style="{StaticResource SectionHeading}"/><TextBlock Text="{Binding Detail.Type}" Style="{StaticResource MutedText}"/></StackPanel></DockPanel>
+              <TextBlock Text="{Binding Detail.Email}" Margin="0,12,0,4" TextWrapping="Wrap"/><TextBlock Text="{Binding Detail.Phone}"/><TextBlock Text="{Binding Detail.Municipality}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+            </StackPanel></Border>
+            <Border Grid.Column="1" Style="{StaticResource CommerceSummary}"><StackPanel><TextBlock Text="Fuente pública reciente" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding PrimarySource.Type,TargetNullValue=Consulta la ficha}" Style="{StaticResource SectionHeading}"/><TextBlock Text="{Binding PrimarySource.Description}" TextWrapping="Wrap" Margin="0,8,0,8"/><TextBlock Text="{Binding PrimarySource.LocalDate,StringFormat=d}" Style="{StaticResource MutedText}"/></StackPanel></Border>
+          </Grid>
+          <WrapPanel Margin="0,12,0,8">
+            <Button Content="Actualizar ficha" Command="{Binding OpenCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="Editar datos" Command="{Binding EditCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanChange}"/>
+            <Button Content="Añadir fuente" Command="{Binding AddSourceCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Revisar / descartar" Command="{Binding ChangeStateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanChange}"/>
+            <Button Content="Registrar gestión" Command="{Binding RecordFollowUpCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="No contactar" Command="{Binding BlockCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanExclude}"/>
+          </WrapPanel>
+          <UniformGrid Columns="2">
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Nombre público" Content="{Binding Detail.Name}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Tipo de negocio" Content="{Binding Detail.Type}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Teléfono" Content="{Binding Detail.Phone}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="WhatsApp" Content="{Binding Detail.WhatsApp}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Correo" Content="{Binding Detail.Email}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Sitio empresarial" Content="{Binding Detail.Website}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Instagram" Content="{Binding Detail.Instagram}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Facebook" Content="{Binding Detail.Facebook}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Departamento" Content="{Binding Detail.Department}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Municipio" Content="{Binding Detail.Municipality}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Distrito" Content="{Binding Detail.District}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Cliente vinculado" Content="{Binding Detail.Customer}"/>
+            <ContentControl Style="{StaticResource CommerceField}" Tag="Compra que acreditó conversión" Content="{Binding Detail.ConversionSale}"/>
+          </UniformGrid>
+          <TextBlock Text="Fuentes conservadas" Style="{StaticResource SectionHeading}"/>
+          <DataGrid ItemsSource="{Binding Sources}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="190" AutomationProperties.Name="Fuentes públicas del prospecto">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="100"/>
+              <DataGridTextColumn Header="Fecha local" Binding="{Binding LocalDate}" Width="150"/>
+              <DataGridTextColumn Header="URL documental" Binding="{Binding Url}" Width="300"/>
+              <DataGridTextColumn Header="Dato obtenido" Binding="{Binding Description}" Width="200"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding SourcePageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de fuentes" Command="{Binding PreviousSourceCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de fuentes" Command="{Binding NextSourceCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <TextBlock Text="Coincidencias actuales · revisar identidad, sin fusión automática" Style="{StaticResource SectionHeading}"/>
+          <DataGrid ItemsSource="{Binding Matches}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" AutomationProperties.Name="Coincidencias de prospectos y clientes">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Entidad" Binding="{Binding Entity}" Width="100"/>
+              <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="65"/>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="240"/>
+              <DataGridTextColumn Header="Coincidencia" Binding="{Binding Match}" Width="220"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding MatchPageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de coincidencias" Command="{Binding PreviousMatchCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de coincidencias" Command="{Binding NextMatchCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <TextBlock Text="Historial interno" Style="{StaticResource SectionHeading}"/>
+          <DataGrid ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" AutomationProperties.Name="Historial del prospecto">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Fecha local" Binding="{Binding LocalDate}" Width="150"/>
+              <DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="150"/>
+              <DataGridTextColumn Header="Operación" Binding="{Binding Action}" Width="180"/>
+              <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="300"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding HistoryPageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de historial" Command="{Binding PreviousHistoryCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de historial" Command="{Binding NextHistoryCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Segmentación" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Segmentación de prospectos" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <TextBlock Text="Combina territorio, negocio, estado, origen y canal. Selecciona un segmento para revisar sus candidatos y después preparar una campaña." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <TextBox Text="{Binding SegmentSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar segmento comercial"/>
+            <Button Content="Buscar / actualizar" Command="{Binding FindSegmentsCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel>
+            <Button Content="+ Nuevo segmento" Command="{Binding NewSegmentCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Editar segmento" Command="{Binding EditSegmentCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Vista previa" Command="{Binding FindPreviewCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Segments}" SelectedItem="{Binding SelectedSegment}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="190" AutomationProperties.Name="Segmentos comerciales">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Canal" Binding="{Binding Channel}" Width="105"/>
+              <DataGridTextColumn Header="Activo" Binding="{Binding Active}" Width="65"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding SelectedSegment.Criteria}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <TextBlock Text="{Binding SegmentPageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousSegmentCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextSegmentCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Segments.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <TextBlock Text="Vista previa del segmento" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <DataGrid ItemsSource="{Binding Preview}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="180" AutomationProperties.Name="Candidatos del segmento">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Negocio" Binding="{Binding Type}" Width="120"/>
+              <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
+              <DataGridTextColumn Header="Municipio" Binding="{Binding Municipality}" Width="*"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding PreviewPageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousPreviewCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextPreviewCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Preview.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <TextBlock Text="La preparación vuelve a validar los contactos. Esta selección no acredita consentimiento." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Plantillas de mensaje" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Plantillas de mensaje" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <TextBox Text="{Binding TemplateSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar plantilla de mensaje"/>
+            <Button Content="Buscar / actualizar" Command="{Binding FindTemplatesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel>
+            <Button Content="+ Nueva plantilla" Command="{Binding NewTemplateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanPlanCampaign}"/>
+            <Button Content="Editar plantilla" Command="{Binding EditTemplateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanPlanCampaign}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="220" AutomationProperties.Name="Plantillas comerciales">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Canal" Binding="{Binding Channel}" Width="110"/>
+              <DataGridTextColumn Header="Activa" Binding="{Binding Active}" Width="70"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding TemplatePageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousTemplateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextTemplateCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Templates.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <TextBlock Text="Vista previa · sin envío" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource SoftPanel}">
+            <TextBlock Text="{Binding SelectedTemplate.Preview,TargetNullValue=Selecciona una plantilla para ver su mensaje.}" TextWrapping="Wrap"/>
+          </Border>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Campañas" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Campañas comerciales" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <TextBlock Text="Selecciona un segmento y una plantilla del mismo canal en sus secciones. Crea un borrador, prepara sus destinatarios y revisa el mensaje en Aprobación." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <TextBox Text="{Binding CampaignSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar campaña comercial"/>
+            <Button Content="Buscar / actualizar" Command="{Binding FindCampaignsCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel>
+            <Button Content="+ Nueva campaña" Command="{Binding NewCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanPlanCampaign}"/>
+            <Button Content="Preparar para aprobación" Command="{Binding PrepareCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanPlanCampaign}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Campaigns}" SelectedItem="{Binding SelectedCampaign}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="260" AutomationProperties.Name="Campañas preparadas">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Canal" Binding="{Binding Channel}" Width="100"/>
+              <DataGridTemplateColumn Header="Estado" Width="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Margin="0,4"><TextBlock Text="{Binding State}" FontSize="11"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+              <DataGridTextColumn Header="Preparados" Binding="{Binding Recipients}" Width="85"/>
+              <DataGridTextColumn Header="Revisar" Binding="{Binding Suppressed}" Width="70"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding CampaignPageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Campaigns.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <TextBlock Text="{Binding CampaignMessage}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Aprobación" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Revisión y aprobación" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <TextBlock Text="{Binding CampaignMessage}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <TextBlock Text="1. Revisa el contenido    2. Consulta destinatarios    3. Aprueba la preparación" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource SoftPanel}">
+            <TextBlock Text="{Binding CampaignPreview}" TextWrapping="Wrap"/>
+          </Border>
+          <WrapPanel>
+            <Button Content="Consultar destinatarios" Command="{Binding FindRecipientsCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="Aprobar preparación" Command="{Binding ApproveCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanApproveCampaign}"/>
+            <Button Content="Volver a borrador" Command="{Binding ReturnCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanApproveCampaign}"/>
+            <Button Content="Cancelar campaña" Command="{Binding CancelCampaignCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanApproveCampaign}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Recipients}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="220" AutomationProperties.Name="Revisión de destinatarios">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Negocio" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Contacto preparado" Binding="{Binding Contact}" Width="*"/>
+              <DataGridTextColumn Header="Revisión actual" Binding="{Binding Status}" Width="220"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding RecipientPageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousRecipientCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextRecipientCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Recipients.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <TextBlock Text="Aprobación interna: no envía mensajes. Los contactos modificados o excluidos se señalan para revisar. La conexión oficial y el consentimiento siguen pendientes." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Respuestas / seguimiento" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Respuestas y seguimiento" Style="{StaticResource SectionHeading}" Margin="0,0,0,12"/>
+          <TextBlock Text="Registra interacciones ya ocurridas fuera de GoDental. Consulta primero la ficha del prospecto; las notas conservan fecha, canal y usuario, sin fabricar una conversación remota." Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <TextBox Text="{Binding FollowUpSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Width="230" Margin="0,0,8,8" AutomationProperties.Name="Buscar respuesta o seguimiento"/>
+            <Button Content="Buscar / actualizar" Command="{Binding FindFollowUpsCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel>
+            <Button Content="Registrar gestión del prospecto" Command="{Binding RecordFollowUpCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanManage}"/>
+            <Button Content="Abrir ficha seleccionada" Command="{Binding OpenFollowUpCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <TextBlock Text="{Binding DetailMessage}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <DataGrid ItemsSource="{Binding FollowUps}" SelectedItem="{Binding SelectedFollowUp}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Height="230" AutomationProperties.Name="Respuestas registradas">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Fecha" Binding="{Binding LocalDate}" Width="135"/>
+              <DataGridTextColumn Header="Negocio" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="Canal" Binding="{Binding Channel}" Width="95"/>
+              <DataGridTextColumn Header="Resultado" Binding="{Binding Result}" Width="105"/>
+              <DataGridTextColumn Header="Próxima gestión" Binding="{Binding NextDate}" Width="120"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding FollowUpPageLabel}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" Command="{Binding PreviousFollowUpCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" Command="{Binding NextFollowUpCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding FollowUps.Count}" Content="Consulta los datos o registra el primer elemento de esta sección."/>
+          <Border Style="{StaticResource SoftPanel}">
+            <StackPanel>
+              <TextBlock Text="{Binding SelectedFollowUp.Note,TargetNullValue=Selecciona una gestión para leer la nota.}" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding SelectedFollowUp.User}" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Conversión a cliente" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Selecciona primero el prospecto y consulta su ficha. Busca una venta confirmada de un cliente activo y verifica que corresponde al mismo negocio. Si falta cliente, regístralo desde Clientes y confirma su compra en POS." Style="{StaticResource MutedText}"/>
+          <TextBlock Text="{Binding DetailMessage}" Style="{StaticResource StatusMessage}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
+            <TextBox Text="{Binding SaleSearch,UpdateSourceTrigger=PropertyChanged}" Width="240" MaxLength="200" AutomationProperties.Name="Buscar compra confirmada para conversión" Margin="0,0,8,8"/>
+            <Button Content="Buscar compras" Command="{Binding FindSalesCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanReadSales}"/>
+            <Button Content="Vincular y convertir" Command="{Binding ConvertCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanConvert}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Sales}" SelectedItem="{Binding SelectedSale}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="260" AutomationProperties.Name="Ventas confirmadas para conversión">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Venta" Binding="{Binding Number}" Width="170"/>
+              <DataGridTextColumn Header="Cliente original" Binding="{Binding Converter={StaticResource SaleCustomerName}}" Width="250"/>
+              <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="130"/>
+              <DataGridTextColumn Header="Total USD" Binding="{Binding Total}" Width="120"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding SalePageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de compras" Command="{Binding PreviousSaleCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de compras" Command="{Binding NextSaleCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <TextBlock Text="La vinculación no crea otra venta, cliente ni deuda; conserva la fuente y todas las exclusiones. No otorga consentimiento de marketing." Style="{StaticResource MutedText}"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="No contactar" Style="{StaticResource OnlineNavigationTab}">
+        <StackPanel Margin="0,4,0,0">
+          <TextBlock Text="Lista central por canal. Permite registrar o reactivar una exclusión; levantarla requiere una política futura de consentimiento. No hay envío de mensajes." Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
+            <TextBox Text="{Binding ExclusionSearch,UpdateSourceTrigger=PropertyChanged}" Width="260" MaxLength="200" AutomationProperties.Name="Buscar exclusión comercial" Margin="0,0,8,8"/>
+            <Button Content="Consultar exclusiones" Command="{Binding FindExclusionsCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="Registrar exclusión" Command="{Binding AddExclusionCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8" IsEnabled="{Binding CanExclude}"/>
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding Exclusions}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="260" AutomationProperties.Name="Lista central de no contactar">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Canal" Binding="{Binding Channel}" Width="120"/>
+              <DataGridTextColumn Header="Identificador" Binding="{Binding Identifier}" Width="240"/>
+              <DataGridTextColumn Header="Activa" Binding="{Binding Active}" Width="75"/>
+              <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="250"/>
+              <DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="150"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="{Binding ExclusionPageLabel}" Style="{StaticResource MutedText}"/>
+          <WrapPanel IsEnabled="{Binding IsNotBusy}">
+            <Button Content="‹" AutomationProperties.Name="Página anterior de exclusiones" Command="{Binding PreviousExclusionCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+            <Button Content="›" AutomationProperties.Name="Página siguiente de exclusiones" Command="{Binding NextExclusionCommand}" Style="{StaticResource ActionButton}" Margin="0,0,8,8"/>
+          </WrapPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+  </Grid>
+</UserControl>

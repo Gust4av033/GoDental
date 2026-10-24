@@ -11,7 +11,23 @@ public sealed partial class ShellViewModel : ObservableObject
 {
     private readonly INavigationService navigation;
     private readonly ISettingsWindowService settingsWindow;
+    public PurchasesViewModel? Purchases { get; }
+    public bool IsPurchases => navigation.CurrentPage == SetupPage.Purchases;
+    public bool CanOpenPurchases => Purchases?.CanRead == true;
+    public CommercialParametersViewModel? CommercialParameters { get; }
+    public HomeViewModel Home { get; }
+    public ReportsViewModel? Reports { get; }
+    public OnlineViewModel? Online {get;}
+    public bool IsOnline=>navigation.CurrentPage==SetupPage.Online;
+    public bool CanOpenOnline=>Online?.CanRead==true;
+    public FiscalViewModel? Fiscal { get; }
+    public bool IsFiscal=>navigation.CurrentPage==SetupPage.Fiscal;
+    public bool CanOpenFiscal=>Fiscal?.CanRead==true;
+    public bool IsReports => navigation.CurrentPage == SetupPage.Reports;
+    public bool CanOpenReports => Reports?.CanRead == true;
     public ConnectionViewModel Connection { get; }
+    public PendingOperationsViewModel? PendingOperations { get; }
+    public bool IsPendingOperations => navigation.CurrentPage == SetupPage.PendingOperations;
     public AccessViewModel Access { get; }
     public ProductsViewModel Products { get; }
     public UsersViewModel Users { get; }
@@ -34,8 +50,46 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenCredit => Credit.CanRead;
     public bool CanOpenOrders => Orders.CanRead;
     public bool CanOpenSales => CommercialHistory.CanRead;
-    public bool HasPendingMvp => new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
-    public bool CanCloseWorkspace => !HasPendingMvp && new MvpWorkspaceViewModel[] { Cash, Pos, Credit, Orders, CommercialHistory }.All(m => !m.IsBusy && !m.IsEditing) && Products.IsNotBusy && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
+    private IEnumerable<MvpWorkspaceViewModel> MvpWorkspaces
+    {
+        get
+        {
+            if (Online is {} online) yield return online;
+            if (Fiscal is { } fiscal) yield return fiscal;
+            if (Reports is { } reports) yield return reports;
+            if (Purchases is { } purchases) yield return purchases;
+            if (CommercialParameters is { } parameters) yield return parameters;
+            yield return Cash; yield return Pos; yield return Credit; yield return Orders; yield return CommercialHistory;
+            if (Products.Inventory?.Barcodes is { } barcodes) yield return barcodes;
+            if (Products.Inventory?.InitialInventory is { } initial) yield return initial;
+        }
+    }
+    public bool IsPageBusy => navigation.CurrentPage switch
+    {
+        SetupPage.Home => Home.IsBusy,
+        SetupPage.Connection => Connection.IsBusy || IsLoading(CommercialParameters),
+        SetupPage.Access => Access.IsBusy,
+        SetupPage.Products => Products.IsBusy || Products.Inventory?.IsBusy == true || Products.CategoryManager?.IsBusy == true
+            || IsLoading(Products.Inventory?.Barcodes) || IsLoading(Products.Inventory?.InitialInventory),
+        SetupPage.Users => Users.IsBusy,
+        SetupPage.Counts => Counts.IsBusy,
+        SetupPage.Suppliers => Suppliers.IsBusy,
+        SetupPage.Customers => Customers.IsBusy,
+        SetupPage.Cash => IsLoading(Cash),
+        SetupPage.Pos => IsLoading(Pos),
+        SetupPage.Credit => IsLoading(Credit),
+        SetupPage.Orders => IsLoading(Orders),
+        SetupPage.Sales or SetupPage.Quotations => IsLoading(CommercialHistory),
+        SetupPage.PendingOperations => PendingOperations?.IsBusy == true,
+        SetupPage.Purchases => IsLoading(Purchases),
+        SetupPage.Reports => IsLoading(Reports),
+        SetupPage.Fiscal => IsLoading(Fiscal),
+        SetupPage.Online => IsLoading(Online),
+        _ => false
+    };
+    private static bool IsLoading(MvpWorkspaceViewModel? model) => model?.IsBusy == true || model?.Operation.IsBusy == true;
+    public bool HasPendingMvp => MvpWorkspaces.Any(m => m.Operation.HasPending || m.Operation.IsBusy);
+    public bool CanCloseWorkspace => PendingOperations?.IsBusy != true && MvpWorkspaces.All(m => m.Operation.CanClose && !m.IsBusy && !m.IsEditing) && !Products.IsBusy && Products.Inventory?.IsBusy != true && Products.CategoryManager?.IsBusy != true && !Users.IsBusy && !Counts.IsBusy && !Suppliers.IsBusy && !Customers.IsBusy && !Access.IsSubmitting;
     public bool IsCustomers => navigation.CurrentPage == SetupPage.Customers;
     public bool CanOpenCustomers => Customers.CanRead;
     public bool IsCounts => navigation.CurrentPage == SetupPage.Counts;
@@ -51,13 +105,17 @@ public sealed partial class ShellViewModel : ObservableObject
     public string TodayLabel => DateTime.Now.ToString("dddd, d 'de' MMMM 'de' yyyy", CultureInfo.GetCultureInfo("es-SV"));
     public string PageTitle => navigation.CurrentPage switch
     {
+        SetupPage.Online => "Online / Gestión interna",
+        SetupPage.Fiscal => "Fiscal / Preparación interna",
+        SetupPage.Reports => "Reportes operativos",
+        SetupPage.Purchases => "Compras / Órdenes y recepciones",
+        SetupPage.PendingOperations => "Operaciones pendientes",
         SetupPage.Cash => "Caja / Turnos y movimientos",
         SetupPage.Pos => "Ventas / Punto de venta",
         SetupPage.Credit => "Crédito / Cuentas y abonos",
         SetupPage.Orders => "Pedidos / Entregas",
         SetupPage.Sales => "Ventas / Comprobantes internos",
         SetupPage.Quotations => "Ventas / Cotizaciones",
-        SetupPage.Preparation => "Preparación del sistema",
         SetupPage.Connection => "Ajustes",
         SetupPage.Access => "Mi cuenta",
         SetupPage.Products => "Inventario / Productos",
@@ -68,7 +126,6 @@ public sealed partial class ShellViewModel : ObservableObject
         _ => "Inicio"
     };
     public bool IsHome => navigation.CurrentPage == SetupPage.Home;
-    public bool IsPreparation => navigation.CurrentPage == SetupPage.Preparation;
     public bool IsConnection => navigation.CurrentPage == SetupPage.Connection;
     public bool IsAccess => navigation.CurrentPage == SetupPage.Access;
     public bool IsProducts => navigation.CurrentPage == SetupPage.Products;
@@ -77,18 +134,23 @@ public sealed partial class ShellViewModel : ObservableObject
     public bool CanOpenProducts => Products.CanView;
     public bool CanSignOut => CanCloseWorkspace && Access.IsAuthenticated && Products.IsNotBusy && !Access.IsBusy && !Users.IsBusy && !Counts.IsBusy && !Counts.IsEditing && !Suppliers.IsBusy && !Suppliers.IsEditing && !Customers.IsBusy && !Customers.IsEditing;
 
-    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory)
+    public ShellViewModel(INavigationService navigation, ConnectionViewModel connection, AccessViewModel access, ProductsViewModel products, UsersViewModel users, ISessionController session, ISettingsWindowService settingsWindow, InventoryCountsViewModel counts, SuppliersViewModel suppliers, CustomersViewModel customers, CashViewModel cash, PosViewModel pos, CreditViewModel credit, OrdersViewModel orders, CommercialHistoryViewModel commercialHistory, HomeViewModel home, PendingOperationsViewModel? pendingOperations = null, CommercialParametersViewModel? commercialParameters = null, PurchasesViewModel? purchases = null, ReportsViewModel? reports = null, FiscalViewModel? fiscal = null, OnlineViewModel? online = null)
     {
         this.navigation = navigation;
+        Home = home; Reports = reports; Fiscal=fiscal; Online=online;
+        Purchases = purchases;
+        CommercialParameters = commercialParameters;
+        PendingOperations = pendingOperations;
+        if (pendingOperations is not null) pendingOperations.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanCloseWorkspace)); OnPropertyChanged(nameof(CanSignOut)); };
         this.settingsWindow = settingsWindow;
         Connection = connection;
         Access = access; Products = products;
         Users = users; Counts = counts; Suppliers = suppliers; Customers = customers;
         Cash = cash; Pos = pos; Credit = credit; Orders = orders; CommercialHistory = commercialHistory;
-        foreach (var model in new MvpWorkspaceViewModel[] { cash, pos, credit, orders, commercialHistory })
+        foreach (var model in MvpWorkspaces)
         {
             model.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
-            model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+            model.Operation.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsPageBusy)); OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(HasPendingMvp)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         }
         customers.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         counts.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
@@ -96,21 +158,41 @@ public sealed partial class ShellViewModel : ObservableObject
         users.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         products.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
         access.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(CanSignOut)); OnPropertyChanged(nameof(CanCloseWorkspace)); };
+        var loadingSources = MvpWorkspaces.Cast<ObservableObject>().Concat(
+            new ObservableObject?[] { Home, Connection, Access, Products, Products.Inventory, Products.CategoryManager,
+                Users, Counts, Suppliers, Customers, PendingOperations }.OfType<ObservableObject>()).Distinct();
+        foreach (var source in loadingSources)
+            source.PropertyChanged += (_, e) =>
+            {
+                if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == "IsBusy") OnPropertyChanged(nameof(IsPageBusy));
+            };
         session.Changed += (_, _) =>
         {
+            OnPropertyChanged(nameof(CanOpenOnline));
+            OnPropertyChanged(nameof(CanOpenFiscal));
+            OnPropertyChanged(nameof(CanOpenReports));
+            OnPropertyChanged(nameof(CanOpenPurchases));
             OnPropertyChanged(nameof(CanOpenProducts)); OnPropertyChanged(nameof(CanSignOut));
             OnPropertyChanged(nameof(CanOpenUsers));
             foreach (var n in new[] { nameof(CanOpenCash), nameof(CanOpenPos), nameof(CanOpenCredit), nameof(CanOpenOrders), nameof(CanOpenSales) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(CanOpenCounts)); OnPropertyChanged(nameof(CanOpenSuppliers)); OnPropertyChanged(nameof(CanOpenCustomers));
+            var wasHome = IsHome;
             navigation.Navigate(session.IsAuthenticated ? SetupPage.Home : SetupPage.Access);
+            if (session.IsAuthenticated && wasHome) Home.ReloadCommand.Execute(null);
             if (session.IsAuthenticated) Products.ReloadCommand.Execute(null);
         };
         navigation.PageChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(IsPageBusy));
+            OnPropertyChanged(nameof(IsOnline));
+            OnPropertyChanged(nameof(IsFiscal));
+            OnPropertyChanged(nameof(IsReports));
+            OnPropertyChanged(nameof(IsPurchases));
+            OnPropertyChanged(nameof(IsPendingOperations));
             foreach (var n in new[] { nameof(IsCash), nameof(IsPos), nameof(IsCredit), nameof(IsOrders), nameof(IsSales), nameof(IsQuotations) }) OnPropertyChanged(n);
             OnPropertyChanged(nameof(IsHome));
-            OnPropertyChanged(nameof(IsPreparation));
+            if (IsHome) Home.ReloadCommand.Execute(null);
             OnPropertyChanged(nameof(IsConnection));
             OnPropertyChanged(nameof(IsAccess)); OnPropertyChanged(nameof(IsProducts));
             OnPropertyChanged(nameof(IsUsers));
@@ -120,6 +202,10 @@ public sealed partial class ShellViewModel : ObservableObject
 
     [RelayCommand] private void Navigate(SetupPage page)
     {
+        if (page == SetupPage.Online && !CanOpenOnline) page = SetupPage.Access;
+        if (page == SetupPage.Fiscal && !CanOpenFiscal) page = SetupPage.Access;
+        if (page == SetupPage.Reports && !CanOpenReports) page = SetupPage.Access;
+        if (page == SetupPage.Purchases && !CanOpenPurchases) page = SetupPage.Access;
         if (page == SetupPage.Products && !CanOpenProducts) page = SetupPage.Access;
         if (page == SetupPage.Users && !CanOpenUsers) page = SetupPage.Access;
         if (page == SetupPage.Counts && !CanOpenCounts) page = SetupPage.Access;
@@ -127,7 +213,13 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Customers && !CanOpenCustomers) page = SetupPage.Access;
         if (page == SetupPage.Cash && !CanOpenCash || page == SetupPage.Pos && !CanOpenPos || page == SetupPage.Credit && !CanOpenCredit || page == SetupPage.Orders && !CanOpenOrders || page is SetupPage.Sales or SetupPage.Quotations && !CanOpenSales) page = SetupPage.Access;
         navigation.Navigate(page);
+        if (page == SetupPage.Connection && CommercialParameters?.CanRead == true) CommercialParameters.ReloadCommand.Execute(null);
         if (page == SetupPage.Access && !Access.IsAuthenticated && !Access.IsBusy) Access.PrepareCommand.Execute(null);
+        if (page == SetupPage.Online) Online?.ReloadCommand.Execute(null);
+        if (page == SetupPage.Fiscal) Fiscal?.ReloadCommand.Execute(null);
+        if (page == SetupPage.Reports) Reports?.ReloadCommand.Execute(null);
+        if (page == SetupPage.Purchases) Purchases?.ReloadCommand.Execute(null);
+        if (page == SetupPage.PendingOperations) PendingOperations?.ReloadCommand.Execute(null);
         if (page == SetupPage.Cash) Cash.ReloadCommand.Execute(null);
         if (page == SetupPage.Pos && Pos.Boxes.Count == 0) Pos.ReloadCommand.Execute(null);
         if (page == SetupPage.Credit) Credit.ReloadCommand.Execute(null);
@@ -139,6 +231,12 @@ public sealed partial class ShellViewModel : ObservableObject
         if (page == SetupPage.Counts) Counts.ReloadCommand.Execute(null);
         if (page == SetupPage.Suppliers) Suppliers.ReloadCommand.Execute(null);
         if (page == SetupPage.Customers) Customers.ReloadCommand.Execute(null);
+    }
+    [RelayCommand] private async Task OpenHomeOrderAsync(GoDental.Application.DTOs.OrderData? order)
+    {
+        if (!CanOpenOrders || Orders.IsBusy || order is null) return;
+        await Orders.OpenOrderCommand.ExecuteAsync(order);
+        if (Orders.Detail?.Order.Id == order.Id) navigation.Navigate(SetupPage.Orders);
     }
     [RelayCommand] private void ToggleSidebar() => IsSidebarCompact = !IsSidebarCompact;
     [RelayCommand] private void OpenSettings() => settingsWindow.Show();

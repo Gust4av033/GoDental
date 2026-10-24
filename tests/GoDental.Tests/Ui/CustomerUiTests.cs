@@ -68,6 +68,24 @@ public sealed class CustomerUiTests
         Assert.Null(vm.Detail);
     }
     [Fact]
+    public async Task RowLinkOpensItsCustomerAndStillRequiresReadPermission()
+    {
+        var repo = new CustomerWorkflowRepository();
+        var session = Session("CLIENTES.VER");
+        var vm = ViewModel(repo, session, new());
+        await vm.ReloadCommand.ExecuteAsync(null);
+        Assert.Null(vm.Selected);
+        await vm.OpenCustomerCommand.ExecuteAsync(vm.Items.Single());
+        Assert.True(vm.IsDetailOpen);
+        Assert.Same(vm.Items.Single(), vm.Selected);
+        Assert.Equal(repo.Customer.Id, vm.Detail!.Id);
+        session.Clear();
+        await vm.OpenCustomerCommand.ExecuteAsync(repo.Customer);
+        Assert.Null(vm.Detail);
+        Assert.False(vm.IsDetailOpen);
+    }
+
+    [Fact]
     public async Task CreatePermissionDoesNotGrantEditOrCreditConfiguration()
     {
         var repo = new CustomerWorkflowRepository(); var service = new CustomerService(repo, Session("CLIENTES.VER", "CLIENTES.CREAR"));
@@ -172,10 +190,13 @@ public sealed class CustomerUiTests
     public async Task HistoryPaginationIsBoundedAndFinancialDataLoadsFromService()
     {
         var repo = new CustomerWorkflowRepository(); var vm = ViewModel(repo, Session("CLIENTES.VER", "VENTAS.VER"), new()); await Open(vm);
-        await vm.LoadSalesCommand.ExecuteAsync(null); Assert.Single(vm.Sales); await vm.NextSalesCommand.ExecuteAsync(null); Assert.Equal(2, repo.LastHistory!.Page);
+        Assert.False(vm.HasLoadedSales); Assert.False(vm.HasLoadedAccounts); Assert.False(vm.HasLoadedPayments);
+        await vm.LoadSalesCommand.ExecuteAsync(null); Assert.True(vm.HasLoadedSales); Assert.Single(vm.Sales); await vm.NextSalesCommand.ExecuteAsync(null); Assert.Equal(2, repo.LastHistory!.Page);
         await vm.NextSalesCommand.ExecuteAsync(null); Assert.Equal(2, repo.LastHistory.Page);
-        await vm.LoadAccountsCommand.ExecuteAsync(null); Assert.Equal(90, vm.Balance!.Available); Assert.Single(vm.Accounts);
-        await vm.LoadPaymentsCommand.ExecuteAsync(null); Assert.Single(vm.Payments);
+        await vm.LoadAccountsCommand.ExecuteAsync(null); Assert.Equal(90, vm.Balance!.Available); Assert.Single(vm.Accounts); Assert.True(vm.HasLoadedAccounts);
+        await vm.LoadPaymentsCommand.ExecuteAsync(null); Assert.Single(vm.Payments); Assert.True(vm.HasLoadedPayments);
+        await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.False(vm.HasLoadedSales); Assert.False(vm.HasLoadedAccounts); Assert.False(vm.HasLoadedPayments); Assert.Null(vm.Balance);
     }
     [Fact]
     public void CreditEditorUsesNullableValuesAndRejectsThousandsSeparators()

@@ -12,6 +12,11 @@
     <Compile Include="../Shared/WorkflowRepositories.cs" Link="WorkflowRepositories.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../Shared/StageTwoUiRepository.cs" Link="StageTwoUiRepository.cs"/>
+    <Compile Include="../Shared/OnlineDiscoveryTestProvider.cs" Link="OnlineDiscoveryTestProvider.cs"/>
+    <Compile Include="../Shared/OnlineUiRepository.cs" Link="OnlineUiRepository.cs"/>
+    <Compile Include="../Shared/FiscalUiRepository.cs" Link="FiscalUiRepository.cs" />
+    <Compile Include="../Shared/CollectionUiRepository.cs" Link="CollectionUiRepository.cs" />
     <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
   </ItemGroup>
 </Project>

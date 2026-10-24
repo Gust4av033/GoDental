@@ -6,6 +6,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using CommunityToolkit.Mvvm.Input;
 using GoDental.Application.DTOs;
 using GoDental.Application.Abstractions.Configuration;
 using GoDental.Application.Validators;
@@ -29,7 +30,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using GoDental.Application.Abstractions.Security;
 
-internal static class Program
+internal static partial class Program
 {
     private static int passed;
     private static string? shutdownProbe;
@@ -38,9 +39,9 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace");
+        shutdownProbe = args.FirstOrDefault(a => a is "--shutdown-login" or "--shutdown-workspace" or "--shutdown-pending");
         var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls" })
+        foreach (var name in new[] { "Colors", "LightTheme", "Typography", "Spacing", "Controls", "Branding" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
                 Source = new Uri($"/GoDental;component/Themes/{name}.xaml", UriKind.Relative)
@@ -94,7 +95,7 @@ internal static class Program
             await vm.InitializeAsync();
             Check(vm.IsDark && themes.CurrentTheme == "Dark", "Restaura el tema al iniciar");
             var probe = vm.CheckConnectionCommand.ExecuteAsync(null);
-            Check(vm.IsBusy && !vm.SaveCommand.CanExecute(null) && !vm.CheckConnectionCommand.CanExecute(null), "Bloquea operaciones solapadas durante la comprobación");
+            Check(vm.IsBusy && !vm.CanEditConnection && !vm.SaveCommand.CanExecute(null) && !vm.CheckConnectionCommand.CanExecute(null), "Bloquea operaciones solapadas durante la comprobación");
             fake.Complete(new(true, "Respuesta controlada para prueba"));
             await probe;
             Check(vm.ConnectionStatus == "Conexión comprobada" && !vm.IsBusy, "Refleja una comprobación exitosa sin crear sesión");
@@ -141,37 +142,72 @@ internal static class Program
             var nav = new NavigationService();
             var session = new UserSession();
             var access = new AccessViewModel(new FakeIdentityGateway(), session, NullLogger<AccessViewModel>.Instance);
-            var inventory = new InventoryViewModel(new InventoryService(new VisualInventoryRepository(),session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService());
-            var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance);
+            var mvpRepository = new MvpUiRepository();
+            var mvpDialogs = new MvpVisualDialogs();
+            var operationService = new MvpOperationService(mvpRepository, session, shutdownProbe == "--shutdown-pending" ? new FilePendingOperationStore(temporaryFolder) : null);
+            var initialStock = new InitialInventoryViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<InitialInventoryViewModel>.Instance);
+            var labelFiles = new VisualPdfFiles();
+            var barcodes = new BarcodesViewModel(new InventorySetupService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<BarcodesViewModel>.Instance, new BarcodeLabelService(mvpRepository, new BarcodeLabelPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), labelFiles, labelFiles);
+            var commercialParameters = new CommercialParametersViewModel(new CommercialParametersService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<CommercialParametersViewModel>.Instance);
+            var visualInventory = new VisualInventoryRepository();
+            var inventory = new InventoryViewModel(new InventoryService(visualInventory,session),session,NullLogger<InventoryViewModel>.Instance, new FakeDialogService(), initialStock, barcodes);
             var productRepository = new FakeProductRepository();
             var productService = new ProductService(productRepository, session);
+            var categories = new CategoriesViewModel(new CategoryService(new VisualCategoryRepository(),session),session,NullLogger<CategoriesViewModel>.Instance, productService);
             var dialogHarness = new FakeDialogService();
             var editorFactory = new ProductEditorFactory(productService, session, NullLogger<ProductEditorViewModel>.Instance);
             var products = new ProductsViewModel(productService, session, NullLogger<ProductsViewModel>.Instance,dialogHarness,editorFactory,inventory,categories);
             var users = new UsersViewModel(new UserManagementService(new FakeUserRepository(), session, new Pbkdf2PasswordHasher()), session, NullLogger<UsersViewModel>.Instance, dialogHarness);
             var settingsHarness = new FakeSettingsWindowService();
-            var mvpRepository = new MvpUiRepository();
-            var mvpDialogs = new MvpVisualDialogs();
-            var operationService = new MvpOperationService(mvpRepository, session);
             var cashService = new CashService(mvpRepository, session);
             var salesService = new SalesService(mvpRepository, session, new FakeIdentityGateway());
             var customerService = new CustomerService(new CustomerWorkflowRepository(), session);
             var cashMvp = new CashViewModel(cashService, new InventoryService(new VisualInventoryRepository(), session), mvpDialogs, session, operationService, NullLogger<CashViewModel>.Instance);
-            var posMvp = new PosViewModel(salesService, cashService, customerService, mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
-            var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance);
-            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance);
-            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions())), session), new VisualPdfFiles(), posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance);
+            var posMvp = new PosViewModel(salesService, cashService, customerService, new OrderService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PosViewModel>.Instance);
+            var collectionFiles = new VisualPdfFiles();
+            var collectionRepository = new CollectionUiRepository();
+            var collectionService = new CollectionService(collectionRepository,new CreditDocumentRenderer(Options.Create(new ReceiptPdfOptions())),session);
+            var creditMvp = new CreditViewModel(cashService, salesService, customerService, mvpDialogs, session, operationService, NullLogger<CreditViewModel>.Instance,collectionService,collectionFiles,collectionFiles);
+            var stageTwoRepository=new StageTwoUiRepository();
+            var reportFiles=new VisualPdfFiles();
+            var reportService=new ReportService(stageTwoRepository,new OperationalReportRenderer(Options.Create(new ReceiptPdfOptions())),session);
+            var onlineRepository=new OnlineUiRepository();
+            var onlineMvp=new OnlineViewModel(new(onlineRepository,session,new OnlineDiscoveryTestProvider()),mvpDialogs,session,operationService,NullLogger<OnlineViewModel>.Instance);
+            var fiscalRepository=new FiscalUiRepository();
+            var fiscalMvp=new FiscalViewModel(new(fiscalRepository,session),new(fiscalRepository,session),mvpDialogs,session,operationService,NullLogger<FiscalViewModel>.Instance);
+            var reportsMvp=new ReportsViewModel(reportService,reportFiles,reportFiles,session,operationService,NullLogger<ReportsViewModel>.Instance);
+            var deliveryService=new DeliveryService(stageTwoRepository,session);
+            var ordersMvp = new OrdersViewModel(new OrderService(mvpRepository, session), customerService, productService, posMvp, nav, mvpDialogs, session, operationService, NullLogger<OrdersViewModel>.Instance,deliveryService,cashService);
+            var pdfFiles = new VisualPdfFiles();
+            var historyMvp = new CommercialHistoryViewModel(salesService, new SaleReceiptService(mvpRepository, new ReceiptPdfRenderer(Options.Create(new ReceiptPdfOptions { Phone = "7203-7117" })), session), pdfFiles, pdfFiles, posMvp, nav, session, operationService, NullLogger<CommercialHistoryViewModel>.Instance,returnService:new SaleReturnService(mvpRepository,session,new FakeIdentityGateway()),returnCash:cashService,returnDialogs:mvpDialogs);
+            var purchasesMvp = new PurchasesViewModel(new PurchaseService(mvpRepository, session), mvpDialogs, session, operationService, NullLogger<PurchasesViewModel>.Instance, new ImportService(mvpRepository,session));
+            var pendingOperations = new PendingOperationsViewModel(operationService, session, NullLogger<PendingOperationsViewModel>.Instance);
+            var home = new HomeViewModel(productService, salesService, new OrderService(mvpRepository, session), session, NullLogger<HomeViewModel>.Instance,reportService);
             var shell = new ShellViewModel(nav, vm, access, products, users, session, settingsHarness,
                 new InventoryCountsViewModel(new InventoryCountService(new UiCountRepository(), session), new InventoryService(new VisualInventoryRepository(), session), productService, session, dialogHarness, NullLogger<InventoryCountsViewModel>.Instance),
                 new SuppliersViewModel(new SupplierService(new UiSupplierRepository(), session), productService, session, dialogHarness, NullLogger<SuppliersViewModel>.Instance),
-                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp);
+                new CustomersViewModel(new CustomerService(new CustomerWorkflowRepository(), session), session, new CustomerTestDialogs(), NullLogger<CustomersViewModel>.Instance), cashMvp, posMvp, creditMvp, ordersMvp, historyMvp, home, pendingOperations, commercialParameters, purchasesMvp,reportsMvp,fiscalMvp,onlineMvp);
             if (shutdownProbe is not null)
             {
-                await StartShutdownProbeAsync(shell, session);
+                await StartShutdownProbeAsync(shell, session, temporaryFolder);
                 return;
             }
             shell.NavigateCommand.Execute(SetupPage.Connection);
             Check(shell.IsConnection && !shell.IsHome && shell.PageTitle == "Ajustes", "La navegación muestra ajustes y actualiza el título");
+            nav.Navigate(SetupPage.Home);
+            shell.NavigateCommand.Execute(SetupPage.Preparation);
+            Check(shell.IsConnection && nav.CurrentPage == SetupPage.Connection, "La ruta antigua de Preparación abre Ajustes sin dejar una pantalla vacía");
+            Check(appResource("GoDentalLogo") is BitmapSource { PixelWidth: > 0, PixelHeight: > 0 }, "El logo de GoDental está incluido en el programa sin depender de archivos externos");
+            var protectedSettings = new ConnectionViewModel(store, fake, themes, NullLogger<ConnectionViewModel>.Instance, session);
+            session.Begin(new(99, "ajustes_prueba", "Usuario de prueba", 1, [], [], false));
+            Check(!protectedSettings.CanEditConnection && protectedSettings.ConnectionEditHint.Contains("Cierra sesión", StringComparison.OrdinalIgnoreCase), "Ajustes explica que la conexión queda protegida durante una sesión");
+            var beforeTheme = await store.LoadAsync();
+            await protectedSettings.SetThemeCommand.ExecuteAsync("Dark");
+            Check(protectedSettings.IsDark && (await store.LoadAsync()) == beforeTheme with { Theme = "Dark" }, "Elegir un tema durante la sesión conserva el perfil de conexión");
+            await protectedSettings.SetThemeCommand.ExecuteAsync("Light");
+            Check(!protectedSettings.IsDark && themes.CurrentTheme == "Light", "La tarjeta de tema claro aplica la apariencia al instante");
+            session.Clear();
+            Check(protectedSettings.CanEditConnection, "Cerrar sesión vuelve a habilitar los campos de conexión");
             shell.OpenSettingsCommand.Execute(null);
             Check(settingsHarness.OpenCount == 1, "El acceso puede abrir los ajustes antes de iniciar sesión");
             shell.ToggleSidebarCommand.Execute(null);
@@ -185,6 +221,7 @@ internal static class Program
             try
             {
                 vm.Server = "";
+                await VerifyPasswordEntryAsync();
                 vm.Database = "";
                 vm.IsDark = false;
                 shell.IsSidebarCompact = false;
@@ -197,7 +234,15 @@ internal static class Program
                 await RenderAsync(shell, 1280, 720, Path.Combine(output, "conexion-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 920, Height = 660 }, Path.Combine(output, "acceso-oscuro.png"));
                 await RenderWindowAsync(new LoginWindow(shell) { Width = 760, Height = 540 }, Path.Combine(output, "acceso-compacto-oscuro.png"));
-                await RenderWindowAsync(new SettingsWindow(vm) { Width = 760, Height = 680 }, Path.Combine(output, "ajustes-ventana-oscuro.png"));
+                foreach (var dark in new[] { false, true })
+                {
+                    vm.IsDark = dark;
+                    var themeName = dark ? "oscuro" : "claro";
+                    foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
+                        for (var tab = 0; tab < 2; tab++)
+                            await RenderWindowAsync(new SettingsWindow(vm) { Width = size.Width, Height = size.Height },
+                                Path.Combine(output, $"ajustes-{themeName}-{size.Width}-pestana-{tab}.png"), tab);
+                }
                 shell.IsSidebarCompact = true;
                 await RenderAsync(shell, 910, 510, Path.Combine(output, "conexion-compacta.png"));
                 shell.IsSidebarCompact = false;
@@ -276,6 +321,11 @@ internal static class Program
                     await categories.ReloadAsync();
                     using (var categoryModel = new CategoryDialogModel(categories))
                         await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-dialogo-{theme}.png"));
+                    categories.NewCategoryCommand.Execute(null);
+                    Check(categories.IsCreating && categories.CanCreate, "Administrar categorías permite alta directa con permiso");
+                    using (var categoryModel = new CategoryDialogModel(categories))
+                        await RenderDialogAsync(categoryModel, new CategoryDialogView { DataContext = categories }, Path.Combine(output, $"categorias-nueva-{theme}.png"));
+                    categories.DiscardChangesCommand.Execute(null);
                     await users.ReloadCommand.ExecuteAsync(null);
                     var createView = new UserCreateDialogView { DataContext = users };
                     using (var createModel = new UserDialogModel(users, true, createView.ReadPasswords, createView.ClearPasswords, createView.HasPasswords))
@@ -284,6 +334,10 @@ internal static class Program
                     var manageView = new UserManageDialogView { DataContext = users };
                     using (var manageModel = new UserDialogModel(users, false, manageView.ReadPasswords, manageView.ClearPasswords, manageView.HasPasswords))
                         await RenderDialogAsync(manageModel, manageView, Path.Combine(output, $"administrar-usuario-dialogo-{theme}.png"));
+                    var passwordView = new UserManageDialogView { DataContext = users };
+                    ((TabControl)passwordView.FindName("AccountSections")).SelectedIndex = 1;
+                    using (var passwordModel = new UserDialogModel(users, false, passwordView.ReadPasswords, passwordView.ClearPasswords, passwordView.HasPasswords))
+                        await RenderDialogAsync(passwordModel, passwordView, Path.Combine(output, $"usuario-restablecer-clave-{theme}.png"));
                 }
                 categories.Selected = categories.Items.First();
                 categories.Name = "General actualizada";
@@ -349,7 +403,44 @@ internal static class Program
                 await RenderAsync(shell, 1366, 1000, Path.Combine(output, "productos.png"));
                 Check(products.ShowEmptyState && !products.ShowCatalogTable,
                     "El catálogo vacío muestra un estado visible en lugar de una tabla en blanco");
-                await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",TracksLot=true,TracksExpiry=true});
+                productRepository.Rows = [
+                    new() { Id = 1, Sku = "UI-001", Name = "Resina para prueba de interfaz", CategoryId = 1, Category = "Restauración", UnitId = 1, Unit = "Unidad", Price = 125.50m, AvailableStock = 12, MinimumStock = 5, TracksLot = true, TracksExpiry = true, ExpiryAlertDays = 90, RowVersion = new byte[8] },
+                    new() { Id = 2, Sku = "UI-002", Name = "Adhesivo para prueba de interfaz", CategoryId = 1, Category = "Adhesivos", UnitId = 1, Unit = "Unidad", Price = 32.25m, AvailableStock = 3, MinimumStock = 5, RowVersion = new byte[8] },
+                    new() { Id = 3, Sku = "UI-003", Name = "Guantes para prueba de interfaz", CategoryId = 1, Category = "Protección", UnitId = 1, Unit = "Caja", Price = 8.50m, AvailableStock = 0, MinimumStock = 2, RowVersion = new byte[8] },
+                    new() { Id = 4, Sku = "UI-004", Name = "Producto inactivo con nombre largo para comprobar que el catálogo conserva el ancho de sus columnas y permite consultar el nombre completo desde el tooltip", CategoryId = 1, Category = "General", UnitId = 1, Unit = "Unidad", Price = 10m, AvailableStock = 5, Active = false, RowVersion = new byte[8] }
+                ];
+                await products.ReloadCommand.ExecuteAsync(null);
+                var stockCaption = new GoDental.Wpf.Converters.ProductStockCaptionConverter();
+                Check(stockCaption.Convert(productRepository.Rows[0], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Con stock")
+                    && stockCaption.Convert(productRepository.Rows[1], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Stock bajo")
+                    && stockCaption.Convert(productRepository.Rows[2], typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Agotado"), "El catálogo distingue niveles de disponible físico sin confundirlos con stock vendible");
+                Check(new GoDental.Wpf.Converters.InventoryCostConverter().Convert(2.123456m, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("$ 2.123456"), "Los costos conservan seis decimales en USD");
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"productos-lista-{theme}.png"));
+                    products.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"productos-filtros-{theme}.png"));
+                    products.ToggleFiltersCommand.Execute(null);
+                }
+                var linkedProducts = new ProductsView { DataContext = products };
+                linkedProducts.Measure(new Size(1000, 740)); linkedProducts.Arrange(new Rect(0, 0, 1000, 740)); linkedProducts.UpdateLayout();
+                var longName = productRepository.Rows[3].Name;
+                var longNameCell = FindChildren<DataGridCell>(linkedProducts).Single(cell => FindChildren<TextBlock>(cell).Any(text => text.Text == longName));
+                var longNameText = FindChildren<TextBlock>(longNameCell).Single(text => text.Text == longName);
+                Check(longNameText.ActualWidth <= longNameCell.ActualWidth && longNameText.TextTrimming == TextTrimming.CharacterEllipsis,
+                    "Los nombres largos de producto respetan el ancho de su columna");
+                var rowLink = FindChildren<Button>(linkedProducts).First(b => b.CommandParameter is ProductData);
+                var linkedProduct = (ProductData)rowLink.CommandParameter;
+                await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)rowLink.Command).ExecuteAsync(linkedProduct);
+                linkedProducts.UpdateLayout();
+                Check(ReferenceEquals(inventory.Product, linkedProduct) && inventory.IsOpen
+                    && FindChildren<InventoryView>(linkedProducts).Single().Visibility == Visibility.Visible,
+                    "El enlace de producto abre la ficha y muestra el inventario dentro del catálogo");
+                var detailEdit = FindChildren<Button>(FindChildren<InventoryView>(linkedProducts).Single()).Single(b => b.Content is string text && text == "Editar producto" && b.Command == products.EditSelectedCommand);
+                Check(detailEdit.IsEnabled && products.CanEditSelected, "La ficha conecta la edición del producto con su comando existente");
+                linkedProducts.DataContext = null;
+                await inventory.OpenAsync(new(){Id=1,Name="Producto para prueba visual",Sku="VISUAL",Category="General",Unit="Unidad",TracksLot=true,TracksExpiry=true});
                 Check(inventory.CanWrite && inventory.Stocks.Count==1,"Carga existencias y habilita operaciones con sesión autorizada");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-detalle.png"));
                 foreach (var theme in new[] { "Light", "Dark" })
@@ -357,6 +448,10 @@ internal static class Program
                     themes.Apply(theme);
                     using var movementModel = new InventoryMovementDialogModel(inventory);
                     await RenderDialogAsync(movementModel, new InventoryMovementDialogView { DataContext = inventory }, Path.Combine(output, $"movimiento-dialogo-{theme}.png"));
+                    var lotMovement = new InventoryMovementDialogView { DataContext = inventory };
+                    lotMovement.Measure(new Size(900, 700)); lotMovement.Arrange(new Rect(0, 0, 900, 700)); lotMovement.UpdateLayout();
+                    FindChildren<TabControl>(lotMovement).Single().SelectedIndex = 1;
+                    await RenderDialogAsync(movementModel, lotMovement, Path.Combine(output, $"movimiento-lote-{theme}.png"));
                 }
                 themes.Apply("Light");
                 inventory.Quantity = "5";
@@ -375,12 +470,17 @@ internal static class Program
                 foreach(var theme in new[]{"Light","Dark"})
                 {
                     themes.Apply(theme);
-                    for(var tab=0;tab<3;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
+                    for(var tab=0;tab<4;tab++) await RenderInventoryAsync(inventory,tab,theme,output);
                 }
                 inventory.CloseCommand.Execute(null);
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-regreso.png"));
                 await users.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Users);
-                await RenderAsync(shell, 1366, 1000, Path.Combine(output, "usuarios.png"));
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"usuarios-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"usuarios-compacto-{theme}.png"));
+                }
                 await shell.Counts.ReloadCommand.ExecuteAsync(null);
                 shell.Counts.Selected = shell.Counts.Items.First(); await shell.Counts.OpenCommand.ExecuteAsync(null);
                 await shell.Suppliers.ReloadCommand.ExecuteAsync(null);
@@ -392,12 +492,28 @@ internal static class Program
                     themes.Apply(theme);
                     nav.Navigate(SetupPage.Counts);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-{theme}.png"));
+                    Check(shell.Counts.IsDetailOpen, "Abrir conteo separa la captura del listado");
+                    shell.Counts.ReturnToListCommand.Execute(null);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"conteos-lista-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"conteos-lista-compacta-{theme}.png"));
+                    await shell.Counts.OpenCommand.ExecuteAsync(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"conteos-detalle-compacto-{theme}.png"));
+                    var countView = new GoDental.Wpf.Views.Inventory.InventoryCountsView { DataContext = shell.Counts };
+                    countView.Measure(new Size(1000, 740)); countView.Arrange(new Rect(0, 0, 1000, 740)); countView.UpdateLayout();
+                    FindChildren<TabControl>(countView).Single().SelectedIndex = 1;
+                    await RenderWindowAsync(new Window { Content = countView, DataContext = shell.Counts, Width = 1000, Height = 740 }, Path.Combine(output, $"conteos-finalizacion-{theme}.png"));
                     nav.Navigate(SetupPage.Suppliers);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-{theme}.png"));
                     Check(shell.Suppliers.IsDetailOpen, "Abrir proveedor muestra su ficha separada del listado");
                     shell.Suppliers.ReturnToListCommand.Execute(null);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"proveedores-lista-{theme}.png"));
-                    await shell.Suppliers.OpenCommand.ExecuteAsync(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-lista-compacta-{theme}.png"));
+                    shell.Suppliers.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-filtros-{theme}.png"));
+                    shell.Suppliers.ToggleFiltersCommand.Execute(null);
+                    await shell.Suppliers.OpenSupplierCommand.ExecuteAsync(shell.Suppliers.Items.First());
+                    await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores", theme, output);
+                    await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores-compacto", theme, output, 1093, 614);
                     // Tamaño lógico equivalente al área de 1366×768 al 125 %.
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"proveedores-125-{theme}.png"));
                     var suppliersView = new GoDental.Wpf.Views.Suppliers.SuppliersView { DataContext = shell.Suppliers };
@@ -414,7 +530,16 @@ internal static class Program
                     {
                         var editor = new SupplierEditorDialogModel(kind, shell.Suppliers.Detail!, shell.Suppliers.Contacts.First(), shell.Suppliers.References.First(), new(productService), [new() { Id = 1, Name = "USD" }], _ => Task.FromResult(false));
                         await RenderDialogAsync(editor, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor }, Path.Combine(output, $"proveedor-{kind}-{theme}.png"));
+                        if (kind == SupplierEditorKind.Supplier)
+                        {
+                            var contactView = new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = editor };
+                            ((TabControl)contactView.FindName("SupplierSections")).SelectedIndex = 1;
+                            await RenderDialogAsync(editor, contactView, Path.Combine(output, $"proveedor-contacto-estado-{theme}.png"));
+                        }
                     }
+                    var newReference = new SupplierEditorDialogModel(SupplierEditorKind.Product, shell.Suppliers.Detail!, null, null, new(productService), [new() { Id = 1, Name = "USD" }], _ => Task.FromResult(false));
+                    await newReference.Picker.SearchCommand.ExecuteAsync(null);
+                    await RenderDialogAsync(newReference, new GoDental.Wpf.Views.Suppliers.SupplierEditorDialogView { DataContext = newReference }, Path.Combine(output, $"proveedor-nuevo-producto-{theme}.png"));
                 }
                 await shell.Customers.ReloadCommand.ExecuteAsync(null);
                 shell.Customers.Selected = shell.Customers.Items.First(); await shell.Customers.OpenCommand.ExecuteAsync(null);
@@ -428,17 +553,40 @@ internal static class Program
                     Check(shell.Customers.IsDetailOpen, "Abrir cliente muestra su ficha separada del listado");
                     shell.Customers.ReturnToListCommand.Execute(null);
                     await RenderAsync(shell, 1366, 768, Path.Combine(output, $"clientes-lista-{theme}.png"));
-                    await shell.Customers.OpenCommand.ExecuteAsync(null);
+                    shell.Customers.ToggleFiltersCommand.Execute(null);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-filtros-{theme}.png"));
+                    shell.Customers.ToggleFiltersCommand.Execute(null);
+                    await shell.Customers.OpenCustomerCommand.ExecuteAsync(shell.Customers.Items.First());
                     await RenderAsync(shell, 1093, 614, Path.Combine(output, $"clientes-125-{theme}.png"));
                     var view = new GoDental.Wpf.Views.Customers.CustomersView { DataContext = shell.Customers };
                     view.Measure(new Size(1000, 700)); view.Arrange(new Rect(0, 0, 1000, 700)); view.UpdateLayout();
                     var tabs = FindChildren<TabControl>(view).First();
                     Check(tabs.Items.Count == 8, "Ficha de cliente organizada en ocho pestañas");
-                    for (var i = 0; i < tabs.Items.Count; i++) { tabs.SelectedIndex = i; view.UpdateLayout(); Check(FindChildren<DataGrid>(view).All(g => g.IsReadOnly && !g.AutoGenerateColumns), $"Consulta de cliente explícita: {theme}, pestaña {i}"); }
+                    for (var i = 0; i < tabs.Items.Count; i++)
+                    {
+                        if (i == 5) await shell.Customers.LoadAccountsCommand.ExecuteAsync(null);
+                        if (i == 6) await shell.Customers.LoadSalesCommand.ExecuteAsync(null);
+                        if (i == 7) await shell.Customers.LoadPaymentsCommand.ExecuteAsync(null);
+                        tabs.SelectedIndex = i; view.UpdateLayout();
+                        Check(FindChildren<DataGrid>(view).All(g => g.IsReadOnly && !g.AutoGenerateColumns), $"Consulta de cliente explícita: {theme}, pestaña {i}");
+                        var scroller = new ScrollViewer { Content = view, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+                        var frame = new Border { Padding = new Thickness(24), Background = (System.Windows.Media.Brush)appResource("SurfaceBrush"), Child = scroller };
+                        await RenderWindowAsync(new Window { Content = frame, DataContext = shell.Customers, Width = 1000, Height = 740 }, Path.Combine(output, $"clientes-pestana-{i}-{theme}.png"));
+                        scroller.Content = null;
+                        frame.Child = null;
+                        Check(FindChildren<Button>(view).Where(b => b.Content is string text && text is "Editar cliente" or "Nuevo contacto" or "Nueva dirección" or "Configurar crédito").All(b => b.ActualWidth == 152 && b.ActualHeight == 36), "Las acciones de Clientes conservan un tamaño uniforme");
+                    }
                     foreach (var kind in Enum.GetValues<CustomerEditorKind>())
                     {
                         var form = new CustomerEditorDialogModel(kind, shell.Customers.Detail!, shell.Customers.Contacts.First(), shell.Customers.Addresses.First(), shell.Customers.Credit, new([new() { Id = 1, Name = "Clínica" }], []), _ => Task.FromResult(false));
                         await RenderDialogAsync(form, new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = form }, Path.Combine(output, $"cliente-{kind}-{theme}.png"));
+                        if (kind == CustomerEditorKind.General)
+                        {
+                            var fiscalView = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = form };
+                            fiscalView.Measure(new Size(1000,700)); fiscalView.Arrange(new Rect(0,0,1000,700)); fiscalView.UpdateLayout();
+                            FindChildren<TabControl>(fiscalView).Single().SelectedIndex = 1;
+                            await RenderDialogAsync(form, fiscalView, Path.Combine(output, $"cliente-fiscal-{theme}.png"));
+                        }
                     }
                 }
                 session.Begin(new(4, "lector_clientes", "Lector clientes", 1, [], ["CLIENTES.VER"], false));
@@ -452,21 +600,70 @@ internal static class Program
                     "El lector de compras puede consultar sin acciones de escritura");
                 nav.Navigate(SetupPage.Suppliers);
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "proveedores-solo-lectura.png"));
+                await RenderCommerceTabsAsync(shell, typeof(GoDental.Wpf.Views.Suppliers.SuppliersView), "proveedores-lector", "Light", output);
                 session.Begin(new(2,"vendedor_visual","Vendedor de prueba visual",1,["Vendedor"],[ProductService.ReadPermission],false));
                 await products.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Products);
                 Check(products.CanView && !products.CanManage && !shell.CanOpenUsers && !shell.CanOpenCounts && !shell.CanOpenSuppliers && shell.Suppliers.References.Count == 0 && !shell.CanOpenCustomers && shell.Customers.Addresses.Count == 0, "El vendedor sólo ve acciones autorizadas");
                 await RenderAsync(shell, 1366, 768, Path.Combine(output, "productos-vendedor.png"));
                 await access.SignOutCommand.ExecuteAsync(null);
                 Check(products.Products.Count == 0 && !shell.CanOpenProducts, "Cerrar sesión limpia datos y oculta el catálogo");
-                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER"], false));
+                session.Begin(new(1, "mvp_visual", "Prueba MVP", 1, ["Administrador"], ["COMERCIAL.CAMPANIAS_CREAR","COMERCIAL.CAMPANIAS_APROBAR","COMERCIAL.VER","COMERCIAL.PROSPECTAR","COMERCIAL.EXCLUSIONES","FISCAL.VER","FISCAL.CONFIGURAR","FISCAL.REVISAR_INTERNO","REPORTES.VENTAS","REPORTES.INVENTARIO","REPORTES.COSTOS","INVENTARIO.COSTOS_VER","VENTAS.REPARTO_GESTIONAR","CAJA.REPARTO_RENDIR","CLIENTES.COBRANZA_GESTIONAR","VENTAS.DEVOLUCION_SOLICITAR","VENTAS.DEVOLUCION_AUTORIZAR","VENTAS.ANULAR","COMPRAS.VER", "COMPRAS.GESTIONAR", "CAJA.VER", "CAJA.ABRIR", "CAJA.CERRAR", "CAJA.MOVIMIENTO", "AJUSTES.EDITAR", "VENTAS.VER", "VENTAS.CREAR", "VENTAS.COTIZAR", "VENTAS.REIMPRIMIR", "VENTAS.USAR_CREDITO", "CLIENTES.VER", "INVENTARIO.VER", "INVENTARIO.AJUSTAR", "INVENTARIO.PRODUCTOS_GESTIONAR"], false));
+                await VerifyWorkspaceScrollingAsync(shell, nav, themes);
+                await VerifyOnlineWorkspaceAsync(shell, nav, themes, output);
+                mvpRepository.Products.AddRange([
+                    new() { Id = 2, Sku = "UI-002", Name = "Resina de prueba", Price = 35, Available = 8 },
+                    new() { Id = 3, Sku = "UI-003", Name = "Guantes de prueba", Price = 12, Available = 30 },
+                    new() { Id = 4, Sku = "UI-004", Name = "Instrumental de prueba con nombre largo para comprobar el ajuste en la tarjeta", Price = 85, Available = 4 },
+                    new() { Id = 5, Sku = "UI-005", Name = "Adhesivo de prueba", Price = 28, Available = 0 }
+                ]);
+                nav.Navigate(SetupPage.Home);
+                await home.ReloadCommand.ExecuteAsync(null);
+                foreach (var theme in new[] { "Light", "Dark" })
+                {
+                    themes.Apply(theme);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"inicio-operacion-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"inicio-operacion-compacto-{theme}.png"));
+                }
+                var recentSale = home.RecentSales.Single();
+                await historyMvp.OpenSaleCommand.ExecuteAsync(recentSale);
+                Check(shell.IsSales && historyMvp.SaleDetail?.Sale.Id == recentSale.Id, "La actividad de Inicio abre la ficha real de venta");
+                nav.Navigate(SetupPage.Home);
+                var recentOrder = home.RecentOrders.Single();
+                await shell.OpenHomeOrderCommand.ExecuteAsync(recentOrder);
+                Check(shell.IsOrders && ordersMvp.Detail?.Order.Id == recentOrder.Id, "La actividad de Inicio abre la ficha real de pedido");
+                nav.Navigate(SetupPage.Home);
+                mvpRepository.PendingSales = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                var homeLoading = home.ReloadCommand.ExecuteAsync(null);
+                Check(home.IsBusy && !home.ReloadCommand.CanExecute(null), "Inicio bloquea otra actualización mientras consulta");
+                await RenderAsync(shell, 1093, 614, Path.Combine(output, "inicio-cargando.png"));
+                mvpRepository.PendingSales.SetResult(new([mvpRepository.Sale.Sale], 1)); await homeLoading; mvpRepository.PendingSales = null;
+                mvpRepository.FailSales = true; await home.ReloadCommand.ExecuteAsync(null);
+                await RenderAsync(shell, 1093, 614, Path.Combine(output, "inicio-error-parcial.png"));
+                mvpRepository.FailSales = false; mvpRepository.EmptyActivity = true; await home.ReloadCommand.ExecuteAsync(null);
+                await RenderAsync(shell, 1366, 768, Path.Combine(output, "inicio-sin-actividad.png"));
+                mvpRepository.EmptyActivity = false; await home.ReloadCommand.ExecuteAsync(null);
+                ordersMvp.ReturnToListCommand.Execute(null); historyMvp.ReturnToSalesCommand.Execute(null);
+                var customerName = new GoDental.Wpf.Converters.SaleCustomerNameConverter();
+                var historicalCustomer = new SaleData { CustomerId = 1, CustomerSnapshot = "{\"Name\":\"Cliente histórico de prueba\"}" };
+                Check(customerName.Convert(historicalCustomer, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Cliente histórico de prueba"),
+                    "El nombre de la venta procede del snapshot histórico");
+                historicalCustomer.CustomerSnapshot = "{";
+                Check(customerName.Convert(historicalCustomer, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture).Equals("Cliente registrado"),
+                    "Un snapshot antiguo inválido conserva una identidad de respaldo sin romper el listado");
                 await cashMvp.ReloadCommand.ExecuteAsync(null);
                 await posMvp.ReloadCommand.ExecuteAsync(null);
                 posMvp.Items.Add(new(1, "UI-TEST", "Producto de prueba", 1, 0));
                 await posMvp.CalculateCommand.ExecuteAsync(null);
                 await creditMvp.ReloadCommand.ExecuteAsync(null); creditMvp.Selected = creditMvp.Items.First();
-                await creditMvp.HistoryCommand.ExecuteAsync(null);
+                await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
+                mvpRepository.Account.NoticeDue = true;
+                await creditMvp.LoadNoticesCommand.ExecuteAsync(null); await creditMvp.LoadStatementCommand.ExecuteAsync(null);
+                Check(creditMvp.Notices.Count==1 && creditMvp.Statement is { Difference:0 },"Crédito carga avisos y estado de cuenta con posventa trazable");
                 await ordersMvp.ReloadCommand.ExecuteAsync(null); ordersMvp.Selected = ordersMvp.Items.First();
                 await ordersMvp.DetailCommand.ExecuteAsync(null);
+                await commercialParameters.ReloadCommand.ExecuteAsync(null);
+                mvpRepository.Barcodes.Add(new() { Id = 1, Code = "GD0000000001", Type = "CODE128", Active = true, Generated = true });
+                await barcodes.OpenAsync(new() { Id = 1, Sku = "UI-TEST", Name = "Producto de prueba" });
                 var emitted = mvpRepository.QuoteFactory(new(1, 1, [new(1, 1)]));
                 mvpRepository.Quotations.Add(new() { Id = 10, Number = "COT-PRUEBA", State = "EMITIDA", Total = emitted.Total, SnapshotJson = System.Text.Json.JsonSerializer.Serialize(emitted) });
                 await historyMvp.ReloadSalesCommand.ExecuteAsync(null); historyMvp.SelectedSale = historyMvp.Sales.First(); await historyMvp.ReadSaleCommand.ExecuteAsync(null);
@@ -474,36 +671,454 @@ internal static class Program
                 foreach (var theme in new[] { "Light", "Dark" })
                 {
                     themes.Apply(theme);
-                    foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations })
+                    var returnHeader=new SaleReturnData{Id=401,SaleId=1,Number="DEV-PRUEBA-001",State="SOLICITADA",Requester="Usuario de prueba",Proof="PRUEBA-001",Reason="Devolución de prueba",Amount=123.45m,RowVersion=[1,2,3,4,5,6,7,8]};
+                    mvpRepository.Returns=mvpRepository.Returns with{Returns=[returnHeader],Total=1};
+                    mvpRepository.ReturnDetail=new(returnHeader,[new(){Id=4001,SaleLineId=1,Sku="UI-TEST",Name="Producto de prueba",Quantity=1,Condition="SELLADO",Restock=true,Amount=123.45m}],123.45m,0,123.45m,new string('A',64),null);
+                    await historyMvp.ReloadReturnsCommand.ExecuteAsync(null);historyMvp.SelectedReturn=returnHeader;await historyMvp.ReadReturnCommand.ExecuteAsync(null);
+                    Check(historyMvp.CanRequestReturn&&historyMvp.CanApplyReturn,"Posventa permite solicitar y revisar una resolución pendiente con permisos vigentes");
+                    foreach(var size in new[]{new Size(900,600),new Size(700,500)})
+                    {
+                        var returnsView=new SaleReturnsView{DataContext=historyMvp};var scrollReturns=new ScrollViewer{Content=returnsView,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+                        scrollReturns.Measure(size);scrollReturns.Arrange(new Rect(size));scrollReturns.UpdateLayout();
+                        Check(FindChildren<DataGrid>(returnsView).All(g=>g.Items.Count==1),"Posventa enlaza la solicitud y el detalle original del contrato");
+                        var returnApplyButton=FindChildren<Button>(returnsView).Single(b=>b.Content is "Autorizar y aplicar");returnApplyButton.BringIntoView();scrollReturns.UpdateLayout();
+                        var bounds=returnApplyButton.TransformToAncestor(scrollReturns).TransformBounds(new Rect(returnApplyButton.RenderSize));
+                        Check(returnApplyButton.IsEnabled&&bounds.Right<=size.Width+.1&&bounds.Bottom<=size.Height+.1,"Posventa mantiene accesible la resolución en Light/Dark y tamaño compacto");
+                        SavePreview(scrollReturns,Path.Combine(output,$"posventa-{size.Width}-{theme}.png"));
+                    }
+                    mvpDialogs.Render=async form=>
+                    {
+                        if(form.Body is ReturnDraftModel draft)
+                        {
+                            var line=draft.Lines.First();line.Condition="ABIERTO_DEFECTUOSO";Check(!line.Restock,"Producto abierto se presenta sin reingreso vendible");
+                        }
+                        await RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"posventa-dialogo-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await historyMvp.RequestReturnCommand.ExecuteAsync(null);await historyMvp.RequestCancellationCommand.ExecuteAsync(null);await historyMvp.ApplyReturnCommand.ExecuteAsync(null);await historyMvp.RejectReturnCommand.ExecuteAsync(null);await historyMvp.ConfigureReturnEvidenceCommand.ExecuteAsync(null);
+                    mvpDialogs.Render=null;mvpRepository.Returns=mvpRepository.Returns with{Returns=[],Total=0};mvpRepository.ReturnDetail=null;await historyMvp.ReloadReturnsCommand.ExecuteAsync(null);
+                    await purchasesMvp.ReloadCommand.ExecuteAsync(null); nav.Navigate(SetupPage.Purchases);
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"compras-listado-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"compras-listado-compacto-{theme}.png"));
+                    purchasesMvp.Selected = purchasesMvp.Items.Single(); await purchasesMvp.OpenCommand.ExecuteAsync(null);
+                    purchasesMvp.SelectedReceipt = purchasesMvp.Detail!.Receipts.Single(); await purchasesMvp.ReadReceiptCommand.ExecuteAsync(null);
+                    Check(shell.CanOpenPurchases && purchasesMvp.CanPrepare && purchasesMvp.CanActOnReceipt, "Compras abre orden, pendiente y recepción con acciones autorizadas");
+                    await RenderCommerceTabsAsync(shell, typeof(PurchasesView), "Compras", theme, output, 1093, 614);
+                    mvpDialogs.Render = async form =>
+                    {
+                        if (form.Body is PurchaseOrderDraftModel purchaseDraft) await purchaseDraft.SearchCommand.ExecuteAsync(null);
+                        var view = new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form, view, Path.Combine(output, $"compras-formulario-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
+                    };
+                    await purchasesMvp.NewCommand.ExecuteAsync(null);
+                    await purchasesMvp.TransitionCommand.ExecuteAsync(null);
+                    await purchasesMvp.PrepareCommand.ExecuteAsync(null);
+                    await purchasesMvp.ApplyCommand.ExecuteAsync(null);
+                    await purchasesMvp.CancelReceiptCommand.ExecuteAsync(null);
+                    var savedPurchase = mvpRepository.Purchase;
+                    mvpRepository.Purchase = savedPurchase with { Receipts = [] };
+                    purchasesMvp.SelectedReceipt = null;
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.CanCreateImport, "Una OC confirmada sin recepciones permite crear importación");
+                    await purchasesMvp.CreateImportCommand.ExecuteAsync(null);
+                    mvpRepository.Importation = new(new() { Id=301,OrderId=savedPurchase.Order.Id,State="CONFIRMADA",Courier="Courier de prueba",RowVersion=[1,2,3,4,5,6,7,8] },
+                        [new() { Id=9,Type="FLETE",Amount=10,Currency="USD",Rate=1,AmountUsd=10,Description="Flete de ejemplo" }],
+                        [new() { Id=1,Type="CREADA",Description="Evento manual de prueba",Date=DateTimeOffset.UtcNow,User="Prueba" }],1);
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.HasImportation && purchasesMvp.CanEditImportCosts && !purchasesMvp.CanPrepare, "La importación muestra gastos y bloquea recibir sin cerrar costos");
+                    await RenderCommerceTabsAsync(shell,typeof(PurchasesView),"Importaciones",theme,output,1093,614);
+                    mvpDialogs.Render = async form =>
+                    {
+                        if(form.Body is ImportCostDraftModel cost) cost.CalculateCommand.Execute(null);
+                        var view=new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form,view,Path.Combine(output,$"importaciones-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await purchasesMvp.ImportEventCommand.ExecuteAsync(null);await purchasesMvp.AddImportExpenseCommand.ExecuteAsync(null);
+                    purchasesMvp.SelectedImportExpense=purchasesMvp.Importation!.Expenses.Single();await purchasesMvp.VoidImportExpenseCommand.ExecuteAsync(null);
+                    await purchasesMvp.CloseImportCostsCommand.ExecuteAsync(null);
+                    mvpRepository.Importation.Importation.CostsClosed=true;mvpRepository.Importation.Importation.Rate=1;
+                    foreach(var line in savedPurchase.Lines){line.ImportPurchaseCostUsd=10;line.ImportExpenseUsd=10;}
+                    await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    Check(purchasesMvp.CanPrepare && !purchasesMvp.CanEditImportCosts,"Cerrar costos habilita recepción y bloquea gastos posteriores");
+                    await purchasesMvp.PrepareCommand.ExecuteAsync(null);
+                    foreach(var line in savedPurchase.Lines){line.ImportPurchaseCostUsd=null;line.ImportExpenseUsd=null;}
+                    mvpRepository.Importation=null;mvpRepository.Purchase=savedPurchase;await purchasesMvp.RefreshDetailCommand.ExecuteAsync(null);
+                    mvpDialogs.Render = null;
+                    foreach (var size in new[] { new Size(760, 680), new Size(540, 500) })
+                        await RenderWindowAsync(new SettingsWindow(vm, commercialParameters) { Width = size.Width, Height = size.Height }, Path.Combine(output, $"ajustes-comercial-{theme}-{size.Width}.png"), 2);
+                    mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"parametros-editar-{theme}.png"));
+                    await commercialParameters.ChangeCommand.ExecuteAsync(null);
+                    var barcodeView = new BarcodesView { DataContext = barcodes };
+                    await RenderWindowAsync(new Window { Width = 650, Height = 500, DataContext = barcodes, Content = new ScrollViewer { Content = barcodeView } }, Path.Combine(output, $"codigos-producto-{theme}.png"));
+                    Check(FindChildren<DataGrid>(barcodeView).Single().Items.Count == 1 && FindChildren<Button>(barcodeView).Any(b => b.IsEnabled && b.Content is "Agregar código"), "Códigos muestra listado y acción de mantenimiento");
+                    barcodes.Selected = barcodes.Items.Single(); await barcodes.PreviewReceiptCommand.ExecuteAsync(null);
+                    Check(barcodes.ReceiptPreview is { IsLabel: true } && barcodes.CanUsePreview, "Etiquetas genera barras y PDF reales del código activo");
+                    var reviewedLabel = barcodes.ReceiptPreview!;
+                    await barcodes.ExportCommand.ExecuteAsync(null); await barcodes.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(labelFiles.Saved, reviewedLabel.Pdf) && ReferenceEquals(labelFiles.Printed, reviewedLabel), "Etiquetas guarda e imprime el documento revisado sin cambios de negocio");
+                    var labelSize = new Size((double)reviewedLabel.WidthMm * 96 / 25.4, (double)reviewedLabel.HeightMm * 96 / 25.4);
+                    var labelPages = PdfPrintService.BuildDocument(reviewedLabel, labelSize, new Rect(labelSize));
+                    Check(Math.Abs(labelPages.Pages[0].Child.Children.OfType<Image>().Single().Width - labelSize.Width) < .01, "La etiqueta conserva tamaño real al imprimir");
+                    var rejectedPaper = false;
+                    try { PdfPrintService.BuildDocument(reviewedLabel, new Size(816, 1056), new Rect(0, 0, 816, 1056)); } catch (ArgumentException) { rejectedPaper = true; }
+                    Check(rejectedPaper, "Una etiqueta no se escala silenciosamente a Carta");
+                    foreach (var size in new[] { new Size(900, 700), new Size(700, 500) })
+                    {
+                        var scrollLabels = new ScrollViewer { Content = new BarcodesView { DataContext = barcodes }, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+                        var labelsHost = new Grid(); labelsHost.Children.Add(scrollLabels); labelsHost.Measure(size); labelsHost.Arrange(new Rect(size)); labelsHost.UpdateLayout();
+                        var labelPreview = FindChildren<ReceiptPreviewView>(labelsHost).Single();
+                        Check(FindChildren<Image>(labelPreview).Single().Source is not null, "La ficha muestra las barras en Light/Dark y tamaño compacto");
+                        var printLabel = FindChildren<Button>(labelPreview).Single(b => b.Content is string text && text == "Imprimir");
+                        printLabel.BringIntoView(); labelsHost.UpdateLayout();
+                        SavePreview(labelsHost, Path.Combine(output, $"etiquetas-{size.Width}-{theme}.png"));
+                    }
+                    barcodes.PrintSettings.Width = "60"; Check(!barcodes.CanUsePreview, "Cambiar la etiqueta bloquea guardar e imprimir hasta regenerar");
+                    barcodes.PrintSettings.Width = "50"; barcodes.CloseReceiptPreviewCommand.Execute(null);
+                    mvpDialogs.Render = form => RenderDialogAsync(form, new MvpFormView { DataContext = form }, Path.Combine(output, $"codigos-agregar-{theme}.png"));
+                    await barcodes.AddCommand.ExecuteAsync(null);
+                    mvpDialogs.Render = null;
+                    foreach (var page in new[] { SetupPage.Cash, SetupPage.Pos, SetupPage.Credit, SetupPage.Orders, SetupPage.Sales, SetupPage.Quotations, SetupPage.PendingOperations })
                     {
                         nav.Navigate(page);
                         await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-{theme}.png"));
                         await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-compacto-{theme}.png"));
-                        if (page == SetupPage.Pos)
+                        if (page == SetupPage.Sales)
+                        {
+                            mvpRepository.ReceiptReadTask = Task.FromResult<SaleSnapshot?>(mvpRepository.Sale with { Delivery = mvpRepository.Order.Order });
+                            await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                            var document = historyMvp.ReceiptPreview!;
+                            var normalizedPhoto=ReturnPhotoPicker.NormalizeInput(document.Pages[0]);
+                            var normalizedImage=GoDental.Wpf.Common.ReceiptPageImage.Load(normalizedPhoto,preview:false);
+                            Check(normalizedImage.PixelWidth<=1600&&normalizedImage.PixelHeight<=1600,"El selector de evidencias limita la dimensión mayor sin ampliar fotos pequeñas");
+                            var invalidPhoto=false;try{ReturnPhotoPicker.NormalizeInput([1,2,3]);}catch(ArgumentException){invalidPhoto=true;}Check(invalidPhoto,"El selector rechaza contenido que no es una foto PNG/JPEG");
+                            Check(historyMvp.IsReceiptPreviewOpen && document.Pages.Count > 0, "Previsualizar genera PDF y páginas reales de la venta confirmada");
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"comprobante-vista-previa-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"comprobante-vista-previa-compacto-{theme}.png"));
+                            historyMvp.ZoomInCommand.Execute(null);
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"comprobante-zoom-{theme}.png"));
+                            historyMvp.NextPreviewPageCommand.Execute(null); historyMvp.PreviousPreviewPageCommand.Execute(null);
+                            Check(historyMvp.PreviewPageNumber == 1 && historyMvp.PreviewZoom == 1, "Los controles de página respetan límites y el zoom cambia sin regenerar la venta");
+                            await historyMvp.ExportCommand.ExecuteAsync(null); await historyMvp.PrintReceiptCommand.ExecuteAsync(null);
+                            Check(ReferenceEquals(pdfFiles.Saved, document.Pdf) && ReferenceEquals(pdfFiles.Printed, document), "Guardar e imprimir usan el documento previsualizado y cancelar conserva la vista");
+                            foreach (var size in new[] { new Size(816, 1056) })
+                            {
+                                var printable = new Rect(24, 24, size.Width - 48, size.Height - 48);
+                                var pages = PdfPrintService.BuildDocument(document, size, printable);
+                                var printedPage = pages.Pages[0].Child;
+                                printedPage.Measure(size); printedPage.Arrange(new Rect(size)); printedPage.UpdateLayout();
+                                var image = printedPage.Children.OfType<Image>().Single();
+                                var bounds = image.TransformToAncestor(printedPage).TransformBounds(new Rect(image.RenderSize));
+                                Check(pages.Pages.Count == document.Pages.Count && bounds.Left >= -.01 && bounds.Right <= size.Width + .01
+                                    && bounds.Top >= -.01 && bounds.Bottom <= size.Height + .01
+                                    && Math.Abs(image.Width - 816) < .01 && Math.Abs(image.Height - 1056) < .01
+                                    && Math.Abs(image.Width / image.Height - 816d / 1056) < .001,
+                                    "La impresión conserva las páginas y tamaño real, con contenido dentro del área imprimible");
+                            }
+                            foreach (var paper in new[] { "Ticket 58 mm", "Ticket 80 mm", "A4" })
+                            {
+                                historyMvp.PrintSettings.Paper = paper;
+                                Check(!historyMvp.CanUsePreview, "Cambiar el papel exige actualizar la vista previa del comprobante");
+                                await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                                Check(historyMvp.CanUsePreview && historyMvp.ReceiptPreview!.WidthMm == (paper == "A4" ? 210 : paper == "Ticket 58 mm" ? 58 : 80), "El formato elegido se aplica a PDF y vista previa");
+                                await RenderAsync(shell, 1093, 614, Path.Combine(output, $"formato-{paper.Replace(' ', '-')}-{theme}.png"));
+                            }
+                            historyMvp.PrintSettings.Kind = "Entrega"; await historyMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                            Check(historyMvp.CanUsePreview, "La venta con pedido permite generar su nota interna de entrega");
+                            historyMvp.PrintSettings.Kind = "Venta"; historyMvp.PrintSettings.Paper = "Carta";
+                            historyMvp.CloseReceiptPreviewCommand.Execute(null);
+                            Check(!historyMvp.IsReceiptPreviewOpen && historyMvp.IsSaleDetailOpen, "Volver desde el comprobante conserva el detalle de venta");
+                            var originalSaleId = mvpRepository.Order.Order.SaleId;
+                            mvpRepository.Order.Order.SaleId = mvpRepository.Sale.Sale.Id;
+                            ordersMvp.Selected = null; await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                            nav.Navigate(SetupPage.Orders);
+                            var orderReceiptWindow = new MainWindow(shell) { Width = 1093, Height = 614 };
+                            var orderReceiptRoot = (FrameworkElement)orderReceiptWindow.Content;
+                            orderReceiptRoot.Measure(new Size(1093, 614)); orderReceiptRoot.Arrange(new Rect(0, 0, 1093, 614)); orderReceiptRoot.UpdateLayout();
+                            var receiptOrderView = FindChildren<OrdersView>(orderReceiptRoot).Single();
+                            FindChildren<TabControl>(receiptOrderView).Single().SelectedIndex = 1; orderReceiptRoot.UpdateLayout();
+                            var orderReceipt = FindChildren<Button>(receiptOrderView).Single(b => b.Content is string text && text == "Ver comprobante");
+                            Check(ReferenceEquals(orderReceipt.Command, historyMvp.PreviewSaleCommand) && orderReceipt.IsEnabled && (long?)orderReceipt.CommandParameter == mvpRepository.Sale.Sale.Id,
+                                "El pedido vinculado conecta Ver comprobante con la venta confirmada correspondiente");
+                            await ((IAsyncRelayCommand)orderReceipt.Command).ExecuteAsync(orderReceipt.CommandParameter);
+                            Check(shell.IsSales && historyMvp.IsReceiptPreviewOpen, "Ver comprobante desde el pedido abre la vista previa real");
+                            orderReceiptWindow.Close(); historyMvp.CloseReceiptPreviewCommand.Execute(null);
+                            mvpRepository.Order.Order.SaleId = originalSaleId;
+                            ordersMvp.Selected = null; await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                            await File.WriteAllBytesAsync(Path.Combine(output, $"comprobante-interno-{theme}.pdf"), document.Pdf);
+                        }
+                        if (page == SetupPage.PendingOperations)
+                        {
+                            var recoveryRequest = new OpenCashShift(Guid.NewGuid(), 1, 10, "Preparación visual aislada");
+                            var writesBeforeRecovery = mvpRepository.Writes.Count;
+                            await operationService.RememberAsync(recoveryRequest);
+                            await pendingOperations.ReloadCommand.ExecuteAsync(null);
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"operaciones-pendientes-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"operaciones-pendientes-compacto-{theme}.png"));
+                            var recoveryWindow = new MainWindow(shell) { Width = 1093, Height = 614, ShowActivated = false };
+                            var recoveryRoot = (FrameworkElement)recoveryWindow.Content;
+                            recoveryRoot.Measure(new Size(1093,614)); recoveryRoot.Arrange(new Rect(0,0,1093,614)); recoveryRoot.UpdateLayout();
+                            var recoveryView = FindChildren<PendingOperationsView>(recoveryRoot).Single();
+                            var resolveButton = FindChildren<Button>(recoveryView).Single(button => button.Content is string label && label == "Resolver y liberar");
+                            Check(shell.IsPendingOperations && pendingOperations.Items.Single().Ticket.OperationId == recoveryRequest.OperationId
+                                && ReferenceEquals(resolveButton.Command, pendingOperations.ResolveAndReleaseCommand) && IsLayoutVisible(resolveButton),
+                                "La pantalla de recuperación muestra el ticket y conecta su resolución visible en tamaño compacto");
+                            await ((IAsyncRelayCommand)resolveButton.Command).ExecuteAsync(null);
+                            Check(pendingOperations.Items.Count == 0 && !pendingOperations.HasAttention && mvpRepository.Writes.Count == writesBeforeRecovery,
+                                "Resolver pendiente sin confirmar libera el diario sin otro cobro ni escritura comercial");
+                            recoveryWindow.Close();
+                        }
+                        else if (page == SetupPage.Pos)
                         {
                             var cartWindow = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
                             var cartRoot = (FrameworkElement)cartWindow.Content;
                             cartRoot.Measure(new Size(1366, 768)); cartRoot.Arrange(new Rect(0, 0, 1366, 768)); cartRoot.UpdateLayout();
                             FindChildren<TabControl>(FindChildren<PosView>(cartRoot).Single()).First().SelectedIndex = 1;
+                            cartRoot.UpdateLayout();
+                            var cartGrid = FindChildren<DataGrid>(cartRoot).Single(grid => ReferenceEquals(grid.ItemsSource, posMvp.CartRows));
+                            cartGrid.SelectedIndex = 0;
+                            Check(ReferenceEquals(posMvp.SelectedLine, posMvp.Items[0]) && ReferenceEquals(posMvp.CartRows[0].Calculation, posMvp.Quote!.Lines[0]),
+                                "El carrito conserva selección de la línea editable y presenta el cálculo devuelto por el servicio");
                             await RenderWindowAsync(cartWindow, Path.Combine(output, $"mvp-Carrito-{theme}.png"));
+                            var cartInputs = posMvp.Items.ToArray();
+                            posMvp.ConfirmedSale = mvpRepository.Sale;
+                            await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-Venta-confirmada-{theme}.png"));
+                            await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Venta-confirmada-compacto-{theme}.png"));
+                            var confirmedView = new MainWindow(shell) { Width = 1366, Height = 768, ShowActivated = false };
+                            var confirmedRoot = (FrameworkElement)confirmedView.Content;
+                            confirmedRoot.Measure(new Size(1366, 768)); confirmedRoot.Arrange(new Rect(0, 0, 1366, 768)); confirmedRoot.UpdateLayout();
+                            var receipt = FindChildren<Button>(FindChildren<PosView>(confirmedRoot).Single()).Single(b => b.Content is string text && text == "Ver comprobante");
+                            Check(ReferenceEquals(receipt.Command, historyMvp.OpenSaleCommand) && ReferenceEquals(receipt.CommandParameter, mvpRepository.Sale.Sale),
+                                "La confirmación conecta el comprobante real con Ventas y PDF");
+                            var listedSales = historyMvp.Sales.ToArray();
+                            historyMvp.Sales.Clear(); historyMvp.SelectedSale = null;
+                            await historyMvp.OpenSaleCommand.ExecuteAsync(receipt.CommandParameter);
+                            Check(shell.IsSales && historyMvp.IsSaleDetailOpen && historyMvp.SaleDetail?.Sale.Id == mvpRepository.Sale.Sale.Id,
+                                "Ver comprobante abre la venta confirmada aunque todavía no figure en el listado");
+                            foreach (var sale in listedSales) historyMvp.Sales.Add(sale);
+                            nav.Navigate(SetupPage.Pos);
+                            var newSale = FindChildren<Button>(FindChildren<PosView>(confirmedRoot).Single()).Single(b => b.Content is string text && text == "Nueva venta");
+                            var previousWrites = mvpRepository.Writes.Count;
+                            newSale.Command!.Execute(newSale.CommandParameter);
+                            Check(!posMvp.HasConfirmedSale && posMvp.CartRows.Count == 0 && posMvp.Quote is null && mvpRepository.Writes.Count == previousWrites,
+                                "Nueva venta inicia un carrito vacío desde su botón sin registrar otra operación");
+                            confirmedView.Close();
+                            var emptyWindow = new MainWindow(shell) { Width = 1093, Height = 614, ShowActivated = false };
+                            var emptyRoot = (FrameworkElement)emptyWindow.Content;
+                            emptyRoot.Measure(new Size(1093, 614)); emptyRoot.Arrange(new Rect(0, 0, 1093, 614)); emptyRoot.UpdateLayout();
+                            FindChildren<TabControl>(FindChildren<PosView>(emptyRoot).Single()).First().SelectedIndex = 1; emptyRoot.UpdateLayout();
+                            Check(FindChildren<ContentControl>(emptyRoot).Any(control => control.Content is string text && text.StartsWith("Tu carrito está vacío") && IsLayoutVisible(control)),
+                                "El carrito vacío muestra una guía visible para agregar productos");
+                            await RenderWindowAsync(emptyWindow, Path.Combine(output, $"mvp-Carrito-vacio-{theme}.png"));
+                            foreach (var inputLine in cartInputs) posMvp.Items.Add(inputLine);
+                            await posMvp.CalculateCommand.ExecuteAsync(null);
+                        }
+                        else
+                        {
+                            var viewType = page switch
+                            {
+                                SetupPage.Cash => typeof(CashView), SetupPage.Credit => typeof(CreditView),
+                                SetupPage.Orders => typeof(OrdersView), SetupPage.Sales => typeof(SalesView), _ => typeof(QuotationsView)
+                            };
+                            await RenderCommerceTabsAsync(shell, viewType, page.ToString(), theme, output);
+                            if (page == SetupPage.Credit) creditMvp.ReturnToListCommand.Execute(null);
+                            if (page == SetupPage.Orders) ordersMvp.ReturnToListCommand.Execute(null);
+                            if (page == SetupPage.Sales) historyMvp.ReturnToSalesCommand.Execute(null);
+                            if (page == SetupPage.Quotations) historyMvp.ReturnToQuotationsCommand.Execute(null);
+                            if (page != SetupPage.Cash)
+                            {
+                                await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-{page}-listado-{theme}.png"));
+                                await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-{page}-listado-compacto-{theme}.png"));
+                            }
+                            if (page == SetupPage.Credit) await creditMvp.OpenAccountCommand.ExecuteAsync(creditMvp.Selected);
+                            if (page == SetupPage.Orders) await ordersMvp.OpenOrderCommand.ExecuteAsync(ordersMvp.Selected);
+                            if (page == SetupPage.Sales) await historyMvp.OpenSaleCommand.ExecuteAsync(historyMvp.SelectedSale);
+                            if (page == SetupPage.Quotations) await historyMvp.OpenQuotationCommand.ExecuteAsync(historyMvp.SelectedQuotation);
                         }
                     }
+                    nav.Navigate(SetupPage.Online);await onlineMvp.ReloadCommand.ExecuteAsync(null);onlineMvp.Selected=onlineMvp.Items.Single();await onlineMvp.OpenCommand.ExecuteAsync(null);
+                    await onlineMvp.FindExclusionsCommand.ExecuteAsync(null);await onlineMvp.FindSalesCommand.ExecuteAsync(null);onlineMvp.SelectedSale=onlineMvp.Sales.Single();
+                    Check(shell.CanOpenOnline&&onlineMvp.CanManage&&onlineMvp.CanExclude&&onlineMvp.CanConvert,"Online habilita mantenimiento exclusiones y vínculo con permisos separados");
+                    Check(onlineMvp.Sources.Count==1&&onlineMvp.Matches.Count==1&&onlineMvp.History.Count==1,"Online consulta fuentes coincidencias e historial sin contactar");
+                    await onlineMvp.FindZonesCommand.ExecuteAsync(null);onlineMvp.SelectedZone=onlineMvp.Zones.Single();
+                    await onlineMvp.FindSegmentsCommand.ExecuteAsync(null);onlineMvp.SelectedSegment=onlineMvp.Segments.Single();await onlineMvp.FindPreviewCommand.ExecuteAsync(null);
+                    await onlineMvp.FindTemplatesCommand.ExecuteAsync(null);onlineMvp.SelectedTemplate=onlineMvp.Templates.Single();
+                    await onlineMvp.FindCampaignsCommand.ExecuteAsync(null);onlineMvp.SelectedCampaign=onlineMvp.Campaigns.Single();await onlineMvp.FindRecipientsCommand.ExecuteAsync(null);
+                    await onlineMvp.FindFollowUpsCommand.ExecuteAsync(null);onlineMvp.SelectedFollowUp=onlineMvp.FollowUps.Single();
+                    Check(onlineMvp.CanPlanCampaign&&onlineMvp.CanApproveCampaign&&onlineMvp.Preview.Count==1&&onlineMvp.Recipients.Count==1,"Online conecta segmentación y aprobación sin transporte externo");
+                    Check(onlineMvp.CampaignPreview.Contains("Negocio de prueba")&&onlineMvp.SelectedTemplate.Preview.Contains("Negocio de ejemplo"),"Online revisa contenido y marcadores como texto plano");
+                    onlineMvp.SelectMapDepartmentCommand.Execute("San Salvador");await onlineMvp.DiscoverCommand.ExecuteAsync(null);onlineMvp.SelectedDiscovered=onlineMvp.Discovered.Single();
+                    Check(onlineMvp.MapRegions.Count==14&&onlineMvp.MapRegions.Count(r=>r.Selected)==1&&onlineMvp.Discovered.Count==1,"Mapa selecciona departamento y muestra descubrimiento sintético sin red");
+                    Check(onlineRepository.Writes.Count==0,"Descubrir no guarda ni contacta prospectos automáticamente");
+                    await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online",theme,output);
+                    await RenderCommerceTabsAsync(shell,typeof(OnlineView),"Online-compacto",theme,output,1093,614);
+                    var onlineRenderer=mvpDialogs.Render;var onlineFormIndex=0;
+                    mvpDialogs.Render=async form=>
+                    {
+                        if(form.Body is OnlineDraftModel draft){if(draft.Id==0){draft.Data.Name="Negocio sintético";draft.Data.Phone="70000000";await draft.CheckMatchesCommand.ExecuteAsync(null);}draft.SourceUrl="https://negocio.example.com/contacto";draft.Description="Contacto empresarial público";}
+                        await RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"online-formulario-{++onlineFormIndex}-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    };
+                    await onlineMvp.CreateCommand.ExecuteAsync(null);await onlineMvp.EditCommand.ExecuteAsync(null);await onlineMvp.AddSourceCommand.ExecuteAsync(null);await onlineMvp.ChangeStateCommand.ExecuteAsync(null);await onlineMvp.BlockCommand.ExecuteAsync(null);await onlineMvp.AddExclusionCommand.ExecuteAsync(null);await onlineMvp.ConvertCommand.ExecuteAsync(null);
+                    await onlineMvp.NewZoneCommand.ExecuteAsync(null);await onlineMvp.EditZoneCommand.ExecuteAsync(null);
+                    await onlineMvp.NewSegmentCommand.ExecuteAsync(null);await onlineMvp.EditSegmentCommand.ExecuteAsync(null);
+                    await onlineMvp.NewTemplateCommand.ExecuteAsync(null);await onlineMvp.EditTemplateCommand.ExecuteAsync(null);
+                    await onlineMvp.NewCampaignCommand.ExecuteAsync(null);await onlineMvp.PrepareCampaignCommand.ExecuteAsync(null);
+                    await onlineMvp.ApproveCampaignCommand.ExecuteAsync(null);await onlineMvp.ReturnCampaignCommand.ExecuteAsync(null);await onlineMvp.CancelCampaignCommand.ExecuteAsync(null);
+                    await onlineMvp.RecordFollowUpCommand.ExecuteAsync(null);await onlineMvp.ReviewDiscoveredCommand.ExecuteAsync(null);mvpDialogs.Render=onlineRenderer;
+                    nav.Navigate(SetupPage.Fiscal);await fiscalMvp.ReloadCommand.ExecuteAsync(null);
+                    fiscalMvp.Selected=fiscalMvp.Documents.Single();await fiscalMvp.OpenCommand.ExecuteAsync(null);
+                    await fiscalMvp.FindSalesCommand.ExecuteAsync(null);fiscalMvp.SelectedSale=fiscalMvp.Candidates.Single();
+                    Check(shell.CanOpenFiscal&&fiscalMvp.CanCreate&&fiscalMvp.CanReview,"Fiscal habilita preparación y revisión con permisos propios");
+                    Check(fiscalMvp.Detail!.Document.State=="PENDIENTE"&&fiscalMvp.History.Count==1,"Fiscal muestra ficha e historial sin emitir DTE");
+                    await RenderCommerceTabsAsync(shell,typeof(FiscalView),"Fiscal",theme,output);
+                    await RenderCommerceTabsAsync(shell,typeof(FiscalView),"Fiscal-compacto",theme,output,1093,614);
+                    var fiscalRenderer=mvpDialogs.Render;
+                    mvpDialogs.Render=form=>RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"fiscal-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    await fiscalMvp.CreateCommand.ExecuteAsync(null);await fiscalMvp.ReviewCommand.ExecuteAsync(null);mvpDialogs.Render=fiscalRenderer;
+                    Check(shell.CanOpenReports,"Reportes se habilita por los permisos propios del módulo");
+                    foreach(var reportChoice in reportsMvp.Kinds.ToArray())
+                    {
+                        reportsMvp.Kind=reportChoice;await reportsMvp.ReloadCommand.ExecuteAsync(null);nav.Navigate(SetupPage.Reports);
+                        Check(reportsMvp.Rows.Count>0,"Reporte consulta filas: "+reportChoice.Code);
+                        await RenderAsync(shell,1366,768,Path.Combine(output,$"reportes-{reportChoice.Code}-{theme}.png"));
+                        await RenderAsync(shell,1093,614,Path.Combine(output,$"reportes-{reportChoice.Code}-compacto-{theme}.png"));
+                    }
+                    reportsMvp.Kind=reportsMvp.Kinds.First();await reportsMvp.PreviewReceiptCommand.ExecuteAsync(null);
+                    Check(reportsMvp.CanUsePreview&&reportsMvp.ReceiptPreview!.Pdf.Length>1000,"Reportes genera PDF real con vista previa");
+                    var reportPreview=reportsMvp.ReceiptPreview;await reportsMvp.ExportCommand.ExecuteAsync(null);await reportsMvp.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(reportFiles.Saved,reportPreview!.Pdf)&&ReferenceEquals(reportFiles.Printed,reportPreview),"Reporte guarda/imprime el mismo documento revisado");
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"reporte-documento-{theme}.png"));
+                    reportsMvp.PrintSettings.Paper="Ticket 80 mm";Check(!reportsMvp.CanUsePreview,"Medidas nuevas invalidan el reporte anterior");
+                    reportsMvp.CloseReceiptPreviewCommand.Execute(null);reportsMvp.PrintSettings.Paper="Carta";
+                    var priorOrderState=mvpRepository.Order.Order.State;var priorFormRenderer=mvpDialogs.Render;
+                    mvpRepository.Order.Order.State="LISTO";await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);nav.Navigate(SetupPage.Orders);
+                    await ordersMvp.QuoteDeliveryCommand.ExecuteAsync(null);Check(ordersMvp.CanDispatchDelivery,"Pedido listo consulta importe antes de despachar");
+                    mvpDialogs.Render=form=>RenderDialogAsync(form,new MvpFormView{DataContext=form},Path.Combine(output,$"reparto-formulario-{form.PrimaryActionLabel.Replace(' ','-')}-{theme}.png"));
+                    await ordersMvp.DispatchCodCommand.ExecuteAsync(null);
+                    foreach(var deliveryState in new[]{"EN_RUTA","PENDIENTE_RENDICION","RENDIDO","RETORNADO"})
+                    {
+                        stageTwoRepository.Delivery=new(){Id=1,OrderId=1,CashBoxId=1,WarehouseId=1,Courier="Repartidor de prueba",State=deliveryState,Total=20,Medium="TRANSFERENCIA",Reference="BANCO-PRUEBA",RowVersion=new byte[8]};
+                        await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);nav.Navigate(SetupPage.Orders);
+                        Check(!ordersMvp.CanPassToPos&&!ordersMvp.CanTransition,"Pedido con reparto bloquea atajos genéricos: "+deliveryState);
+                        await RenderAsync(shell,1093,614,Path.Combine(output,$"reparto-{deliveryState}-{theme}.png"));
+                        if(deliveryState=="EN_RUTA")await ordersMvp.ResolveCodCommand.ExecuteAsync(null);
+                        if(deliveryState=="PENDIENTE_RENDICION")await ordersMvp.SettleCodCommand.ExecuteAsync(null);
+                    }
+                    stageTwoRepository.Delivery=null;mvpRepository.Order.Order.State=priorOrderState;mvpDialogs.Render=priorFormRenderer;
+                    await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                    await creditMvp.LoadNoticesCommand.ExecuteAsync(null); await creditMvp.LoadStatementCommand.ExecuteAsync(null);
+                    await creditMvp.PreviewStatementCommand.ExecuteAsync(null);
+                    Check(creditMvp.ReceiptPreview?.Pages.Count>0 && creditMvp.CanUsePreview,"Estado de cuenta genera PDF real y vista previa con permisos");
+                    var creditPreview=creditMvp.ReceiptPreview;
+                    await creditMvp.ExportCommand.ExecuteAsync(null);await creditMvp.PrintReceiptCommand.ExecuteAsync(null);
+                    Check(ReferenceEquals(collectionFiles.Saved,creditPreview!.Pdf)&&ReferenceEquals(collectionFiles.Printed,creditPreview),"Guardar e imprimir crédito usa el mismo documento revisado");
+                    nav.Navigate(SetupPage.Credit);
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"credito-documento-compacto-{theme}.png"));
+                    creditMvp.CloseReceiptPreviewCommand.Execute(null);creditMvp.SelectedPayment=creditMvp.Payments.FirstOrDefault();
+                    await creditMvp.PreviewPaymentCommand.ExecuteAsync(null);
+                    Check(creditMvp.ReceiptPreview?.Pdf.Length>1000,"Recibo independiente de abono tiene PDF y vista previa");
+                    creditMvp.PrintSettings.Paper="Ticket 80 mm";Check(!creditMvp.CanUsePreview,"Cambiar papel invalida el documento de crédito anterior");
+                    await creditMvp.PreviewPaymentCommand.ExecuteAsync(null);
+                    await RenderAsync(shell,1093,614,Path.Combine(output,$"credito-recibo-ticket-{theme}.png"));
+                    creditMvp.CloseReceiptPreviewCommand.Execute(null);creditMvp.PrintSettings.Paper="Carta";
+                    Check(creditMvp.IsDetailOpen && ordersMvp.IsDetailOpen && historyMvp.IsSaleDetailOpen && historyMvp.IsQuotationDetailOpen,
+                        "Volver al listado y reabrir conserva las fichas de crédito, pedidos, ventas y cotizaciones");
                     mvpDialogs.Render = async form =>
                     {
+                        if (form.Body is OrderDraftModel draft)
+                        {
+                            draft.Customer.Selected = new() { Id = 1, Name = "Cliente de prueba" };
+                            await (draft.AddressesCommand.ExecutionTask ?? Task.CompletedTask);
+                            Check(draft.ContactName == "Contacto de prueba" && draft.DeliveryAddress == "Dirección de prueba", "Seleccionar cliente precarga los datos del pedido sin copiar campos manualmente");
+                        }
                         var view = new MvpFormView(); view.Connect(form);
                         await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-dialogo-{form.PrimaryActionLabel.Replace(' ', '-')}-{theme}.png"));
                     };
+                    var openShift = cashMvp.Shift;
+                    cashMvp.Shift = null;
+                    nav.Navigate(SetupPage.Cash);
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Caja-sin-turno-{theme}.png"));
+                    await cashMvp.OpenCommand.ExecuteAsync(null);
+                    cashMvp.Shift = new() { Id = 9, CashBoxId = 1, State = "CERRADO", Opening = 50m, Expected = 75m, Counted = 70m, Difference = -5m, Opened = DateTimeOffset.Now.AddHours(-8), Closed = DateTimeOffset.Now };
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Caja-cerrada-{theme}.png"));
+                    Check(!cashMvp.HasOpenShift && !cashMvp.CanClose && !cashMvp.CanMove, "Un turno cerrado no permite movimientos ni otro cierre");
+                    cashMvp.Shift = openShift;
                     await cashMvp.MoveCommand.ExecuteAsync(null);
                     await cashMvp.CloseCommand.ExecuteAsync(null);
                     await posMvp.CheckoutCommand.ExecuteAsync(null);
                     await posMvp.SaveQuotationCommand.ExecuteAsync(null);
                     await posMvp.SelectCustomerCommand.ExecuteAsync(null);
+                    await creditMvp.RegisterNoticeCommand.ExecuteAsync(null);
                     await creditMvp.PayCommand.ExecuteAsync(null);
                     await ordersMvp.CreateCommand.ExecuteAsync(null);
                     await ordersMvp.TransitionCommand.ExecuteAsync(null);
                     await ordersMvp.LinkCommand.ExecuteAsync(null);
+                    visualInventory.HasStock = false;
+                    await inventory.OpenAsync(new() { Id = 4, Name = "Producto sin saldo de prueba", Sku = "UI-INICIAL", TracksLot = true, TracksExpiry = true });
+                    nav.Navigate(SetupPage.Products);
+                    Check(inventory.CanInitialize && !inventory.CanWrite, "El producto sin saldo ofrece existencias iniciales en lugar de exigir una versión inexistente");
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"inventario-sin-saldo-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"inventario-sin-saldo-compacto-{theme}.png"));
+                    await inventory.OpenInitialInventoryCommand.ExecuteAsync(null);
+                    visualInventory.HasStock = true;
+                    await inventory.ReloadCommand.ExecuteAsync(null);
+                    // Recorrido real de comandos Pedido → POS → cobro, con datos sintéticos.
+                    mvpDialogs.Render = async form => { form.Confirmed = true; await ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null); };
+                    await posMvp.ClearCartCommand.ExecuteAsync(null);
+                    nav.Navigate(SetupPage.Orders);
+                    await ordersMvp.OpenOrderCommand.ExecuteAsync(mvpRepository.Order.Order);
+                    var orderView = new OrdersView { DataContext = ordersMvp };
+                    orderView.Measure(new Size(1000, 620)); orderView.Arrange(new Rect(0, 0, 1000, 620)); orderView.UpdateLayout();
+                    var passToPos = FindChildren<Button>(orderView).Single(b => b.Content is string text && text == "Pasar al POS");
+                    Check(passToPos.IsEnabled && passToPos.ActualWidth == 152 && passToPos.ActualHeight == 36,
+                        "El pedido ofrece Pasar al POS como acción principal uniforme");
+                    await ((IAsyncRelayCommand)passToPos.Command).ExecuteAsync(passToPos.CommandParameter);
+                    Check(shell.IsPos && posMvp.OrderOrigin?.OrderId == 1 && posMvp.Customer.Selected?.Id == 1 && !posMvp.CanChangeCart && posMvp.CanSell,
+                        "Pasar al POS navega con cliente, productos, cálculo actual y origen protegido");
+                    await RenderAsync(shell, 1366, 768, Path.Combine(output, $"mvp-Pedido-POS-{theme}.png"));
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Pedido-POS-compacto-{theme}.png"));
+                    var writesBeforeOrder = mvpRepository.Writes.Count;
+                    mvpRepository.LoseResponse = true;
+                    mvpDialogs.Render = async form =>
+                    {
+                        var checkout = (CheckoutModel)form.Body!;
+                        var view = new MvpFormView(); view.Connect(form);
+                        await RenderDialogAsync(form, view, Path.Combine(output, $"mvp-Pedido-cobro-{theme}.png"));
+                        checkout.Payments.Add(new() { MethodId = 1, Amount = checkout.Quote.Total }); checkout.CashTendered = "150";
+                        form.Fields.Single(f => f.Key == "reason").Value = "Cobrar pedido de prueba";
+                        form.Confirmed = true; await ((IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null);
+                    };
+                    await posMvp.CheckoutCommand.ExecuteAsync(null);
+                    var combined = (ConfirmSale)mvpRepository.Writes[writesBeforeOrder];
+                    Check(posMvp.Operation.HasPending && !shell.CanCloseWorkspace && combined.Order?.OrderId == 1,
+                        "Una respuesta perdida conserva el pedido y bloquea otra venta y el cierre");
+                    mvpRepository.LoseResponse = false; await posMvp.Operation.RetryCommand.ExecuteAsync(null);
+                    Check(posMvp.HasConfirmedSale && !posMvp.Operation.HasPending && mvpRepository.Writes.Count == writesBeforeOrder + 2
+                        && ((ConfirmSale)mvpRepository.Writes[^1]).OperationId == combined.OperationId && posMvp.StatusMessage.Contains("vinculada"),
+                        "Recuperar cobro usa el mismo GUID y una única escritura que confirma y vincula");
+                    await RenderAsync(shell, 1093, 614, Path.Combine(output, $"mvp-Pedido-venta-confirmada-{theme}.png"));
+                    posMvp.NewSaleCommand.Execute(null);
+                    Check(posMvp.OrderOrigin is null && posMvp.Customer.Selected is null, "Nueva venta elimina el origen y los datos del pedido previo");
+                    posMvp.Items.Add(new(1, "UI-TEST", "Producto de prueba", 1, 0)); await posMvp.CalculateCommand.ExecuteAsync(null);
                     mvpDialogs.Render = null;
                 }
+                visualInventory.HasStock = false;
+                await inventory.ReloadCommand.ExecuteAsync(null);
+                mvpRepository.LoseResponse = true;
+                mvpDialogs.Render = async form =>
+                {
+                    foreach (var (key, value) in new[] { ("quantity", "10"), ("cost", "2.123456"), ("lot", "INICIAL-UI"), ("reason", "Carga inicial verificada") }) form.Fields.Single(f => f.Key == key).Value = value;
+                    form.Fields.Single(f => f.Key == "expires").Date = new DateTime(2030, 1, 1);
+                    form.Confirmed = true;
+                    await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)form.SaveCommand).ExecuteAsync(null);
+                };
+                await inventory.OpenInitialInventoryCommand.ExecuteAsync(null);
+                Check(shell.HasPendingMvp && !shell.CanCloseWorkspace && !shell.CanSignOut && !inventory.IsNotBusy,
+                    "Una carga inicial incierta conserva su solicitud y bloquea cierre, sesión y nuevas operaciones de inventario");
+                var initialRequest = (InitialInventory)mvpRepository.Writes.Last();
+                visualInventory.HasStock = true; mvpRepository.LoseResponse = false;
+                await initialStock.Operation.RetryCommand.ExecuteAsync(null);
+                Check(mvpRepository.Writes.OfType<InitialInventory>().All(r => r.OperationId == initialRequest.OperationId) && inventory.CanWrite && !inventory.CanInitialize && !shell.HasPendingMvp,
+                    "Reenviar la misma carga conserva OperationId y refresca existencias sin ofrecer otra inicialización");
+                mvpDialogs.Render = null;
                 Check(posMvp.Quote?.Total == emitted.Total && ordersMvp.Detail is not null && creditMvp.Payments.Count > 0, "MVP muestra cálculos, pedido y abonos de sus servicios");
                 var controlHost = new StackPanel();
                 var input = new TextBox { Text = "Prueba de edición", Width = 220 };
@@ -515,17 +1130,56 @@ internal static class Program
                 Check(input.Template.FindName("PART_ContentHost", input) is ScrollViewer && password.Template.FindName("PART_ContentHost", password) is ScrollViewer, "Los campos modernos conservan el host de texto y contraseña");
                 Check(selector.Template.FindName("PART_Popup", selector) is System.Windows.Controls.Primitives.Popup && selector.SelectedIndex == 0, "El desplegable moderno conserva popup y selección");
                 Check(FindChildren<TextBlock>(selector).Any(t => t.Text == "Caja de prueba"), "El desplegable muestra el nombre del objeto seleccionado, sin nombres internos de clases");
-                Check(action.ActualWidth >= 120 && action.ActualHeight == 36, "Las acciones compactas conservan espacio legible y altura uniforme de 36 DIP");
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36, "Las acciones comparten tamaño de 152 por 36 DIP");
+                Check(((Border)input.Template.FindName("InputSurface", input)).CornerRadius.TopLeft == 8, "Los campos siguen el radio de control de las referencias");
+                Check(((Style)appResource("StateBadge")).TargetType == typeof(Border) && ((CornerRadius)appResource("CardRadius")).TopLeft == 12, "Tarjetas y estados utilizan geometría compartida");
+                Check(new GoDental.Wpf.Converters.UsdMoneyConverter().Convert(1250m, typeof(string), null!, System.Globalization.CultureInfo.GetCultureInfo("es-SV")).Equals("$ 1,250.00"), "Los importes operativos se presentan en USD sin depender de la configuración regional");
                 password.Clear();
                 var customerForm = new CustomerEditorDialogModel(CustomerEditorKind.General, new(), null, null, null,
                     new([new() { Id = 1, Name = "Paciente" }, new() { Id = 2, Name = "Clínica" }], []), _ => Task.FromResult(false));
                 var customerEditor = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = customerForm };
                 customerEditor.Measure(new Size(1000, 700)); customerEditor.Arrange(new Rect(0, 0, 1000, 700)); customerEditor.UpdateLayout();
+                var customerEditorTabs = FindChildren<TabControl>(customerEditor).Single();
+                customerEditorTabs.SelectedIndex = 2; customerEditor.UpdateLayout();
                 var typeSelector = FindChildren<ComboBox>(customerEditor).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Tipo de cliente");
                 typeSelector.SelectedValue = 2;
                 typeSelector.GetBindingExpression(System.Windows.Controls.Primitives.Selector.SelectedValueProperty)!.UpdateSource();
                 Check(!Validation.GetHasError(typeSelector) && customerForm.BuildCustomer().TypeId == 2,
                     "Cambiar el tipo de cliente no produce error de conversión ni borde rojo");
+                customerEditorTabs.SelectedIndex = 1; customerEditor.UpdateLayout();
+                var duiInput = FindChildren<TextBox>(customerEditor).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "DUI");
+                void PasteIdentity(TextBox target, string value)
+                {
+                    var data = new DataObject(DataFormats.UnicodeText, value);
+                    target.RaiseEvent(new DataObjectPastingEventArgs(data, false, DataFormats.UnicodeText) { RoutedEvent = DataObject.PastingEvent });
+                }
+                PasteIdentity(duiInput, "123456789");
+                Check(duiInput.Text == "12345678-9" && customerForm.Customer.Dui == "12345678-9", "Pegado de DUI aplica máscara y conserva binding");
+                PasteIdentity(duiInput, "1"); Check(duiInput.Text == "12345678-9", "Captura de DUI rechaza dígitos sobrantes");
+                duiInput.SelectAll(); PasteIdentity(duiInput, "987654321");
+                Check(duiInput.Text == "98765432-1", "Seleccionar todo permite reemplazar un DUI completo");
+                var nitInput = FindChildren<TextBox>(customerEditor).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "NIT");
+                PasteIdentity(nitInput, "06140101001010");
+                Check(nitInput.Text == "0614-010100-101-0", "NIT de catorce dígitos se presenta con sus tres guiones");
+                var nitSelector = FindChildren<ComboBox>(customerEditor).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Dígitos del NIT");
+                nitSelector.SelectedItem = 9; customerEditor.UpdateLayout();
+                nitInput.SelectAll(); PasteIdentity(nitInput, "123456789");
+                Check(nitInput.Text == "12345678-9" && customerForm.NitDigits == 9, "Cambiar a DUI como NIT actualiza la máscara sin errores de binding");
+                var locationForm = new CustomerEditorDialogModel(CustomerEditorKind.Address, new(), null, null, null, new([], []), _ => Task.FromResult(false));
+                var locationView = new GoDental.Wpf.Views.Customers.CustomerEditorDialogView { DataContext = locationForm };
+                locationView.Measure(new Size(1000,700)); locationView.Arrange(new Rect(0,0,1000,700)); locationView.UpdateLayout();
+                ComboBox LocationBox(string name) => FindChildren<ComboBox>(locationView).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == name);
+                LocationBox("Departamento").SelectedItem = "San Salvador"; locationView.UpdateLayout();
+                LocationBox("Municipio").SelectedItem = "San Salvador Centro"; locationView.UpdateLayout();
+                LocationBox("Distrito").SelectedItem = "Mejicanos"; locationView.UpdateLayout();
+                Check(locationForm.PrepareFields() && locationForm.Address.District == "Mejicanos", "Selectores reales guardan departamento, municipio actual y distrito opcional");
+                LocationBox("Departamento").SelectedItem = "La Libertad"; locationView.UpdateLayout();
+                Check(locationForm.Location.Municipality == AddressSelectionModel.Unspecified && locationForm.Location.District == AddressSelectionModel.Unspecified,
+                    "Cambiar departamento limpia municipio y distrito en la vista");
+                var phoneControl = new GoDental.Wpf.Controls.PhoneInput { Region = "CN", Text = "13800138000" };
+                Check(phoneControl.Hint.Contains("China") && !phoneControl.Text.StartsWith("+"), "Teléfono nacional chino se reconoce sin forzar prefijo");
+                phoneControl.Text = "+50370000001";
+                Check(phoneControl.Hint.Contains("El Salvador"), "Código explícito identifica teléfono de otro país");
                 session.Clear();
                 var loginWindow = new LoginWindow(shell) { ShowActivated = false };
                 var workspaceWindow = new MainWindow(shell) { ShowActivated = false };
@@ -560,10 +1214,10 @@ internal static class Program
             await VerifyShutdownProcessesAsync();
             Console.WriteLine($"{passed} comprobaciones correctas.");
         }
-        finally { Directory.Delete(temporaryFolder, recursive: true); }
+        finally { if (shutdownProbe != "--shutdown-pending") Directory.Delete(temporaryFolder, recursive: true); }
     }
 
-    private static async Task StartShutdownProbeAsync(ShellViewModel shell, ISessionController session)
+    private static async Task StartShutdownProbeAsync(ShellViewModel shell, ISessionController session, string temporaryFolder)
     {
         var app = System.Windows.Application.Current;
         var login = new LoginWindow(shell);
@@ -575,13 +1229,26 @@ internal static class Program
         app.Exit += (_, _) =>
         {
             shutdownVerified = service.Stopped && service.Disposed && !login.IsVisible && !workspace.IsVisible;
+            if (shutdownProbe == "--shutdown-pending")
+            {
+                var journal = Path.Combine(temporaryFolder, "pending-operations.json");
+                shutdownVerified &= File.Exists(journal) && System.Text.Json.JsonSerializer.Deserialize<List<PendingOperation>>(File.ReadAllText(journal))?.Count == 1;
+                Directory.Delete(temporaryFolder, recursive: true);
+            }
             coordinator.Dispose();
         };
         coordinator.Start();
-        if (shutdownProbe == "--shutdown-workspace")
-            session.Begin(new(1, "probe", "Cuenta de prueba", 1, [], [ProductService.ReadPermission], false));
+        if (shutdownProbe is "--shutdown-workspace" or "--shutdown-pending")
+            session.Begin(new(1, "probe", "Cuenta de prueba", 1, [], [ProductService.ReadPermission], false, "smoke|isolated"));
+        if (shutdownProbe == "--shutdown-pending")
+        {
+            var request = new OpenCashShift(Guid.NewGuid(), 1, 10, "Salida con diario aislado");
+            await shell.Pos.Operation.StartAsync(request, request.OperationId, _ => throw new IOException("Respuesta perdida de prueba"), _ => Task.CompletedTask);
+            if (shell.PendingOperations?.ReloadCommand.ExecutionTask is { } loading) await loading;
+            Check(shell.HasPendingMvp && shell.CanCloseWorkspace, "Un pendiente durable permite cerrar el espacio de trabajo sin perder el diario");
+        }
         await app.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-        var active = shutdownProbe == "--shutdown-workspace" ? (Window)workspace : login;
+        var active = shutdownProbe is "--shutdown-workspace" or "--shutdown-pending" ? (Window)workspace : login;
         Check(active.IsVisible, "La ventana de la prueba de cierre está visible");
         // El seguimiento del coordinador debe resistir un MainWindow obsoleto.
         app.MainWindow = ReferenceEquals(active, workspace) ? login : workspace;
@@ -604,7 +1271,7 @@ internal static class Program
 
     private static async Task VerifyShutdownProcessesAsync()
     {
-        foreach (var mode in new[] { "--shutdown-login", "--shutdown-workspace" })
+        foreach (var mode in new[] { "--shutdown-login", "--shutdown-workspace", "--shutdown-pending" })
         {
             var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
             start.ArgumentList.Add(typeof(Program).Assembly.Location);
@@ -634,6 +1301,86 @@ internal static class Program
             window.Show();
             await window.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             window.UpdateLayout();
+            if (model is MvpFormModel operationForm)
+            {
+                var footer = FindChildren<MvpFormFooterView>(window).Single();
+                var confirmation = FindChildren<CheckBox>(footer).Single();
+                var scroll = (ScrollViewer)window.Template.FindName("DialogBodyScroll", window);
+                Rect Bounds(FrameworkElement element) => element.TransformToAncestor(window).TransformBounds(new Rect(element.RenderSize));
+                void CheckFooter()
+                {
+                    var action = FindChildren<Button>(window).Single(b => b.Content is string text && text == model.PrimaryActionLabel);
+                    Check(Bounds(confirmation).Top >= 0 && Bounds(confirmation).Bottom <= window.ActualHeight
+                        && action.ActualWidth == 152 && action.ActualHeight == 36 && Bounds(action).Bottom <= window.ActualHeight,
+                        "Confirmación y acción permanecen visibles en el pie fijo: " + model.Title);
+                    var original = Bounds(confirmation); scroll.ScrollToEnd(); window.UpdateLayout();
+                    Check(Bounds(confirmation) == original, "Desplazar el formulario no oculta la confirmación: " + model.Title);
+                    scroll.ScrollToTop(); window.UpdateLayout();
+                }
+                CheckFooter();
+                if (operationForm.Body is CheckoutModel)
+                {
+                    var confirmed = operationForm.Confirmed; var previousStatus = operationForm.StatusMessage;
+                    operationForm.Confirmed = false; await ((IAsyncRelayCommand)operationForm.SaveCommand).ExecuteAsync(null);
+                    window.UpdateLayout();
+                    var message = FindChildren<TextBlock>(footer).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "Resultado de la confirmación");
+                    Check(message.Text.Contains("Marca la confirmación") && Bounds(message).Bottom <= window.ActualHeight,
+                        "Confirmar sin marcar la casilla muestra el motivo junto al botón, sin buscarlo con scroll");
+                    operationForm.Confirmed = confirmed; operationForm.StatusMessage = previousStatus;
+                    var cash = FindChildren<TextBox>(body).Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "Efectivo recibido");
+                    var payments = FindChildren<DataGrid>(body).Single();
+                    Check(Bounds(cash).Top < Bounds(payments).Top, "El efectivo recibido se pide antes de la tabla de pagos");
+                    var originalWidth = window.Width; var originalHeight = window.Height;
+                    window.Width = 780; window.Height = 540; window.UpdateLayout(); CheckFooter();
+                    window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
+                }
+            }
+            if (model is SupplierEditorDialogModel or CustomerEditorDialogModel or UserDialogModel)
+            {
+                void CheckDirectoryDialog()
+                {
+                    if (model.ShowPrimaryAction)
+                    {
+                        var action = FindChildren<Button>(window).Single(button => button.Content is string text && text == model.PrimaryActionLabel);
+                        var bounds = action.TransformToAncestor(window).TransformBounds(new Rect(action.RenderSize));
+                        Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Right <= window.ActualWidth && bounds.Bottom <= window.ActualHeight,
+                            $"La acción de {model.Title} permanece visible en {window.ActualWidth:0}×{window.ActualHeight:0}");
+                    }
+                    var reason = FindChildren<TextBox>(body).FirstOrDefault(input => System.Windows.Automation.AutomationProperties.GetName(input).StartsWith("Motivo del cambio", StringComparison.Ordinal));
+                    if (reason is not null)
+                    {
+                        var bounds = reason.TransformToAncestor(window).TransformBounds(new Rect(reason.RenderSize));
+                        Check(bounds.Left >= 0 && bounds.Right <= window.ActualWidth && reason.AcceptsReturn, "El motivo se adapta al ancho del formulario y permite varias líneas");
+                    }
+                }
+                CheckDirectoryDialog();
+                var originalWidth = window.Width; var originalHeight = window.Height;
+                window.Width = 780; window.Height = 540; window.UpdateLayout(); CheckDirectoryDialog();
+                window.Width = originalWidth; window.Height = originalHeight; window.UpdateLayout();
+                if (model is SupplierEditorDialogModel { IsNewProduct: true })
+                    Check(FindChildren<GoDental.Wpf.Views.Shared.ProductPickerView>(body).Single().IsVisible,
+                        "Vincular un producto nuevo muestra el buscador real del catálogo");
+                if (body is UserManageDialogView)
+                {
+                    var action = FindChildren<Button>(body).Single(button => IsLayoutVisible(button) && button.Content is "Cambiar estado" or "Restablecer clave");
+                    Check(action.ActualWidth == 152 && action.ActualHeight == 36, "Las acciones de administración de cuentas tienen tamaño uniforme");
+                }
+            }
+            if (model is MvpFormModel { Body: OrderDraftModel draft })
+            {
+                FindChildren<TabControl>(body).Single().SelectedIndex = 1; window.UpdateLayout();
+                Check(FindChildren<TextBox>(body).Any(input => System.Windows.Automation.AutomationProperties.GetName(input) == "Contacto de entrega" && input.Text == draft.ContactName),
+                    "Datos de entrega muestra el contacto precargado en el campo editable");
+            }
+            if (model is MvpFormModel { Body: CheckoutModel checkout })
+            {
+                var methods = FindChildren<ListBox>(body).Single(box => ReferenceEquals(box.ItemsSource, checkout.Methods));
+                var previous = checkout.Method;
+                methods.SelectedItem = checkout.Methods.LastOrDefault();
+                Check(ReferenceEquals(checkout.Method, methods.SelectedItem), "Los mosaicos de cobro seleccionan el método real sin registrar pagos");
+                Check(checkout.Payments.Count == 0, "Seleccionar un método de cobro no agrega ni confirma un pago");
+                methods.SelectedItem = previous;
+            }
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window);
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -676,15 +1423,72 @@ internal static class Program
         public Func<MvpFormModel, Task>? Render { get; set; }
         public async Task<bool> ShowAsync(MvpFormModel form) { if (Render is not null) await Render(form); return false; }
     }
-    private sealed class VisualPdfFiles : IPdfFileService
+    private sealed class VisualPdfFiles : IPdfFileService, IPdfPrintService
     {
-        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) => Task.FromResult(false);
+        public byte[]? Saved { get; private set; }
+        public ReceiptDocument? Printed { get; private set; }
+        public Task<bool> SaveAsync(byte[] pdf, string suggestedName) { Saved = pdf; return Task.FromResult(false); }
+        public Task<bool> PrintAsync(ReceiptDocument document, string name) { Printed = document; return Task.FromResult(false); }
     }
 
     private sealed class FakeSettingsWindowService : ISettingsWindowService
     {
         public int OpenCount { get; private set; }
         public void Show() => OpenCount++;
+    }
+
+    private static async Task VerifyPasswordEntryAsync()
+    {
+        var entry = new GoDental.Wpf.Controls.PasswordEntry { Label = "Contraseña de prueba" };
+        var masked = (PasswordBox)entry.FindName("MaskedInput");
+        var visible = (TextBox)entry.FindName("VisibleInput");
+        var reveal = (Button)entry.FindName("RevealButton");
+        masked.Password = "frase sintética";
+        Check(!entry.IsRevealed && visible.Text.Length == 0, "La contraseña inicia enmascarada sin copia en el campo visible");
+        reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(entry.IsRevealed && visible.Text == entry.Password, "Mostrar contraseña revela sólo el valor del control visual");
+        visible.Text = "frase sintética editada";
+        reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(entry.Password == "frase sintética editada" && visible.Text.Length == 0 && !visible.CanUndo, "Ocultar conserva la edición y elimina el texto visible y su historial");
+        Check(entry.ReadAndClear() == "frase sintética editada" && entry.Password.Length == 0 && !entry.IsRevealed, "Leer para enviar vacía los controles y vuelve a enmascarar");
+        masked.Password = "otra frase sintética"; reveal.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); entry.IsEnabled = false;
+        Check(entry.Password.Length == 0 && visible.Text.Length == 0 && !entry.IsRevealed, "Deshabilitar el campo limpia ambas representaciones de la contraseña");
+        entry.IsEnabled = true; masked.Password = "sintética sin persistir"; entry.DataContext = new object();
+        Check(entry.Password.Length == 0, "Cambiar contexto no conserva contraseñas de la identidad anterior");
+
+        var pending = new TaskCompletionSource<GoDental.Application.Common.Result<UserIdentity>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var model = new AccessViewModel(new FakeIdentityGateway { PendingAccess = pending.Task }, new UserSession(), NullLogger<AccessViewModel>.Instance) { UserName = "prueba", DisplayName = "Persona sintética" };
+        await model.PrepareCommand.ExecuteAsync(null);
+        var view = new AccessView { DataContext = model }; view.Measure(new Size(520, 900)); view.Arrange(new Rect(0, 0, 520, 900)); view.UpdateLayout();
+        await view.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.DataBind);
+        var password = (GoDental.Wpf.Controls.PasswordEntry)view.FindName("PasswordInput");
+        var confirmation = (GoDental.Wpf.Controls.PasswordEntry)view.FindName("ConfirmationInput");
+        ((PasswordBox)password.FindName("MaskedInput")).Password = "frase sintética";
+        ((PasswordBox)confirmation.FindName("MaskedInput")).Password = "frase sintética";
+        ((Button)password.FindName("RevealButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        FindChildren<Button>(view).Single(b => b.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(model.IsSubmitting && password.Password.Length == 0 && confirmation.Password.Length == 0 && !password.IsRevealed, "El acceso limpia y oculta las claves antes de esperar la respuesta del gateway");
+        pending.SetResult(GoDental.Application.Common.Result<UserIdentity>.Failure("TEST", "Intento sintético rechazado."));
+        await view.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        Check(!model.IsSubmitting && password.Password.Length == 0, "Un acceso rechazado permite reintentar con los campos vacíos");
+        ((PasswordBox)password.FindName("MaskedInput")).Password = "otra sintética"; model.MustChangePassword = true;
+        Check(password.Password.Length == 0, "Cambiar al formulario de actualización no conserva la contraseña de acceso");
+        view.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+    }
+
+    private static async Task RenderCommerceTabsAsync(ShellViewModel shell, Type viewType, string page, string theme, string output, double width = 1366, double height = 768)
+    {
+        var count = 1;
+        for (var index = 0; index < count; index++)
+        {
+            var window = new MainWindow(shell) { Width = width, Height = height, ShowActivated = false };
+            var root = (FrameworkElement)window.Content;
+            root.Measure(new Size(width, height)); root.Arrange(new Rect(0, 0, width, height)); root.UpdateLayout();
+            var view = FindChildren<UserControl>(root).Single(control => control.GetType() == viewType);
+            var tabs = FindChildren<TabControl>(view).Single();
+            count = tabs.Items.Count; tabs.SelectedIndex = index;
+            await RenderWindowAsync(window, Path.Combine(output, $"mvp-{page}-pestana-{index}-{theme}.png"));
+        }
     }
 
     private static async Task RenderInventoryAsync(InventoryViewModel model,int tab,string theme,string output)
@@ -703,7 +1507,7 @@ internal static class Program
         FindTabs(view)!.SelectedIndex=tab;
         await Dispatcher.CurrentDispatcher.InvokeAsync(()=>{},DispatcherPriority.ApplicationIdle);
         view.Measure(new Size(1080,760));view.Arrange(new Rect(0,0,1080,760));view.UpdateLayout();
-        if (theme == "Dark" && tab == 2)
+        if (theme == "Dark" && tab == 3)
         {
             var picker = Descendant<DatePicker>(view)!;
             var popup = (System.Windows.Controls.Primitives.Popup)picker.Template.FindName("PART_Popup", picker);
@@ -737,10 +1541,26 @@ internal static class Program
         }
     }
 
+    // El árbol se renderiza fuera de Window: IsVisible sería falso para todos.
+    // ActualWidth puede conservar medidas de un panel que después se colapsó.
+    private static bool IsLayoutVisible(DependencyObject element)
+    {
+        for (DependencyObject? current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (current is UIElement { Visibility: not Visibility.Visible }) return false;
+        return true;
+    }
+
     private static Task RenderAsync(ShellViewModel shell, double width, double height, string path) =>
         RenderWindowAsync(new MainWindow(shell) { Width = width, Height = height, ShowActivated = false }, path);
 
-    private static async Task RenderWindowAsync(Window window, string path)
+    private static void SavePreview(FrameworkElement root, string path)
+    {
+        var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(root); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(path); encoder.Save(stream);
+    }
+
+    private static async Task RenderWindowAsync(Window window, string path, int? settingsTab = null)
     {
         var width = window.Width;
         var height = window.Height;
@@ -760,12 +1580,184 @@ internal static class Program
             root.Measure(new Size(width, height));
             root.Arrange(new Rect(0, 0, width, height));
             root.UpdateLayout();
-            if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1280 && height >= 768)
+            if (settingsTab is not null)
             {
-                var checkout = FindChildren<Button>(root).Single(button => button.Content is string caption && caption == "Cobrar");
+                FindChildren<TabControl>(root).Single().SelectedIndex = settingsTab.Value;
+                root.UpdateLayout();
+            }
+            if (window is LoginWindow)
+            {
+                Check(FindChildren<Image>(root).Any(image => image.Source is BitmapSource { PixelWidth: > 0 }), $"El acceso muestra el logo en {width}×{height}");
+                var submit = FindChildren<Button>(root).Single(button => button.IsDefault);
+                var bounds = submit.TransformToAncestor(root).TransformBounds(new Rect(submit.RenderSize));
+                Check(submit.ActualHeight == 44 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción de acceso admite Enter y cabe en {width}×{height}");
+            }
+            if (window is SettingsWindow)
+            {
+                var tabs = FindChildren<TabControl>(root).Single();
+                if (tabs.SelectedIndex == 0)
+                {
+                    var save = FindChildren<Button>(root).Single(button => button.Content is string text && text == "Guardar conexión");
+                    var bounds = save.TransformToAncestor(root).TransformBounds(new Rect(save.RenderSize));
+                    Check(save.ActualWidth == 152 && save.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width,
+                        $"Guardar conexión conserva su tamaño y cabe en Ajustes de {width}×{height}");
+                    Check(!FindChildren<Expander>(root).Single().IsExpanded, "Las opciones de desarrollo empiezan contraídas");
+                }
+                else if (tabs.SelectedIndex == 1)
+                    Check(FindChildren<Button>(root).Count(button => button.CommandParameter is "Light" or "Dark" && button.ActualWidth == 180) == 2,
+                        $"Apariencia muestra las dos opciones de tema en {width}×{height}");
+                else
+                {
+                    var commercial = FindChildren<CommercialParametersView>(root).Single();
+                    var edit = FindChildren<Button>(commercial).Single(b => b.Content is "Editar parámetros");
+                    var bounds = edit.TransformToAncestor(root).TransformBounds(new Rect(edit.RenderSize));
+                    Check(edit.IsEnabled && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height, $"Parámetros comerciales carga valores y acción visible en {width}×{height}");
+                }
+            }
+            if (root.DataContext is ShellViewModel { IsHome: true } homeShell && homeShell.Access.IsAuthenticated)
+            {
+                var view = FindChildren<GoDental.Wpf.Views.Home.HomeView>(root).Single();
+                var indicators = FindChildren<ItemsControl>(view).Single(control => ReferenceEquals(control.ItemsSource, homeShell.Home.Metrics));
+                var surfaces = FindChildren<Border>(indicators).Where(border => ReferenceEquals(border.Style, view.FindResource("HomeMetricSurface"))).ToArray();
+                Check(surfaces.Length == homeShell.Home.Metrics.Count && surfaces.All(border =>
+                {
+                    var bounds = border.TransformToAncestor(root).TransformBounds(new Rect(border.RenderSize));
+                    return bounds.Left >= 0 && bounds.Right <= width;
+                }), $"Los indicadores autorizados de Inicio caben en {width}×{height}");
+                if (surfaces.Length > 1)
+                    Check(surfaces.Max(border => border.ActualHeight) - surfaces.Min(border => border.ActualHeight) < 1,
+                        "Los indicadores de Inicio mantienen la misma altura");
+                var activity = (System.Windows.Controls.Primitives.UniformGrid)view.FindName("ActivityPanels");
+                if (homeShell.Home.CanReadSales)
+                {
+                    Check(activity.Columns == (activity.ActualWidth < 900 ? 1 : 2), $"La actividad de Inicio adapta sus columnas en {width}×{height}");
+                    if (width >= 1366 && height >= 768 && !homeShell.HasPendingMvp)
+                    {
+                        var bounds = activity.TransformToAncestor(root).TransformBounds(new Rect(activity.RenderSize));
+                        Check(bounds.Bottom <= height - 58,
+                            $"Los paneles completos de Inicio caben en {width}×{height}; borde inferior {bounds.Bottom:0}");
+                    }
+                }
+                if (homeShell.CanOpenPos)
+                {
+                    var posAction = FindChildren<Button>(view).Single(button => button.Content is "Ir al POS");
+                    var bounds = posAction.TransformToAncestor(root).TransformBounds(new Rect(posAction.RenderSize));
+                    Check(posAction.ActualWidth == 152 && posAction.ActualHeight == 36 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                        $"Ir al POS permanece visible y uniforme en Inicio de {width}×{height}");
+                }
+                var actions = FindChildren<Button>(view).Where(button => ReferenceEquals(button.Style, view.FindResource("HomeQuickAction")) && IsLayoutVisible(button));
+                Check(actions.All(button => button.ActualWidth == 152 && button.ActualHeight == 36), "Los accesos rápidos de Inicio comparten tamaño");
+                var progress = FindChildren<ProgressBar>(root).Single(bar => bar.Name == "WorkspaceLoading");
+                Check((progress.Visibility == Visibility.Visible) == homeShell.Home.IsBusy, "Inicio refleja el estado real de carga");
+                if (!homeShell.Home.CanReadSales)
+                    Check(activity.Visibility == Visibility.Collapsed && homeShell.Home.RecentSales.Count == 0, "Inicio oculta la actividad comercial sin permiso");
+                if (!homeShell.Home.IsBusy && homeShell.Home.CanReadSales && homeShell.Home.RecentSales.Count == 0)
+                    Check(FindChildren<TextBlock>(view).Any(text => text.Text == homeShell.Home.SalesMessage && IsLayoutVisible(text)),
+                        "Inicio muestra el motivo de una actividad vacía o no disponible");
+            }
+            if (root.DataContext is ShellViewModel { IsPos: true } && width >= 1093 && height >= 614)
+            {
+                var pos = ((ShellViewModel)root.DataContext).Pos;
+                var catalog = FindChildren<ListBox>(root).FirstOrDefault(box => ReferenceEquals(box.ItemsSource, pos.Products));
+                if (pos.CanChangeCart && catalog is { Items.Count: > 0 })
+                {
+                    catalog.SelectedIndex = 0;
+                    Check(ReferenceEquals(pos.Product, catalog.SelectedItem) && pos.CanAddProduct, "Las tarjetas del catálogo conservan selección y habilitan la acción de carrito");
+                    var add = FindChildren<Button>(root).Single(button => button.Content is string text && text == "Agregar al carrito");
+                    var addBounds = add.TransformToAncestor(root).TransformBounds(new Rect(add.RenderSize));
+                    Check(add.ActualWidth == 152 && add.ActualHeight == 36 && addBounds.Bottom <= height - 32 && addBounds.Right <= width,
+                        $"Agregar al carrito permanece visible en {width}×{height}");
+                }
+                var caption = pos.HasConfirmedSale ? "Nueva venta" : "Cobrar";
+                var checkout = FindChildren<Button>(root).Single(button => button.Content is string text && text == caption);
                 var bounds = checkout.TransformToAncestor(root).TransformBounds(new Rect(checkout.RenderSize));
-                Check(bounds.Bottom <= height - 56 && bounds.Right <= width,
-                    "El botón Cobrar permanece visible junto al catálogo y al carrito a 1366×768");
+                Check(checkout.ActualWidth == 152 && checkout.ActualHeight == 36 && bounds.Bottom <= height - 32 && bounds.Right <= width,
+                    $"La acción {caption} permanece visible con tamaño uniforme en {width}×{height}; borde inferior {bounds.Bottom:0}");
+            }
+            if (root.DataContext is ShellViewModel commerceShell && (commerceShell.IsCash || commerceShell.IsCredit || commerceShell.IsOrders || commerceShell.IsSales || commerceShell.IsQuotations))
+            {
+                var caption = commerceShell.IsCash ? (commerceShell.Cash.HasOpenShift ? "Cerrar caja" : "Abrir caja")
+                    : commerceShell.IsCredit ? "Registrar abono"
+                    : commerceShell.IsOrders ? (commerceShell.Orders.IsDetailOpen ? "Pasar al POS" : "Nuevo pedido")
+                    : commerceShell.IsSales ? (commerceShell.CommercialHistory.IsReceiptPreviewOpen ? "Imprimir" : commerceShell.CommercialHistory.IsSaleDetailOpen ? "Guardar PDF" : "Actualizar")
+                    : commerceShell.CommercialHistory.IsQuotationDetailOpen ? "Llevar al POS" : "Actualizar";
+                var action = FindChildren<Button>(root).Single(b => b.Content is string text && text == caption && b.ActualWidth > 0 && IsLayoutVisible(b));
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                    $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
+                if (commerceShell.IsSales && commerceShell.CommercialHistory.IsReceiptPreviewOpen)
+                {
+                    var preview = FindChildren<ReceiptPreviewView>(root).Single();
+                    Check(FindChildren<Image>(preview).Single().Source is not null, "La vista previa muestra la imagen real de la página, sin navegador externo");
+                    var save = FindChildren<Button>(preview).Single(b => b.Content is string text && text == "Guardar PDF");
+                    var saveBounds = save.TransformToAncestor(root).TransformBounds(new Rect(save.RenderSize));
+                    Check(save.ActualWidth == 152 && saveBounds.Right <= width && saveBounds.Bottom <= height - 32, "Guardar PDF e Imprimir permanecen visibles en la vista previa compacta");
+                }
+            }
+            if (root.DataContext is ShellViewModel { IsProducts: true } productShell && productShell.Products.CanManage)
+            {
+                var productsView = FindChildren<ProductsView>(root).Single();
+                var caption = productShell.Products.Inventory?.IsOpen == true ? "Registrar movimiento" : "Nuevo producto";
+                var action = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción de Productos/Inventario cabe en {width}×{height} con tamaño uniforme");
+                if (productShell.Products.Inventory is { IsOpen: true, CanAdjust: true })
+                {
+                    var initial = FindChildren<Button>(productsView).Single(b => b.Content is string text && text == "Existencias iniciales");
+                    var initialBounds = initial.TransformToAncestor(root).TransformBounds(new Rect(initial.RenderSize));
+                    Check(IsLayoutVisible(initial) && initial.ActualWidth == 152 && initial.ActualHeight == 36 && initialBounds.Right <= width && initialBounds.Bottom <= height
+                        && initial.IsEnabled == productShell.Products.Inventory.CanInitialize
+                        && !string.IsNullOrWhiteSpace(productShell.Products.Inventory.InitialInventoryHint),
+                        $"Existencias iniciales permanece visible y explica cuándo se puede usar en {width}×{height}");
+                }
+            }
+            if (root.DataContext is ShellViewModel { IsSuppliers: true } supplierShell)
+            {
+                var view = FindChildren<GoDental.Wpf.Views.Suppliers.SuppliersView>(root).Single();
+                if (supplierShell.Suppliers.CanManage)
+                {
+                    var caption = supplierShell.Suppliers.IsDetailOpen ? "Editar proveedor" : "Nuevo proveedor";
+                    var action = FindChildren<Button>(view).Single(button => button.Content is string text && text == caption);
+                    var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                    Check(IsLayoutVisible(action) && action.ActualWidth == 152 && action.ActualHeight == 36
+                        && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                        $"La acción {caption} cabe en {width}×{height} con tamaño uniforme");
+                }
+                var productGrid = FindChildren<DataGrid>(view).FirstOrDefault(grid => ReferenceEquals(grid.ItemsSource, supplierShell.Suppliers.References) && IsLayoutVisible(grid));
+                if (productGrid is not null && productGrid.Items.Count > 0 && !supplierShell.Suppliers.CanManage)
+                    Check(FindChildren<TextBlock>(productGrid).Any(text => text.Text == "Restringido" && IsLayoutVisible(text))
+                        && !FindChildren<TextBlock>(productGrid).Any(text => text.Text == "1.123456" && IsLayoutVisible(text)),
+                        "Un lector de Proveedores ve el costo restringido, sin exponer su importe");
+                Check(!FindChildren<TextBlock>(view).Any(text => IsLayoutVisible(text) && text.Text is "True" or "False"), "Proveedores presenta Sí/No y estados legibles");
+            }
+            if (root.DataContext is ShellViewModel { IsUsers: true } userShell && userShell.Users.CanManage)
+            {
+                var view = FindChildren<UsersView>(root).Single();
+                var create = FindChildren<Button>(view).Single(button => button.Content is string text && text == "Crear cuenta");
+                var bounds = create.TransformToAncestor(root).TransformBounds(new Rect(create.RenderSize));
+                Check(create.ActualWidth == 152 && create.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height - 32,
+                    $"Crear cuenta mantiene tamaño y posición visible en {width}×{height}");
+                Check(!FindChildren<TextBlock>(view).Any(text => IsLayoutVisible(text) && text.Text is "True" or "False"), "Usuarios muestra el cambio de clave como Sí/No");
+            }
+            if (root.DataContext is ShellViewModel { IsCounts: true } countShell)
+            {
+                var countView = FindChildren<GoDental.Wpf.Views.Inventory.InventoryCountsView>(root).Single();
+                var caption = countShell.Counts.IsDetailOpen ? "Guardar cantidades" : "Abrir conteo";
+                var action = FindChildren<Button>(countView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Left >= 0 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción principal de Conteos cabe en {width}×{height}");
+            }
+            if (root.DataContext is ShellViewModel { IsCustomers: true } customerShell)
+            {
+                var customersView = FindChildren<GoDental.Wpf.Views.Customers.CustomersView>(root).Single();
+                var caption = customerShell.Customers.IsDetailOpen ? "Editar cliente" : "Nuevo cliente";
+                var action = FindChildren<Button>(customersView).Single(b => b.Content is string text && text == caption);
+                var bounds = action.TransformToAncestor(root).TransformBounds(new Rect(action.RenderSize));
+                Check(action.ActualWidth == 152 && action.ActualHeight == 36 && bounds.Right <= width && bounds.Bottom <= height,
+                    $"La acción principal de Clientes cabe en {width}×{height} con tamaño uniforme");
             }
             var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(root);

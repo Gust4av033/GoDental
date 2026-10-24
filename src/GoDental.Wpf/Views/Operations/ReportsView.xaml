@@ -1,0 +1,61 @@
+<UserControl x:Class="GoDental.Wpf.Views.Operations.ReportsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Operations">
+<UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+<StackPanel><TextBlock Text="Reportes operativos" Style="{StaticResource Heading}"/><TextBlock Text="Ventas y compensaciones por fecha local. Inventario actual y compras recibidas. Importes en USD." Style="{StaticResource MutedText}"/>
+<ProgressBar Style="{StaticResource InlineLoadingIndicator}" Height="3" IsIndeterminate="True"/>
+<WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,12,0,12">
+<StackPanel Width="210" Margin="0,0,8,8"><TextBlock Text="Reporte" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de reporte"/></StackPanel>
+<StackPanel Width="145" Margin="0,0,8,8"><TextBlock Text="Desde (El Salvador)" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding From}" AutomationProperties.Name="Fecha inicial del reporte"/></StackPanel>
+<StackPanel Width="145" Margin="0,0,8,8"><TextBlock Text="Hasta (inclusivo)" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding To}" AutomationProperties.Name="Fecha final del reporte"/></StackPanel>
+<StackPanel Width="170" Margin="0,0,8,8" Visibility="{Binding IsSales, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="Agrupar ventas por" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Groups}" SelectedItem="{Binding Grouping}" DisplayMemberPath="Name" AutomationProperties.Name="Agrupación de ventas"/></StackPanel>
+<Button Content="Consultar reporte" Command="{Binding ReloadCommand}" Style="{StaticResource PrimaryActionButton}" VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+</WrapPanel><TextBlock Text="{Binding Summary}" Style="{StaticResource SectionHeading}" TextWrapping="Wrap"/><TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,12"/>
+<DataGrid ItemsSource="{Binding Rows}" Visibility="{Binding IsSales, Converter={StaticResource BoolToVisibility}}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" AutomationProperties.Name="Reporte IsSales"><DataGrid.Columns>
+<DataGridTextColumn Header="Grupo" Binding="{Binding GroupLabel}" Width="210"/>
+<DataGridTextColumn Header="Unidades netas" Binding="{Binding Quantity}" Width="105"/>
+<DataGridTextColumn Header="Total USD" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="110"/>
+<DataGridTextColumn Header="Mercadería sin impuesto" Binding="{Binding Net, Converter={StaticResource UsdMoney}}" Width="150"/>
+<DataGridTextColumn Header="Impuesto" Binding="{Binding Tax, Converter={StaticResource UsdMoney}}" Width="100"/>
+<DataGridTextColumn Header="Entrega" Binding="{Binding Delivery, Converter={StaticResource UsdMoney}}" Width="100"/>
+<DataGridTextColumn Header="Costo histórico" Binding="{Binding Cost, Converter={StaticResource UsdMoney}}" Width="115"/>
+<DataGridTextColumn Header="Margen bruto" Binding="{Binding Margin, Converter={StaticResource UsdMoney}}" Width="115"/>
+</DataGrid.Columns></DataGrid>
+<DataGrid ItemsSource="{Binding Rows}" Visibility="{Binding IsInventory, Converter={StaticResource BoolToVisibility}}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" AutomationProperties.Name="Reporte IsInventory"><DataGrid.Columns>
+<DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="220"/>
+<DataGridTextColumn Header="Almacén" Binding="{Binding Warehouse}" Width="130"/>
+<DataGridTextColumn Header="Físico" Binding="{Binding Stock}" Width="90"/>
+<DataGridTextColumn Header="Reservado" Binding="{Binding Reserved}" Width="90"/>
+<DataGridTextColumn Header="Vendible" Binding="{Binding Sellable}" Width="90"/>
+<DataGridTextColumn Header="Mínimo" Binding="{Binding Minimum}" Width="85"/>
+<DataGridTextColumn Header="Custodia" Binding="{Binding InRoute}" Width="90"/>
+<DataGridTextColumn Header="Valor bodega" Binding="{Binding Value, Converter={StaticResource UsdMoney}}" Width="110"/>
+<DataGridTextColumn Header="Valor custodia" Binding="{Binding RouteValue, Converter={StaticResource UsdMoney}}" Width="110"/>
+<DataGridTextColumn Header="Aviso" Binding="{Binding Note}" Width="180"/>
+</DataGrid.Columns></DataGrid>
+<DataGrid ItemsSource="{Binding Rows}" Visibility="{Binding IsExpiry, Converter={StaticResource BoolToVisibility}}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" AutomationProperties.Name="Reporte IsExpiry"><DataGrid.Columns>
+<DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="220"/>
+<DataGridTextColumn Header="Almacén" Binding="{Binding Warehouse}" Width="130"/>
+<DataGridTextColumn Header="Lote" Binding="{Binding Lot}" Width="130"/>
+<DataGridTextColumn Header="Vence" Binding="{Binding Expires, StringFormat=dd/MM/yyyy}" Width="100"/>
+<DataGridTextColumn Header="Unidades" Binding="{Binding Quantity}" Width="90"/>
+<DataGridTextColumn Header="Aviso" Binding="{Binding Note}" Width="230"/>
+</DataGrid.Columns></DataGrid>
+<DataGrid ItemsSource="{Binding Rows}" Visibility="{Binding IsPurchases, Converter={StaticResource BoolToVisibility}}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" AutomationProperties.Name="Reporte IsPurchases"><DataGrid.Columns>
+<DataGridTextColumn Header="Recepción" Binding="{Binding Document}" Width="130"/>
+<DataGridTextColumn Header="Fecha" Binding="{Binding LocalDate, StringFormat=dd/MM/yyyy}" Width="100"/>
+<DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="180"/>
+<DataGridTextColumn Header="Proveedor" Binding="{Binding Party}" Width="170"/>
+<DataGridTextColumn Header="Unidades" Binding="{Binding Quantity}" Width="90"/>
+<DataGridTextColumn Header="Mercadería USD" Binding="{Binding Cost, Converter={StaticResource UsdMoney}}" Width="120"/>
+<DataGridTextColumn Header="Gastos USD" Binding="{Binding Freight, Converter={StaticResource UsdMoney}}" Width="110"/>
+<DataGridTextColumn Header="Puesto bodega USD" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="130"/>
+<DataGridTextColumn Header="Constancia" Binding="{Binding Note}" Width="230"/>
+</DataGrid.Columns></DataGrid>
+<TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" Margin="0,8,0,0"/><WrapPanel IsEnabled="{Binding IsNotBusy}"><Button Content="‹" Command="{Binding PreviousCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Filas anteriores del reporte"/><Button Content="›" Command="{Binding NextCommand}" Style="{StaticResource PaginationButton}" AutomationProperties.Name="Filas siguientes del reporte"/></WrapPanel>
+<WrapPanel IsEnabled="{Binding IsNotBusy}" Margin="0,16,0,12">
+<StackPanel Width="160" Margin="0,0,8,0"><TextBlock Text="Papel" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding PrintSettings.Papers}" SelectedItem="{Binding PrintSettings.Paper}" AutomationProperties.Name="Papel del reporte"/></StackPanel>
+<StackPanel Width="90" Margin="0,0,8,0"><TextBlock Text="Ancho mm"/><TextBox Text="{Binding PrintSettings.Width, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Ancho del reporte"/></StackPanel>
+<StackPanel Width="90" Margin="0,0,8,0"><TextBlock Text="Alto mm"/><TextBox Text="{Binding PrintSettings.Height, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Alto del reporte"/></StackPanel>
+<StackPanel Width="90" Margin="0,0,8,0"><TextBlock Text="Margen mm"/><TextBox Text="{Binding PrintSettings.Margin, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" AutomationProperties.Name="Margen del reporte"/></StackPanel>
+<Button Content="Generar PDF" Command="{Binding PreviewReceiptCommand}" IsEnabled="{Binding CanPreview}" Style="{StaticResource ActionButton}" VerticalAlignment="Bottom"/>
+</WrapPanel><local:ReceiptPreviewView Visibility="{Binding IsReceiptPreviewOpen, Converter={StaticResource BoolToVisibility}}"/>
+</StackPanel></UserControl>

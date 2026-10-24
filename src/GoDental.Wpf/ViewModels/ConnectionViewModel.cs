@@ -11,20 +11,37 @@ using Microsoft.Extensions.Logging;
 
 namespace GoDental.Wpf.ViewModels;
 
-public sealed partial class ConnectionViewModel(
-    IWorkstationSettingsStore store, IConnectionHealthCheck healthCheck,
-    IThemeService themes, ILogger<ConnectionViewModel> logger, ISessionController? session = null) : ObservableObject
+public sealed partial class ConnectionViewModel : ObservableObject
 {
+    private readonly IWorkstationSettingsStore store;
+    private readonly IConnectionHealthCheck healthCheck;
+    private readonly IThemeService themes;
+    private readonly ILogger<ConnectionViewModel> logger;
+    private readonly ISessionController? session;
+
+    public ConnectionViewModel(IWorkstationSettingsStore store, IConnectionHealthCheck healthCheck,
+        IThemeService themes, ILogger<ConnectionViewModel> logger, ISessionController? session = null)
+    {
+        this.store = store; this.healthCheck = healthCheck; this.themes = themes; this.logger = logger; this.session = session;
+        if (session is not null) session.Changed += (_, _) =>
+        {
+            OnPropertyChanged(nameof(CanEditConnection)); OnPropertyChanged(nameof(ConnectionEditHint));
+        };
+    }
     private readonly SemaphoreSlim settingsWriteGate = new(1, 1);
     [ObservableProperty] private string server = "";
     [ObservableProperty] private string database = "";
     [ObservableProperty] private string statusMessage = "Configura la conexión para comprobar el acceso al servidor.";
     [ObservableProperty] private string connectionStatus = "Sin comprobar";
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(CanEditConnection))] private bool isBusy;
     [ObservableProperty] private bool isDark;
     [ObservableProperty] private string themePreferenceStatus = "";
     [ObservableProperty] private bool localDevelopment;
     public bool IsNotBusy => !IsBusy;
+    public bool CanEditConnection => IsNotBusy && session?.IsAuthenticated != true;
+    public string ConnectionEditHint => session?.IsAuthenticated == true
+        ? "Conexión protegida: cierra sesión para cambiar el servidor o la base de datos."
+        : "Configura dónde se guardan los datos de tu depósito. Los cambios se aplican a este equipo.";
     public string WorkstationName => Environment.MachineName;
 
     public async Task InitializeAsync()
@@ -69,6 +86,14 @@ public sealed partial class ConnectionViewModel(
         }
         finally { settingsWriteGate.Release(); }
     }
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task SetThemeAsync(string? theme)
+    {
+        if (theme is not ("Light" or "Dark")) return;
+        IsDark = theme == "Dark";
+        await SaveThemePreferenceAsync();
+    }
+
     private void InvalidateConnection()
     {
         ConnectionStatus = "Sin comprobar";

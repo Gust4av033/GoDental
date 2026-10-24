@@ -68,7 +68,7 @@ public sealed class SalesService(ISalesRepository repository, IUserSession sessi
         return repository.QuoteAsync(MvpValidator.Freeze(cart), UserId, ct);
     }
 
-    public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, CancellationToken ct = default) => Write(CanSell, r, () => repository.ConfirmAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim() }, UserId, WorkstationId, ct));
+    public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, CancellationToken ct = default) => Write(CanSell, r, () => repository.ConfirmAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Payments = r.Payments.Select(p => p with { Reference = p.Reference?.Trim() }).ToArray(), Reason = r.Reason.Trim(), Order = r.Order is { } o ? o with { ExpectedVersion = o.ExpectedVersion.ToArray() } : null }, UserId, WorkstationId, ct));
     public Task<Result<MvpReceipt>> SaveQuotationAsync(SaveQuotation r, CancellationToken ct = default) => Write(CanQuote, r, () => repository.SaveQuotationAsync(r with { Cart = MvpValidator.Freeze(r.Cart), Reason = r.Reason.Trim() }, UserId, WorkstationId, ct));
     public async Task<Result<MvpReceipt>> AuthorizeDiscountAsync(DiscountApproval r, string administrator, string password, CancellationToken ct = default)
     {
@@ -198,8 +198,15 @@ public sealed class OrderService(IOrderRepository repository, IUserSession sessi
 
 public sealed class InventorySetupService(IInventorySetupRepository repository, IUserSession session) : MvpServiceAccess(session)
 {
+    public bool CanReadBarcodes => Has("INVENTARIO.VER");
+    public bool CanManageBarcodes => Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR");
+    public Task<ProductBarcodes> BarcodesAsync(int productId, CancellationToken ct = default)
+    {
+        Read("INVENTARIO.VER"); Id(productId);
+        return repository.ReadBarcodesAsync(productId, UserId, ct);
+    }
     public Task<Result<MvpReceipt>> InitializeAsync(InitialInventory r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.AJUSTAR"), r, () => repository.InitialInventoryAsync(r with { Reason=r.Reason.Trim(), LotNumber=r.LotNumber?.Trim() }, UserId, WorkstationId, ct));
-    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"), r, () => repository.SaveBarcodeAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
+    public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, CancellationToken ct = default) => Write(Has("INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"), r, () => repository.SaveBarcodeAsync(r with { ExpectedVersion = r.ExpectedVersion.ToArray(), Code = r.Code?.Trim(), Reason=r.Reason.Trim() }, UserId, WorkstationId, ct));
 }
 
 public sealed class FiscalPendingService(IFiscalPendingRepository repository, IUserSession session) : MvpServiceAccess(session)
@@ -210,16 +217,5 @@ public sealed class FiscalPendingService(IFiscalPendingRepository repository, IU
         Read("FISCAL.VER");
         Page(f);
         return repository.PendingAsync(f, UserId, ct);
-    }
-}
-
-public sealed class MvpOperationService(IMvpOperationRepository repository, IUserSession session) : MvpServiceAccess(session)
-{
-    public Task<MvpReceipt?> FindAsync(Guid id, CancellationToken ct = default)
-    {
-        Read();
-        if (id == Guid.Empty)
-            throw new ArgumentException("Identificador vacío.");
-        return repository.FindOperationAsync(id, UserId, ct);
     }
 }

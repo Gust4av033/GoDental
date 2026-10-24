@@ -26,6 +26,8 @@ public sealed partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private CatalogOption? filterCategory;
     [ObservableProperty] private CatalogOption? filterBrand;
     [ObservableProperty] private bool lowStockOnly;
+    [ObservableProperty] private bool areFiltersOpen;
+    [RelayCommand] private void ToggleFilters() => AreFiltersOpen = !AreFiltersOpen;
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanEditSelected))] [NotifyPropertyChangedFor(nameof(CanOpenInventory))] private ProductData? selectedProduct;
@@ -39,12 +41,12 @@ public sealed partial class ProductsViewModel : ObservableObject
     public bool CanEdit => CanManage && IsNotBusy && !dialogOpen;
     public bool CanEditSelected => CanEdit && SelectedProduct is not null;
     public bool CanOpenInventory => IsNotBusy && SelectedProduct is not null && Inventory is not null;
-    public bool IsNotBusy => !IsBusy && Inventory?.IsBusy != true && CategoryManager?.IsBusy != true;
+    public bool IsNotBusy => !IsBusy && Inventory?.IsNotBusy != false && CategoryManager?.IsBusy != true;
     public bool IsEmpty => Total == 0;
     public bool ShowEmptyState => IsEmpty && !IsBusy && !HasLoadError;
     public bool ShowErrorState => IsEmpty && !IsBusy && HasLoadError;
     public bool ShowCatalogTable => Total > 0;
-    public string PageLabel => $"{Total} productos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
+    public string PageLabel => Total == 0 ? "0 productos" : $"Mostrando {(Page - 1) * 30 + 1}–{Math.Min(Page * 30, Total)} de {Total} · Página {Page}";
 
     public ProductsViewModel(ProductService service, ISessionController session, ILogger<ProductsViewModel> logger,
         IDialogService dialogs, ProductEditorFactory editorFactory, InventoryViewModel? inventory = null, CategoriesViewModel? categories = null)
@@ -57,7 +59,7 @@ public sealed partial class ProductsViewModel : ObservableObject
         if (inventory is not null) inventory.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); };
         session.Changed += (_, _) =>
         {
-            Products.Clear(); Categories.Clear(); Brands.Clear(); catalogs = null; SelectedProduct = null; Total = 0; Page = 1; HasLoadError = false;
+            AreFiltersOpen = false; Products.Clear(); Categories.Clear(); Brands.Clear(); catalogs = null; SelectedProduct = null; Total = 0; Page = 1; HasLoadError = false;
             StatusMessage = "Busca o registra tu primer producto.";
             OnPropertyChanged(nameof(CanView)); OnPropertyChanged(nameof(CanEdit)); OnPropertyChanged(nameof(CanEditSelected)); OnPropertyChanged(nameof(CanOpenInventory)); OnPropertyChanged(nameof(CanManage));
         };
@@ -82,8 +84,8 @@ public sealed partial class ProductsViewModel : ObservableObject
             if (revision != session.Revision) return false;
             if (!result.IsSuccess || result.Value is null) { HasLoadError = true; StatusMessage = result.Message ?? "No se pudo consultar."; return false; }
             Products.Clear(); foreach (var row in result.Value.Items) Products.Add(row);
-            Total = result.Value.Total; SelectedProduct = null;
-            StatusMessage = Total == 0 ? "No hay productos con estos filtros. Puedes registrar uno nuevo." : "Catálogo actualizado. El stock se consulta; no se edita desde esta pantalla.";
+            Total = result.Value.Total; SelectedProduct = Inventory?.IsOpen == true ? Products.FirstOrDefault(p => p.Id == Inventory.Product?.Id) : null;
+            StatusMessage = "";
             return true;
         }
         catch (Exception ex) { HasLoadError = true; Fail(ex); return false; }
@@ -94,6 +96,13 @@ public sealed partial class ProductsViewModel : ObservableObject
     {
         if (!IsNotBusy || SelectedProduct is null || Inventory is null) return;
         await Inventory.OpenAsync(SelectedProduct);
+    }
+
+    [RelayCommand] private async Task OpenProductAsync(ProductData? selected)
+    {
+        if (!CanView || !IsNotBusy || selected is null || Inventory is null) return;
+        SelectedProduct = selected;
+        await Inventory.OpenAsync(selected);
     }
 
     [RelayCommand] private async Task NewProductAsync() => await OpenEditorAsync(null);
@@ -123,6 +132,7 @@ public sealed partial class ProductsViewModel : ObservableObject
         {
             using var editor = editorFactory.Create(product, catalogs);
             var saved = await dialogs.ShowProductEditorAsync(editor);
+            if (saved) Inventory?.CloseCommand.Execute(null);
             if ((saved || editor.CatalogChanged) && await LoadAsync())
                 StatusMessage = saved ? "Producto guardado correctamente." : "Categoría creada. Producto sin guardar.";
         }

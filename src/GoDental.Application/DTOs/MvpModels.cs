@@ -7,8 +7,9 @@ public sealed record SaleItem(int ProductId, decimal Quantity, decimal DiscountP
 public sealed record SaleCart(int CashBoxId, long? CustomerId, IReadOnlyList<SaleItem> Items, decimal GlobalDiscountPercent = 0,
     int? PriceListId = null, decimal DeliveryCharge = 0);
 public sealed record SalePayment(short MethodId, decimal Amount, string? Reference = null);
+public sealed record SaleOrderOrigin(long OrderId, byte[] ExpectedVersion);
 public sealed record ConfirmSale(Guid OperationId, SaleCart Cart, string QuoteToken, IReadOnlyList<SalePayment> Payments,
-    decimal CashTendered, long? ShiftId, string Reason, long? DiscountAuthorizationId = null, long? QuotationId = null);
+    decimal CashTendered, long? ShiftId, string Reason, long? DiscountAuthorizationId = null, long? QuotationId = null, SaleOrderOrigin? Order = null);
 public sealed record SaveQuotation(Guid OperationId, SaleCart Cart, string QuoteToken, DateTime? ValidUntil, string Reason, long? DiscountAuthorizationId = null);
 public sealed record DiscountApproval(Guid OperationId, SaleCart Cart, string QuoteToken, string Reason);
 public sealed record InitialInventory(Guid OperationId, int ProductId, int WarehouseId, decimal Quantity, decimal UnitCost,
@@ -113,7 +114,9 @@ public sealed class SalePaymentData
     public decimal Amount { get; set; }
     public string? Reference { get; set; }
 }
-public sealed record SaleSnapshot(SaleData Sale, IReadOnlyList<SaleLineData> Lines, IReadOnlyList<SalePaymentData> Payments);
+public sealed record SaleSnapshot(SaleData Sale, IReadOnlyList<SaleLineData> Lines, IReadOnlyList<SalePaymentData> Payments, OrderData? Delivery = null);
+public sealed record ReceiptDocument(byte[] Pdf, IReadOnlyList<byte[]> Pages,
+    decimal WidthMm = 215.9m, decimal HeightMm = 279.4m, decimal MarginMm = 11.3m, bool IsLabel = false);
 public sealed class QuotationData
 {
     public long Id { get; set; }
@@ -134,6 +137,7 @@ public sealed class CreditAccountData
     public string Sale { get; set; } = "";
     public DateTime Due { get; set; }
     public DateTime? NextNotice { get; set; }
+    public bool NoticeDue { get; set; }
     public decimal Original { get; set; }
     public decimal Balance { get; set; }
     public bool Overdue { get; set; }
@@ -156,6 +160,7 @@ public sealed class OrderData
     public string Address { get; set; } = "";
     public string? Department { get; set; }
     public string? Municipality { get; set; }
+    public string? District { get; set; }
     public string? Reference { get; set; }
     public DateTime? Scheduled { get; set; }
     public string? Responsible { get; set; }

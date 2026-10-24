@@ -3,9 +3,9 @@
 ## Flujo de trabajo
 
 - `main`: versión validada e integrable.
-- `feature/ui`: presentación WPF y pruebas de UI. `feature/logica`: negocio, persistencia, SQL y sus pruebas.
-- Separar UI y lógica en sus capas, ramas asignadas y commits enfocados; no crear otras ramas permanentes.
-- Abrir PR de la rama correspondiente hacia `main`, validar y revisar antes de integrar. Conservar ambas ramas de trabajo y sincronizarlas con `main` después del merge.
+- `feature/desarrollo`: rama activa para lógica, presentación y pruebas. `feature/ui` y `feature/logica` se conservan como referencias históricas.
+- Separar UI y lógica en sus capas y commits enfocados; no crear otras ramas permanentes.
+- Abrir PR de `feature/desarrollo` hacia `main`, validar y revisar antes de integrar. Conservar la rama de desarrollo y sincronizarla con `main` después del merge.
 - Las ramas anteriores se conservan mediante etiquetas `archive/2026-10-18/<rama>`. Ver [decisión y recuperación](docs/DEV-08-Ramas.md).
 
 ## Antes de programar

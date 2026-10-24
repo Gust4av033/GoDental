@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/CategoriesViewModel.cs" Link="Ui/CategoriesViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/HomeViewModel.cs" Link="Ui/HomeViewModel.cs" />
+    <Compile Include="../../src/GoDental.Wpf/ViewModels/AccessViewModel.cs" Link="Ui/AccessViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/WorkflowViewModel.cs" Link="Ui/WorkflowViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/InventoryCountsViewModel.cs" Link="Ui/InventoryCountsViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/SuppliersViewModel.cs" Link="Ui/SuppliersViewModel.cs" />
@@ -19,6 +22,7 @@
     <Compile Include="../../src/GoDental.Wpf/Dialogs/SupplierEditorDialogModel.cs" Link="Ui/SupplierEditorDialogModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/ViewModels/CustomersViewModel.cs" Link="Ui/CustomersViewModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/ICustomerDialogService.cs" Link="Ui/ICustomerDialogService.cs" />
+    <Compile Include="../../src/GoDental.Wpf/Dialogs/AddressSelectionModel.cs" Link="Ui/AddressSelectionModel.cs" />
     <Compile Include="../../src/GoDental.Wpf/Dialogs/CustomerEditorDialogModel.cs" Link="Ui/CustomerEditorDialogModel.cs" />
     <Compile Include="../Shared/CustomerWorkflowRepository.cs" Link="Ui/CustomerWorkflowRepository.cs" />
     <Compile Include="../Shared/WorkflowRepositories.cs" Link="Ui/WorkflowRepositories.cs" />
@@ -36,6 +40,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="StbImageSharp" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
@@ -47,6 +52,11 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../Shared/StageTwoUiRepository.cs" Link="StageTwoUiRepository.cs"/>
+    <Compile Include="../Shared/OnlineDiscoveryTestProvider.cs" Link="OnlineDiscoveryTestProvider.cs"/>
+    <Compile Include="../Shared/OnlineUiRepository.cs" Link="OnlineUiRepository.cs"/>
+    <Compile Include="../Shared/FiscalUiRepository.cs" Link="FiscalUiRepository.cs" />
+    <Compile Include="../Shared/CollectionUiRepository.cs" Link="CollectionUiRepository.cs" />
     <Compile Include="../Shared/MvpUiRepository.cs" Link="MvpUiRepository.cs" />
   </ItemGroup>
   <ItemGroup>

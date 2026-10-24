@@ -19,5 +19,11 @@
     <SolidColorBrush x:Key="WarningTintBrush" Color="{StaticResource DarkWarningTint}" />
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DarkDanger}" />
     <SolidColorBrush x:Key="DangerTintBrush" Color="{StaticResource DarkDangerTint}" />
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="{StaticResource DarkControlBorder}" />
+    <SolidColorBrush x:Key="RowSeparatorBrush" Color="{StaticResource DarkRowSeparator}" />
+    <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource DarkRowHover}" />
+    <SolidColorBrush x:Key="RowSelectionBrush" Color="{StaticResource DarkRowSelection}" />
+    <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource DarkShadow}"/>
+    <SolidColorBrush x:Key="BrandWordmarkBrush" Color="{StaticResource DarkText}"/>
 </ResourceDictionary>
 

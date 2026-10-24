@@ -1,0 +1,37 @@
+<UserControl x:Class="GoDental.Wpf.Views.Operations.SaleReturnsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:format="clr-namespace:GoDental.Wpf.Converters">
+ <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Commerce.xaml"/></ResourceDictionary.MergedDictionaries><format:ReceiptPageImageConverter x:Key="ReturnPhotoImage"/></ResourceDictionary></UserControl.Resources>
+ <StackPanel Margin="0,12,0,0">
+  <TextBlock Text="Solicita dentro del plazo configurado. Sólo un administrador puede autorizar. La deuda se reduce primero y el excedente se reintegra en efectivo." Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+  <WrapPanel Margin="0,12,0,12">
+   <Button Content="Carpeta de evidencias" Command="{Binding ConfigureReturnEvidenceCommand}" IsEnabled="{Binding CanConfigureReturnEvidence}" Margin="0,0,8,6"/>
+   <Button Content="Actualizar posventa" Command="{Binding ReloadReturnsCommand}" Margin="0,0,8,6"/>
+   <Button Content="Solicitar devolución" Command="{Binding RequestReturnCommand}" IsEnabled="{Binding CanRequestReturn}" Margin="0,0,8,6"/>
+   <Button Content="Solicitar anulación completa" Command="{Binding RequestCancellationCommand}" IsEnabled="{Binding CanRequestCancellation}" Margin="0,0,8,6"/>
+  </WrapPanel>
+  <DataGrid ItemsSource="{Binding SaleReturns.Returns}" SelectedItem="{Binding SelectedReturn}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="170" AutomationProperties.Name="Solicitudes de posventa">
+   <DataGrid.Columns>
+    <DataGridTextColumn Header="Número" Binding="{Binding Number}" Width="140"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="110"/>
+    <DataGridCheckBoxColumn Header="Anulación" Binding="{Binding CancelSale}" Width="85"/><DataGridTextColumn Header="Solicitante" Binding="{Binding Requester}" Width="*"/>
+    <DataGridTextColumn Header="Importe" Binding="{Binding Amount,Converter={StaticResource UsdMoney}}" Width="100"/>
+   </DataGrid.Columns>
+  </DataGrid>
+  <WrapPanel Margin="0,8,0,12"><Button Content="Anterior" Command="{Binding PreviousReturnsCommand}"/><TextBlock Text="{Binding ReturnPageLabel}" Margin="12,8"/><Button Content="Siguiente" Command="{Binding NextReturnsCommand}"/><Button Content="Consultar solicitud" Command="{Binding ReadReturnCommand}" Margin="12,0,0,0"/></WrapPanel>
+  <Border Style="{StaticResource SoftPanel}" Visibility="{Binding HasReturnDetail,Converter={StaticResource BoolToVisibility}}">
+   <StackPanel>
+    <TextBlock Text="{Binding ReturnDetail.Return.Number}" Style="{StaticResource SectionHeading}"/>
+    <TextBlock Text="{Binding ReturnDetail.Return.Proof,StringFormat=Comprobante: {0}}" TextWrapping="Wrap"/>
+    <TextBlock Text="{Binding ReturnDetail.Return.Reason,StringFormat=Motivo: {0}}" TextWrapping="Wrap"/>
+    <TextBlock Text="{Binding ReturnDetail.Return.Administrator,StringFormat=Administrador: {0}}"/>
+    <TextBlock Text="{Binding ReturnDetail.Return.Resolution,StringFormat=Resolución: {0}}" TextWrapping="Wrap"/>
+    <TextBlock Text="{Binding ReturnDetail.UnavailableReason}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="0,6"/>
+    <WrapPanel><TextBlock Text="{Binding ReturnDetail.CurrentAmount,StringFormat=Total USD {0:0.00}}" Margin="0,0,16,8"/><TextBlock Text="{Binding ReturnDetail.DebtReduction,StringFormat=Reduce deuda USD {0:0.00}}" Margin="0,0,16,8"/><TextBlock Text="{Binding ReturnDetail.CashRefund,StringFormat=Reintegra efectivo USD {0:0.00}}" Margin="0,0,0,8"/></WrapPanel>
+    <DataGrid ItemsSource="{Binding ReturnDetail.Lines}" SelectedItem="{Binding SelectedReturnLine}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="150" AutomationProperties.Name="Productos devueltos">
+     <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="80"/><DataGridTextColumn Header="Condición" Binding="{Binding Condition}" Width="160"/><DataGridCheckBoxColumn Header="Vendible" Binding="{Binding Restock}" Width="85"/><DataGridTextColumn Header="Motivo no reingreso" Binding="{Binding NoRestockReason}" Width="*"/></DataGrid.Columns>
+    </DataGrid>
+    <WrapPanel Margin="0,10,0,10"><ComboBox ItemsSource="{Binding SelectedReturnLine.Evidence}" SelectedItem="{Binding SelectedReturnPhoto}" DisplayMemberPath="Name" Width="250" AutomationProperties.Name="Foto de devolución"/><Button Content="Ver foto" Command="{Binding ShowReturnPhotoCommand}" Margin="10,0,0,0"/></WrapPanel>
+    <Image Source="{Binding ReturnPhoto,Converter={StaticResource ReturnPhotoImage}}" MaxHeight="240" Stretch="Uniform" AutomationProperties.Name="Evidencia fotográfica"/>
+    <WrapPanel Margin="0,12,0,0"><Button Content="Autorizar y aplicar" Command="{Binding ApplyReturnCommand}" IsEnabled="{Binding CanApplyReturn}" Margin="0,0,12,0"/><Button Content="Rechazar solicitud" Command="{Binding RejectReturnCommand}" IsEnabled="{Binding CanResolveReturn}"/></WrapPanel>
+   </StackPanel>
+  </Border>
+ </StackPanel>
+</UserControl>

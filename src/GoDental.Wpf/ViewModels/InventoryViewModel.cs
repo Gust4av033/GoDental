@@ -6,6 +6,7 @@ using GoDental.Application.Abstractions.Security;
 using GoDental.Application.DTOs;
 using GoDental.Application.Services;
 using GoDental.Wpf.Dialogs;
+using GoDental.Wpf.ViewModels.Operations;
 using Microsoft.Extensions.Logging;
 
 namespace GoDental.Wpf.ViewModels;
@@ -17,7 +18,20 @@ public sealed partial class InventoryViewModel : ObservableObject
     private readonly ILogger<InventoryViewModel> logger;
     private readonly IDialogService dialogs;
     public event EventHandler? InventoryChanged;
+    public BarcodesViewModel? Barcodes { get; }
+    public InitialInventoryViewModel? InitialInventory { get; }
+    private bool snapshotLoaded, initializedRefresh;
+    public bool CanOfferInitial => InitialInventory is not null && CanAdjust && snapshotLoaded && product?.Active == true && SelectedStock is null;
+    public bool CanInitialize => CanOfferInitial && IsNotBusy && InitialInventory!.CanInitialize;
+    public string InitialInventoryHint => !CanAdjust ? "Consulta de inventario. Necesitas permiso de ajuste para registrar unidades."
+        : product?.Active != true ? "Activa el producto antes de registrar sus existencias iniciales."
+        : Warehouse is null ? "Selecciona un almacén para consultar sus existencias."
+        : !snapshotLoaded ? "Pulsa Actualizar para consultar el almacén y habilitar la acción correspondiente."
+        : SelectedStock is null ? "Sin saldo registrado en este almacén. Usa Existencias iniciales para ingresar cantidad, costo y lote si corresponde."
+        : "Este almacén ya tiene un saldo registrado, aunque sea cero. Para agregar unidades usa Registrar movimiento → AJUSTE.";
     private ProductData? product;
+    public ProductData? Product => product;
+    public StockData? SelectedStock => Stocks.FirstOrDefault(stock => stock.WarehouseId == Warehouse?.Id);
     private byte[]? version;
     public ObservableCollection<CatalogOption> Warehouses { get; } = [];
     public ObservableCollection<StockData> Stocks { get; } = [];
@@ -28,11 +42,11 @@ public sealed partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private string title = "Existencias y trazabilidad";
     [ObservableProperty] private bool isOpen;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsNotBusy)), NotifyPropertyChangedFor(nameof(CanWrite))] private bool isBusy;
-    [ObservableProperty] private string statusMessage = "Selecciona un producto para consultar sus existencias.";
+    [ObservableProperty] private string statusMessage = "";
     [ObservableProperty] private CatalogOption? warehouse;
     [ObservableProperty] private CatalogOption? destination;
     [ObservableProperty] private LotData? selectedLot;
-    [ObservableProperty] private string movementType = "AJUSTE";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsTransfer))] private string movementType = "AJUSTE";
     [ObservableProperty] private string quantity = "";
     [ObservableProperty] private string unitCost = "";
     [ObservableProperty] private string reason = "";
@@ -47,28 +61,44 @@ public sealed partial class InventoryViewModel : ObservableObject
     [ObservableProperty] private DateTime? until;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel)), NotifyPropertyChangedFor(nameof(IsHistoryEmpty))] private int total;
-    public bool IsNotBusy => !IsBusy;
+    public bool IsNotBusy => Barcodes?.IsBusy != true && Barcodes?.IsEditing != true && Barcodes?.Operation.CanStart != false && !IsBusy && (InitialInventory is null || (!InitialInventory.IsBusy && !InitialInventory.IsEditing && InitialInventory.Operation.CanStart));
     public bool CanAdjust => service.CanAdjust;
     public bool CanSeeCosts => service.CanSeeCosts;
-    public bool CanWrite => CanAdjust && !IsBusy && version is not null;
+    public bool CanWrite => CanAdjust && IsNotBusy && version is not null;
+    public bool IsTransfer => MovementType == "TRANSFERENCIA";
     public bool TracksLot => product?.TracksLot == true;
     public bool IsHistoryEmpty => Total == 0;
     public bool IsStocksEmpty => Stocks.Count == 0;
     public bool IsLotsEmpty => Lots.Count == 0;
     public string PageLabel => $"{Total} movimientos · Página {Page} de {Math.Max(1, (int)Math.Ceiling(Total / 30d))}";
 
-    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs)
+    public InventoryViewModel(InventoryService service, ISessionController session, ILogger<InventoryViewModel> logger, IDialogService dialogs, InitialInventoryViewModel? initialInventory = null, BarcodesViewModel? barcodes = null)
     {
         this.service = service; this.session = session; this.logger = logger; this.dialogs = dialogs;
+        Barcodes = barcodes;
+        if (barcodes is not null) barcodes.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(CanInitialize)); };
+        InitialInventory = initialInventory;
+        if (initialInventory is not null) initialInventory.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(IsNotBusy)); OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(CanInitialize));
+            if (initializedRefresh && IsNotBusy) { initializedRefresh = false; InventoryChanged?.Invoke(this, EventArgs.Empty); }
+        };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IsBusy)) OnPropertyChanged(nameof(CanInitialize));
+            if (e.PropertyName is nameof(CanOfferInitial) or nameof(CanAdjust) or nameof(Product)) OnPropertyChanged(nameof(InitialInventoryHint));
+        };
+        Stocks.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(SelectedStock)); OnPropertyChanged(nameof(CanOfferInitial)); OnPropertyChanged(nameof(CanInitialize)); };
         session.Changed += (_, _) =>
         {
-            product = null; version = null; IsOpen = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Warehouses.Clear();
+            snapshotLoaded = initializedRefresh = false;
+            product = null; OnPropertyChanged(nameof(Product)); version = null; IsOpen = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Warehouses.Clear();
             Warehouse = null; SelectedLot = null; Total = 0; ResetForm();
             OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty));
             OnPropertyChanged(nameof(CanAdjust)); OnPropertyChanged(nameof(CanSeeCosts)); OnPropertyChanged(nameof(CanWrite));
         };
     }
-    partial void OnWarehouseChanged(CatalogOption? value) { version = null; Confirmed = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Total = 0; SelectedLot = null; OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty)); }
+    partial void OnWarehouseChanged(CatalogOption? value) { snapshotLoaded = false; version = null; Confirmed = false; Stocks.Clear(); Lots.Clear(); Movements.Clear(); Total = 0; SelectedLot = null; OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(IsStocksEmpty)); OnPropertyChanged(nameof(IsLotsEmpty)); }
     partial void OnCreateLotChanged(bool value) { Confirmed = false; if (value) SelectedLot = null; }
     partial void OnSelectedLotChanged(LotData? value) { Confirmed = false; }
     partial void OnQuantityChanged(string value) => Confirmed = false;
@@ -82,10 +112,12 @@ public sealed partial class InventoryViewModel : ObservableObject
 
     public async Task OpenAsync(ProductData selected)
     {
-        if (IsBusy) return;
-        product = selected; Title = $"{selected.Name} · {selected.Sku}"; IsOpen = true; Page = 1;
+        if (!IsNotBusy) return;
+        snapshotLoaded = false;
+        product = selected; OnPropertyChanged(nameof(Product)); Title = $"{selected.Name} · {selected.Sku}"; IsOpen = true; Page = 1;
         From = null; Until = null; HistoryType = "Todos"; FilterSelectedLot = false;
         ResetForm(); OnPropertyChanged(nameof(TracksLot));
+        var openedRevision = session.Revision;
         await ExecuteAsync(async revision =>
         {
             var values = await service.WarehousesAsync();
@@ -94,8 +126,18 @@ public sealed partial class InventoryViewModel : ObservableObject
             Warehouse = Warehouses.FirstOrDefault();
             await ReadCoreAsync(revision);
         });
+        if (openedRevision == session.Revision && Barcodes is not null) await Barcodes.OpenAsync(selected);
     }
-    [RelayCommand] private void Close() { if (!IsBusy) IsOpen = false; }
+    [RelayCommand] private void Close() { if (IsNotBusy) IsOpen = false; }
+    [RelayCommand] private async Task OpenInitialInventoryAsync()
+    {
+        if (!CanInitialize || product is null || Warehouse is null || InitialInventory is null) return;
+        await InitialInventory.OpenAsync(product, Warehouse, async () =>
+        {
+            initializedRefresh = true;
+            await ReloadCommand.ExecuteAsync(null);
+        });
+    }
     [RelayCommand] private async Task OpenMovementDialogAsync()
     {
         if (!CanWrite || !IsOpen) return;
@@ -108,7 +150,7 @@ public sealed partial class InventoryViewModel : ObservableObject
     [RelayCommand] private async Task PreviousAsync() { if (IsBusy || Page <= 1) return; Page--; await ExecuteAsync(ReadHistoryAsync); }
     private async Task ReadCoreAsync(long revision)
     {
-        version = null; OnPropertyChanged(nameof(CanWrite));
+        snapshotLoaded = false; version = null; OnPropertyChanged(nameof(CanWrite)); OnPropertyChanged(nameof(CanOfferInitial)); OnPropertyChanged(nameof(CanInitialize));
         if (product is null || Warehouse is null) { StatusMessage = "No hay almacenes activos para operar."; return; }
         var selectedId = SelectedLot?.Id;
         Stocks.Clear(); Lots.Clear(); Movements.Clear(); Total = 0;
@@ -121,7 +163,9 @@ public sealed partial class InventoryViewModel : ObservableObject
         version = Stocks.FirstOrDefault(s => s.WarehouseId == Warehouse.Id)?.RowVersion.ToArray();
         Confirmed = false; OnPropertyChanged(nameof(CanWrite));
         await ReadHistoryAsync(revision);
-        StatusMessage = "Existencias actualizadas. Los lotes están ordenados por vencimiento; selecciona el que vas a operar.";
+        if (revision != session.Revision) return;
+        snapshotLoaded = true; OnPropertyChanged(nameof(CanOfferInitial)); OnPropertyChanged(nameof(CanInitialize));
+        StatusMessage = "";
     }
     private async Task ReadHistoryAsync(long revision)
     {
@@ -186,6 +230,7 @@ public sealed partial class InventoryViewModel : ObservableObject
         {
             logger.LogWarning("Falló inventario: {ErrorType}.", ex.GetType().Name);
             if (revision != session.Revision) return;
+            snapshotLoaded = false; OnPropertyChanged(nameof(CanOfferInitial)); OnPropertyChanged(nameof(CanInitialize));
             version = null; Confirmed = false;
             if (ex is UnauthorizedAccessException) { session.Clear(); return; }
             StatusMessage = ex is ArgumentException ? ex.Message : "No se pudo completar la operación. Revisa la conexión y la migración de inventario. Actualiza y revisa el Kardex antes de repetir un guardado.";

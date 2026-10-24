@@ -37,6 +37,7 @@ public sealed record CustomerAddressData
     public string Type { get; set; } = "ENTREGA";
     public string? Department { get; set; }
     public string? Municipality { get; set; }
+    public string? District { get; set; }
     public string Address { get; set; } = "";
     public string? Reference { get; set; }
     public bool Primary { get; set; }

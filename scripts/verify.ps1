@@ -9,6 +9,8 @@ try {
     dotnet restore GoDental.sln
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    & ./scripts/check-dependencies.ps1
+
     Write-Host '==> GoDental: build Release' -ForegroundColor Cyan
     dotnet build GoDental.sln -c Release --no-restore
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -25,6 +27,10 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     if ($SqlIntegration) {
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-online --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-fiscal --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-integration --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-inventory --server $SqlServer $repoRoot
@@ -38,6 +44,20 @@ try {
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-mvp --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-codes --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-deliveries-reports --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-collections --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-returns --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-imports --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-purchases --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-complements --server $SqlServer $repoRoot
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet run --project tests/GoDental.DatabaseTests -c Release --no-build -- --run-recovery --server $SqlServer $repoRoot
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     Write-Host '==> Todo correcto. La solución compila y los tests pasaron.' -ForegroundColor Green

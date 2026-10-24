@@ -19,7 +19,9 @@ public sealed partial class ProductPickerViewModel(ProductService products) : Ob
     public ObservableCollection<ProductChoice> Items { get; } = [];
     [ObservableProperty] private string search = "";
     [ObservableProperty] private string statusMessage = "Busca productos por SKU o nombre.";
-    [ObservableProperty] private bool isBusy;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
+    public bool IsNotBusy => !IsBusy;
+    public int SelectedCount => selected.Count;
     [ObservableProperty] private int page = 1;
     private int total;
     public IReadOnlyList<int> SelectedIds => selected.ToArray();
@@ -38,7 +40,7 @@ public sealed partial class ProductPickerViewModel(ProductService products) : Ob
             foreach (var p in result.Value.Items)
             {
                 var choice = new ProductChoice(p, selected.Contains(p.Id));
-                choice.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ProductChoice.Selected)) { if (choice.Selected) selected.Add(p.Id); else selected.Remove(p.Id); } };
+                choice.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ProductChoice.Selected)) { if (choice.Selected) selected.Add(p.Id); else selected.Remove(p.Id); OnPropertyChanged(nameof(SelectedCount)); } };
                 Items.Add(choice);
             }
             StatusMessage = $"{total} productos · Página {Page}. La selección se conserva entre páginas.";

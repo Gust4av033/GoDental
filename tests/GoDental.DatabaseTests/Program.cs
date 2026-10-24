@@ -10,9 +10,87 @@ using GoDental.Infrastructure.Data;
 using GoDental.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 
+if (args is ["--recovery-journal-probe", var journalFolder, var serializedPending])
+{
+    var pending = System.Text.Json.JsonSerializer.Deserialize<PendingOperation>(Convert.FromBase64String(serializedPending))!;
+    if (!await new FilePendingOperationStore(journalFolder).TryAddAsync(pending)) throw new InvalidOperationException("El diario ya tenía una solicitud.");
+    Console.WriteLine("JOURNAL_READY");
+    await Task.Delay(Timeout.InfiniteTimeSpan);
+    return;
+}
 var root = args.LastOrDefault(a => Directory.Exists(Path.Combine(a, "database"))) ?? "GoDental";
 try { DevelopmentDatabase.TestServer = DevelopmentServerOptions.Parse(args); }
 catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); Environment.ExitCode = 2; return; }
+if (args.Contains("--run-server-identity"))
+{
+    var db = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db, Path.Combine(root, "database"), includeServerIdentity: false);
+    await ServerIdentityIntegration.RunAsync(new TestConnectionFactory(db), root, db);
+    return;
+}
+if (args.Contains("--run-online"))
+{
+    var db="GoDental_Tests_"+Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db,Path.Combine(root,"database"));
+    await OnlineIntegration.RunAsync(new TestConnectionFactory(db),root,db);
+    return;
+}
+if (args.Contains("--run-fiscal"))
+{
+    var db="GoDental_Tests_"+Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db,Path.Combine(root,"database"));
+    await FiscalIntegration.RunAsync(new TestConnectionFactory(db),root,db);
+    return;
+}
+if (args.Contains("--run-deliveries-reports"))
+{
+    var db="GoDental_Tests_"+Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db,Path.Combine(root,"database"));
+    await DeliveryReportIntegration.RunAsync(new TestConnectionFactory(db),root,db);
+    return;
+}
+if (args.Contains("--run-collections"))
+{
+    var db = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(db, Path.Combine(root, "database"));
+    await CollectionIntegration.RunAsync(new TestConnectionFactory(db), root, db);
+    return;
+}
+if (args.Contains("--run-returns"))
+{
+    var returnDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(returnDatabase, Path.Combine(root, "database"));
+    await ReturnIntegration.RunAsync(new TestConnectionFactory(returnDatabase), root, returnDatabase);
+    return;
+}
+if (args.Contains("--run-imports"))
+{
+    var importDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(importDatabase, Path.Combine(root, "database"));
+    await ImportIntegration.RunAsync(new TestConnectionFactory(importDatabase), root, importDatabase);
+    return;
+}
+if (args.Contains("--run-purchases"))
+{
+    var purchaseDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(purchaseDatabase, Path.Combine(root, "database"));
+    await PurchaseIntegration.RunAsync(new TestConnectionFactory(purchaseDatabase), root, purchaseDatabase);
+    return;
+}
+if (args.Contains("--run-complements"))
+{
+    var complementDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(complementDatabase, Path.Combine(root, "database"));
+    await ComplementsIntegration.RunAsync(new TestConnectionFactory(complementDatabase), root, complementDatabase);
+    return;
+}
+if (args.Contains("--run-recovery"))
+{
+    var recoveryDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
+    await DevelopmentDatabase.InstallAsync(recoveryDatabase, Path.Combine(root, "database"));
+    await OperationRecoveryIntegration.RunAsync(new TestConnectionFactory(recoveryDatabase), root, recoveryDatabase);
+    return;
+}
 if (args.Contains("--run-codes"))
 {
     var codesDatabase = "GoDental_Tests_" + Guid.NewGuid().ToString("N");
@@ -67,7 +145,7 @@ if (args.Contains("--install-development"))
 }
 if (!args.Contains("--run-integration"))
 {
-    Console.WriteLine(@"Uso: --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
+    Console.WriteLine(@"Uso: --run-online | --run-fiscal | --run-deliveries-reports | --run-collections | --install-development | --run-integration | --run-inventory | --run-counts | --run-suppliers | --run-customers | --run-mvp | --run-codes | --run-recovery | --run-complements | --run-purchases | --run-imports [--server .\SQLEXPRESS | --localdb] [ruta del repositorio]. SQL local y autenticación Windows.");
     return;
 }
 

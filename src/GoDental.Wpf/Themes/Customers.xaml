@@ -1,0 +1,104 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:format="clr-namespace:GoDental.Wpf.Converters">
+  <format:CustomerInitialsConverter x:Key="CustomerInitials"/>
+  <format:CustomerOptionalTextConverter x:Key="CustomerOptionalText"/>
+  <Style x:Key="CustomerAvatar" TargetType="Border">
+    <Setter Property="Width" Value="28"/>
+    <Setter Property="Height" Value="28"/>
+    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Background" Value="{DynamicResource SidebarSelectionBrush}"/>
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryBrush}"/>
+    <Setter Property="TextElement.FontWeight" Value="SemiBold"/>
+  </Style>
+  <Style x:Key="CustomerIdentityAvatar" TargetType="Border" BasedOn="{StaticResource CustomerAvatar}">
+    <Setter Property="Width" Value="48"/>
+    <Setter Property="Height" Value="48"/>
+    <Setter Property="CornerRadius" Value="24"/>
+    <Setter Property="TextElement.FontSize" Value="18"/>
+  </Style>
+  <Style x:Key="CustomerField" TargetType="ContentControl">
+    <Setter Property="Margin" Value="0,0,16,16"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <StackPanel>
+            <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource FieldLabel}"/>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="{StaticResource ControlRadius}" Padding="10,8" MinHeight="36">
+              <TextBlock Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource CustomerOptionalText}}" Foreground="{DynamicResource TextBrush}"/>
+            </Border>
+          </StackPanel>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="CustomerSection" TargetType="StackPanel">
+    <Setter Property="Margin" Value="0,20,0,0"/>
+  </Style>
+  <Style x:Key="CustomerTab" TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Padding" Value="10,11"/>
+  </Style>
+  <Style x:Key="CustomerIconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Width" Value="36"/>
+    <Setter Property="Height" Value="36"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+  </Style>
+  <Style x:Key="CustomerRowLink" TargetType="Button" BasedOn="{StaticResource TextButton}">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="MinHeight" Value="28"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+  </Style>
+  <Style x:Key="CustomerEmpty" TargetType="ContentControl">
+    <Setter Property="Visibility" Value="Collapsed"/>
+    <Setter Property="IsHitTestVisible" Value="False"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="VerticalAlignment" Value="Stretch"/>
+    <Setter Property="Margin" Value="0,36,0,0"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Border Background="{DynamicResource SurfaceBrush}" Padding="20">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="380">
+              <Border Style="{StaticResource CustomerIdentityAvatar}" HorizontalAlignment="Center" Margin="0,0,0,12">
+                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+              <TextBlock Text="{TemplateBinding Content}" TextAlignment="Center" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="0">
+        <Setter Property="Visibility" Value="Visible"/>
+      </DataTrigger>
+      <DataTrigger Binding="{Binding IsBusy}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+    </Style.Triggers>
+  </Style>
+  <DataTemplate x:Key="CustomerPrimaryBadge">
+    <Border x:Name="Badge" CornerRadius="{StaticResource BadgeRadius}" Padding="8,2" Background="{DynamicResource TintBrush}" HorizontalAlignment="Left">
+      <TextBlock x:Name="Caption" Text="No" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
+    </Border>
+    <DataTemplate.Triggers>
+      <DataTrigger Binding="{Binding}" Value="True">
+        <Setter TargetName="Caption" Property="Text" Value="Sí"/>
+        <Setter TargetName="Caption" Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter TargetName="Badge" Property="Background" Value="{DynamicResource SidebarSelectionBrush}"/>
+      </DataTrigger>
+    </DataTemplate.Triggers>
+  </DataTemplate>
+  <DataTemplate x:Key="CustomerCreditBadge">
+    <Border x:Name="Badge" Style="{StaticResource StateBadge}" Tag="CREDITO">
+      <TextBlock x:Name="Caption" Text="Deshabilitado" FontSize="11"/>
+    </Border>
+    <DataTemplate.Triggers>
+      <DataTrigger Binding="{Binding}" Value="True">
+        <Setter TargetName="Caption" Property="Text" Value="Habilitado"/>
+        <Setter TargetName="Badge" Property="Background" Value="{DynamicResource SuccessTintBrush}"/>
+        <Setter TargetName="Badge" Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}"/>
+      </DataTrigger>
+    </DataTemplate.Triggers>
+  </DataTemplate>
+</ResourceDictionary>

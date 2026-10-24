@@ -2,6 +2,8 @@
 
 Incremento autorizado para `feature/logica`. El objetivo es cerrar el recorrido entrada inicial → cliente → caja → presupuesto/precio → venta → cobro/crédito → comprobante → pedido/entrega → cierre. El refinamiento visual corresponde a `feature/ui`. No se considera validación de SQL una compilación ni se simulan respuestas fiscales.
 
+Las referencias a `feature/logica` y `feature/ui` describen el incremento histórico. La rama vigente es `feature/desarrollo`; el bloque de pedidos distingue la conexión implementada al POS de las reservas y el cobro contra entrega pendientes.
+
 ## Decisiones y límites
 
 - Se reutilizan las tablas y procedimientos 001–011. La migración aditiva 012 define `sis.OperacionesMvp` (IdOperacion GUID PK, Tipo, IdUsuario FK, HashSolicitud binary(32), EntidadId bigint, Fecha). Cada escritura nueva recibe un GUID estable y motivo; un bloqueo transaccional por GUID permite repetir la misma solicitud sin duplicar movimientos. Reutilizar GUID con otro usuario/tipo/contenido se rechaza. El registro se confirma en la misma transacción que el negocio y la auditoría; no hay reintentos automáticos de escrituras.
@@ -19,6 +21,40 @@ Incremento autorizado para `feature/logica`. El objetivo es cerrar el recorrido 
 - Pedidos/entregas: 013 añade `ven.PedidosMvp`, `ven.PedidoLineasMvp`, `ven.PedidoEventosMvp`. Cabecera con cliente/contacto, snapshot de dirección y referencias, responsable usuario o nombre libre, fecha prevista, cargo de entrega, venta nullable, estado, fecha/persona de entrega y RowVersion. Líneas conservan producto/SKU/nombre/cantidad; eventos son append-only. Estados RECIBIDO → PREPARANDO → LISTO → EN_RUTA → ENTREGADO, con entrega directa desde LISTO; CANCELADO/INCIDENCIA conservan motivo y eventos. Incidencia puede volver a PREPARANDO/LISTO/EN_RUTA. Cancelar no anula una venta ni revierte cobros. Se usa VENTAS.VER para leer y VENTAS.CREAR para gestionar, sin permisos nuevos.
 - Un pedido no reserva inventario ni representa un pago. Se enlaza a una venta confirmada del mismo cliente, productos/cantidades y cargo; pago pendiente se deriva de la venta/CxC, sin permitir marcar “pagado” manualmente. EN_RUTA y ENTREGADO requieren esa venta confirmada para que la salida tenga inventario y cobro/crédito registrados; se permite saldo financiado. El cambio posterior de dirección del cliente no altera el snapshot. Una venta sólo se enlaza a un pedido. Entregar registra fecha, usuario y observación, sin tracking/GPS obligatorio. Las líneas exigen productos y unidades compatibles con el POS del MVP.
 - Comprobante PDF operativo mediante QuestPDF, obtenido del snapshot de la venta confirmada, claramente interno y separado de DTE. Fiscal permite registrar FE/CCFE pendiente para una venta sin transmitir ni declarar aceptación; las credenciales, firma, esquemas y transporte reales siguen fuera de este MVP y de cualquier certificación productiva.
+
+## Decisiones vigentes · Pedidos → Ventas → Entregas
+
+### 1. Pasar al POS / Crear venta desde pedido · implementación autorizada
+
+**Pasar al POS / Crear venta desde pedido** es el recorrido habitual implementado: carga cliente, productos, cantidades y cargo de entrega, conserva la referencia al pedido y recalcula precios, promociones y descuentos con la lógica normal del POS. El usuario revisa el cálculo y cobra normalmente; tras confirmar la venta, ésta queda vinculada automáticamente al pedido. El ID manual se conserva como opción secundaria.
+
+El enlace conserva las validaciones existentes de cliente, productos, cantidades y cargo de entrega, además de permisos, versiones y auditoría. `Vincular venta` manual queda como mecanismo secundario de recuperación/compatibilidad.
+
+Diseño autorizado antes de implementar (20/10/2026): `ConfirmSale` admite un origen opcional `SaleOrderOrigin(OrderId, ExpectedVersion)`, incompatible con `QuotationId`. Application valida y copia la versión; el POS conserva el origen al recalcular y reenviar. Infrastructure bloquea primero el pedido con `UPDLOCK,HOLDLOCK`, verifica versión, ausencia de venta y estado no finalizado; ejecuta la confirmación habitual y reutiliza la validación del enlace manual dentro de **la misma transacción**. Actualización de `IdVenta`, evento del pedido, inventario/lotes/Kardex, pagos/crédito/Caja, recibo por GUID y auditoría se confirman juntos o se revierten juntos. El recibo sigue identificando la venta. Dos GUID distintos no pueden confirmar dos ventas para el mismo pedido; reenviar el GUID original devuelve el mismo recibo incluso si avanzó la versión del pedido. No hay segunda escritura de enlace desde WPF ni migración nueva: se reutilizan las tablas de 012/013 y su índice único de venta vinculada.
+
+La UI lee nuevamente el pedido al llevarlo al POS, carga sus datos sólo después de recalcular correctamente y nunca sustituye un carrito en curso. Conserva cliente, productos, cantidades y entrega; permite caja/lista y descuentos con el cálculo habitual. Vaciar cancela únicamente el borrador local. Confirmar no cambia el estado operativo del pedido. Las reglas de entrega y los pendientes de reservas/cobro contra entrega permanecen intactos.
+
+Implementación y validación en `feature/desarrollo`: [CI Windows #90](https://github.com/Gust4av033/GoDental/actions/runs/39498220393), código `b37bfd8`, con 163 xUnit, 372 comprobaciones SQL (125 MVP) y 327 WPF correctas. Incluye rollback después de vincular, compatibilidad completa, reenvío/consulta del GUID y dos solicitudes concurrentes que sólo generan una venta para el pedido. Detalle visual y límites de la evidencia en DEV-26.
+
+### 2. Pedido y stock · recorrido operativo recomendado
+
+**Un pedido no reserva ni descuenta inventario.** Para la operación pequeña actual se recomienda:
+
+**RECIBIDO → PREPARANDO → CONFIRMAR VENTA → LISTO → EN_RUTA → ENTREGADO**
+
+`CONFIRMAR VENTA` es un paso comercial, no un nuevo estado del pedido. `RECIBIDO` y `PREPARANDO` no significan stock reservado; **LISTO tampoco representa una reserva**. Antes de considerar realmente listo un pedido para salir debe existir una venta confirmada asociada. Esa venta es la operación que descuenta inventario, asigna lotes, genera Kardex y registra pago/crédito.
+
+Esta recomendación no cambia las transiciones vigentes: hoy la validación implementada exige la venta confirmada para `EN_RUTA` y `ENTREGADO`; no se afirma que `LISTO` ya tenga ese bloqueo. No se implementa un sistema complejo de reservas. Una reserva ligera de stock queda como evolución futura únicamente si la operación del negocio la necesita.
+
+### 3. Cobro contra entrega · decisión pendiente de diseño
+
+Representa productos que salen a reparto y cuyo dinero se recibe al entregarlos. No debe tratarse automáticamente como crédito comercial: no debe consumir límite, generar mora, alterar indicadores de clientes con crédito ni crear una CxC comercial ordinaria sólo para representar unas horas de reparto. El crédito comercial existente no es un sustituto automático de este flujo.
+
+Antes de implementar se debe definir cómo proteger/reservar unidades durante `EN_RUTA`, cuándo descontar definitivamente el inventario y confirmar la venta, qué ocurre ante rechazo del cliente, cómo registrar el efectivo recibido y su efecto en Caja, y cómo devolver las unidades disponibles si falla la entrega. No se añade todavía un método de pago ni se inventa comportamiento transaccional. El recorrido actual con venta confirmada y pago/crédito válido no habilita por sí solo cobro contra entrega.
+
+**Pedido = solicitud/preparación · Venta = operación comercial · Entrega = cumplimiento físico · Cobro contra entrega = condición operativa pendiente de diseño.**
+
+Estas decisiones son documentales: no modifican `OrderRules`, `OrderService`, `SalesService`, SQL ni WPF.
 
 ## Validación y coordinación
 

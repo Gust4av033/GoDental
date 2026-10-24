@@ -16,16 +16,17 @@ public sealed partial class AccessViewModel : ObservableObject
     [ObservableProperty] private string displayName = "";
     [ObservableProperty] private string statusMessage = "Guarda la conexión y comprueba la instalación para iniciar sesión.";
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsNotBusy))] [NotifyPropertyChangedFor(nameof(ShowPrepareAction))] private bool isBusy;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool isBootstrap;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(FormDescription))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool isBootstrap;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowPrepareAction))] private bool isReady;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool mustChangePassword;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormTitle))] [NotifyPropertyChangedFor(nameof(FormDescription))] [NotifyPropertyChangedFor(nameof(NeedsConfirmation))] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool mustChangePassword;
     public bool IsNotBusy => !IsBusy;
     public bool IsAuthenticated => session.IsAuthenticated;
     public string IdentityLabel => session.DisplayName ?? "Sin sesión de usuario";
     public bool NeedsConfirmation => IsBootstrap || MustChangePassword;
     public bool ShowSignIn => !session.IsAuthenticated;
     public bool ShowPrepareAction => !IsReady && !IsBusy && !IsAuthenticated;
-    public string PrimaryActionLabel => MustChangePassword ? "Cambiar contraseña" : IsBootstrap ? "Crear administrador" : "Iniciar sesión";
+    public string PrimaryActionLabel => IsSubmitting ? "Procesando acceso…" : MustChangePassword ? "Cambiar contraseña" : IsBootstrap ? "Crear administrador" : "Iniciar sesión";
+    public string FormDescription => IsAuthenticated ? "Administra el acceso de tu cuenta en este equipo." : MustChangePassword ? "Elige una nueva contraseña para continuar con tu cuenta." : IsBootstrap ? "Configura la cuenta que administrará tu depósito dental." : "Ingresa con tu cuenta para continuar con la operación.";
     public string FormTitle => session.IsAuthenticated ? "Sesión iniciada" : MustChangePassword ? "Actualiza tu contraseña" : IsBootstrap ? "Crea el primer administrador" : "Iniciar sesión";
 
     public AccessViewModel(IIdentityGateway gateway, ISessionController session, ILogger<AccessViewModel> logger)
@@ -33,7 +34,7 @@ public sealed partial class AccessViewModel : ObservableObject
         this.gateway = gateway; this.session = session; this.logger = logger;
         session.Changed += (_, _) =>
         {
-            OnPropertyChanged(nameof(IsAuthenticated)); OnPropertyChanged(nameof(IdentityLabel)); OnPropertyChanged(nameof(FormTitle)); OnPropertyChanged(nameof(ShowSignIn)); OnPropertyChanged(nameof(ShowPrepareAction));
+            OnPropertyChanged(nameof(IsAuthenticated)); OnPropertyChanged(nameof(IdentityLabel)); OnPropertyChanged(nameof(FormTitle)); OnPropertyChanged(nameof(FormDescription)); OnPropertyChanged(nameof(ShowSignIn)); OnPropertyChanged(nameof(ShowPrepareAction));
             if (!session.IsAuthenticated) { IsReady = false; StatusMessage = "Tu sesión terminó. Comprueba el acceso para volver a ingresar."; }
         };
     }
@@ -55,12 +56,16 @@ public sealed partial class AccessViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    [ObservableProperty] private bool isSubmitting;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(PrimaryActionLabel))] private bool isSubmitting;
 
     // Las contraseñas se reciben sólo durante el envío; no son propiedades persistentes del ViewModel.
     public async Task SubmitAsync(string password, string confirmation, string currentPassword)
     {
         if (IsBusy || !IsReady || IsAuthenticated) return;
+        if (string.IsNullOrWhiteSpace(UserName)) { StatusMessage = "Escribe tu usuario de GoDental."; return; }
+        if (string.IsNullOrEmpty(password)) { StatusMessage = NeedsConfirmation ? "Escribe la nueva contraseña." : "Escribe tu contraseña."; return; }
+        if (MustChangePassword && string.IsNullOrEmpty(currentPassword)) { StatusMessage = "Escribe tu contraseña actual."; return; }
+        if (IsBootstrap && string.IsNullOrWhiteSpace(DisplayName)) { StatusMessage = "Escribe el nombre completo del primer administrador."; return; }
         if (NeedsConfirmation && password != confirmation) { StatusMessage = "Las contraseñas no coinciden."; return; }
         IsBusy = true; IsSubmitting = true;
         try
@@ -86,6 +91,14 @@ public sealed partial class AccessViewModel : ObservableObject
         }
         catch (Exception ex) { Fail(ex); }
         finally { IsSubmitting = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task CancelPasswordChangeAsync()
+    {
+        if (IsBusy || !MustChangePassword || IsAuthenticated) return;
+        pendingIdentity = null; MustChangePassword = false;
+        await PrepareAsync(CancellationToken.None);
     }
 
     [RelayCommand]

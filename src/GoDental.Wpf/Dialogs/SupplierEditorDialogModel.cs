@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using GoDental.Application.DTOs;
+using GoDental.Application.Localization;
+using GoDental.Application.Validators;
 using GoDental.Wpf.ViewModels;
 
 namespace GoDental.Wpf.Dialogs;
@@ -28,8 +30,14 @@ public sealed class SupplierEditorDialogModel : OperationDialogModel
         SupplierProductData? product, ProductPickerViewModel picker, IReadOnlyList<CatalogOption> currencies,
         Func<OperationDialogModel, Task<bool>> save) : base(save)
     {
+        originalSupplier = supplier with { }; originalContact = contact is null ? null : contact with { };
         Kind = kind; Supplier = supplier with { RowVersion = supplier.RowVersion.ToArray() };
         Contact = (contact ?? new()) with { }; Product = (product ?? new()) with { };
+        var countries = DirectoryCatalog.Countries.ToList();
+        countries.Insert(0, new("", "Sin especificar", []));
+        var existingCountry = DirectoryCatalog.Country(Supplier.Country);
+        if (existingCountry is null && !string.IsNullOrWhiteSpace(Supplier.Country)) { existingCountry = new("ZZ", Supplier.Country, []); countries.Add(existingCountry); }
+        Countries = countries; selectedCountry = existingCountry ?? countries[0];
         Picker = picker;
         var options = currencies.ToList();
         if (Product.CurrencyId is { } id && options.All(c => c.Id != id)) options.Add(new() { Id = id, Name = Product.Currency ?? "Moneda histórica" });
@@ -38,6 +46,18 @@ public sealed class SupplierEditorDialogModel : OperationDialogModel
         Cost = Product.LastCost?.ToString(CultureInfo.InvariantCulture) ?? "";
         Minimum = Product.MinimumQuantity?.ToString(CultureInfo.InvariantCulture) ?? "";
         LeadTime = Product.LeadTimeDays?.ToString(CultureInfo.InvariantCulture) ?? "";
+    }
+    private readonly SupplierData originalSupplier;
+    private readonly SupplierContactData? originalContact;
+    public IReadOnlyList<CountryOption> Countries { get; }
+    private CountryOption selectedCountry;
+    public CountryOption SelectedCountry { get => selectedCountry; set { if (value is null || !SetProperty(ref selectedCountry, value)) return; Supplier.Country = value.Code == "" ? null : value.Name; OnPropertyChanged(nameof(PhoneRegion)); } }
+    public string? PhoneRegion => DirectoryCatalog.Country(Supplier.Country)?.Code;
+    public bool PrepareFields()
+    {
+        var error = IsSupplier ? DirectoryFields.SupplierError(Supplier, Supplier.Id == 0 ? null : originalSupplier) : IsContact ? PhoneFormat.Error(Contact.Phone, originalContact?.Phone, PhoneRegion, originalContact is null) : null;
+        if (error is null) return true;
+        StatusMessage = error; return false;
     }
     public SupplierProductData? BuildProduct()
     {

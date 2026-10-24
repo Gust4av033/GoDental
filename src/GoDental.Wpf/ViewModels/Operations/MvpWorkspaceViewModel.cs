@@ -9,7 +9,8 @@ public abstract partial class MvpWorkspaceViewModel : ObservableObject
 {
     protected readonly ISessionController Session;
     private readonly ILogger logger;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(CanEdit))] private bool isBusy;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CanEdit)), NotifyPropertyChangedFor(nameof(IsNotBusy))] private bool isBusy;
+    public bool IsNotBusy => !IsBusy;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(CanEdit))] private bool isEditing;
     [ObservableProperty] private string statusMessage = "Selecciona Actualizar para consultar.";
     public MvpOperationModel Operation { get; }

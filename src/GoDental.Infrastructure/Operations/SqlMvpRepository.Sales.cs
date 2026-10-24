@@ -56,7 +56,7 @@ public sealed partial class SqlMvpRepository
         public decimal Authorization { get; set; }
     }
 
-    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 AND Codigo<>N'TARJETA' ORDER BY Nombre;"), ct);
+    public Task<IReadOnlyList<PaymentMethodData>> PaymentMethodsAsync(int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.List<PaymentMethodData>("SELECT IdMetodoPago Id,Codigo Code,Nombre Name,AfectaCajaEfectivo AffectsCash,RequiereReferencia RequiresReference FROM cat.MetodosPago WHERE Activo=1 AND Codigo<>N'EFECTIVO_REPARTO' ORDER BY Nombre;"), ct);
     public Task<MvpPage<PosProductData>> SearchProductsAsync(int boxId, string search, MvpFilter f, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], async w =>
     {
         var warehouse = await BoxWarehouse(w, boxId);
@@ -182,7 +182,7 @@ public sealed partial class SqlMvpRepository
         var percent = quote.Lines.Max(l => l.EffectiveDiscountPercent);
         Require(percent > quote.AuthorizationThreshold, "VALIDATION", "Ese descuento no necesita autorización administrativa.");
         return await w.Scalar<long>("INSERT INTO sis.AutorizacionesOperacion(TipoOperacion,EntidadTipo,SolicitadoPor,AutorizadoPor,PorcentajeValor,Motivo,FechaAutorizacion,Resultado,TokenCalculoMvp) OUTPUT INSERTED.IdAutorizacion VALUES(N'DESCUENTO_MAYOR_35',N'CARRITO_MVP',@userId,@administratorId,@percent,@Reason,SYSDATETIMEOFFSET(),N'APROBADA',@QuoteToken);", new { userId, administratorId, percent = decimal.Ceiling(percent * 10000) / 10000, r.Reason, r.QuoteToken });
-    }, ct);
+    }, ct, GoDental.Application.Common.OperationIdentity.Describe(r));
     private static async Task ConsumeDiscount(Work w, SaleQuote quote, long? authorizationId, int userId, string entity, long id)
     {
         if (quote.Lines.Max(l => l.EffectiveDiscountPercent) <= quote.AuthorizationThreshold) return;
@@ -212,12 +212,14 @@ public sealed partial class SqlMvpRepository
     public Task<Result<MvpReceipt>> ConfirmAsync(ConfirmSale r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CONFIRMAR_VENTA", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
+        // Bloquear el pedido antes de cualquier efecto comercial impide cobrarlo en dos equipos.
+        if (r.Order is { } origin)
+            { LinkableOrder(await LockOrder(w, origin.OrderId, origin.ExpectedVersion)); await NoDelivery(w, origin.OrderId); }
         Require(workstationId is not null, "FORBIDDEN", "La sesión no tiene equipo de trabajo.");
         var methods = new List<(SalePayment Payment, PaymentMethodData Method)>();
         foreach (var p in r.Payments)
         {
             var method = await Method(w, p.MethodId);
-            Require(method.Code != "TARJETA", "INVALID_STATE", "El cobro con tarjeta queda pendiente de integración.");
             Require(!method.RequiresReference || !string.IsNullOrWhiteSpace(p.Reference), "VALIDATION", "El método requiere referencia.");
             methods.Add((p, method));
         }
@@ -260,6 +262,8 @@ public sealed partial class SqlMvpRepository
             await TouchShift(w, r.ShiftId!.Value);
         if (r.QuotationId is not null)
             await w.Execute("UPDATE ven.Cotizaciones SET Estado=N'CONVERTIDA' WHERE IdCotizacion=@QuotationId;", r);
+        if (r.Order is { } order)
+            await LinkOrderSaleCore(w, new(r.OperationId, order.OrderId, order.ExpectedVersion, id, r.Reason), userId);
         return id;
     }, ct);
     public Task<QuotationData?> ReadQuotationAsync(long id, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], w => w.Maybe<QuotationData>("SELECT IdCotizacion Id,NumeroCotizacion Number,IdCliente CustomerId,Fecha Date,Total,ValidaHasta ValidUntil,Estado State,ISNULL(SnapshotMvp,N'') SnapshotJson,RowVersion FROM ven.Cotizaciones WHERE IdCotizacion=@id;", new { id }), ct);
@@ -274,6 +278,7 @@ public sealed partial class SqlMvpRepository
             return null;
         var lines = await w.List<SaleLineData>("SELECT IdDetalle Id,IdProducto ProductId,IdLote LotId,SkuSnapshot Sku,DescripcionSnapshot Name,Cantidad Quantity,PrecioUnitario UnitPrice,DescuentoMonto Discount,ImpuestoMonto Tax,TotalLinea Total,CalculoPrecioMvp PricingTrace FROM ven.VentaDetalle WHERE IdVenta=@id ORDER BY IdDetalle;", new { id });
         var payments = await w.List<SalePaymentData>("SELECT p.IdMetodoPago MethodId,m.Nombre Method,p.Monto Amount,p.Referencia Reference FROM ven.VentaPagos p JOIN cat.MetodosPago m ON m.IdMetodoPago=p.IdMetodoPago WHERE p.IdVenta=@id AND p.Estado=N'CONFIRMADO' ORDER BY p.IdPago;", new { id });
-        return new SaleSnapshot(sale, lines, payments);
+        var delivery = await w.Maybe<OrderData>($"SELECT {OrderColumns} FROM ven.PedidosMvp p LEFT JOIN ven.Ventas v ON v.IdVenta=p.IdVenta WHERE p.IdVenta=@id;", new { id });
+        return new SaleSnapshot(sale, lines, payments, delivery);
     }, ct);
 }

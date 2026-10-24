@@ -66,3 +66,10 @@ La regla debe existir en un único servicio/caso de uso de cálculo comercial en
 Con esta precedencia y la regla promoción + descuento manual ya definidas, VEN-01 queda suficientemente cerrado para iniciar el desarrollo base de GoDental sin improvisar reglas centrales de precio.
 
 > **Decisión adoptada:** Lista base → condición/tipo de cliente → comparación con promoción → mejor precio válido → descuento manual autorizado. No existe acumulación automática entre beneficios; sólo se permite cuando una promoción lo declara expresamente.
+
+## Continuación de posventa · DEV-38 (23/10/2026)
+
+El usuario confirmó reducir primero deuda de la venta y reintegrar excedente en efectivo;
+crédito/saldo a favor reutilizable conserva su estado diferido. Se adoptó carpeta central para fotos
+y anulación completa también en ruta/entregado, con recuperación física y autorización administrativa.
+Estas decisiones no modifican la precedencia comercial de este addendum.
