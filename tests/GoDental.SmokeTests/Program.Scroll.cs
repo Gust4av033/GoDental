@@ -57,7 +57,8 @@ internal static partial class Program
                 sidebar.ScrollToHome();
                 await ScrollLayoutAsync(window);
                 Check(Math.Abs(page.VerticalOffset - pageOffset) < 1, "Mover el menú no desplaza el contenido");
-                navigation.Navigate(SetupPage.Online);
+                // Este caso prueba el scroll exterior; Online tiene ahora un viewport interno propio.
+                navigation.Navigate(SetupPage.Reports);
                 await ScrollLayoutAsync(window);
                 Check(page.VerticalOffset < 1, "Cambiar de módulo vuelve al encabezado aunque la pantalla nueva también sea larga");
                 CheckSelectedLinkVisible(links, sidebar);

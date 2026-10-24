@@ -423,8 +423,8 @@
     <Setter Property="behaviors:WorkspaceViewport.ResetSectionScroll" Value="True"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabControl">
       <Grid KeyboardNavigation.TabNavigation="Local" ClipToBounds="True">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="{StaticResource SectionNavigationWidth}"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <ScrollViewer x:Name="SectionNavigationScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Focusable="False" AutomationProperties.Name="Menú de secciones">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <ScrollViewer x:Name="SectionNavigationScroll" Width="{StaticResource SectionNavigationWidth}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Focusable="False" AutomationProperties.Name="Menú de secciones">
           <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" KeyboardNavigation.TabNavigation="Once"/>
         </ScrollViewer>
         <ScrollViewer x:Name="SectionScroll" Grid.Column="1" Margin="{StaticResource SectionContentGap}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" behaviors:ScrollBoundary.ContinueAtBoundary="True" Focusable="False" AutomationProperties.Name="Contenido de la sección">
