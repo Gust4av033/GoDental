@@ -24,6 +24,8 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
     [ObservableProperty] private SupplierProductData? selectedProduct;
     [ObservableProperty] private string search = "";
     [ObservableProperty] private bool includeInactive;
+    [ObservableProperty] private bool areFiltersOpen;
+    [RelayCommand] private void ToggleFilters() => AreFiltersOpen = !AreFiltersOpen;
     [ObservableProperty] private bool isEditing;
     [ObservableProperty] private bool isDetailOpen;
     [RelayCommand] private void ReturnToList() => IsDetailOpen = false;
@@ -40,7 +42,7 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
     public bool CanEdit => CanManage && IsNotBusy && !IsEditing;
     public bool CanEditChildren => CanEdit && Detail?.Active == true;
     public bool IsEmpty => Total == 0;
-    public string PageLabel => $"{Total} proveedores · Página {Page}";
+    public string PageLabel => Total == 0 ? "Sin resultados" : $"Mostrando {(Page - 1) * 30 + 1}–{Math.Min(Page * 30, Total)} de {Total} · Página {Page}";
     protected override bool CanAccess => CanRead;
     public SuppliersViewModel(SupplierService service, ProductService products, ISessionController session,
         IWorkflowDialogService dialogs, ILogger<SuppliersViewModel> logger) : base(session, logger)
@@ -58,7 +60,13 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
         if (!Current(r)) return; Items.Clear(); foreach (var s in result.Items) Items.Add(s); Total = result.Total;
         StatusMessage = Total == 0 ? "No hay proveedores con estos filtros." : "Listado actualizado.";
     }
-    [RelayCommand] private async Task OpenAsync() { if (Selected is null) return; var id = Selected.Id; await RunAsync((r, ct) => ReadCoreAsync(id, r, ct)); }
+    [RelayCommand] private Task OpenAsync() => OpenSupplierAsync(Selected);
+    [RelayCommand] private async Task OpenSupplierAsync(SupplierData? supplier)
+    {
+        if (supplier is null || IsBusy || !CanRead) return;
+        Selected = supplier;
+        await RunAsync((r, ct) => ReadCoreAsync(supplier.Id, r, ct));
+    }
     private async Task ReadCoreAsync(int id, long r, CancellationToken ct)
     {
         Detail = null; Contacts.Clear(); References.Clear(); SelectedContact = null; SelectedProduct = null;
@@ -95,6 +103,7 @@ public sealed partial class SuppliersViewModel : WorkflowViewModel
         {
             if (!Current(revision)) return false;
             var editor = (SupplierEditorDialogModel)form;
+            if (!editor.PrepareFields()) return false;
             var product = kind == SupplierEditorKind.Product ? editor.BuildProduct() : null;
             if (kind == SupplierEditorKind.Product && product is null) return false;
             bool saved = false; bool answered = false;

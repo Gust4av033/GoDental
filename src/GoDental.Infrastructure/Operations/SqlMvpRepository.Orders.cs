@@ -5,7 +5,7 @@ using GoDental.Domain.Rules;
 namespace GoDental.Infrastructure.Operations;
 public sealed partial class SqlMvpRepository
 {
-    private const string OrderColumns = "p.IdPedido Id,p.IdCliente CustomerId,p.ClienteSnapshot Customer,p.Contacto Contact,p.Telefono Phone,p.Direccion Address,p.Departamento Department,p.Municipio Municipality,p.Referencia Reference,p.FechaPrevista Scheduled,p.Responsable Responsible,p.IdResponsable ResponsibleUserId,p.CargoEntrega DeliveryCharge,p.IdVenta SaleId,p.Estado State,p.FechaEntrega Delivered,p.EntregadoPor DeliveredBy,p.RowVersion,v.SaldoPendiente Pending,CASE WHEN v.IdVenta IS NULL THEN N'SIN_VENTA' WHEN v.SaldoPendiente=0 THEN N'PAGADO' WHEN v.SaldoPendiente<v.Total THEN N'PARCIAL' ELSE N'PENDIENTE' END PaymentState";
+    private const string OrderColumns = "p.IdPedido Id,p.IdCliente CustomerId,p.ClienteSnapshot Customer,p.Contacto Contact,p.Telefono Phone,p.Direccion Address,p.Departamento Department,p.Municipio Municipality,p.Distrito District,p.Referencia Reference,p.FechaPrevista Scheduled,p.Responsable Responsible,p.IdResponsable ResponsibleUserId,p.CargoEntrega DeliveryCharge,p.IdVenta SaleId,p.Estado State,p.FechaEntrega Delivered,p.EntregadoPor DeliveredBy,p.RowVersion,v.SaldoPendiente Pending,CASE WHEN v.IdVenta IS NULL THEN N'SIN_VENTA' WHEN v.SaldoPendiente=0 THEN N'PAGADO' WHEN v.SaldoPendiente<v.Total THEN N'PARCIAL' ELSE N'PENDIENTE' END PaymentState";
     public Task<Result<MvpReceipt>> PlaceOrderAsync(PlaceOrder r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CREAR_PEDIDO", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
@@ -22,12 +22,12 @@ public sealed partial class SqlMvpRepository
         };
         if (r.CustomerAddressId is { } addressId)
         {
-            var saved = await w.Maybe<CustomerAddressData>("SELECT Direccion Address,Departamento Department,Municipio Municipality,Referencia Reference FROM cli.ClienteDirecciones WITH(HOLDLOCK) WHERE IdDireccion=@addressId AND IdCliente=@CustomerId AND Activo=1;", new { addressId, r.CustomerId });
+            var saved = await w.Maybe<CustomerAddressData>("SELECT Direccion Address,Departamento Department,Municipio Municipality,Distrito District,Referencia Reference FROM cli.ClienteDirecciones WITH(HOLDLOCK) WHERE IdDireccion=@addressId AND IdCliente=@CustomerId AND Activo=1;", new { addressId, r.CustomerId });
             Require(saved is not null, "VALIDATION", "La dirección no pertenece al cliente o está inactiva.");
             address = saved!;
         }
 
-        var id = await w.Scalar<long>("INSERT INTO ven.PedidosMvp(IdCliente,ClienteSnapshot,Contacto,Telefono,Direccion,Departamento,Municipio,Referencia,FechaPrevista,Responsable,IdResponsable,CargoEntrega) OUTPUT INSERTED.IdPedido VALUES(@CustomerId,@customer,@Contact,@Phone,@Address,@Department,@Municipality,@Reference,@Scheduled,@Responsible,@ResponsibleUserId,@DeliveryCharge);", new { r.CustomerId, customer, Contact = r.Contact.Trim(), Phone = r.Phone.Trim(), Address = address.Address.Trim(), address.Department, address.Municipality, address.Reference, r.Scheduled, r.Responsible, r.ResponsibleUserId, r.DeliveryCharge });
+        var id = await w.Scalar<long>("INSERT INTO ven.PedidosMvp(IdCliente,ClienteSnapshot,Contacto,Telefono,Direccion,Departamento,Municipio,Distrito,Referencia,FechaPrevista,Responsable,IdResponsable,CargoEntrega) OUTPUT INSERTED.IdPedido VALUES(@CustomerId,@customer,@Contact,@Phone,@Address,@Department,@Municipality,@District,@Reference,@Scheduled,@Responsible,@ResponsibleUserId,@DeliveryCharge);", new { r.CustomerId, customer, Contact = r.Contact.Trim(), Phone = r.Phone.Trim(), Address = address.Address.Trim(), address.Department, address.Municipality, address.District, address.Reference, r.Scheduled, r.Responsible, r.ResponsibleUserId, r.DeliveryCharge });
         foreach (var line in r.Items.OrderBy(i => i.ProductId))
         {
             var changed = await w.Execute("INSERT INTO ven.PedidoLineasMvp(IdPedido,IdProducto,SKU,Nombre,Cantidad) SELECT @id,p.IdProducto,p.SKU,p.Nombre,@Quantity FROM inv.Productos p WITH(HOLDLOCK) JOIN cat.UnidadesMedida u WITH(HOLDLOCK) ON u.IdUnidadMedida=p.IdUnidadMedida WHERE p.IdProducto=@ProductId AND p.Activo=1 AND p.ControlaSerie=0 AND (u.PermiteDecimales=1 OR FLOOR(@Quantity)=@Quantity);", new { id, line.ProductId, line.Quantity });
@@ -50,6 +50,7 @@ public sealed partial class SqlMvpRepository
     {
         Check(r);
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
+        await NoDelivery(w, r.OrderId);
         Require(OrderRules.CanTransition(order.State, r.State), "INVALID_STATE", "La transición no está permitida para el estado actual.");
         if (r.State is "EN_RUTA" or "ENTREGADO")
             Require(order.SaleId is not null && await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId AND Estado=N'CONFIRMADA') THEN 1 ELSE 0 END);", new { order.SaleId }), "INVALID_STATE", "Vincula una venta confirmada antes de despachar o entregar el pedido.");
@@ -60,8 +61,16 @@ public sealed partial class SqlMvpRepository
     public Task<Result<MvpReceipt>> LinkSaleAsync(LinkOrderSale r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "VINCULAR_PEDIDO_VENTA", r, userId, workstationId, ["VENTAS.VER", "VENTAS.CREAR"], async w =>
     {
         Check(r);
+        await LinkOrderSaleCore(w, r, userId);
+        return r.OrderId;
+    }, ct);
+    private static async Task NoDelivery(Work w,long order) => Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM ven.RepartosMvp WITH(HOLDLOCK) WHERE IdPedido=@order) THEN 1 ELSE 0 END);",new{order}),"INVALID_STATE","Resuelve este pedido desde el flujo de reparto contra entrega.");
+    private static void LinkableOrder(OrderData order) => Require(order.State is not ("CANCELADO" or "ENTREGADO") && order.SaleId is null, "INVALID_STATE", "El pedido ya tiene venta o está finalizado.");
+    private static async Task LinkOrderSaleCore(Work w, LinkOrderSale r, int userId)
+    {
         var order = await LockOrder(w, r.OrderId, r.ExpectedVersion);
-        Require(order.State is not ("CANCELADO" or "ENTREGADO") && order.SaleId is null, "INVALID_STATE", "El pedido ya tiene venta o está finalizado.");
+        LinkableOrder(order);
+        await NoDelivery(w, r.OrderId);
         var sale = await w.Maybe<SaleData>("SELECT IdVenta Id,IdCliente CustomerId,Estado State,CargoEntrega DeliveryCharge FROM ven.Ventas WITH(UPDLOCK,HOLDLOCK) WHERE IdVenta=@SaleId;", r);
         Require(sale is not null && sale.State == "CONFIRMADA" && sale.CustomerId == order.CustomerId && sale.DeliveryCharge == order.DeliveryCharge, "VALIDATION", "La venta debe estar confirmada y corresponder al cliente y cargo de entrega.");
         Require(await w.Scalar<bool>("""
@@ -74,8 +83,7 @@ public sealed partial class SqlMvpRepository
             """, r), "VALIDATION", "La venta no corresponde a los productos y cantidades del pedido.");
         await w.Execute("UPDATE ven.PedidosMvp SET IdVenta=@SaleId WHERE IdPedido=@OrderId;", r);
         await OrderEvent(w, r.OrderId, userId, order.State, r.Reason);
-        return r.OrderId;
-    }, ct);
+    }
     public Task<OrderSnapshot?> ReadOrderAsync(long id, int userId, CancellationToken ct) => Read(userId, ["VENTAS.VER"], async w =>
     {
         var order = await w.Maybe<OrderData>($"SELECT {OrderColumns} FROM ven.PedidosMvp p LEFT JOIN ven.Ventas v ON v.IdVenta=p.IdVenta WHERE p.IdPedido=@id;", new { id });
@@ -95,6 +103,13 @@ public sealed partial class SqlMvpRepository
         Require(!await w.Scalar<bool>("SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM inv.ExistenciasProducto WITH(UPDLOCK,HOLDLOCK) WHERE IdProducto=@ProductId AND IdAlmacen=@WarehouseId) OR EXISTS(SELECT 1 FROM inv.MovimientosInventario WITH(HOLDLOCK) WHERE IdProducto=@ProductId AND IdAlmacen=@WarehouseId) THEN 1 ELSE 0 END);", r), "CONCURRENCY_CONFLICT", "Ya existe saldo o historial para ese producto y almacén. Consulta antes de ajustar.");
         return await w.Scalar<long>("EXEC inv.sp_RegistrarAjuste @ProductId=@ProductId,@WarehouseId=@WarehouseId,@Quantity=@Quantity,@UnitCost=@UnitCost,@Type=N'AJUSTE',@Reason=@Reason,@ExpectedVersion=0x,@NewLotNumber=@LotNumber,@Manufactured=@Manufactured,@Expires=@Expires,@UserId=@userId,@WorkstationId=@workstationId;", new { r.ProductId, r.WarehouseId, r.Quantity, r.UnitCost, r.Reason, r.LotNumber, r.Manufactured, r.Expires, userId, workstationId });
     }, ct);
+    public Task<ProductBarcodes> ReadBarcodesAsync(int productId, int userId, CancellationToken ct) => Read(userId, ["INVENTARIO.VER"], async w =>
+    {
+        var version = await w.Scalar<byte[]?>("SELECT RowVersion FROM inv.Productos WITH(HOLDLOCK) WHERE IdProducto=@productId;", new { productId });
+        Require(version is not null, "INVALID_STATE", "El producto ya no está disponible.");
+        var items = await w.List<BarcodeData>("SELECT IdCodigoBarra Id,Codigo Code,Tipo Type,Activo Active,GeneradoInternamente Generated,EsPrincipal [Primary] FROM inv.ProductoCodigosBarra WHERE IdProducto=@productId ORDER BY Activo DESC,EsPrincipal DESC,IdCodigoBarra;", new { productId });
+        return new ProductBarcodes(version!, items);
+    }, ct);
     public Task<Result<MvpReceipt>> SaveBarcodeAsync(BarcodeChange r, int userId, int? workstationId, CancellationToken ct) => Write(r.OperationId, "CODIGO_BARRAS", r, userId, workstationId, ["INVENTARIO.VER", "INVENTARIO.PRODUCTOS_GESTIONAR"], async w =>
     {
         Check(r);
@@ -103,8 +118,9 @@ public sealed partial class SqlMvpRepository
         var generated = string.IsNullOrWhiteSpace(r.Code);
         Require(!generated || r.Type == "CODE128", "VALIDATION", "El código interno utiliza CODE128.");
         var code = generated ? $"GD{r.ProductId:D10}" : r.Code!.Trim();
-        var existing = await w.Scalar<long?>("SELECT IdCodigoBarra FROM inv.ProductoCodigosBarra WITH(UPDLOCK,HOLDLOCK) WHERE Codigo=@code AND IdProducto=@ProductId;", new { code, r.ProductId });
-        var id = existing ?? await w.Scalar<long>("INSERT INTO inv.ProductoCodigosBarra(IdProducto,Codigo,Tipo,EsPrincipal,GeneradoInternamente,Activo) OUTPUT INSERTED.IdCodigoBarra VALUES(@ProductId,@code,@Type,0,@generated,@Active);", new { r.ProductId, code, r.Type, generated, r.Active });
+        var existing = await w.Maybe<BarcodeData>("SELECT IdCodigoBarra Id,Tipo Type,GeneradoInternamente Generated FROM inv.ProductoCodigosBarra WITH(UPDLOCK,HOLDLOCK) WHERE Codigo=@code AND IdProducto=@ProductId;", new { code, r.ProductId });
+        Require(existing is null || existing.Type == r.Type, "INVALID_STATE", "El tipo de un código existente no se cambia. Actualiza el listado.");
+        var id = existing?.Id ?? await w.Scalar<long>("INSERT INTO inv.ProductoCodigosBarra(IdProducto,Codigo,Tipo,EsPrincipal,GeneradoInternamente,Activo) OUTPUT INSERTED.IdCodigoBarra VALUES(@ProductId,@code,@Type,0,@generated,@Active);", new { r.ProductId, code, r.Type, generated, r.Active });
         if (existing is not null)
             await w.Execute("UPDATE inv.ProductoCodigosBarra SET Activo=@Active WHERE IdCodigoBarra=@id;", new { id, r.Active });
         await w.Execute("UPDATE inv.Productos SET Nombre=Nombre WHERE IdProducto=@ProductId;", r);

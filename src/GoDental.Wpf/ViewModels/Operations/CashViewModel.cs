@@ -18,16 +18,18 @@ public sealed partial class CashViewModel : MvpWorkspaceViewModel
     public ObservableCollection<CashMovementData> Movements { get; } = [];
     [ObservableProperty] private CashBoxData? box;
     [ObservableProperty] private CashShiftData? shift;
-    [ObservableProperty] private int page = 1;
-    [ObservableProperty] private int total;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int page = 1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PageLabel))] private int total;
     [ObservableProperty] private string shiftLookup = "";
     public override bool CanRead => cash.CanRead;
     public bool CanOpen => CanEdit && cash.CanOpen && Box?.Active == true && Shift?.State != "ABIERTO";
     public bool CanMove => CanEdit && cash.CanMove && Shift?.State == "ABIERTO";
     public bool CanClose => CanEdit && cash.CanClose && Shift?.State == "ABIERTO";
     public bool CanManageBoxes => CanEdit && inventory.CanRead && Has("AJUSTES.EDITAR");
+    public bool HasOpenShift => Shift?.State == "ABIERTO";
+    public string PageLabel => $"{Total} movimientos · Página {Page}";
     public string ShiftLabel => Shift is null ? "No hay turno abierto. Selecciona una caja y consulta." : $"Turno {Shift.Id} · {Shift.State}";
-    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(CanOpen), nameof(CanMove), nameof(CanClose), nameof(CanManageBoxes), nameof(ShiftLabel) }) OnPropertyChanged(n); }
+    protected override void PermissionsChanged() { foreach (var n in new[] { nameof(HasOpenShift), nameof(CanOpen), nameof(CanMove), nameof(CanClose), nameof(CanManageBoxes), nameof(ShiftLabel) }) OnPropertyChanged(n); }
     partial void OnBoxChanged(CashBoxData? value) { Shift = null; Movements.Clear(); PermissionsChanged(); }
     partial void OnShiftChanged(CashShiftData? value) => PermissionsChanged();
     public CashViewModel(CashService cash, InventoryService inventory, IMvpDialogService dialogs, ISessionController session, MvpOperationService operations, ILogger<CashViewModel> logger) : base(session, operations, logger) { this.cash = cash; this.inventory = inventory; this.dialogs = dialogs; }

@@ -1,50 +1,98 @@
-<UserControl x:Class="GoDental.Wpf.Views.Settings.SettingsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<UserControl x:Class="GoDental.Wpf.Views.Settings.SettingsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" x:Name="SettingsRoot" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:brand="clr-namespace:GoDental.Wpf.Controls" xmlns:settings="clr-namespace:GoDental.Wpf.Views.Settings">
+  <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
+    <DockPanel Margin="0,0,0,20">
+      <Border DockPanel.Dock="Right" Style="{StaticResource BrandPlate}" Width="100" Height="76" Margin="20,0,0,0">
+        <brand:BrandLogoView/>
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock Text="TU ESPACIO DE TRABAJO" Style="{StaticResource PageEyebrow}"/>
+        <TextBlock Text="Ajustes" Style="{StaticResource Heading}"/>
+        <TextBlock Text="Conexión, apariencia y parámetros de tu negocio." Style="{StaticResource MutedText}"/>
+      </StackPanel>
+    </DockPanel>
+    <Border Background="{DynamicResource TintBrush}" CornerRadius="{StaticResource CardRadius}" Padding="14,10" Margin="0,0,0,20">
+      <WrapPanel>
+        <TextBlock Text="{Binding WorkstationName, StringFormat='Equipo: {0}'}" Margin="0,0,24,0" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding ConnectionStatus}" Style="{StaticResource MutedText}"/>
+      </WrapPanel>
+    </Border>
+    <TabControl>
+      <TabItem Header="Conexión" Style="{StaticResource SettingsTab}">
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0">
           <StackPanel>
-            <TextBlock Text="Ajustes generales" Style="{StaticResource Heading}" />
-            <TextBlock Text="Configura la conexión de esta estación y la apariencia del sistema." Style="{StaticResource MutedText}" Margin="0,0,0,16" />
-            <TextBlock Text="{Binding ConnectionStatus, StringFormat='Estado de conexión: {0}'}" Style="{StaticResource MutedText}" Margin="0,0,0,4"/>
-            <TextBlock Text="{Binding WorkstationName, StringFormat='Equipo: {0}'}" Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
-            <Button Content="Usar base local de desarrollo" Command="{Binding UseLocalDevelopmentCommand}" HorizontalAlignment="Left" Margin="0,0,0,16" />
-            <TabControl>
-              <TabItem Header="Conexión">
-            <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <TextBlock Text="Conexión de datos" Style="{StaticResource SectionHeading}"/>
+            <TextBlock Text="{Binding ConnectionEditHint}" Style="{StaticResource MutedText}" Margin="0,4,0,20"/>
+            <Grid IsEnabled="{Binding CanEditConnection}">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
               <StackPanel>
-                <StackPanel IsEnabled="{Binding IsNotBusy}">
-                  <Label Content="_Servidor SQL" Target="{Binding ElementName=ServerInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,8" />
-                  <TextBox x:Name="ServerInput" Text="{Binding Server, UpdateSourceTrigger=PropertyChanged}" MaxLength="256" AutomationProperties.Name="Servidor SQL" />
-                  <TextBlock Text="Nombre del equipo e instancia, o dirección y puerto del servidor." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,16" />
-                  <Label Content="_Base de datos" Target="{Binding ElementName=DatabaseInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,8" />
-                  <TextBox x:Name="DatabaseInput" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" MaxLength="128" AutomationProperties.Name="Base de datos" />
-                  <TextBlock Text="La base debe existir. Esta comprobación no la crea ni instala tablas." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,16" />
-                  <CheckBox Content="Desarrollo local: aceptar certificado autofirmado" IsChecked="{Binding LocalDevelopment}" Margin="0,0,0,16" ToolTip="Sólo en este equipo y bases GoDental_ separadas. La conexión continúa cifrada." />
-                </StackPanel>
-                <WrapPanel>
-                  <Button Content="Comprobar conexión" Style="{StaticResource PrimaryButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8" />
-                  <Button Tag="&#xE74E;" Content="Guardar configuración" Command="{Binding SaveCommand}" Margin="0,0,12,8" />
-                  <Button Content="Cancelar" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8" />
-                </WrapPanel>
-                <ProgressBar IsIndeterminate="True" Height="3" Foreground="{DynamicResource PrimaryBrush}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0" />
-                <Border Background="{DynamicResource TintBrush}" Padding="16" CornerRadius="6" Margin="0,12,0,0">
-                  <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" />
-                </Border>
+                <Label Content="_Servidor SQL" Target="{Binding ElementName=ServerInput}" Padding="0,0,0,8"/>
+                <TextBox x:Name="ServerInput" Text="{Binding Server, UpdateSourceTrigger=PropertyChanged}" MaxLength="256" AutomationProperties.Name="Servidor SQL"/>
+                <TextBlock Text="Equipo e instancia, o dirección y puerto." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0"/>
               </StackPanel>
+              <StackPanel Grid.Column="2">
+                <Label Content="_Base de datos" Target="{Binding ElementName=DatabaseInput}" Padding="0,0,0,8"/>
+                <TextBox x:Name="DatabaseInput" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" MaxLength="128" AutomationProperties.Name="Base de datos"/>
+                <TextBlock Text="Nombre de la base ya instalada." Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0"/>
+              </StackPanel>
+            </Grid>
+            <WrapPanel Margin="0,20,0,0">
+              <Button Content="Guardar conexión" Style="{StaticResource PrimaryActionButton}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEditConnection}" Margin="0,0,12,8"/>
+              <Button Content="Comprobar conexión" Style="{StaticResource ActionButton}" Command="{Binding CheckConnectionCommand}" Margin="0,0,12,8"/>
+              <Button Content="Cancelar" Style="{StaticResource ActionButton}" Command="{Binding CheckConnectionCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,8"/>
+            </WrapPanel>
+            <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0"/>
+            <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="{StaticResource CardRadius}" Margin="0,8,0,0">
+              <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
             </Border>
-              </TabItem>
-              <TabItem Header="Apariencia">
-                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                  <StackPanel>
-                    <TextBlock Text="Tema del sistema" Style="{StaticResource SectionHeading}"/>
-                    <TextBlock Text="Elige la apariencia que prefieres en esta estación." Style="{StaticResource MutedText}" Margin="0,0,0,20"/>
-                    <StackPanel Orientation="Horizontal">
-                      <Label Content="Tema oscuro" Target="{Binding ElementName=ThemeSwitchSettings}" VerticalAlignment="Center" Margin="0,0,20,0" />
-                      <ToggleButton x:Name="ThemeSwitchSettings" Style="{StaticResource ThemeSwitch}" IsChecked="{Binding IsDark}" Command="{Binding SaveThemePreferenceCommand}" AutomationProperties.Name="Tema oscuro" AutomationProperties.HelpText="Pulsa Espacio para cambiar entre tema claro y oscuro" />
-                    </StackPanel>
-                    <TextBlock Text="El tema se guarda automáticamente en este equipo." Style="{StaticResource MutedText}" Margin="0,16,0,0"/>
-                  </StackPanel>
-                </Border>
-              </TabItem>
-            </TabControl>
-            <TextBlock Text="Esta versión usa tu cuenta de Windows para SQL Server. Los usuarios y permisos de GoDental se validan por separado. El modo de certificado local sólo se admite para desarrollo en este equipo; la cuenta SQL de producción sigue pendiente." Style="{StaticResource MutedText}" FontSize="12" Margin="0,16,0,0" />
+            <Expander Header="Avanzado · entorno de desarrollo" Margin="0,20,0,0" IsEnabled="{Binding CanEditConnection}">
+              <StackPanel Margin="0,12,0,0">
+                <TextBlock Text="La conexión usa tu cuenta de Windows. Comprobar no crea la base ni instala tablas. Usa las opciones locales sólo en una base de desarrollo separada." Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,12"/>
+                <CheckBox IsChecked="{Binding LocalDevelopment}" Margin="0,0,0,12" ToolTip="Sólo en este equipo y bases GoDental_ separadas. La conexión continúa cifrada.">
+                  <TextBlock Text="Desarrollo local: aceptar certificado autofirmado" TextWrapping="Wrap"/>
+                </CheckBox>
+                <Button Content="Usar base local de desarrollo" Command="{Binding UseLocalDevelopmentCommand}" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Expander>
           </StackPanel>
-
+        </Border>
+      </TabItem>
+      <TabItem Header="Apariencia" Style="{StaticResource SettingsTab}">
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+          <StackPanel>
+            <TextBlock Text="Hazlo tuyo" Style="{StaticResource SectionHeading}"/>
+            <TextBlock Text="Elige cómo quieres ver GoDental. Se aplica al instante." Style="{StaticResource MutedText}" Margin="0,4,0,20"/>
+            <WrapPanel>
+              <Button Style="{StaticResource LightThemeChoice}" Command="{Binding SetThemeCommand}" CommandParameter="Light" AutomationProperties.Name="Usar tema claro" Margin="0,0,12,12">
+                <StackPanel>
+                  <Border Background="{StaticResource PreviewLightBrush}" CornerRadius="6" Width="150" Height="60" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="8">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <Border Background="{StaticResource BrandPaperBrush}" CornerRadius="3"/>
+                      <StackPanel Grid.Column="2"><Border Background="{StaticResource BrandPaperBrush}" CornerRadius="3" Height="12" Margin="0,0,0,6"/><Border Background="{StaticResource BrandPaperBrush}" CornerRadius="3" Height="24"/></StackPanel>
+                    </Grid>
+                  </Border>
+                  <TextBlock Text="Claro" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource DarkThemeChoice}" Command="{Binding SetThemeCommand}" CommandParameter="Dark" AutomationProperties.Name="Usar tema oscuro" Margin="0,0,0,12">
+                <StackPanel>
+                  <Border Background="{StaticResource PreviewDarkBrush}" CornerRadius="6" Width="150" Height="60" Padding="8">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <Border Background="{StaticResource BrandPaperBrush}" Opacity=".18" CornerRadius="3"/>
+                      <StackPanel Grid.Column="2"><Border Background="{StaticResource BrandPaperBrush}" Opacity=".18" CornerRadius="3" Height="12" Margin="0,0,0,6"/><Border Background="{StaticResource BrandPaperBrush}" Opacity=".18" CornerRadius="3" Height="24"/></StackPanel>
+                    </Grid>
+                  </Border>
+                  <TextBlock Text="Oscuro" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Button>
+            </WrapPanel>
+            <TextBlock Text="El tema se guarda automáticamente en este equipo." Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+            <TextBlock Text="{Binding ThemePreferenceStatus}" Style="{StaticResource StatusMessage}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+          </StackPanel>
+        </Border>
+      </TabItem>
+      <TabItem Header="Comercial" Style="{StaticResource SettingsTab}" Visibility="{Binding CommercialParameters.CanRead, ElementName=SettingsRoot, Converter={StaticResource BoolToVisibility}}">
+        <settings:CommercialParametersView DataContext="{Binding CommercialParameters, ElementName=SettingsRoot}"/>
+      </TabItem>
+    </TabControl>
+  </StackPanel>
 </UserControl>

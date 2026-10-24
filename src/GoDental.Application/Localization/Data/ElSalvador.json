@@ -1,0 +1,554 @@
+[
+  {
+    "Name": "Ahuachapán",
+    "Municipalities": [
+      {
+        "Name": "Ahuachapán Norte",
+        "Districts": [
+          "Atiquizaya",
+          "El Refugio",
+          "San Lorenzo",
+          "Turín"
+        ]
+      },
+      {
+        "Name": "Ahuachapán Centro",
+        "Districts": [
+          "Ahuachapán",
+          "Apaneca",
+          "Concepción de Ataco",
+          "Tacuba"
+        ]
+      },
+      {
+        "Name": "Ahuachapán Sur",
+        "Districts": [
+          "Guaymango",
+          "Jujutla",
+          "San Francisco Menéndez",
+          "San Pedro Puxtla"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Cabañas",
+    "Municipalities": [
+      {
+        "Name": "Cabañas Este",
+        "Districts": [
+          "Sensuntepeque",
+          "Victoria",
+          "Dolores",
+          "Guacotecti",
+          "San Isidro"
+        ]
+      },
+      {
+        "Name": "Cabañas Oeste",
+        "Districts": [
+          "Ilobasco",
+          "Tejutepeque",
+          "Jutiapa",
+          "Cinquera"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Chalatenango",
+    "Municipalities": [
+      {
+        "Name": "Chalatenango Norte",
+        "Districts": [
+          "La Palma",
+          "Citalá",
+          "San Ignacio"
+        ]
+      },
+      {
+        "Name": "Chalatenango Centro",
+        "Districts": [
+          "Nueva Concepción",
+          "Tejutla",
+          "La Reina",
+          "Agua Caliente",
+          "Dulce Nombre de María",
+          "El Paraíso",
+          "San Francisco Morazán",
+          "San Rafael",
+          "Santa Rita",
+          "San Fernando"
+        ]
+      },
+      {
+        "Name": "Chalatenango Sur",
+        "Districts": [
+          "Chalatenango",
+          "Arcatao",
+          "Azacualpa",
+          "Comalapa",
+          "Concepción Quezaltepeque",
+          "El Carrizal",
+          "La Laguna",
+          "Las Vueltas",
+          "Nombre de Jesús",
+          "Nueva Trinidad",
+          "Ojos de Agua",
+          "Potonico",
+          "San Antonio de La Cruz",
+          "San Antonio Los Ranchos",
+          "San Francisco Lempa",
+          "San Isidro Labrador",
+          "San José Cancasque",
+          "San Miguel de Mercedes",
+          "San José Las Flores",
+          "San Luis del Carmen"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Cuscatlán",
+    "Municipalities": [
+      {
+        "Name": "Cuscatlán Norte",
+        "Districts": [
+          "Suchitoto",
+          "San José Guayabal",
+          "Oratorio de Concepción",
+          "San Bartolomé Perulapía",
+          "San Pedro Perulapán"
+        ]
+      },
+      {
+        "Name": "Cuscatlán Sur",
+        "Districts": [
+          "Cojutepeque",
+          "San Rafael Cedros",
+          "Candelaria",
+          "Monte San Juan",
+          "El Carmen",
+          "San Cristóbal",
+          "Santa Cruz Michapa",
+          "San Ramón",
+          "El Rosario",
+          "Santa Cruz Analquito",
+          "Tenancingo"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "La Libertad",
+    "Municipalities": [
+      {
+        "Name": "La Libertad Norte",
+        "Districts": [
+          "Quezaltepeque",
+          "San Matías",
+          "San Pablo Tacachico"
+        ]
+      },
+      {
+        "Name": "La Libertad Centro",
+        "Districts": [
+          "San Juan Opico",
+          "Ciudad Arce"
+        ]
+      },
+      {
+        "Name": "La Libertad Oeste",
+        "Districts": [
+          "Colón",
+          "Jayaque",
+          "Sacacoyo",
+          "Tepecoyo",
+          "Talnique"
+        ]
+      },
+      {
+        "Name": "La Libertad Este",
+        "Districts": [
+          "Antiguo Cuscatlán",
+          "Huizúcar",
+          "Nuevo Cuscatlán",
+          "San José Villanueva",
+          "Zaragoza"
+        ]
+      },
+      {
+        "Name": "La Libertad Costa",
+        "Districts": [
+          "Chiltuipán",
+          "Jicalapa",
+          "La Libertad",
+          "Tamanique",
+          "Teotepeque"
+        ]
+      },
+      {
+        "Name": "La Libertad Sur",
+        "Districts": [
+          "Comasagua",
+          "Santa Tecla"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "La Paz",
+    "Municipalities": [
+      {
+        "Name": "La Paz Oeste",
+        "Districts": [
+          "Cuyultitán",
+          "Olocuilta",
+          "San Juan Talpa",
+          "San Luis Talpa",
+          "San Pedro Masahuat",
+          "Tapalhuaca",
+          "San Francisco Chinameca"
+        ]
+      },
+      {
+        "Name": "La Paz Centro",
+        "Districts": [
+          "El Rosario",
+          "Jerusalén",
+          "Mercedes La Ceiba",
+          "Paraíso de Osorio",
+          "San Antonio Masahuat",
+          "San Emigdio",
+          "San Juan Tepezontes",
+          "San Luis La Herradura",
+          "San Miguel Tepezontes",
+          "San Pedro Nonualco",
+          "Santa María Ostuma",
+          "Santiago Nonualco"
+        ]
+      },
+      {
+        "Name": "La Paz Este",
+        "Districts": [
+          "San Juan Nonualco",
+          "San Rafael Obrajuelo",
+          "Zacatecoluca"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "La Unión",
+    "Municipalities": [
+      {
+        "Name": "La Unión Norte",
+        "Districts": [
+          "Anamorós",
+          "Bolívar",
+          "Concepción de Oriente",
+          "El Sauce",
+          "Lislique",
+          "Nueva Esparta",
+          "Pasaquina",
+          "Polorós",
+          "San José",
+          "Santa Rosa de Lima"
+        ]
+      },
+      {
+        "Name": "La Unión Sur",
+        "Districts": [
+          "Conchagua",
+          "El Carmen",
+          "Intipucá",
+          "La Unión",
+          "Meanguera del Golfo",
+          "San Alejo",
+          "Yayantique",
+          "Yucuaiquín"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Morazán",
+    "Municipalities": [
+      {
+        "Name": "Morazán Norte",
+        "Districts": [
+          "Arambala",
+          "Cacaopera",
+          "Corinto",
+          "El Rosario",
+          "Joateca",
+          "Jocoaitique",
+          "Meanguera",
+          "Perquín",
+          "San Fernando",
+          "San Isidro",
+          "Torola"
+        ]
+      },
+      {
+        "Name": "Morazán Sur",
+        "Districts": [
+          "Chilanga",
+          "Delicias de Concepción",
+          "El Divisadero",
+          "Gualococti",
+          "Guatajiagua",
+          "Jocoro",
+          "Lolotiquillo",
+          "Osicala",
+          "San Carlos",
+          "San Francisco Gotera",
+          "San Simón",
+          "Sensembra",
+          "Sociedad",
+          "Yamabal",
+          "Yoloaiquín"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "San Miguel",
+    "Municipalities": [
+      {
+        "Name": "San Miguel Norte",
+        "Districts": [
+          "Ciudad Barrios",
+          "Sesori",
+          "Nuevo Edén de San Juan",
+          "San Gerardo",
+          "San Luis de La Reina",
+          "Carolina",
+          "San Antonio del Mosco",
+          "Chapeltique"
+        ]
+      },
+      {
+        "Name": "San Miguel Centro",
+        "Districts": [
+          "San Miguel",
+          "Comacarán",
+          "Uluazapa",
+          "Moncagua",
+          "Quelepa",
+          "Chirilagua"
+        ]
+      },
+      {
+        "Name": "San Miguel Oeste",
+        "Districts": [
+          "Chinameca",
+          "Nueva Guadalupe",
+          "Lolotique",
+          "San Jorge",
+          "San Rafael Oriente",
+          "El Tránsito"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "San Salvador",
+    "Municipalities": [
+      {
+        "Name": "San Salvador Norte",
+        "Districts": [
+          "Aguilares",
+          "El Paisnal",
+          "Guazapa"
+        ]
+      },
+      {
+        "Name": "San Salvador Oeste",
+        "Districts": [
+          "Apopa",
+          "Nejapa"
+        ]
+      },
+      {
+        "Name": "San Salvador Este",
+        "Districts": [
+          "Ilopango",
+          "San Martín",
+          "Soyapango",
+          "Tonacatepeque"
+        ]
+      },
+      {
+        "Name": "San Salvador Centro",
+        "Districts": [
+          "Ayutuxtepeque",
+          "Mejicanos",
+          "San Salvador",
+          "Cuscatancingo",
+          "Ciudad Delgado"
+        ]
+      },
+      {
+        "Name": "San Salvador Sur",
+        "Districts": [
+          "Panchimalco",
+          "Rosario de Mora",
+          "San Marcos",
+          "Santo Tomás",
+          "Santiago Texacuangos"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "San Vicente",
+    "Municipalities": [
+      {
+        "Name": "San Vicente Norte",
+        "Districts": [
+          "Apastepeque",
+          "Santa Clara",
+          "San Ildefonso",
+          "San Esteban Catarina",
+          "San Sebastián",
+          "San Lorenzo",
+          "Santo Domingo"
+        ]
+      },
+      {
+        "Name": "San Vicente Sur",
+        "Districts": [
+          "San Vicente",
+          "Guadalupe",
+          "Verapaz",
+          "Tepetitán",
+          "Tecoluca",
+          "San Cayetano Istepeque"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Santa Ana",
+    "Municipalities": [
+      {
+        "Name": "Santa Ana Norte",
+        "Districts": [
+          "Masahuat",
+          "Metapán",
+          "Santa Rosa Guachipilín",
+          "Texistepeque"
+        ]
+      },
+      {
+        "Name": "Santa Ana Centro",
+        "Districts": [
+          "Santa Ana"
+        ]
+      },
+      {
+        "Name": "Santa Ana Este",
+        "Districts": [
+          "Coatepeque",
+          "El Congo"
+        ]
+      },
+      {
+        "Name": "Santa Ana Oeste",
+        "Districts": [
+          "Candelaria de la Frontera",
+          "Chalchuapa",
+          "El Porvenir",
+          "San Antonio Pajonal",
+          "San Sebastián Salitrillo",
+          "Santiago de La Frontera"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Sonsonate",
+    "Municipalities": [
+      {
+        "Name": "Sonsonate Norte",
+        "Districts": [
+          "Juayúa",
+          "Nahuizalco",
+          "Salcoatitán",
+          "Santa Catarina Masahuat"
+        ]
+      },
+      {
+        "Name": "Sonsonate Centro",
+        "Districts": [
+          "Sonsonate",
+          "Sonzacate",
+          "Nahulingo",
+          "San Antonio del Monte",
+          "Santo Domingo de Guzmán"
+        ]
+      },
+      {
+        "Name": "Sonsonate Este",
+        "Districts": [
+          "Izalco",
+          "Armenia",
+          "Caluco",
+          "San Julián",
+          "Cuisnahuat",
+          "Santa Isabel Ishuatán"
+        ]
+      },
+      {
+        "Name": "Sonsonate Oeste",
+        "Districts": [
+          "Acajutla"
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Usulután",
+    "Municipalities": [
+      {
+        "Name": "Usulután Norte",
+        "Districts": [
+          "Santiago de María",
+          "Alegría",
+          "Berlín",
+          "Mercedes Umaña",
+          "Jucuapa",
+          "El Triunfo",
+          "Estanzuelas",
+          "San Buenaventura",
+          "Nueva Granada"
+        ]
+      },
+      {
+        "Name": "Usulután Este",
+        "Districts": [
+          "Usulután",
+          "Jucuarán",
+          "San Dionisio",
+          "Concepción Batres",
+          "Santa María",
+          "Ozatlán",
+          "Tecapán",
+          "Santa Elena",
+          "California",
+          "Ereguayquín"
+        ]
+      },
+      {
+        "Name": "Usulután Oeste",
+        "Districts": [
+          "Jiquilisco",
+          "Puerto El Triunfo",
+          "San Agustín",
+          "San Francisco Javier"
+        ]
+      }
+    ]
+  }
+]

@@ -26,7 +26,7 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
     private const string Columns = "c.IdCliente Id,c.Codigo Code,c.IdTipoCliente TypeId,t.Nombre [Type],c.NombreRazonSocial Name,c.NombreComercial CommercialName,c.NIT Nit,c.NRC Nrc,c.DUI Dui,c.Giro BusinessActivity,c.Telefono Phone,c.WhatsApp,c.Email,c.IdListaPrecio PriceListId,l.Nombre PriceList,c.Activo Active,c.RowVersion";
     private const string Joins = " JOIN cat.TiposCliente t ON t.IdTipoCliente=c.IdTipoCliente LEFT JOIN ven.ListasPrecio l ON l.IdListaPrecio=c.IdListaPrecio ";
     private const string ContactColumns = "IdContacto Id,Nombre Name,Cargo Position,Telefono Phone,WhatsApp,Email,EsPrincipal [Primary],Activo Active";
-    private const string AddressColumns = "IdDireccion Id,Tipo [Type],Departamento Department,Municipio Municipality,Direccion Address,Referencia Reference,EsPrincipal [Primary],Activo Active";
+    private const string AddressColumns = "IdDireccion Id,Tipo [Type],Departamento Department,Municipio Municipality,Distrito District,Direccion Address,Referencia Reference,EsPrincipal [Primary],Activo Active";
     private const string CreditColumns = "PermiteCredito Enabled,LimiteCredito [Limit],DiasCredito Days,IntervaloAvisoDias NoticeDays,BloqueadoCredito Blocked,MotivoBloqueoCredito BlockReason";
 
     public async Task<CustomerPage> SearchAsync(CustomerSearch search, int userId, CancellationToken ct = default)
@@ -74,6 +74,13 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
         var s = request.Customer;
         return MutateAsync(s.Id, s.RowVersion, s.Id == 0 ? "CLIENTES.CREAR" : "CLIENTES.EDITAR", false, userId, ct, async (c, tx, previous) =>
         {
+            if (DirectoryFields.CustomerError(s, previous) is { } fieldError) return Result<long>.Failure("VALIDATION", fieldError);
+            s = DirectoryFields.Normalize(s, previous);
+            // Comparación canónica bajo HOLDLOCK: no duplicar un NIT histórico sin guiones.
+            if ((previous is null || previous.Nit != s.Nit) && !string.IsNullOrWhiteSpace(s.Nit) && await c.ExecuteScalarAsync<bool>(Cmd("""
+                SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cli.Clientes WITH(UPDLOCK,HOLDLOCK)
+                 WHERE IdCliente<>@Id AND REPLACE(REPLACE(NIT,N'-',N''),N' ',N'')=REPLACE(REPLACE(@Nit,N'-',N''),N' ',N'')) THEN 1 ELSE 0 END);
+                """, new { s.Id, s.Nit }, tx, ct))) return Result<long>.Failure("DUPLICATE_IDENTITY", "Ya existe un cliente con ese NIT.");
             if (!await c.ExecuteScalarAsync<bool>(Cmd("""
                 SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cat.TiposCliente WITH(HOLDLOCK) WHERE IdTipoCliente=@TypeId AND (Activo=1 OR IdTipoCliente=@OldType))
                   AND (@PriceListId IS NULL OR EXISTS(SELECT 1 FROM ven.ListasPrecio WITH(HOLDLOCK) WHERE IdListaPrecio=@PriceListId AND (Activo=1 OR IdListaPrecio=@OldList))) THEN 1 ELSE 0 END);
@@ -105,6 +112,8 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
         {
             var previous = s.Id == 0 ? null : await c.QuerySingleOrDefaultAsync<CustomerContactData>(Cmd($"SELECT {ContactColumns} FROM cli.ClienteContactos WHERE IdCliente=@CustomerId AND IdContacto=@Id;", new { request.CustomerId, s.Id }, tx, ct));
             if (s.Id != 0 && previous is null) return Result<long>.Failure("VALIDATION", "El contacto no pertenece al cliente.");
+            if (DirectoryFields.ContactError(s, previous) is { } fieldError) return Result<long>.Failure("VALIDATION", fieldError);
+            s = DirectoryFields.Normalize(s, previous);
             var p = new { request.CustomerId, s.Id, s.Name, s.Position, s.Phone, s.WhatsApp, s.Email, s.Primary, s.Active };
             var id = s.Id == 0 ? await c.ExecuteScalarAsync<long>(Cmd("INSERT INTO cli.ClienteContactos(IdCliente,Nombre,Cargo,Telefono,WhatsApp,Email,EsPrincipal,Activo) OUTPUT INSERTED.IdContacto VALUES(@CustomerId,@Name,@Position,@Phone,@WhatsApp,@Email,@Primary,@Active);", p, tx, ct)) : s.Id;
             if (s.Id != 0) await c.ExecuteAsync(Cmd("UPDATE cli.ClienteContactos SET Nombre=@Name,Cargo=@Position,Telefono=@Phone,WhatsApp=@WhatsApp,Email=@Email,EsPrincipal=@Primary,Activo=@Active WHERE IdCliente=@CustomerId AND IdContacto=@Id;", p, tx, ct));
@@ -121,9 +130,10 @@ public sealed class SqlCustomerRepository(IDbConnectionFactory factory) : ICusto
         {
             var previous = s.Id == 0 ? null : await c.QuerySingleOrDefaultAsync<CustomerAddressData>(Cmd($"SELECT {AddressColumns} FROM cli.ClienteDirecciones WHERE IdCliente=@CustomerId AND IdDireccion=@Id;", new { request.CustomerId, s.Id }, tx, ct));
             if (s.Id != 0 && previous is null) return Result<long>.Failure("VALIDATION", "La dirección no pertenece al cliente.");
-            var p = new { request.CustomerId, s.Id, s.Type, s.Department, s.Municipality, s.Address, s.Reference, s.Primary, s.Active };
-            var id = s.Id == 0 ? await c.ExecuteScalarAsync<long>(Cmd("INSERT INTO cli.ClienteDirecciones(IdCliente,Tipo,Departamento,Municipio,Direccion,Referencia,EsPrincipal,Activo) OUTPUT INSERTED.IdDireccion VALUES(@CustomerId,@Type,@Department,@Municipality,@Address,@Reference,@Primary,@Active);", p, tx, ct)) : s.Id;
-            if (s.Id != 0) await c.ExecuteAsync(Cmd("UPDATE cli.ClienteDirecciones SET Tipo=@Type,Departamento=@Department,Municipio=@Municipality,Direccion=@Address,Referencia=@Reference,EsPrincipal=@Primary,Activo=@Active WHERE IdCliente=@CustomerId AND IdDireccion=@Id;", p, tx, ct));
+            if (DirectoryFields.AddressError(s, previous) is { } fieldError) return Result<long>.Failure("VALIDATION", fieldError);
+            var p = new { request.CustomerId, s.Id, s.Type, s.Department, s.Municipality, s.District, s.Address, s.Reference, s.Primary, s.Active };
+            var id = s.Id == 0 ? await c.ExecuteScalarAsync<long>(Cmd("INSERT INTO cli.ClienteDirecciones(IdCliente,Tipo,Departamento,Municipio,Distrito,Direccion,Referencia,EsPrincipal,Activo) OUTPUT INSERTED.IdDireccion VALUES(@CustomerId,@Type,@Department,@Municipality,@District,@Address,@Reference,@Primary,@Active);", p, tx, ct)) : s.Id;
+            if (s.Id != 0) await c.ExecuteAsync(Cmd("UPDATE cli.ClienteDirecciones SET Tipo=@Type,Departamento=@Department,Municipio=@Municipality,Distrito=@District,Direccion=@Address,Referencia=@Reference,EsPrincipal=@Primary,Activo=@Active WHERE IdCliente=@CustomerId AND IdDireccion=@Id;", p, tx, ct));
             await TouchAsync(c, tx, request.CustomerId, ct);
             await AuditAsync(c, tx, request.CustomerId, userId, workstationId, "GUARDAR_DIRECCION_CLIENTE", request.Reason, previous, s with { Id = id }, ct);
             return Result<long>.Success(request.CustomerId);

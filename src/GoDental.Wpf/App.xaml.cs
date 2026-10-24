@@ -48,13 +48,16 @@ public partial class App : System.Windows.Application
                 {
                     services.AddApplication();
                     services.AddInfrastructure(context.Configuration);
+                    services.AddSingleton<IPrintPreferencesStore>(new LocalPrintPreferencesStore(Path.Combine(localFolder, "printing.json")));
                     services.AddSingleton<IWorkstationSettingsStore>(new LocalWorkstationSettingsStore(Path.Combine(localFolder, "workstation.json")));
+                    services.AddSingleton<GoDental.Application.Abstractions.Persistence.IPendingOperationStore>(new FilePendingOperationStore(localFolder));
                     services.AddSingleton<System.Windows.Application>(this);
                     services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
                     services.AddSingleton<ConnectionViewModel>();
                     services.AddSingleton<AccessViewModel>();
+                    services.AddSingleton<InitialInventoryViewModel>();
                     services.AddSingleton<InventoryViewModel>();
                     services.AddSingleton<InventoryCountsViewModel>();
                     services.AddSingleton<SuppliersViewModel>();
@@ -68,11 +71,21 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<UsersViewModel>();
                     services.AddSingleton<IMvpDialogService>(sp => (DialogService)sp.GetRequiredService<IDialogService>());
                     services.AddSingleton<IPdfFileService, PdfFileService>();
+                    services.AddSingleton<IPdfPrintService, PdfPrintService>();
                     services.AddSingleton<CashViewModel>();
                     services.AddSingleton<PosViewModel>();
                     services.AddSingleton<CreditViewModel>();
                     services.AddSingleton<OrdersViewModel>();
+                    services.AddSingleton<ReportsViewModel>();
+                    services.AddSingleton<FiscalViewModel>();
+                    services.AddSingleton<OnlineViewModel>();
                     services.AddSingleton<CommercialHistoryViewModel>();
+                    services.AddSingleton<IReturnPhotoPicker, ReturnPhotoPicker>();
+                    services.AddSingleton<PendingOperationsViewModel>();
+                    services.AddSingleton<CommercialParametersViewModel>();
+                    services.AddSingleton<PurchasesViewModel>();
+                    services.AddSingleton<BarcodesViewModel>();
+                    services.AddSingleton<HomeViewModel>();
                     services.AddSingleton<ShellViewModel>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<LoginWindow>();

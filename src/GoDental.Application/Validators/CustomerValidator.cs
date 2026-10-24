@@ -24,7 +24,7 @@ public static class CustomerValidator
     {
         if (Version(request.CustomerId, request.ExpectedVersion) is { } error) return error;
         var a = request.Address;
-        if (a is null || a.Id < 0 || a.Type is not ("FISCAL" or "ENTREGA" or "OTRA") || string.IsNullOrWhiteSpace(a.Address) || a.Address.Trim().Length > 500 || a.Department?.Trim().Length > 100 || a.Municipality?.Trim().Length > 100 || a.Reference?.Trim().Length > 300) return "Revisa tipo, dirección (500), departamento/municipio (100) y referencia (300).";
+        if (a is null || a.Id < 0 || a.Type is not ("FISCAL" or "ENTREGA" or "OTRA") || string.IsNullOrWhiteSpace(a.Address) || a.Address.Trim().Length > 500 || a.Department?.Trim().Length > 100 || a.Municipality?.Trim().Length > 100 || a.District?.Trim().Length > 100 || a.Reference?.Trim().Length > 300) return "Revisa tipo, dirección (500), departamento/municipio (100) y referencia (300).";
         return Reason(request.Reason);
     }
     public static string? Validate(CustomerCreditChange request)

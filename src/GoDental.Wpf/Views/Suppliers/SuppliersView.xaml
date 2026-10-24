@@ -1,102 +1,126 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Suppliers.SuppliersView">
+<UserControl x:Class="GoDental.Wpf.Views.Suppliers.SuppliersView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/GoDental;component/Themes/Directory.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
   <StackPanel>
-    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando proveedores"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
-    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo proveedor" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryButton}" Tag="&#xE710;" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}"/><TextBlock Text="Proveedores" Style="{StaticResource Heading}"/></DockPanel>
-    <TextBlock Text="Contactos y referencias comerciales en una sola ficha." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
-    <WrapPanel IsEnabled="{Binding IsNotBusy}">
-      <StackPanel Width="280" Margin="0,0,16,12">
-        <TextBlock Text="Código, nombre o país" Margin="0,0,0,6"/>
-        <TextBox Style="{StaticResource SearchBox}" Tag="Buscar…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código, nombre o país"/>
-      </StackPanel>
-      <CheckBox Content="Incluir inactivos" IsChecked="{Binding IncludeInactive}" Margin="0,6,16,12"/>
-      <Button Tag="&#xE721;" Content="Buscar / Actualizar" Command="{Binding ReloadCommand}" VerticalAlignment="Bottom" Margin="0,0,8,12"/>
-    </WrapPanel>
-    <TextBlock Text="No hay proveedores para mostrar." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
-    <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="380" Margin="0,0,0,12" SelectionMode="Single">
-      <DataGrid.Columns>
-        <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="100"/>
-        <DataGridTemplateColumn Header="Proveedor" Width="*" MinWidth="180" CellTemplate="{StaticResource PersonName}"/>
-        <DataGridTextColumn Header="País" Binding="{Binding Country}" Width="130"/>
-        <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="150"/>
-        <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-      </DataGrid.Columns>
-    </DataGrid>
-    <WrapPanel IsEnabled="{Binding IsNotBusy}">
-      <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,8,8"/>
-      <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" Margin="0,0,8,8"/>
-      <Button Content="Ver ficha" Command="{Binding OpenCommand}" Margin="0,0,8,8"/>
-      <TextBlock Text="{Binding PageLabel}" VerticalAlignment="Center"/>
-    </WrapPanel>
+      <DockPanel Margin="0,0,0,20">
+        <Button DockPanel.Dock="Right" Content="Nuevo proveedor" Command="{Binding NewCommand}" Style="{StaticResource PrimaryActionButton}" Tag="&#xE710;" Margin="16,0,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/>
+        <StackPanel><TextBlock Text="Proveedores" Style="{StaticResource Heading}"/><TextBlock Text="Tu directorio de proveedores y productos relacionados." Style="{StaticResource MutedText}"/></StackPanel>
+      </DockPanel>
+      <DockPanel Margin="0,0,0,12" IsEnabled="{Binding IsNotBusy}">
+        <Button DockPanel.Dock="Right" Style="{StaticResource CommerceIconButton}" Content="&#xE72C;" Command="{Binding ReloadCommand}" ToolTip="Actualizar proveedores" AutomationProperties.Name="Actualizar proveedores" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Content="Filtros" Tag="&#xE71C;" Command="{Binding ToggleFiltersCommand}" Style="{StaticResource ActionButton}" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Style="{StaticResource CommerceIconButton}" Content="&#xE721;" Command="{Binding ReloadCommand}" ToolTip="Buscar proveedores" AutomationProperties.Name="Buscar proveedores" Margin="8,0,0,0"/>
+        <TextBox Style="{StaticResource SearchBox}" Tag="Buscar por código, nombre o país…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Buscar proveedores por código, nombre o país">
+          <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding ReloadCommand}"/></TextBox.InputBindings>
+        </TextBox>
+      </DockPanel>
+      <Border Style="{StaticResource FilterPanel}" Margin="0,0,0,12" Visibility="{Binding AreFiltersOpen, Converter={StaticResource BoolToVisibility}}">
+        <DockPanel IsEnabled="{Binding IsNotBusy}">
+          <Button DockPanel.Dock="Right" Content="Aplicar filtros" Command="{Binding ReloadCommand}" Style="{StaticResource ActionButton}" Margin="16,0,0,0"/>
+          <CheckBox Content="Incluir proveedores inactivos" IsChecked="{Binding IncludeInactive}" VerticalAlignment="Center"/>
+        </DockPanel>
+      </Border>
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+      <Grid>
+        <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="300" SelectionMode="Single" AutomationProperties.Name="Listado de proveedores">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="110" ElementStyle="{StaticResource CommerceCell}"/>
+            <DataGridTemplateColumn Header="Proveedor" Width="*" MinWidth="200"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+              <Button Style="{StaticResource CommerceRowLink}" Command="{Binding DataContext.OpenSupplierCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" ToolTip="Abrir ficha del proveedor" AutomationProperties.Name="{Binding Name}">
+                <DockPanel><Border DockPanel.Dock="Left" Style="{StaticResource DirectoryAvatar}" Margin="0,0,10,0"><TextBlock Text="{Binding Name, Converter={StaticResource CommerceInitials}}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="{Binding Name}" Style="{StaticResource CommerceCell}" FontWeight="SemiBold"/></DockPanel>
+              </Button>
+            </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+            <DataGridTextColumn Header="País" Binding="{Binding Country, Converter={StaticResource DirectoryOptionalText}}" Width="120" ElementStyle="{StaticResource CommerceCell}"/>
+            <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone, Converter={StaticResource DirectoryOptionalText}}" Width="120" ElementStyle="{StaticResource CommerceCell}"/>
+            <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+        <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Items.Count}" Content="No hay proveedores con estos filtros. Ajusta la búsqueda o registra un nuevo proveedor."/>
+      </Grid>
+      <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
+        <Button DockPanel.Dock="Right" Content="Ver ficha" Command="{Binding OpenCommand}" Style="{StaticResource ActionButton}" Margin="16,0,0,0"/>
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"><Button Content="‹" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,6,0"/><Button Content="›" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}"/></StackPanel>
+        <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+      </DockPanel>
     </StackPanel>
     <StackPanel Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVisibility}}">
-      <DockPanel Margin="0,0,0,18">
-        <Button DockPanel.Dock="Right" Content="Actualizar ficha" Tag="&#xE72C;" Command="{Binding RefreshDetailCommand}" IsEnabled="{Binding IsNotBusy}"/>
-        <Button Content="Volver a proveedores" Tag="&#xE72B;" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left"/>
+      <DockPanel Margin="0,0,0,16">
+        <Button DockPanel.Dock="Right" Content="Editar proveedor" Tag="&#xE70F;" Command="{Binding EditSupplierCommand}" Style="{StaticResource PrimaryActionButton}" Margin="8,0,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/>
+        <Button DockPanel.Dock="Right" Content="&#xE72C;" Command="{Binding RefreshDetailCommand}" Style="{StaticResource CommerceIconButton}" IsEnabled="{Binding IsNotBusy}" ToolTip="Actualizar ficha" AutomationProperties.Name="Actualizar ficha"/>
+        <Button Content="Volver a proveedores" Tag="&#xE72B;" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left" IsEnabled="{Binding IsNotBusy}"/>
       </DockPanel>
-      <DockPanel Margin="0,0,0,18">
-        <Border DockPanel.Dock="Left" Background="{DynamicResource SidebarSelectionBrush}" CornerRadius="22" Width="44" Height="44" Margin="0,0,12,0"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="24" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-        <ContentControl DockPanel.Dock="Right" Content="{Binding Detail.Active}" ContentTemplate="{StaticResource ActiveBadge}" VerticalAlignment="Top"/>
-        <StackPanel><TextBlock Text="{Binding Detail.Name}" Style="{StaticResource Heading}"/><TextBlock Text="{Binding Detail.Code}" Style="{StaticResource MutedText}"/></StackPanel>
+      <DockPanel Margin="0,0,0,20">
+        <Border DockPanel.Dock="Left" Style="{StaticResource DirectoryIdentity}" Margin="0,0,12,0"><TextBlock Text="{Binding Detail.Name, Converter={StaticResource CommerceInitials}}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+        <StackPanel><WrapPanel><TextBlock Text="{Binding Detail.Name}" Style="{StaticResource Heading}" Margin="0,0,12,4"/><ContentControl Content="{Binding Detail.Active}" ContentTemplate="{StaticResource ActiveBadge}" VerticalAlignment="Center"/></WrapPanel><TextBlock Text="{Binding Detail.Code}" Style="{StaticResource MutedText}"/></StackPanel>
       </DockPanel>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
-    <TabControl>
-      <TabItem Header="Información general"><StackPanel Margin="16"><UniformGrid Columns="2">
-<StackPanel Margin="0,0,20,16"><TextBlock Text="País" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Country}" Margin="0,4,0,0"/></StackPanel>
-<StackPanel Margin="0,0,20,16"><TextBlock Text="Dirección" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Address}" Margin="0,4,0,0"/></StackPanel>
-<StackPanel Margin="0,0,20,16"><TextBlock Text="Correo electrónico" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Email}" Margin="0,4,0,0"/></StackPanel>
-<StackPanel Margin="0,0,20,16"><TextBlock Text="Teléfono" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Phone}" Margin="0,4,0,0"/></StackPanel>
-<StackPanel Margin="0,0,20,16"><TextBlock Text="Sitio web" Style="{StaticResource MutedText}"/><TextBlock Text="{Binding Detail.Website}" Margin="0,4,0,0"/></StackPanel>
-      </UniformGrid><Button Content="Editar proveedor" Tag="&#xE70F;" Command="{Binding EditSupplierCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}"/></StackPanel></TabItem>
-      <TabItem Header="Contactos">
-        <StackPanel Margin="16">
-          <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="200" Margin="0,0,0,12" SelectionMode="Single">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
-              <DataGridTextColumn Header="Cargo" Binding="{Binding Position}" Width="120"/>
-              <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="170"/>
-              <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="120"/>
-              <DataGridTextColumn Header="Principal" Binding="{Binding Primary}" Width="70"/>
-              <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}">
-            <Button Tag="&#xE710;" Content="Nuevo contacto…" Command="{Binding NewContactCommand}" Margin="0,0,8,8"/>
-            <Button Content="Editar / Estado…" Command="{Binding EditContactCommand}" Margin="0,0,8,8"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Productos y referencias">
-        <StackPanel Margin="16">
-          <DataGrid ItemsSource="{Binding References}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="200" Margin="0,0,0,12" SelectionMode="Single">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="SKU local" Binding="{Binding LocalSku}" Width="90"/>
-              <DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="*"/>
-              <DataGridTextColumn Header="SKU externo" Binding="{Binding SupplierSku}" Width="110"/>
-              <DataGridTemplateColumn Header="Costo / moneda" Width="140">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="{Binding LastCost}" Margin="0,0,8,0"/>
-                      <TextBlock Text="{Binding Currency}"/>
-                    </StackPanel>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-              </DataGridTemplateColumn>
-              <DataGridTextColumn Header="MOQ" Binding="{Binding MinimumQuantity}" Width="70"/>
-              <DataGridTextColumn Header="Días" Binding="{Binding LeadTimeDays}" Width="50"/>
-              <DataGridTextColumn Header="Preferido" Binding="{Binding Preferred}" Width="70"/>
-              <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}">
-            <Button Tag="&#xE710;" Content="Nueva referencia…" Command="{Binding NewProductCommand}" Margin="0,0,8,8"/>
-            <Button Content="Editar / Estado…" Command="{Binding EditProductCommand}" Margin="0,0,8,8"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-    </TabControl>
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+      <TabControl IsEnabled="{Binding IsNotBusy}">
+        <TabItem Header="Información general" Style="{StaticResource CommerceTab}">
+          <StackPanel Style="{StaticResource DirectorySection}">
+            <TextBlock Text="Datos del proveedor" Style="{StaticResource SectionHeading}"/>
+            <TextBlock Text="Identificación y canales de contacto registrados." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
+            <UniformGrid Columns="2" Margin="0,0,-16,0">
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="Nombre comercial / Razón social" Content="{Binding Detail.Name}"/>
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="País" Content="{Binding Detail.Country}"/>
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="Teléfono" Content="{Binding Detail.Phone}"/>
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="Correo electrónico" Content="{Binding Detail.Email}"/>
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="Sitio web" Content="{Binding Detail.Website}"/>
+              <ContentControl Style="{StaticResource DirectoryField}" Tag="Dirección" Content="{Binding Detail.Address}"/>
+            </UniformGrid>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Contactos" Style="{StaticResource CommerceTab}">
+          <StackPanel Style="{StaticResource DirectorySection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Nuevo contacto" Tag="&#xE710;" Command="{Binding NewContactCommand}" Style="{StaticResource PrimaryActionButton}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}" Margin="16,0,0,0"/>
+              <StackPanel><TextBlock Text="Personas de contacto" Style="{StaticResource SectionHeading}"/><TextBlock Text="Responsables y medios para comunicarte con el proveedor." Style="{StaticResource MutedText}"/></StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="240" SelectionMode="Single" AutomationProperties.Name="Contactos del proveedor">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*" MinWidth="160" ElementStyle="{StaticResource CommerceCell}"/>
+                  <DataGridTextColumn Header="Cargo" Binding="{Binding Position, Converter={StaticResource DirectoryOptionalText}}" Width="110" ElementStyle="{StaticResource CommerceCell}"/>
+                  <DataGridTemplateColumn Header="Contacto" Width="*" MinWidth="180"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding Email, Converter={StaticResource DirectoryOptionalText}}" Style="{StaticResource CommerceCell}"/><TextBlock Text="{Binding Phone, Converter={StaticResource DirectoryOptionalText}}" Style="{StaticResource CommerceCell}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Principal" Width="75"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Primary}" ContentTemplate="{StaticResource CommerceYesNo}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding Contacts.Count}" Content="Este proveedor todavía no tiene contactos registrados."/>
+            </Grid>
+            <Button Content="Editar contacto" Command="{Binding EditContactCommand}" Style="{StaticResource ActionButton}" HorizontalAlignment="Right" Margin="0,12,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}"/>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="Productos por proveedor" Style="{StaticResource CommerceTab}">
+          <StackPanel Style="{StaticResource DirectorySection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Vincular producto" Tag="&#xE710;" Command="{Binding NewProductCommand}" Style="{StaticResource PrimaryActionButton}" Margin="16,0,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}"/>
+              <StackPanel><TextBlock Text="Productos relacionados" Style="{StaticResource SectionHeading}"/><TextBlock Text="Códigos externos y condiciones de referencia del proveedor." Style="{StaticResource MutedText}"/></StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding References}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="240" SelectionMode="Single" AutomationProperties.Name="Productos por proveedor">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="Producto" Width="*" MinWidth="180"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding Product}" Style="{StaticResource CommerceCell}" FontWeight="SemiBold"/><TextBlock Text="{Binding LocalSku}" Style="{StaticResource CommerceCell}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTextColumn Header="SKU externo" Binding="{Binding SupplierSku, Converter={StaticResource DirectoryOptionalText}}" Width="100" ElementStyle="{StaticResource CommerceCell}"/>
+                  <DataGridTemplateColumn Header="Costo / moneda" Width="120"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+                    <Grid>
+                      <StackPanel Orientation="Horizontal" Visibility="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}"><TextBlock Text="{Binding LastCost, StringFormat={}{0:0.######}, ConverterCulture=en-US, TargetNullValue=—}" Margin="0,0,6,0"/><TextBlock Text="{Binding Currency}"/></StackPanel>
+                      <TextBlock Text="Restringido" Foreground="{DynamicResource MutedBrush}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource CommerceCell}"><Style.Triggers><DataTrigger Binding="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+                    </Grid>
+                  </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Mínimo" Binding="{Binding MinimumQuantity, StringFormat={}{0:0.####}, TargetNullValue=—}" Width="75" ElementStyle="{StaticResource CommerceNumber}"/>
+                  <DataGridTextColumn Header="Plazo (días)" Binding="{Binding LeadTimeDays, TargetNullValue=—}" Width="80" ElementStyle="{StaticResource CommerceNumber}"/>
+                  <DataGridTemplateColumn Header="Preferido" Width="75"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Preferred}" ContentTemplate="{StaticResource CommerceYesNo}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CommerceEmpty}" Tag="{Binding References.Count}" Content="No hay productos vinculados a este proveedor."/>
+            </Grid>
+            <Button Content="Editar referencia" Command="{Binding EditProductCommand}" Style="{StaticResource ActionButton}" HorizontalAlignment="Right" Margin="0,12,0,0" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEditChildren}"/>
+            <TextBlock Text="El costo de referencia no cambia precios, existencias ni el costo del inventario." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
     </StackPanel>
   </StackPanel>
 </UserControl>

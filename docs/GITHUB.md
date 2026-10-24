@@ -42,12 +42,12 @@ Los tests están en `tests/GoDental.Tests/`.
 
 El flujo recomendado es:
 
-1. Trabajar en `feature/ui` o `feature/logica`, según responsabilidad; `main` conserva la versión validada.
+1. Trabajar en `feature/desarrollo`, separando responsabilidades por capas y commits; `main` conserva la versión validada.
 2. Hacer cambios y pruebas locales.
 3. Abrir Pull Request hacia `main`.
 4. Esperar CI verde.
 5. Revisar el diff.
-6. Integrar conservando el historial mediante merge; mantener ambas ramas de desarrollo y sincronizarlas con `main` mediante `git merge origin/main` después de actualizar referencias.
+6. Integrar conservando el historial mediante merge; mantener `feature/desarrollo` y sincronizarla con `main` mediante `git merge origin/main` después de actualizar referencias.
 
 UI y lógica se separan por capas y commits. Las ramas anteriores están archivadas como etiquetas, según [DEV-08](DEV-08-Ramas.md).
 

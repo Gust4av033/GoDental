@@ -84,6 +84,8 @@ public sealed class SqlSupplierRepository(IDbConnectionFactory factory) : ISuppl
         var s = request.Supplier;
         return MutateAsync(s.Id, s.RowVersion, false, userId, ct, async (c, tx, previous) =>
         {
+            if (SupplierValidator.ValidateFields(s, previous) is { } fieldError) return Result<int>.Failure("VALIDATION", fieldError);
+            s = GoDental.Application.Validators.DirectoryFields.Normalize(s, previous);
             if (previous is not null && previous.Code != s.Code && await c.ExecuteScalarAsync<bool>(Cmd(
                 "SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cmp.OrdenesCompra WITH(HOLDLOCK) WHERE IdProveedor=@Id) THEN 1 ELSE 0 END);", s, tx, ct)))
                 return Result<int>.Failure("IN_USE", "El proveedor tiene órdenes; conserva su código para mantener trazabilidad.");
@@ -107,12 +109,15 @@ public sealed class SqlSupplierRepository(IDbConnectionFactory factory) : ISuppl
     {
         if (SupplierValidator.Validate(request) is { } error) return Invalid(error);
         var contact = request.Contact;
-        return MutateAsync(request.SupplierId, request.ExpectedSupplierVersion, true, userId, ct, async (c, tx, _) =>
+        return MutateAsync(request.SupplierId, request.ExpectedSupplierVersion, true, userId, ct, async (c, tx, parent) =>
         {
             var previous = contact.Id == 0 ? null : await c.QuerySingleOrDefaultAsync<SupplierContactData>(Cmd(
                 $"SELECT {ContactColumns} FROM cmp.ProveedorContactos WHERE IdProveedor=@SupplierId AND IdContacto=@Id;",
                 new { request.SupplierId, contact.Id }, tx, ct));
             if (contact.Id != 0 && previous is null) return Result<int>.Failure("VALIDATION", "El contacto no pertenece a este proveedor.");
+            var region = GoDental.Application.Localization.DirectoryCatalog.Country(parent?.Country)?.Code;
+            if (GoDental.Application.Localization.PhoneFormat.Error(contact.Phone, previous?.Phone, region, previous is null) is { } phoneError) return Result<int>.Failure("VALIDATION", phoneError);
+            contact = contact with { Phone = GoDental.Application.Localization.PhoneFormat.NormalizeChanged(contact.Phone, previous?.Phone, region, previous is null) };
             if (contact.Primary && contact.Active && await c.ExecuteScalarAsync<bool>(Cmd("""
                 SELECT CONVERT(bit,CASE WHEN EXISTS(SELECT 1 FROM cmp.ProveedorContactos WHERE IdProveedor=@SupplierId
                     AND Activo=1 AND EsPrincipal=1 AND IdContacto<>@Id) THEN 1 ELSE 0 END);

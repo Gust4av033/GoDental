@@ -1,0 +1,6 @@
+<UserControl x:Class="GoDental.Wpf.Controls.PhoneInput" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Name="Root">
+  <StackPanel>
+    <TextBox x:Name="NumberInput" Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxLength="{Binding MaxLength, ElementName=Root}" AutomationProperties.Name="{Binding Label, ElementName=Root}"/>
+    <TextBlock Text="{Binding Hint, ElementName=Root}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite"/>
+  </StackPanel>
+</UserControl>

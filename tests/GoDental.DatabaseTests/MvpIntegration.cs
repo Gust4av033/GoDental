@@ -60,14 +60,14 @@ internal static class MvpIntegration
         var effective = methods.Single(m => m.Code == "EFECTIVO").Id;
         var credit = methods.Single(m => m.Code == "CREDITO").Id;
         var transfer = methods.Single(m => m.Code == "TRANSFERENCIA").Id;
-        Check(methods.All(m => m.Code != "TARJETA"), "No anuncia cobro con tarjeta sin integración");
+        Check(methods.Any(m => m.Code == "TARJETA" && m.RequiresReference && !m.AffectsCash), "Ofrece tarjeta manual con referencia y sin afectar efectivo");
         var type = checked((short)(await customers.CatalogsAsync()).Types.First().Id);
-        var createdCustomer = await customers.SaveAsync(new(new() { Code = "MVP-CLIENTE", Name = "Cliente aislado", TypeId = type, Nit = "MVP-NIT", Nrc = "MVP-NRC" }, "Alta cliente"));
+        var createdCustomer = await customers.SaveAsync(new(new() { Code = "MVP-CLIENTE", Name = "Cliente aislado", TypeId = type, Nit = "0614-010100-102-0", Nrc = "MVP-NRC" }, "Alta cliente"));
         Check(createdCustomer.IsSuccess, "Crea cliente para ventas y entregas"); var customerId = createdCustomer.Value;
         var customer = (await customers.ReadAsync(customerId))!;
         Check((await customers.SaveCreditAsync(new(customerId, customer.Customer.RowVersion, new() { Enabled = true, Limit = 1000, Days = 15, NoticeDays = 5 }, "Crédito de prueba"))).IsSuccess, "Habilita crédito mediante contrato administrativo");
         customer = (await customers.ReadAsync(customerId))!;
-        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, new() { Type = "ENTREGA", Address = "Dirección original", Reference = "Portón" }, "Dirección de entrega"))).IsSuccess, "Registra dirección de entrega");
+        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, new() { Type = "ENTREGA", Address = "Dirección original", Department = "San Salvador", Municipality = "San Salvador Centro", District = "San Salvador", Reference = "Portón" }, "Dirección de entrega"))).IsSuccess, "Registra dirección de entrega");
         customer = (await customers.ReadAsync(customerId))!;
         var address = customer.Addresses.Single();
 
@@ -176,7 +176,10 @@ internal static class MvpIntegration
         var highSale = new ConfirmSale(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, [new(effective, discountQuote.Total)], discountQuote.Total, shiftId, "Descuento autorizado");
         Check((await sales.ConfirmAsync(highSale)).ErrorCode == "FORBIDDEN", "Descuento efectivo mayor a 35 exige autorización aun junto al umbral");
         Check((await sales.SaveQuotationAsync(new(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, today.AddDays(1), "Cotización sin autorización"))).ErrorCode == "FORBIDDEN", "Cotización emitida tampoco puede eludir autorización administrativa");
-        var authorizationId = Saved(await sales.AuthorizeDiscountAsync(new(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, "Autorización de prueba"), identity.UserName, password));
+        var approvalRequest = new DiscountApproval(Guid.NewGuid(), discountQuote.Cart, discountQuote.Token, "Autorización de prueba");
+        var authorizationId = Saved(await sales.AuthorizeDiscountAsync(approvalRequest, identity.UserName, password));
+        Check((await repository.ResolveOperationAsync(OperationIdentity.Describe(approvalRequest), false, identity.Id, identity.WorkstationId, default)).Receipt?.Id == authorizationId,
+            "Recupera autorización sin persistir ni volver a pedir su contraseña administrativa");
         Saved(await sales.ConfirmAsync(highSale with { DiscountAuthorizationId = authorizationId }));
         Check(await c.ExecuteScalarAsync<bool>("SELECT UtilizadaMvp FROM sis.AutorizacionesOperacion WHERE IdAutorizacion=@authorizationId;", new { authorizationId }), "Autorización administrativa se consume en la transacción de venta");
 
@@ -200,10 +203,12 @@ internal static class MvpIntegration
         var orderId = Saved(await orders.PlaceAsync(placed));
         var order = (await orders.ReadAsync(orderId))!;
         customer = (await customers.ReadAsync(customerId))!;
-        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, address with { Address = "Dirección nueva" }, "Cambio de domicilio"))).IsSuccess, "Edita dirección de cliente después de crear pedido");
-        Check((await orders.ReadAsync(orderId))!.Order.Address == "Dirección original", "Pedido conserva snapshot de entrega");
+        Check((await customers.SaveAddressAsync(new(customerId, customer.Customer.RowVersion, address with { Address = "Dirección nueva", District = "Mejicanos" }, "Cambio de domicilio"))).IsSuccess, "Edita dirección de cliente después de crear pedido");
+        Check((await orders.ReadAsync(orderId))!.Order is { Address: "Dirección original", District: "San Salvador" }, "Pedido conserva snapshot de entrega y distrito después de editar cliente");
         Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "ENTREGADO", "Salto inválido"))).IsSuccess, "Pedido recibido no pasa directamente a entregado");
         Saved(await orders.LinkSaleAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, saleId, "Vincular venta correspondiente")));
+        Check((await sales.ReadAsync(saleId))!.Delivery is { Id: var linkedOrder, Address: "Dirección original" } && linkedOrder == orderId,
+            "Comprobante lee la entrega del pedido sin sustituirla por la dirección actual del cliente");
         Check((await orders.TransitionAsync(new(Guid.NewGuid(), orderId, order.Order.RowVersion, "PREPARANDO", "Versión obsoleta"))).ErrorCode == "CONCURRENCY_CONFLICT", "Vincular venta invalida versión anterior del pedido");
         foreach (var state in new[] { "PREPARANDO", "LISTO", "EN_RUTA", "ENTREGADO" })
         {
@@ -224,6 +229,85 @@ internal static class MvpIntegration
         var unbilled = (await orders.ReadAsync(unbilledOrderId))!;
         Check(!(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "EN_RUTA", "Despachar sin venta"))).IsSuccess && !(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "ENTREGADO", "Entregar sin venta"))).IsSuccess, "No despacha ni entrega sin venta e inventario registrados");
         Saved(await orders.TransitionAsync(new(Guid.NewGuid(), unbilledOrderId, unbilled.Order.RowVersion, "CANCELADO", "Cancelar pedido no facturado")));
+
+        // Pedido → POS: una sola transacción, incluso con pérdida de respuesta o dos equipos.
+        var fromOrderId = Saved(await orders.PlaceAsync(placed with { OperationId = Guid.NewGuid() }));
+        var fromOrder = (await orders.ReadAsync(fromOrderId))!;
+        var beforeOrderStock = await c.ExecuteScalarAsync<decimal>("SELECT StockActual FROM inv.ExistenciasProducto WHERE IdProducto=@p AND IdAlmacen=@warehouse;", new { p, warehouse });
+        var origin = new SaleOrderOrigin(fromOrderId, fromOrder.Order.RowVersion);
+        var fromOrderRequest = (await CashSale(Cart(delivery: 5))) with { Order = origin };
+        Saved(await orders.TransitionAsync(new(Guid.NewGuid(), fromOrderId, origin.ExpectedVersion, "PREPARANDO", "Preparar antes de cobrar")));
+        Check((await sales.ConfirmAsync(fromOrderRequest)).ErrorCode == "CONCURRENCY_CONFLICT", "Pedido cambiado exige revisar versión antes de cobrar");
+        fromOrder = (await orders.ReadAsync(fromOrderId))!; origin = new(fromOrderId, fromOrder.Order.RowVersion);
+        Check(await c.ExecuteScalarAsync<decimal>("SELECT StockActual FROM inv.ExistenciasProducto WHERE IdProducto=@p AND IdAlmacen=@warehouse;", new { p, warehouse }) == beforeOrderStock, "Recibir y preparar pedido no reservan ni descuentan inventario");
+
+        Task<string?> CommercialState() => c.ExecuteScalarAsync<string>("""
+            SELECT (SELECT (SELECT COUNT(*) FROM ven.Ventas) Sales,
+              (SELECT COUNT(*) FROM ven.VentaDetalle) Lines,(SELECT COUNT(*) FROM ven.VentaPagos) Payments,
+              (SELECT COUNT(*) FROM ven.CuentasPorCobrar) Accounts,(SELECT COUNT(*) FROM ven.MovimientosCaja) CashMovements,
+              (SELECT COUNT(*) FROM inv.MovimientosInventario) InventoryMovements,
+              (SELECT SUM(StockActual) FROM inv.ExistenciasProducto) Stock,
+              (SELECT EfectivoEsperado FROM ven.TurnosCaja WHERE IdTurno=@shiftId) Cash,
+              (SELECT COUNT(*) FROM sis.OperacionesMvp) Operations,(SELECT COUNT(*) FROM sis.Bitacora) Audit,
+              (SELECT COUNT(*) FROM ven.PedidoEventosMvp) Events,
+              (SELECT IdVenta FROM ven.PedidosMvp WHERE IdPedido=@fromOrderId) LinkedSale
+              FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
+            """, new { shiftId, fromOrderId });
+        foreach (var incompatible in new[] { Cart(delivery: 6), Cart(2, 5), Cart(delivery: 5) with { CustomerId = null } })
+        {
+            var incompatibleRequest = (await CashSale(incompatible)) with { Order = origin };
+            var originalState = await CommercialState();
+            Check((await sales.ConfirmAsync(incompatibleRequest)).ErrorCode == "VALIDATION", "Venta desde pedido conserva validación de cargo/cantidad/cliente");
+            Check(await CommercialState() == originalState && await repository.FindOperationAsync(incompatibleRequest.OperationId, identity.Id, default) is null,
+                "Enlace incompatible revierte venta, pagos, caja, Kardex, stock, evento y GUID");
+        }
+        var otherProduct = await Product("MVP-PEDIDO-OTRO", 101);
+        Saved(await setup.InitializeAsync(new(Guid.NewGuid(), otherProduct, warehouse, 4, 30, "Stock para incompatibilidad")));
+        var wrongProduct = (await CashSale(new(box, customerId, [new(otherProduct, 1)], DeliveryCharge: 5))) with { Order = origin };
+        var beforeWrongProduct = await CommercialState();
+        Check((await sales.ConfirmAsync(wrongProduct)).ErrorCode == "VALIDATION" && await CommercialState() == beforeWrongProduct, "Producto distinto también revierte toda la operación");
+
+        fromOrderRequest = (await CashSale(Cart(delivery: 5))) with { Order = origin };
+        var beforeAuditFailure = await CommercialState();
+        await c.ExecuteAsync("""
+            CREATE TRIGGER sis.tr_Test_OrderSaleRollback ON sis.Bitacora AFTER INSERT AS
+            BEGIN
+              IF EXISTS(SELECT 1 FROM inserted WHERE Modulo=N'MVP' AND Accion=N'CONFIRMAR_VENTA')
+                THROW 51099,N'Fallo sintético después del enlace.',1;
+            END;
+            """);
+        var orderSaleRolledBack = false;
+        try { await sales.ConfirmAsync(fromOrderRequest); }
+        catch (SqlException ex) when (ex.Number == 51099) { orderSaleRolledBack = true; }
+        finally { await c.ExecuteAsync("DROP TRIGGER sis.tr_Test_OrderSaleRollback;"); }
+        Check(orderSaleRolledBack && await CommercialState() == beforeAuditFailure && (await orders.ReadAsync(fromOrderId))!.Order.RowVersion.SequenceEqual(origin.ExpectedVersion),
+            "Fallo posterior al enlace revierte venta y pedido incluidos versión, evento, stock, caja y ledger");
+        var automaticSaleId = Saved(await sales.ConfirmAsync(fromOrderRequest));
+        fromOrder = (await orders.ReadAsync(fromOrderId))!;
+        Check(fromOrder.Order.SaleId == automaticSaleId && fromOrder.Order.State == "PREPARANDO" && fromOrder.Order.PaymentState == "PAGADO" && fromOrder.TotalEvents == 3,
+            "Cobrar pedido vincula venta automáticamente sin cambiar su estado de preparación");
+        Check((await repository.ReadReceiptAsync(automaticSaleId, identity.Id, default))!.Delivery?.Id == fromOrderId,
+            "Comprobante con permiso de reimpresión incluye el pedido asociado automáticamente");
+        var afterAutomaticSale = await CommercialState();
+        Check(Saved(await sales.ConfirmAsync(fromOrderRequest)) == automaticSaleId && await CommercialState() == afterAutomaticSale,
+            "Recuperar respuesta perdida devuelve venta enlazada original aunque su versión avanzó");
+        Check((await repository.FindOperationAsync(fromOrderRequest.OperationId, identity.Id, default))?.Id == automaticSaleId,
+            "Consulta por GUID identifica venta con pedido ya enlazado");
+        Check(!(await sales.ConfirmAsync(fromOrderRequest with { OperationId = Guid.NewGuid() })).IsSuccess && await CommercialState() == afterAutomaticSale,
+            "Otro GUID no vuelve a cobrar un pedido vinculado");
+
+        var concurrentOrderId = Saved(await orders.PlaceAsync(placed with { OperationId = Guid.NewGuid() }));
+        var concurrentOrder = (await orders.ReadAsync(concurrentOrderId))!;
+        var competingRequest = (await CashSale(Cart(delivery: 5))) with { Order = new(concurrentOrderId, concurrentOrder.Order.RowVersion) };
+        var salesBeforeCompetition = await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;");
+        var orderCompetition = await Task.WhenAll(sales.ConfirmAsync(competingRequest), sales.ConfirmAsync(competingRequest with { OperationId = Guid.NewGuid() }));
+        Check(orderCompetition.Count(r => r.IsSuccess) == 1 && orderCompetition.Count(r => !r.IsSuccess) == 1
+            && await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;") == salesBeforeCompetition + 1
+            && (await orders.ReadAsync(concurrentOrderId))!.Order.SaleId == orderCompetition.Single(r => r.IsSuccess).Value!.Id,
+            "Dos equipos con GUID distintos confirman y vinculan una única venta por pedido");
+
+        var cancelledOrderRequest = (await CashSale(Cart(delivery: 5))) with { Order = new(unbilledOrderId, (await orders.ReadAsync(unbilledOrderId))!.Order.RowVersion) };
+        Check((await sales.ConfirmAsync(cancelledOrderRequest)).ErrorCode == "INVALID_STATE", "Pedido cancelado no admite venta automática");
 
         var fiscal = new FiscalPendingService(repository, session);
         customer = (await customers.ReadAsync(customerId))!;
@@ -255,7 +339,7 @@ internal static class MvpIntegration
         Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sis.Bitacora WHERE DatosDespuesJson LIKE '%'+@password+'%';", new { password }) == 0, "Reautenticación no persiste contraseña en auditoría");
         var salesBeforeInstall = await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;");
         await DevelopmentDatabase.InstallAsync(database, Path.Combine(root, "database"));
-        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;") == salesBeforeInstall && (await orders.ReadAsync(orderId))!.Order.State == "ENTREGADO", "Reaplicar migraciones conserva ventas y entregas");
+        Check(await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ven.Ventas;") == salesBeforeInstall && (await orders.ReadAsync(orderId))!.Order is { State: "ENTREGADO", District: "San Salvador" }, "Reaplicar migraciones 001–020 conserva ventas, entregas y distrito");
         Console.WriteLine($"{checks} comprobaciones MVP SQL correctas. Base aislada retenida: {database}");
     }
 }

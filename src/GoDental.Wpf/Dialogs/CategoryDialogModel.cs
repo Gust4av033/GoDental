@@ -15,7 +15,7 @@ public sealed class CategoryDialogModel : ObservableObject, IDialogModel, IDispo
     public bool ShowPrimaryAction => true;
     public bool HasUnsavedChanges => manager.HasPendingChanges;
     public bool IsBusy => manager.IsBusy;
-    public bool CanEdit => manager.CanEdit && manager.Selected is not null;
+    public bool CanEdit => manager.CanEdit && (manager.IsCreating || manager.Selected is not null);
     public ICommand SaveCommand => manager.SaveCommand;
     public ICommand CancelCommand { get; }
     public event EventHandler? Saved;

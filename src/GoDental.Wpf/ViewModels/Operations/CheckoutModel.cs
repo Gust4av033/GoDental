@@ -8,6 +8,9 @@ namespace GoDental.Wpf.ViewModels.Operations;
 
 public sealed partial class CheckoutModel : ObservableObject
 {
+    public const string ManualCardNotice = "Tarjeta: registra únicamente un cobro ya aprobado en la terminal externa y su referencia. GoDental no procesa ni verifica el cobro. No ingreses número de tarjeta ni CVV.";
+    public bool HasManualCard => Methods.Any(m => m.Code == "TARJETA");
+    public string CardNotice => ManualCardNotice;
     public SaleQuote Quote { get; }
     public IReadOnlyList<PaymentMethodData> Methods { get; }
     public ObservableCollection<SalePaymentData> Payments { get; } = [];
@@ -27,7 +30,8 @@ public sealed partial class CheckoutModel : ObservableObject
             if (Method is null) throw new ArgumentException("Selecciona una forma de pago.");
             var value = Parse(Amount, "importe aplicado");
             if (value <= 0 || Payments.Count >= 10) throw new ArgumentException("Usa importes positivos y hasta diez pagos.");
-            if (Method.RequiresReference && string.IsNullOrWhiteSpace(Reference)) throw new ArgumentException("Esta forma de pago requiere referencia.");
+            if ((Method.RequiresReference || Method.Code == "TARJETA") && string.IsNullOrWhiteSpace(Reference)) throw new ArgumentException("Esta forma de pago requiere referencia.");
+            if (Reference.Length > 150) throw new ArgumentException("Usa una referencia de hasta 150 caracteres.");
             Payments.Add(new() { MethodId = Method.Id, Method = Method.Name, Amount = value, Reference = string.IsNullOrWhiteSpace(Reference) ? null : Reference.Trim() });
             StatusMessage = "Pago agregado. El servicio verificará el total y determinará el cambio al confirmar.";
         }

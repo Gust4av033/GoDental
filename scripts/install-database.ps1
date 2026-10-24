@@ -25,12 +25,25 @@ $scripts = @(
     '011_Conteos_Inventario.sql',
     '012_MVP_Operativo.sql',
     '013_Pedidos_MVP.sql',
-    '014_Codigos_Automaticos.sql'
+    '014_Codigos_Automaticos.sql',
+    '015_Resolucion_Operaciones.sql',
+    '016_Parametros_Comerciales.sql',
+    '017_Compras_Recepciones.sql',
+    '018_Importaciones_Costeo.sql',
+    '019_Posventa.sql',
+    '020_Distritos_Formularios.sql',
+    '021_Cobranza_Documentos.sql',
+    '022_Reparto_ContraEntrega.sql',
+    '023_Reportes_Operativos.sql',
+    '024_Fiscal_Revision_Interna.sql',
+    '025_Online_Interno.sql',
+    '026_Online_Planificacion.sql',
+    '027_Servidor_Identidad.sql'
 )
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if (-not $sqlcmd) {
-    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-014 manualmente desde SSMS.'
+    throw 'No se encontró sqlcmd en PATH. Instala SQL Server command-line utilities o ejecuta database/001-027 manualmente desde SSMS.'
 }
 
 foreach ($scriptName in $scripts) {
@@ -42,13 +55,15 @@ foreach ($scriptName in $scripts) {
 
 Write-Host "Servidor: $ServerInstance"
 Write-Host 'Autenticación: Windows integrada'
-Write-Host 'Ejecutando baseline y migraciones en orden 001 -> 014...'
+Write-Host 'Ejecutando baseline y migraciones en orden 001 -> 027...'
 
 foreach ($scriptName in $scripts) {
     $scriptPath = Join-Path $databaseDir $scriptName
     Write-Host "`n==> $scriptName"
 
-    $arguments = @('-S', $ServerInstance, '-E', '-b', '-i', $scriptPath)
+    # Cada sqlcmd abre una sesión nueva: las migraciones aditivas no deben caer en master.
+    $databaseTarget = if ($scriptName -eq '001_Core.sql') { 'master' } else { 'GoDental' }
+    $arguments = @('-S', $ServerInstance, '-E', '-b', '-d', $databaseTarget, '-i', $scriptPath)
     if ($TrustServerCertificate) {
         $arguments += '-C'
     }

@@ -1,257 +1,428 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Customers.CustomersView">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="GoDental.Wpf.Views.Customers.CustomersView" Background="{DynamicResource SurfaceBrush}">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Customers.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
   <StackPanel>
-    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ProgressBar Height="3" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando clientes"/>
     <StackPanel Style="{StaticResource MasterListPanel}">
-    <DockPanel Margin="0,0,0,4"><Button DockPanel.Dock="Right" Content="Nuevo cliente" Command="{Binding NewCommand}" Margin="12,0,0,0" Style="{StaticResource PrimaryButton}" Tag="&#xE710;" IsEnabled="{Binding CanCreate}"/><TextBlock Text="Clientes" Style="{StaticResource Heading}"/></DockPanel>
-    <TextBlock Text="Información comercial, contactos y direcciones para tu operación." Style="{StaticResource MutedText}" Margin="0,0,0,16"/>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
-    <WrapPanel IsEnabled="{Binding IsNotBusy}">
-      <StackPanel Width="280" Margin="0,0,16,12">
-        <TextBlock Text="Código, nombre, documento o teléfono" Margin="0,0,0,6"/>
-        <TextBox Style="{StaticResource SearchBox}" Tag="Buscar…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Código, nombre, documento o teléfono"/>
-      </StackPanel>
-      <StackPanel Width="240" Margin="0,0,16,12">
-        <TextBlock Text="Tipo de cliente"/>
-        <ComboBox ItemsSource="{Binding Types}" SelectedItem="{Binding Type}" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
-      </StackPanel>
-      <CheckBox Content="Incluir inactivos" IsChecked="{Binding IncludeInactive}" Margin="0,6,16,12"/>
-      <Button Tag="&#xE721;" Content="Buscar" Command="{Binding SearchCommand}" VerticalAlignment="Bottom" Margin="0,0,8,12"/>
-      <Button Tag="&#xE72C;" Content="Actualizar" Command="{Binding ReloadCommand}" VerticalAlignment="Bottom" Margin="0,0,8,12"/>
-    </WrapPanel>
-    <TextBlock Text="No hay clientes para mostrar." Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
-    <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="380" Margin="0,0,0,12">
-      <DataGrid.Columns>
-        <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="95"/>
-        <DataGridTemplateColumn Header="Cliente" Width="*" MinWidth="180" CellTemplate="{StaticResource PersonName}"/>
-        <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="140"/>
-        <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="120"/>
-        <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-      </DataGrid.Columns>
-    </DataGrid>
-    <WrapPanel IsEnabled="{Binding IsNotBusy}">
-      <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,8,8"/>
-      <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" Margin="0,0,8,8"/>
-      <Button Content="Ver ficha" Command="{Binding OpenCommand}" Margin="0,0,8,8"/>
-      <TextBlock Text="{Binding PageLabel}" VerticalAlignment="Center"/>
-    </WrapPanel>
+      <DockPanel Margin="0,0,0,20">
+        <Button DockPanel.Dock="Right" Content="Nuevo cliente" Command="{Binding NewCommand}" Style="{StaticResource PrimaryActionButton}" Tag="" IsEnabled="{Binding CanCreate}" Margin="16,0,0,0"/>
+        <StackPanel>
+          <TextBlock Text="Clientes" Style="{StaticResource Heading}"/>
+          <TextBlock Text="Gestiona tu cartera de clientes y su información comercial." Style="{StaticResource MutedText}"/>
+        </StackPanel>
+      </DockPanel>
+      <DockPanel Margin="0,0,0,12" IsEnabled="{Binding IsNotBusy}">
+        <Button DockPanel.Dock="Right" Style="{StaticResource CustomerIconButton}" Content="" Command="{Binding ReloadCommand}" ToolTip="Actualizar listado" AutomationProperties.Name="Actualizar listado" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Content="Filtros" Tag="" Command="{Binding ToggleFiltersCommand}" Style="{StaticResource ActionButton}" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Style="{StaticResource CustomerIconButton}" Content="" Command="{Binding SearchCommand}" ToolTip="Buscar clientes" AutomationProperties.Name="Buscar clientes" Margin="8,0,0,0"/>
+        <TextBox Style="{StaticResource SearchBox}" Tag="Buscar por nombre, documento o teléfono…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Buscar clientes por código, nombre, documento o teléfono">
+          <TextBox.InputBindings>
+            <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+          </TextBox.InputBindings>
+        </TextBox>
+      </DockPanel>
+      <Border Style="{StaticResource FilterPanel}" Margin="0,0,0,12" Visibility="{Binding AreFiltersOpen, Converter={StaticResource BoolToVisibility}}">
+        <WrapPanel IsEnabled="{Binding IsNotBusy}">
+          <StackPanel Width="220" Margin="0,0,20,0">
+            <TextBlock Text="Tipo de cliente" Style="{StaticResource FieldLabel}"/>
+            <ComboBox ItemsSource="{Binding Types}" SelectedItem="{Binding Type}" DisplayMemberPath="Name" AutomationProperties.Name="Tipo de cliente"/>
+          </StackPanel>
+          <CheckBox Content="Incluir inactivos" IsChecked="{Binding IncludeInactive}" VerticalAlignment="Bottom" Margin="0,0,20,8"/>
+          <Button Content="Aplicar filtros" Style="{StaticResource ActionButton}" Command="{Binding SearchCommand}" VerticalAlignment="Bottom"/>
+        </WrapPanel>
+      </Border>
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+      <Grid>
+        <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="320">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="110"/>
+            <DataGridTemplateColumn Header="Nombre del cliente" Width="*" MinWidth="200">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Button Style="{StaticResource CustomerRowLink}" Command="{Binding DataContext.OpenCustomerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" ToolTip="Abrir ficha del cliente" AutomationProperties.Name="{Binding Name}">
+                    <DockPanel>
+                      <Border Style="{StaticResource CustomerAvatar}" DockPanel.Dock="Left" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding Name, Converter={StaticResource CustomerInitials}}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                      </Border>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                    </DockPanel>
+                  </Button>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="120"/>
+            <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="120"/>
+            <DataGridTemplateColumn Header="Estado" Width="90">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+        <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Items.Count}" Content="No hay clientes con estos filtros. Ajusta la búsqueda o registra un nuevo cliente."/>
+      </Grid>
+      <DockPanel Margin="0,12,0,0">
+        <Button Content="Ver ficha" Command="{Binding OpenCommand}" Style="{StaticResource ActionButton}" DockPanel.Dock="Right" Margin="16,0,0,0"/>
+        <DockPanel Margin="0" IsEnabled="{Binding IsNotBusy}">
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+            <Button Content="‹" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+            <Button Content="›" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
+          </StackPanel>
+          <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </DockPanel>
+      </DockPanel>
     </StackPanel>
     <StackPanel Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVisibility}}">
-      <DockPanel Margin="0,0,0,18">
-        <Button DockPanel.Dock="Right" Content="Actualizar ficha" Tag="&#xE72C;" Command="{Binding RefreshDetailCommand}" IsEnabled="{Binding IsNotBusy}"/>
-        <Button Content="Volver a clientes" Tag="&#xE72B;" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left"/>
+      <DockPanel Margin="0,0,0,16">
+        <Button DockPanel.Dock="Right" Content="Editar cliente" Tag="" Command="{Binding EditCustomerCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanEdit}" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Content="" Style="{StaticResource CustomerIconButton}" Command="{Binding RefreshDetailCommand}" IsEnabled="{Binding IsNotBusy}" ToolTip="Actualizar ficha" AutomationProperties.Name="Actualizar ficha"/>
+        <Button Content="Volver a clientes" Tag="" Command="{Binding ReturnToListCommand}" Style="{StaticResource TextButton}" HorizontalAlignment="Left" IsEnabled="{Binding IsNotBusy}"/>
       </DockPanel>
-      <DockPanel Margin="0,0,0,18">
-        <Border DockPanel.Dock="Left" Background="{DynamicResource SidebarSelectionBrush}" CornerRadius="22" Width="44" Height="44" Margin="0,0,12,0"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="24" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-        <ContentControl DockPanel.Dock="Right" Content="{Binding Detail.Active}" ContentTemplate="{StaticResource ActiveBadge}" VerticalAlignment="Top"/>
-        <StackPanel><TextBlock Text="{Binding Detail.Name}" Style="{StaticResource Heading}"/><TextBlock Text="{Binding Detail.Code}" Style="{StaticResource MutedText}"/></StackPanel>
+      <DockPanel Margin="0,0,0,20">
+        <Border DockPanel.Dock="Left" Style="{StaticResource CustomerIdentityAvatar}" Margin="0,0,12,0">
+          <TextBlock Text="{Binding Detail.Name, Converter={StaticResource CustomerInitials}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+        <StackPanel>
+          <WrapPanel>
+            <TextBlock Text="{Binding Detail.Name}" Style="{StaticResource Heading}" Margin="0,0,12,4"/>
+            <ContentControl Content="{Binding Detail.Active}" ContentTemplate="{StaticResource ActiveBadge}" VerticalAlignment="Center"/>
+          </WrapPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding Detail.Type}" Style="{StaticResource MutedText}"/>
+            <TextBlock Text=" · " Style="{StaticResource MutedText}"/>
+            <TextBlock Text="{Binding Detail.Code}" Style="{StaticResource MutedText}"/>
+          </StackPanel>
+        </StackPanel>
       </DockPanel>
-    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite"/>
-    <TabControl>
-      <TabItem Header="Información general">
-        <StackPanel Margin="16">
-<UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Código" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Code}" TextWrapping="Wrap"/></Border>
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+      <TabControl IsEnabled="{Binding IsNotBusy}">
+        <TabItem Header="Información general" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <StackPanel>
+                <TextBlock Text="Información del cliente" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Datos de identificación y contacto principal." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <UniformGrid Columns="2" Margin="0,0,-16,0">
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Nombre / Razón social" Content="{Binding Detail.Name}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Tipo de cliente" Content="{Binding Detail.Type}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Nombre comercial" Content="{Binding Detail.CommercialName}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Código" Content="{Binding Detail.Code}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Teléfono principal" Content="{Binding Detail.Phone}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="WhatsApp" Content="{Binding Detail.WhatsApp}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Correo electrónico" Content="{Binding Detail.Email}"/>
+            </UniformGrid>
           </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Nombre comercial" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.CommercialName}" TextWrapping="Wrap"/></Border>
+        </TabItem>
+        <TabItem Header="Contactos" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Nuevo contacto" Command="{Binding NewContactCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanEditChildren}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Contactos" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Personas de contacto para coordinar con este cliente." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="240" RowHeight="48">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*" MinWidth="150"/>
+                  <DataGridTextColumn Header="Cargo" Binding="{Binding Position}" Width="100"/>
+                  <DataGridTemplateColumn Header="Teléfono / WA" Width="130"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding Phone, Converter={StaticResource CustomerOptionalText}}" FontSize="12" TextWrapping="NoWrap"/><TextBlock Text="{Binding WhatsApp, Converter={StaticResource CustomerOptionalText}, ConverterParameter=—, StringFormat=WA: {0}}" Style="{StaticResource MutedText}" FontSize="11" TextWrapping="NoWrap"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="160"/>
+                  <DataGridTemplateColumn Header="Principal" Width="75">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ContentControl Content="{Binding Primary}" ContentTemplate="{StaticResource CustomerPrimaryBadge}" HorizontalAlignment="Left"/>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Estado" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Contacts.Count}" Content="Este cliente todavía no tiene contactos registrados."/>
+            </Grid>
+            <Button Content="Editar contacto" Command="{Binding EditContactCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding CanEditChildren}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
           </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Teléfono" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Phone}" TextWrapping="Wrap"/></Border>
+        </TabItem>
+        <TabItem Header="Direcciones" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Nueva dirección" Command="{Binding NewAddressCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanEditChildren}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Direcciones" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Ubicaciones fiscales, de entrega y otras referencias." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Addresses}" SelectedItem="{Binding SelectedAddress}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="240">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="85"/>
+                  <DataGridTemplateColumn Header="Dirección" Width="*" MinWidth="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <DockPanel>
+                          <TextBlock DockPanel.Dock="Left" Text="" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding Address}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Address}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Departamento" Binding="{Binding Department}" Width="110"/>
+                  <DataGridTextColumn Header="Municipio" Binding="{Binding Municipality}" Width="110"/>
+                  <DataGridTextColumn Header="Distrito" Binding="{Binding District}" Width="110"/>
+                  <DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="120"/>
+                  <DataGridTemplateColumn Header="Principal" Width="75">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ContentControl Content="{Binding Primary}" ContentTemplate="{StaticResource CustomerPrimaryBadge}" HorizontalAlignment="Left"/>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Estado" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Addresses.Count}" Content="Este cliente todavía no tiene direcciones registradas."/>
+            </Grid>
+            <Button Content="Editar dirección" Command="{Binding EditAddressCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding CanEditChildren}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
           </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="WhatsApp" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.WhatsApp}" TextWrapping="Wrap"/></Border>
+        </TabItem>
+        <TabItem Header="Datos fiscales" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <StackPanel>
+                <TextBlock Text="Datos fiscales" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Documentos e información fiscal del cliente." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <UniformGrid Columns="2" Margin="0,0,-16,0">
+              <ContentControl Style="{StaticResource CustomerField}" Tag="NIT" Content="{Binding Detail.Nit}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="NRC" Content="{Binding Detail.Nrc}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="DUI" Content="{Binding Detail.Dui}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Giro / Actividad económica" Content="{Binding Detail.BusinessActivity}"/>
+            </UniformGrid>
           </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Correo" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Email}" TextWrapping="Wrap"/></Border>
-          </StackPanel></UniformGrid>
-
-          <CheckBox Content="Cliente activo" IsChecked="{Binding Detail.Active, Mode=OneWay}" IsEnabled="False" Margin="0,0,0,12"/>
-          <Button Content="Editar ficha" Tag="&#xE70F;" HorizontalAlignment="Left" Command="{Binding EditCustomerCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanEdit}"/>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Contactos">
-        <StackPanel Margin="16">
-          <DataGrid ItemsSource="{Binding Contacts}" SelectedItem="{Binding SelectedContact}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="190" Margin="0,0,0,12">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
-              <DataGridTextColumn Header="Cargo" Binding="{Binding Position}" Width="100"/>
-              <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="110"/>
-              <DataGridTextColumn Header="WhatsApp" Binding="{Binding WhatsApp}" Width="110"/>
-              <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="150"/>
-              <DataGridTextColumn Header="Principal" Binding="{Binding Primary}" Width="65"/>
-              <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel IsEnabled="{Binding CanEditChildren}">
-            <Button Tag="&#xE710;" Content="Nuevo contacto…" Command="{Binding NewContactCommand}" Margin="0,0,8,8"/>
-            <Button Content="Editar / Estado…" Command="{Binding EditContactCommand}" Margin="0,0,8,8"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Direcciones">
-        <StackPanel Margin="16">
-          <DataGrid ItemsSource="{Binding Addresses}" SelectedItem="{Binding SelectedAddress}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="190" Margin="0,0,0,12">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="85"/>
-              <DataGridTextColumn Header="Departamento" Binding="{Binding Department}" Width="110"/>
-              <DataGridTextColumn Header="Municipio" Binding="{Binding Municipality}" Width="110"/>
-              <DataGridTextColumn Header="Dirección" Binding="{Binding Address}" Width="*"/>
-              <DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="130"/>
-              <DataGridTextColumn Header="Principal" Binding="{Binding Primary}" Width="65"/>
-              <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel IsEnabled="{Binding CanEditChildren}">
-            <Button Tag="&#xE710;" Content="Nueva dirección…" Command="{Binding NewAddressCommand}" Margin="0,0,8,8"/>
-            <Button Content="Editar / Estado…" Command="{Binding EditAddressCommand}" Margin="0,0,8,8"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Datos fiscales">
-        <StackPanel Margin="16">
-<UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
-            <TextBlock Text="NIT" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nit}" TextWrapping="Wrap"/></Border>
+        </TabItem>
+        <TabItem Header="Comercial" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <StackPanel>
+                <TextBlock Text="Condiciones comerciales" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Clasificación y lista de precios asignada." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <UniformGrid Columns="2" Margin="0,0,-16,0">
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Tipo de cliente" Content="{Binding Detail.Type}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Lista de precios" Content="{Binding Detail.PriceList}"/>
+            </UniformGrid>
           </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="NRC" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Nrc}" TextWrapping="Wrap"/></Border>
-          </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="DUI" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Dui}" TextWrapping="Wrap"/></Border>
-          </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Giro / Actividad económica" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.BusinessActivity}" TextWrapping="Wrap"/></Border>
-          </StackPanel></UniformGrid>
-
-          <Button Content="Editar ficha" Tag="&#xE70F;" HorizontalAlignment="Left" Command="{Binding EditCustomerCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanEdit}"/>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Comercial">
-        <StackPanel Margin="16">
-<UniformGrid Columns="2" MaxWidth="940"><StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Tipo de cliente" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.Type}" TextWrapping="Wrap"/></Border>
-          </StackPanel>
-<StackPanel Margin="0,0,20,16">
-            <TextBlock Text="Lista de precios asignada" Style="{StaticResource MutedText}"/>
-            <Border Background="{DynamicResource TintBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,7" MinHeight="34" Margin="0,4,0,0"><TextBlock Text="{Binding Detail.PriceList}" TextWrapping="Wrap"/></Border>
-          </StackPanel></UniformGrid>
-
-          <Button Content="Editar ficha" Tag="&#xE70F;" HorizontalAlignment="Left" Command="{Binding EditCustomerCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanEdit}"/>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Crédito">
-        <StackPanel Margin="16">
-          <CheckBox Content="Crédito habilitado" IsChecked="{Binding Credit.Enabled, Mode=OneWay}" IsEnabled="False" Margin="0,0,0,12"/>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Límite configurado" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Credit.Limit}" TextWrapping="Wrap"/>
-          </StackPanel>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Plazo en días" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Credit.Days}" TextWrapping="Wrap"/>
-          </StackPanel>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Intervalo de avisos" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Credit.NoticeDays}" TextWrapping="Wrap"/>
-          </StackPanel>
-          <CheckBox Content="Crédito bloqueado" IsChecked="{Binding Credit.Blocked, Mode=OneWay}" IsEnabled="False" Margin="0,0,0,12"/>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Motivo de bloqueo" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Credit.BlockReason}" TextWrapping="Wrap"/>
-          </StackPanel>
-          <Button Content="Configurar crédito…" Command="{Binding EditCreditCommand}" Margin="0,0,8,8" IsEnabled="{Binding CanConfigureCredit}"/>
-          <StackPanel Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}">
-            <Button Content="Consultar saldo y disponible" Command="{Binding LoadAccountsCommand}" Margin="0,0,8,8"/>
-            <StackPanel Margin="0,0,0,10">
-              <TextBlock Text="Saldo utilizado" Style="{StaticResource MutedText}"/>
-              <TextBlock Text="{Binding Balance.Outstanding}" TextWrapping="Wrap"/>
+        </TabItem>
+        <TabItem Header="Crédito" Style="{StaticResource CustomerTab}">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Configurar crédito" Command="{Binding EditCreditCommand}" Style="{StaticResource PrimaryActionButton}" IsEnabled="{Binding CanConfigureCredit}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Crédito del cliente" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Condiciones vigentes para las ventas al crédito." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <WrapPanel Margin="0,0,0,16">
+              <TextBlock Text="Estado del crédito" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <ContentControl Content="{Binding Credit.Enabled}" ContentTemplate="{StaticResource CustomerCreditBadge}"/>
+              <Border Style="{StaticResource StateBadge}" Tag="BLOQUEADO" Visibility="{Binding Credit.Blocked, Converter={StaticResource BoolToVisibility}}" Margin="12,0,0,0">
+                <TextBlock Text="Bloqueado" FontSize="11"/>
+              </Border>
+            </WrapPanel>
+            <UniformGrid Columns="2" Margin="0,0,-16,0">
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Límite configurado" Content="{Binding Credit.Limit, Converter={StaticResource UsdMoney}}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Plazo en días" Content="{Binding Credit.Days}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Intervalo de avisos en días" Content="{Binding Credit.NoticeDays}"/>
+              <ContentControl Style="{StaticResource CustomerField}" Tag="Motivo de bloqueo" Content="{Binding Credit.BlockReason}"/>
+            </UniformGrid>
+            <StackPanel Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}">
+              <DockPanel Margin="0,0,0,16">
+                <Button DockPanel.Dock="Right" Content="Consultar saldo" Command="{Binding LoadAccountsCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding IsNotBusy}" Margin="16,0,0,0"/>
+                <StackPanel>
+                  <TextBlock Text="Saldo y disponibilidad" Style="{StaticResource SectionHeading}"/>
+                  <TextBlock Text="Importes consultados desde el estado de cuenta." Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </DockPanel>
+              <UniformGrid Columns="3" Margin="0,0,-12,16">
+                <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                  <StackPanel>
+                    <TextBlock Text="Saldo utilizado" Style="{StaticResource FieldLabel}"/>
+                    <TextBlock Text="{Binding Balance.Outstanding, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource PrimaryBrush}"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                  <StackPanel>
+                    <TextBlock Text="Saldo vencido" Style="{StaticResource FieldLabel}"/>
+                    <TextBlock Text="{Binding Balance.Overdue, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource DangerBrush}"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                  <StackPanel>
+                    <TextBlock Text="Disponible nominal" Style="{StaticResource FieldLabel}"/>
+                    <TextBlock Text="{Binding Balance.Available, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource SuccessBrush}"/>
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+              <TextBlock Text="La disponibilidad es informativa. Cada venta valida la habilitación, el bloqueo y las condiciones vigentes." Style="{StaticResource MutedText}"/>
             </StackPanel>
-            <StackPanel Margin="0,0,0,10">
-              <TextBlock Text="Saldo vencido" Style="{StaticResource MutedText}"/>
-              <TextBlock Text="{Binding Balance.Overdue}" TextWrapping="Wrap"/>
-            </StackPanel>
-            <StackPanel Margin="0,0,0,10">
-              <TextBlock Text="Disponible nominal" Style="{StaticResource MutedText}"/>
-              <TextBlock Text="{Binding Balance.Available}" TextWrapping="Wrap"/>
-            </StackPanel>
-            <TextBlock Text="La disponibilidad es informativa. Revisa habilitación y bloqueo; cada venta vuelve a validar sus condiciones." Style="{StaticResource MutedText}"/>
           </StackPanel>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Historial de ventas" Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}">
-        <StackPanel Margin="16">
-          <Button Content="Consultar ventas" Command="{Binding LoadSalesCommand}" Margin="0,0,8,8"/>
-          <DataGrid ItemsSource="{Binding Sales}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="190" Margin="0,0,0,12">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Venta" Binding="{Binding Number}" Width="130"/>
-              <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="180"/>
-              <DataGridTemplateColumn Header="Estado" Width="140"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-              <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="110"/>
-              <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, StringFormat={}{0:N2}}" Width="110"/>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel IsEnabled="{Binding IsNotBusy}">
-            <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousSalesCommand}" Margin="0,0,8,8"/>
-            <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextSalesCommand}" Margin="0,0,8,8"/>
-            <TextBlock Text="{Binding SalesLabel}"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-      <TabItem Header="Estado de cuenta" Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}">
-        <StackPanel Margin="16">
-          <Button Content="Consultar cuentas y saldo" Command="{Binding LoadAccountsCommand}" Margin="0,0,8,8"/>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Saldo utilizado" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Balance.Outstanding}" TextWrapping="Wrap"/>
+        </TabItem>
+        <TabItem Header="Ventas" Style="{StaticResource CustomerTab}" Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}" ToolTip="Historial de ventas">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Consultar ventas" Command="{Binding LoadSalesCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding IsNotBusy}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Historial de ventas" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Ventas y saldos pendientes de este cliente." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Sales}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="240">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Venta" Binding="{Binding Number}" Width="*"/>
+                  <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="170"/>
+                  <DataGridTemplateColumn Header="Estado" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Border Style="{StaticResource StateBadge}" Tag="{Binding State}">
+                          <TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/>
+                        </Border>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource UsdMoney}}" Width="120" ElementStyle="{StaticResource MoneyCellText}"/>
+                  <DataGridTextColumn Header="Pendiente" Binding="{Binding Pending, Converter={StaticResource UsdMoney}}" Width="120" ElementStyle="{StaticResource MoneyCellText}"/>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Sales.Count}" Content="{Binding SalesEmptyMessage}"/>
+            </Grid>
+            <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
+              <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="‹" Style="{StaticResource PaginationButton}" Command="{Binding PreviousSalesCommand}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+                <Button Content="›" Style="{StaticResource PaginationButton}" Command="{Binding NextSalesCommand}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
+              </StackPanel>
+              <TextBlock Text="{Binding SalesLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
           </StackPanel>
-          <StackPanel Margin="0,0,0,10">
-            <TextBlock Text="Saldo vencido" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding Balance.Overdue}" TextWrapping="Wrap"/>
+        </TabItem>
+        <TabItem Header="Cuenta" Style="{StaticResource CustomerTab}" Visibility="{Binding CanReadHistory, Converter={StaticResource BoolToVisibility}}" ToolTip="Estado de cuenta">
+          <StackPanel Style="{StaticResource CustomerSection}">
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Consultar cuentas" Command="{Binding LoadAccountsCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding IsNotBusy}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Estado de cuenta" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Cuentas por cobrar y abonos registrados." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <UniformGrid Columns="3" Margin="0,0,-12,16">
+              <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="Saldo utilizado" Style="{StaticResource FieldLabel}"/>
+                  <TextBlock Text="{Binding Balance.Outstanding, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource PrimaryBrush}"/>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="Saldo vencido" Style="{StaticResource FieldLabel}"/>
+                  <TextBlock Text="{Binding Balance.Overdue, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource DangerBrush}"/>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource SoftPanel}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="Disponible nominal" Style="{StaticResource FieldLabel}"/>
+                  <TextBlock Text="{Binding Balance.Available, Converter={StaticResource UsdMoney}}" Style="{StaticResource MetricValue}" FontSize="22" Foreground="{DynamicResource SuccessBrush}"/>
+                </StackPanel>
+              </Border>
+            </UniformGrid>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Accounts}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="200">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Cuenta" Binding="{Binding Id}" Width="70"/>
+                  <DataGridTextColumn Header="Venta" Binding="{Binding Sale}" Width="*"/>
+                  <DataGridTextColumn Header="Emisión" Binding="{Binding Issued, StringFormat=dd/MM/yyyy}" Width="100"/>
+                  <DataGridTextColumn Header="Vence" Binding="{Binding Due, StringFormat=dd/MM/yyyy}" Width="100"/>
+                  <DataGridTextColumn Header="Original" Binding="{Binding Original, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
+                  <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
+                  <DataGridTemplateColumn Header="Estado" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Border Style="{StaticResource StateBadge}" Tag="{Binding State}">
+                          <TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/>
+                        </Border>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Accounts.Count}" Content="{Binding AccountsEmptyMessage}"/>
+            </Grid>
+            <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
+              <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="‹" Style="{StaticResource PaginationButton}" Command="{Binding PreviousAccountsCommand}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+                <Button Content="›" Style="{StaticResource PaginationButton}" Command="{Binding NextAccountsCommand}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
+              </StackPanel>
+              <TextBlock Text="{Binding AccountsLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,20,0,20"/>
+            <DockPanel Margin="0,0,0,16">
+              <Button DockPanel.Dock="Right" Content="Consultar abonos" Command="{Binding LoadPaymentsCommand}" Style="{StaticResource ActionButton}" IsEnabled="{Binding IsNotBusy}" Margin="16,0,0,0"/>
+              <StackPanel>
+                <TextBlock Text="Abonos" Style="{StaticResource SectionHeading}"/>
+                <TextBlock Text="Pagos recibidos y su estado." Style="{StaticResource MutedText}"/>
+              </StackPanel>
+            </DockPanel>
+            <Grid>
+              <DataGrid ItemsSource="{Binding Payments}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="200">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Recibo" Binding="{Binding Receipt}" Width="*"/>
+                  <DataGridTextColumn Header="Cuenta" Binding="{Binding AccountId}" Width="70"/>
+                  <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="170"/>
+                  <DataGridTextColumn Header="Monto" Binding="{Binding Amount, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource MoneyCellText}"/>
+                  <DataGridTextColumn Header="Método" Binding="{Binding Method}" Width="120"/>
+                  <DataGridTemplateColumn Header="Anulado" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ContentControl Content="{Binding Voided}" ContentTemplate="{StaticResource CustomerPrimaryBadge}" HorizontalAlignment="Left"/>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+              <ContentControl Style="{StaticResource CustomerEmpty}" Tag="{Binding Payments.Count}" Content="{Binding PaymentsEmptyMessage}"/>
+            </Grid>
+            <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
+              <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="‹" Style="{StaticResource PaginationButton}" Command="{Binding PreviousPaymentsCommand}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+                <Button Content="›" Style="{StaticResource PaginationButton}" Command="{Binding NextPaymentsCommand}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
+              </StackPanel>
+              <TextBlock Text="{Binding PaymentsLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
           </StackPanel>
-          <DataGrid ItemsSource="{Binding Accounts}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="190" Margin="0,0,0,12">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Cuenta" Binding="{Binding Id}" Width="70"/>
-              <DataGridTextColumn Header="Venta" Binding="{Binding Sale}" Width="120"/>
-              <DataGridTextColumn Header="Emisión" Binding="{Binding Issued, StringFormat=dd/MM/yyyy}" Width="140"/>
-              <DataGridTextColumn Header="Vence" Binding="{Binding Due, StringFormat=dd/MM/yyyy}" Width="140"/>
-              <DataGridTextColumn Header="Original" Binding="{Binding Original, StringFormat={}{0:N2}}" Width="90"/>
-              <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="90"/>
-              <DataGridTemplateColumn Header="Estado" Width="110"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Style="{StaticResource StateBadge}" Tag="{Binding State}"><TextBlock Text="{Binding State}" FontSize="11" TextWrapping="NoWrap"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel IsEnabled="{Binding IsNotBusy}">
-            <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousAccountsCommand}" Margin="0,0,8,8"/>
-            <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextAccountsCommand}" Margin="0,0,8,8"/>
-            <TextBlock Text="{Binding AccountsLabel}"/>
-          </WrapPanel>
-          <Button Content="Consultar abonos" Command="{Binding LoadPaymentsCommand}" Margin="0,0,8,8"/>
-          <DataGrid ItemsSource="{Binding Payments}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="190" Margin="0,0,0,12">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Recibo" Binding="{Binding Receipt}" Width="130"/>
-              <DataGridTextColumn Header="Cuenta" Binding="{Binding AccountId}" Width="70"/>
-              <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="180"/>
-              <DataGridTextColumn Header="Monto" Binding="{Binding Amount, StringFormat={}{0:N2}}" Width="100"/>
-              <DataGridTextColumn Header="Método" Binding="{Binding Method}" Width="110"/>
-              <DataGridTextColumn Header="Anulado" Binding="{Binding Voided}" Width="75"/>
-            </DataGrid.Columns>
-          </DataGrid>
-          <WrapPanel IsEnabled="{Binding IsNotBusy}">
-            <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousPaymentsCommand}" Margin="0,0,8,8"/>
-            <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextPaymentsCommand}" Margin="0,0,8,8"/>
-            <TextBlock Text="{Binding PaymentsLabel}"/>
-          </WrapPanel>
-        </StackPanel>
-      </TabItem>
-    </TabControl>
+        </TabItem>
+      </TabControl>
     </StackPanel>
   </StackPanel>
 </UserControl>

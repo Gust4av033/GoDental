@@ -10,6 +10,10 @@ Revisión de `feature/desarrollo` antes de integrar `feature/ui` el 19/10/2026. 
 - La semilla `007` reemplazaba todos los valores configurables y borraba `ModificadoPor` al repetirse. Ahora conserva valor, usuario y fecha de los parámetros `EditableUI=1`; sigue restaurando los no editables. La validación final acepta valores configurados válidos y comprueba el orden de los dos umbrales.
 - El MVP de ventas integrado desde `feature/ui` lee los umbrales en la cotización y vuelve a calcular al confirmar. Sus permisos y tipos de autorización conservan nombres con 7/35 (`VENTAS.DESCUENTO_MAYOR_7`, `VENTAS.DESCUENTO_MAYOR_35`, `DESCUENTO_MAYOR_35`). Antes de exponer edición en Ajustes hay que verificar la semántica de esos identificadores.
 
-## Siguiente incremento acotado
+## Incremento definido en la revisión original
 
 Crear un caso de uso de parámetros comerciales en Application y repositorio SQL en Infrastructure. Validar `0 <= justificación <= autorización <= 100`, permisos `AJUSTES.EDITAR` en servicio y SQL, concurrencia entre estaciones y escritura de `sis.Bitacora` dentro de la misma transacción. Exponer únicamente claves realmente consumidas en Ventas; no presentar `Descuento.VendedorMaximo` como límite efectivo mientras siga sin uso. Añadir la pantalla de Ajustes y pruebas de lectura, edición, rechazo sin permiso, conflicto y auditoría.
+
+## Implementación posterior
+
+[DEV-32](DEV-32-Complementos-MVP.md) implementa este incremento con migración 016 y pestaña Comercial. Los códigos de permisos conservan sus identificadores históricos y representan los tramos vigentes; las etiquetas ya no fijan 7/35. No se expone VendedorMaximo como límite efectivo.

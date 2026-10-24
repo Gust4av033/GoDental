@@ -57,6 +57,56 @@ public sealed class WorkflowUiTests
         Assert.Null(vm.Detail);
     }
 
+    [Fact]
+    public async Task SupplierRowOpensWithoutPreviousSelectionAndRequiresReadPermission()
+    {
+        var session = Session("COMPRAS.VER");
+        var vm = Suppliers(new(), session, new());
+        await vm.ReloadCommand.ExecuteAsync(null);
+        var row = vm.Items.Single();
+        Assert.Null(vm.Selected);
+        await vm.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Same(row, vm.Selected);
+        Assert.Equal(row.Id, vm.Detail!.Id);
+        Assert.True(vm.IsDetailOpen);
+        session.Clear();
+        await vm.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Null(vm.Detail);
+        Assert.Null(vm.Selected);
+
+        var deniedSession = Session("INVENTARIO.VER");
+        var denied = Suppliers(new() { DenyRead = true }, deniedSession, new());
+        await denied.OpenSupplierCommand.ExecuteAsync(row);
+        Assert.Null(denied.Selected);
+        Assert.Null(denied.Detail);
+        Assert.True(deniedSession.IsAuthenticated);
+    }
+
+    [Fact]
+    public async Task CountNavigationPreservesCaptureUntilSavedOrExplicitlyDiscarded()
+    {
+        var session = Session();
+        var vm = Counts(new(), session);
+        await Open(vm);
+        Assert.True(vm.IsDetailOpen);
+        var selected = vm.Selected;
+        vm.Lines[0].Quantity = "0";
+        vm.ReturnToListCommand.Execute(null);
+        Assert.True(vm.IsDetailOpen);
+        await vm.RefreshDetailCommand.ExecuteAsync(null);
+        Assert.Equal("0", vm.Lines[0].Quantity);
+        vm.DiscardCaptureCommand.Execute(null);
+        Assert.Equal("", vm.Lines[0].Quantity);
+        vm.ReturnToListCommand.Execute(null);
+        Assert.False(vm.IsDetailOpen);
+        Assert.Same(selected, vm.Selected);
+        await vm.OpenCommand.ExecuteAsync(null);
+        Assert.True(vm.IsDetailOpen);
+        session.Clear();
+        Assert.False(vm.IsDetailOpen);
+        Assert.Null(vm.Header);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

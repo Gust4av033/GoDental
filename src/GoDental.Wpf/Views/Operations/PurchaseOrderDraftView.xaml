@@ -1,0 +1,25 @@
+<UserControl x:Class="GoDental.Wpf.Views.Operations.PurchaseOrderDraftView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <UniformGrid Columns="2">
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Proveedor" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Catalogs.Suppliers}" SelectedItem="{Binding Supplier}" DisplayMemberPath="Name" AutomationProperties.Name="Proveedor de la orden"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Moneda de negociación" Style="{StaticResource FieldLabel}"/><ComboBox ItemsSource="{Binding Catalogs.Currencies}" SelectedItem="{Binding Currency}" DisplayMemberPath="Name" AutomationProperties.Name="Moneda de compra"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Fecha de la orden" Style="{StaticResource FieldLabel}"/><DatePicker SelectedDate="{Binding Date}" AutomationProperties.Name="Fecha de la orden"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Cambio estimado: USD por unidad de moneda" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Rate, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cambio estimado"/></StackPanel>
+    </UniformGrid>
+    <TextBlock Text="Productos de la orden" Style="{StaticResource SectionHeading}" Margin="0,8,0,8"/>
+    <DockPanel Margin="0,0,0,8"><Button DockPanel.Dock="Right" Content="Buscar productos" Command="{Binding SearchCommand}" Style="{StaticResource ActionButton}" Margin="8,0,0,0"/><TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Buscar producto de compra" MaxLength="200"/></DockPanel>
+    <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    <ComboBox ItemsSource="{Binding Products}" SelectedItem="{Binding Product}" DisplayMemberPath="Name" AutomationProperties.Name="Producto de compra" Margin="0,4,0,8"/>
+    <WrapPanel Margin="0,0,0,8"><Button Content="Anterior" Command="{Binding PreviousCommand}" Margin="0,0,8,0"/><Button Content="Siguiente" Command="{Binding NextCommand}"/></WrapPanel>
+    <UniformGrid Columns="3">
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Cantidad" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cantidad de compra"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Costo unitario · moneda origen" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding UnitCost, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Costo de compra"/></StackPanel>
+      <StackPanel Margin="0,0,12,12"><TextBlock Text="Descuento monetario de la línea" Style="{StaticResource FieldLabel}"/><TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Descuento de compra"/></StackPanel>
+    </UniformGrid>
+    <WrapPanel Margin="0,0,0,8"><Button Content="Agregar / reemplazar" Command="{Binding AddCommand}" Margin="0,0,8,0"/><Button Content="Quitar línea" Command="{Binding RemoveCommand}"/></WrapPanel>
+    <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="180" AutomationProperties.Name="Líneas de la orden">
+      <DataGrid.Columns><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"/><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="150"/><DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="85"/><DataGridTextColumn Header="Costo" Binding="{Binding UnitCost}" Width="100"/><DataGridTextColumn Header="Desc." Binding="{Binding Discount}" Width="80"/></DataGrid.Columns>
+    </DataGrid>
+    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+  </StackPanel>
+</UserControl>

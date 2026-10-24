@@ -5,3 +5,14 @@
 DM-01 define el alcance funcional y las reglas maestras de GoDental. La transcripción histórica completa se conserva en `../DM-01.md` y el documento Word original en `../referencias/GoDental_DocumentoMaestro_v0.2-1.docx`.
 
 Debe consultarse junto con DB-01 y ARQ-01 antes de implementar módulos. Una decisión de código no debe reemplazar silenciosamente una regla de negocio aprobada.
+
+Continuación arquitectónica DTE: ARQ-01 v0.2 / FIS-01 v0.2 definen servidor central progresivo.
+[DEV-51](../DEV-51-Servidor-Identidad.md) implementa identidad B1; no modifica reglas comerciales,
+no migra todo WPF ni habilita transmisión. DB-01 documenta 027 y SEC-01 su política de sesión.
+
+Complemento confirmado por el usuario para 2.1B: IMP-01 v0.2 y DEV-37 definen reparto por valor neto y cierre de costos antes de recibir. La recepción con costo incompleto y gastos posteriores al cierre no está habilitada.
+
+Decisiones de posventa confirmadas por el usuario (DEV-38): reducir primero deuda de la venta,
+reintegrar excedente en efectivo; carpeta central configurable para fotos; permitir anulación
+completa también en ruta/entregado con recuperación física, autorización y conservación del historial.
+Saldo a favor reutilizable sigue diferido; no se promete su uso en POS.

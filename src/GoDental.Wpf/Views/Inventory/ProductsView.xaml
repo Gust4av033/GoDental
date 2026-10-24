@@ -1,93 +1,134 @@
-<UserControl x:Class="GoDental.Wpf.Views.Inventory.ProductsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Inventory">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:GoDental.Wpf.Views.Inventory" x:Class="GoDental.Wpf.Views.Inventory.ProductsView" x:Name="ProductsRoot">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/GoDental;component/Themes/Inventory.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
   <StackPanel>
     <StackPanel>
       <StackPanel.Style>
         <Style TargetType="StackPanel">
-          <Setter Property="Visibility" Value="Visible"/>
-          <Style.Triggers><DataTrigger Binding="{Binding Inventory.IsOpen}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Inventory.IsOpen}" Value="True">
+              <Setter Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+          </Style.Triggers>
         </Style>
       </StackPanel.Style>
-    <DockPanel>
-      <WrapPanel DockPanel.Dock="Right" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}">
-        <Button Content="Editar seleccionado" Command="{Binding EditSelectedCommand}" IsEnabled="{Binding CanEditSelected}" Visibility="{Binding CanEditSelected, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0" />
-        <Button Tag="&#xE710;" Content="Nuevo producto" Command="{Binding NewProductCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryButton}" />
-      </WrapPanel>
-      <StackPanel>
-        <TextBlock Text="Productos" Style="{StaticResource Heading}" />
-      </StackPanel>
-    </DockPanel>
-    <TextBlock Text="Administra tu catálogo, precios de referencia y existencias disponibles." Style="{StaticResource MutedText}" Margin="0,0,0,16" />
-    <Border Background="{DynamicResource TintBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
-      <TextBlock Text="{Binding StatusMessage}" AutomationProperties.LiveSetting="Polite" />
-    </Border>
-    <ProgressBar IsIndeterminate="True" Height="3" Margin="0,0,0,12" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-    <Border Style="{StaticResource Card}" Padding="16">
-      <StackPanel>
-        <Grid IsEnabled="{Binding IsNotBusy}">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-          </Grid.ColumnDefinitions>
-          <StackPanel Margin="0,0,12,0">
-            <Label Content="Buscar por SKU, nombre o código de barras" Target="{Binding ElementName=SearchInput}" Foreground="{DynamicResource TextBrush}" Padding="0,0,0,6" />
-            <TextBox Style="{StaticResource SearchBox}" Tag="Buscar…" x:Name="SearchInput" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" MaxLength="200">
-              <TextBox.InputBindings>
-                <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
-              </TextBox.InputBindings>
-            </TextBox>
-          </StackPanel>
-          <WrapPanel Grid.Column="1" VerticalAlignment="Bottom">
-            <Button Tag="&#xE721;" Content="Buscar" Command="{Binding SearchCommand}" Margin="0,0,8,0" />
-            <Button Tag="&#xE72C;" Content="Actualizar" Command="{Binding ReloadCommand}" />
+      <DockPanel Margin="0,0,0,20">
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" Margin="16,0,0,0">
+          <Button Content="Categorías" Tag="" Command="{Binding ManageCategoriesCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource ActionButton}" Margin="0,0,8,0"/>
+          <Button Content="Nuevo producto" Tag="" Command="{Binding NewProductCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource PrimaryActionButton}"/>
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="Productos" Style="{StaticResource Heading}"/>
+          <TextBlock Text="Tu catálogo, precios y existencias en un solo lugar." Style="{StaticResource MutedText}"/>
+        </StackPanel>
+      </DockPanel>
+      <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Cargando productos"/>
+      <DockPanel Margin="0,0,0,12" IsEnabled="{Binding IsNotBusy}">
+        <Button DockPanel.Dock="Right" Content="" Style="{StaticResource InventoryIconButton}" Command="{Binding ReloadCommand}" ToolTip="Actualizar catálogo" AutomationProperties.Name="Actualizar catálogo" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Content="Filtros" Tag="" Style="{StaticResource ActionButton}" Command="{Binding ToggleFiltersCommand}" Margin="8,0,0,0"/>
+        <Button DockPanel.Dock="Right" Content="" Style="{StaticResource InventoryIconButton}" Command="{Binding SearchCommand}" ToolTip="Buscar productos" AutomationProperties.Name="Buscar productos" Margin="8,0,0,0"/>
+        <TextBox x:Name="SearchInput" Style="{StaticResource SearchBox}" Tag="Buscar por SKU, nombre o código de barras…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Buscar por SKU, nombre o código de barras">
+          <TextBox.InputBindings>
+            <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+          </TextBox.InputBindings>
+        </TextBox>
+      </DockPanel>
+      <Border Style="{StaticResource FilterPanel}" Margin="0,0,0,12" Visibility="{Binding AreFiltersOpen, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel IsEnabled="{Binding IsNotBusy}">
+          <WrapPanel>
+            <StackPanel Width="210" Margin="0,0,16,12">
+              <TextBlock Text="Categoría" Style="{StaticResource FieldLabel}"/>
+              <ComboBox x:Name="CategoryFilterInput" ItemsSource="{Binding Categories}" SelectedItem="{Binding FilterCategory}" DisplayMemberPath="Name" AutomationProperties.Name="Filtro de categoría"/>
+            </StackPanel>
+            <StackPanel Width="210" Margin="0,0,16,12">
+              <TextBlock Text="Marca" Style="{StaticResource FieldLabel}"/>
+              <ComboBox x:Name="BrandFilterInput" ItemsSource="{Binding Brands}" SelectedItem="{Binding FilterBrand}" DisplayMemberPath="Name" AutomationProperties.Name="Filtro de marca"/>
+            </StackPanel>
+            <Button Content="Aplicar filtros" Command="{Binding SearchCommand}" Style="{StaticResource ActionButton}" VerticalAlignment="Bottom" Margin="0,0,8,12"/>
+            <Button Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" Style="{StaticResource ActionButton}" VerticalAlignment="Bottom" Margin="0,0,0,12"/>
           </WrapPanel>
-        </Grid>
-        <WrapPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
-          <StackPanel Width="200" Margin="0,0,12,0"><Label Content="Categoría" Target="{Binding ElementName=CategoryFilterInput}"/><ComboBox x:Name="CategoryFilterInput" ItemsSource="{Binding Categories}" SelectedItem="{Binding FilterCategory}" DisplayMemberPath="Name" AutomationProperties.Name="Filtro de categoría"/></StackPanel>
-          <StackPanel Width="200" Margin="0,0,12,0"><Label Content="Marca" Target="{Binding ElementName=BrandFilterInput}"/><ComboBox x:Name="BrandFilterInput" ItemsSource="{Binding Brands}" SelectedItem="{Binding FilterBrand}" DisplayMemberPath="Name" AutomationProperties.Name="Filtro de marca"/></StackPanel>
-          <Button Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" VerticalAlignment="Bottom"/>
-        </WrapPanel>
-        <WrapPanel Margin="0,12,0,12" IsEnabled="{Binding IsNotBusy}">
-          <CheckBox Content="Sólo stock bajo" IsChecked="{Binding LowStockOnly}" Margin="0,0,24,0" VerticalAlignment="Center"/>
-          <CheckBox Content="Incluir productos inactivos" IsChecked="{Binding IncludeInactive}" VerticalAlignment="Center"/>
-        </WrapPanel>
-        <Button Content="Ver existencias, lotes y movimientos" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding CanOpenInventory}" HorizontalAlignment="Left" Margin="0,0,0,12" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}" />
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
-          <StackPanel HorizontalAlignment="Center" MaxWidth="480">
-            <TextBlock Text="Todavía no hay productos para mostrar" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
-            <TextBlock Text="Prueba otros filtros, actualiza el catálogo o registra un producto nuevo." Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"/>
-            <Button Tag="&#xE710;" Content="Nuevo producto" Command="{Binding NewProductCommand}" Style="{StaticResource PrimaryButton}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding CanEdit}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
-          </StackPanel>
-        </Border>
-        <Border Background="{DynamicResource TintBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,12" Visibility="{Binding ShowErrorState, Converter={StaticResource BoolToVisibility}}">
-          <StackPanel HorizontalAlignment="Center" MaxWidth="480">
-            <TextBlock Text="No se pudo cargar el catálogo" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
-            <TextBlock Text="Revisa el mensaje anterior y vuelve a intentarlo." Style="{StaticResource MutedText}" TextAlignment="Center" TextWrapping="Wrap"/>
-            <Button Content="Reintentar" Command="{Binding ReloadCommand}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
-          </StackPanel>
-        </Border>
-        <DataGrid MouseDoubleClick="OnProductDoubleClick" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="280" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="Catálogo de productos" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="120" />
-            <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="150" />
-            <DataGridTextColumn Header="Categoría" Binding="{Binding Category}" Width="120" />
-            <DataGridTextColumn Header="Precio USD" Binding="{Binding Price, StringFormat={}{0:0.00}}" Width="100" />
-            <DataGridTextColumn Header="Disponible físico" Binding="{Binding AvailableStock, StringFormat={}{0:0.####}}" Width="95" />
-            <DataGridTemplateColumn Header="Estado" Width="90"><DataGridTemplateColumn.CellTemplate><DataTemplate><ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-          </DataGrid.Columns>
-        </DataGrid>
-        <DockPanel Margin="0,12,0,0" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
-          <WrapPanel DockPanel.Dock="Right" IsEnabled="{Binding IsNotBusy}">
-            <Button Content="‹" ToolTip="Anterior" AutomationProperties.Name="Anterior" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" Margin="0,0,8,0" />
-            <Button Content="›" ToolTip="Siguiente" AutomationProperties.Name="Siguiente" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" />
+          <WrapPanel>
+            <CheckBox Content="Sólo stock bajo" IsChecked="{Binding LowStockOnly}" Margin="0,0,24,0"/>
+            <CheckBox Content="Incluir inactivos" IsChecked="{Binding IncludeInactive}"/>
           </WrapPanel>
-          <StackPanel>
-            <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" />
-            <TextBlock Text="Stock total de almacenes activos. No se modifica desde el catálogo." Style="{StaticResource MutedText}" FontSize="11" Margin="0,4,8,0" />
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,0,0,8"/>
+      <Border Style="{StaticResource SoftPanel}" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,12" Padding="24">
+        <StackPanel HorizontalAlignment="Center" MaxWidth="420">
+          <Border Style="{StaticResource InventoryIdentitySymbol}" HorizontalAlignment="Center" Margin="0,0,0,12">
+            <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <TextBlock Text="No hay productos para mostrar" Style="{StaticResource SectionHeading}" TextAlignment="Center"/>
+          <TextBlock Text="Prueba otros filtros o registra un producto nuevo." Style="{StaticResource MutedText}" TextAlignment="Center"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource SoftPanel}" Visibility="{Binding ShowErrorState, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,12">
+        <StackPanel HorizontalAlignment="Center">
+          <TextBlock Text="No se pudo cargar el catálogo" Style="{StaticResource SectionHeading}"/>
+          <Button Content="Reintentar" Command="{Binding ReloadCommand}" Style="{StaticResource ActionButton}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" MouseDoubleClick="OnProductDoubleClick" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" Height="320" RowHeight="48" AutomationProperties.Name="Catálogo de productos" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
+        <DataGrid.InputBindings>
+          <KeyBinding Key="Enter" Command="{Binding OpenInventoryCommand}"/>
+        </DataGrid.InputBindings>
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="110" ElementStyle="{StaticResource InventoryCell}"/>
+          <DataGridTemplateColumn Header="Producto" Width="*" MinWidth="200">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource InventoryRowLink}" Command="{Binding DataContext.OpenProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}">
+                  <DockPanel>
+                    <Border Style="{StaticResource InventorySymbol}" DockPanel.Dock="Left" Margin="0,0,10,0">
+                      <TextBlock Text="" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                    </Border>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource InventoryCell}" FontWeight="SemiBold"/>
+                  </DockPanel>
+                </Button>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn Header="Categoría" Binding="{Binding Category}" Width="120" ElementStyle="{StaticResource InventoryCell}"/>
+          <DataGridTextColumn Header="Precio USD" Binding="{Binding Price, Converter={StaticResource UsdMoney}}" Width="110" ElementStyle="{StaticResource InventoryNumber}"/>
+          <DataGridTemplateColumn Header="Disponible físico" Width="130">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource InventoryState}" Tag="{Binding Converter={StaticResource ProductStockCaption}}" ToolTip="{Binding Converter={StaticResource ProductStockCaption}}" HorizontalAlignment="Right">
+                  <TextBlock Text="{Binding AvailableStock, StringFormat={}{0:0.####}}" FontSize="12" TextWrapping="NoWrap"/>
+                </Border>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTemplateColumn Header="Estado" Width="90">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <ContentControl Content="{Binding Active}" ContentTemplate="{StaticResource ActiveBadge}" HorizontalAlignment="Left"/>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+        </DataGrid.Columns>
+      </DataGrid>
+      <DockPanel Margin="0,12,0,0" Visibility="{Binding ShowCatalogTable, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="16,0,0,0">
+          <Button Content="Editar producto" Command="{Binding EditSelectedCommand}" IsEnabled="{Binding CanEditSelected}" Style="{StaticResource ActionButton}" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0"/>
+          <Button Content="Ver inventario" Command="{Binding OpenInventoryCommand}" IsEnabled="{Binding CanOpenInventory}" Style="{StaticResource ActionButton}"/>
+        </StackPanel>
+        <DockPanel Margin="0,12,0,0" IsEnabled="{Binding IsNotBusy}">
+          <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+            <Button Content="‹" Style="{StaticResource PaginationButton}" Command="{Binding PreviousCommand}" ToolTip="Página anterior" AutomationProperties.Name="Página anterior" Margin="0,0,6,0"/>
+            <Button Content="›" Style="{StaticResource PaginationButton}" Command="{Binding NextCommand}" ToolTip="Página siguiente" AutomationProperties.Name="Página siguiente"/>
           </StackPanel>
+          <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         </DockPanel>
-      </StackPanel>
-    </Border>
+      </DockPanel>
+      <TextBlock Text="Disponible físico de almacenes activos. Consulta el inventario para ver reservas y stock vendible." Style="{StaticResource MutedText}" FontSize="11" Margin="0,12,0,0"/>
     </StackPanel>
-    <local:InventoryView DataContext="{Binding Inventory}" Visibility="{Binding Inventory.IsOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
+    <local:InventoryView DataContext="{Binding Inventory}" EditProductCommand="{Binding DataContext.EditSelectedCommand, ElementName=ProductsRoot}" CanEditProduct="{Binding DataContext.CanEditSelected, ElementName=ProductsRoot}" Visibility="{Binding DataContext.Inventory.IsOpen, ElementName=ProductsRoot, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}"/>
   </StackPanel>
 </UserControl>
