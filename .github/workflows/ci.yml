@@ -59,7 +59,7 @@ jobs:
         run: dotnet build GoDental.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
+        run: dotnet test GoDental.sln -c Release --no-build --no-restore --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults --blame-hang --blame-hang-timeout 2m --blame-hang-dump-type none
 
       - name: Inventario sobre SQL Server aislado
         shell: pwsh

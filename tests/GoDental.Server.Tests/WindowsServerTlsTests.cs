@@ -77,7 +77,9 @@ public sealed class WindowsServerTlsTests
             var pfx = keyedLeaf.Export(X509ContentType.Pfx);
             try { _leaf = new X509Certificate2(pfx, "", X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet); }
             finally { CryptographicOperations.ZeroMemory(pfx); }
-            using var roots = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            // Root de usuario puede solicitar consentimiento UI aunque el runner esté elevado.
+            // Root de máquina permite provisión administrativa no interactiva en este runner efímero.
+            using var roots = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             roots.Open(OpenFlags.ReadWrite);
             using var publicRoot = new X509Certificate2(_authority.RawData);
             roots.Add(publicRoot);
@@ -88,7 +90,7 @@ public sealed class WindowsServerTlsTests
             { Url = url ?? "https://localhost:7443", HttpsCertificateThumbprint = thumbprint ?? Thumbprint }));
         public void RemoveTrust()
         {
-            using var roots = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            using var roots = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             roots.Open(OpenFlags.ReadWrite); roots.Remove(_authority);
         }
         public void Dispose()
