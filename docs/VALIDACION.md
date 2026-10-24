@@ -1,5 +1,22 @@
 # Validación de baseline v0.1
 
+## Custodia genérica B3 · 24/10/2026
+
+[DEV-53](DEV-53-Custodia-Secretos.md), código `ba6ca34f388618a0f0a9701a735c96ad1d8503de`:
+[CI Windows #215](https://github.com/Gust4av033/GoDental/actions/runs/40113142251) correcto.
+Release cero warnings/errores; **468 xUnit (429 aplicación + 39 servidor), cero omitidas;
+825 comprobaciones SQL / 1170 WPF**, sin errores de binding reportados. Dieciséis pruebas
+Windows reales: DPAPI/ACL y otra cuenta sintética, particiones/versiones, manipulación,
+revocación, archivos bloqueados entre procesos, restauración bajo misma identidad/perfil y CLI.
+Nueve proyectos NuGet, cero avisos altos/críticos; ocho pruebas documentales y ocho fuentes
+intactas. Node DEP0169 de herramientas Actions permanece en SEC-06. 001–027 sin cambios.
+Linux: Release sin warnings/errores, 452 pruebas correctas y 16 Windows omitidas explícitamente.
+
+No hay importador/aprobación fiscal, firma, transporte ni material real MH. Recuperación DPAPI
+en otro host, reconciliación de backups antiguos, permisos/reautenticación/auditoría fiscal y
+despliegue LAN real siguen pendientes. B2/SEC-01/03 globales abiertos. Última migración 027;
+ninguna aplicada a la PC personal desde cloud. El cierre sólo cambia documentación.
+
 ## Servidor B1 e identidad · 23/10/2026
 
 [DEV-51](DEV-51-Servidor-Identidad.md), código `c9b9710`, [CI Windows #203](https://github.com/Gust4av033/GoDental/actions/runs/40029963174):

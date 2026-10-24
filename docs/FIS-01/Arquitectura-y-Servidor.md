@@ -112,3 +112,8 @@ Pruebas de salida del bloque B: inicio sin secretos fiscales, rechazo anónimo/s
 revocación, mínimo privilegio SQL, sesión aislada entre estaciones, rate limit, aislamiento de
 ambientes, reinicio del host y logs sanitizados. Sólo entonces incorporar endpoints internos de
 operaciones fiscales reales, definidos/documentados separadamente del contrato de Hacienda.
+
+Base B3 de custodia: [DEV-53](../DEV-53-Custodia-Secretos.md) implementa candidatos opacos
+Windows con DPAPI CurrentUser/ACL y comandos locales de diagnóstico. No añade operaciones
+fiscales confiables, aprobación de material ni descarga/importación por API. CI #215 valida
+la base interna, sin certificar despliegue LAN ni protocolos Hacienda.

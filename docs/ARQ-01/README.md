@@ -19,7 +19,7 @@ sólo para satisfacer el nombre de una arquitectura.
 
 ## Decisiones vigentes
 
-- Solución actual dividida en `GoDental.Domain`, `GoDental.Application`, `GoDental.Infrastructure` y `GoDental.Wpf`; `GoDental.Server` se incorporará según la decisión v0.2. Un proyecto `GoDental.Worker` separado sólo se crea si el host central no cubre una necesidad real de ejecución independiente.
+- Solución actual dividida en `GoDental.Domain`, `GoDental.Application`, `GoDental.Infrastructure` y `GoDental.Wpf`; `GoDental.Server` implementa la base de identidad según la decisión v0.2. Un proyecto `GoDental.Worker` separado sólo se crea si el host central no cubre una necesidad real de ejecución independiente.
 - Dependencias hacia adentro: Domain sólo BCL; Application depende de Domain; Infrastructure implementa contratos de Application y conoce Domain; WPF compone Application + Infrastructure.
 - La UI no ejecuta SQL ni contiene reglas transaccionales. No Service Locator, no `GenericRepository<T>`, no CQRS/event sourcing/microservicios en v0.1.
 - Generic Host + `Microsoft.Extensions.DependencyInjection` como composition root.

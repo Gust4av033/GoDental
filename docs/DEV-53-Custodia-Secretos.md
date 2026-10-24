@@ -39,7 +39,10 @@ reautenticación, permisos específicos y auditoría transaccional; ese caso aú
 
 Pruebas puras de referencias/buffer; Windows real para DPAPI CurrentUser y ACL, manipulación,
 particiones, concurrencia, reinicio, rotación por versión y restauración cifrada bajo la misma
-identidad. Identidad distinta: proceso Windows aislado con cuenta sintética y denegación ACL/DPAPI.
+identidad. Identidad distinta: token de inicio de sesión Windows con cuenta sintética local y denegación ACL/DPAPI.
+El fixture crea/retira esa cuenta con NetAPI en runner elevado; CI exige ejecutarlo. En Windows
+local sin elevación sólo ese caso se omite explícitamente. El bloqueo entre procesos usa un
+proceso hijo independiente, sin esperar mediante sleeps ni compartir estado en memoria.
 Fixtures sintéticos fuera de artefactos de CI; nunca certificados/credenciales MH.
 Regresión Release/xUnit/SQL/WPF y comprobación de fuentes oficiales intactas.
 
@@ -58,4 +61,13 @@ Baseline local previa: Release sin warnings/errores, 418 xUnit de aplicación y 
 Después de implementar: Release sin warnings/errores, **429 aplicación + 23 HTTP = 452**
 correctas en Linux; 16 pruebas Windows omitidas explícitamente (DPAPI/ACL no se simulan).
 Ocho pruebas del verificador y ocho PDF SHA-256 correctos; 001–027 sin cambios.
-Validación nativa Windows aún pendiente; no atribuir a esta entrega resultados SQL/WPF previos.
+Validación nativa: [CI Windows #215](https://github.com/Gust4av033/GoDental/actions/runs/40113142251)
+sobre **ba6ca34f388618a0f0a9701a735c96ad1d8503de**, job `120928859988`: Release cero
+warnings/errores; **468 xUnit (429 aplicación + 39 servidor), sin omitidas; 825 comprobaciones
+SQL y 1170 WPF**, sin errores de binding reportados. Incluye 16 pruebas Windows reales y
+la denegación ACL/DPAPI bajo otra cuenta sintética, bloqueos entre procesos y comandos locales.
+Las 1170 WPF conservan las 64 comprobaciones de navegación DEV-52 incorporadas del remoto.
+Nueve proyectos NuGet consultados, cero avisos altos/críticos en CI; consulta local sin
+vulnerabilidades conocidas. Ocho pruebas documentales, ocho PDF intactos y 001–027 sin cambios.
+No hay llamadas/credenciales MH ni validación LAN personal. El cierre posterior sólo documenta
+esta evidencia. Avisos Node DEP0169 de herramientas Actions siguen registrados en SEC-06.
