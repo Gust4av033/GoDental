@@ -107,3 +107,44 @@ logging de cuerpos/cabeceras/excepciones completas.
 Pruebas reproducibles: `dotnet test tests/GoDental.Server.Tests -c Release` para contrato HTTP
 con identidad sintética; suite SQL real aislada con `--run-server-identity --localdb .` en Windows.
 No usa ni pide secretos MH, y no valida la instalación LAN personal.
+
+## 5. Raíz privada del servidor · DEV-53 (candidatos, sin importación fiscal)
+
+Sólo Windows y NTFS local. Ejecutar estos comandos **bajo la cuenta dedicada del servicio**,
+con perfil cargado y permiso para crear su directorio en ProgramData (o provisión supervisada).
+No usar la cuenta de un operador de escritorio para conservar el almacén definitivo. TEST y
+PROD requieren cuentas/raíces separadas. Ningún certificado/contraseña fiscal se solicita aquí.
+
+PowerShell, configuración **no secreta**. `IssuerId` es identificador interno estable del emisor;
+no es el NIT ni un Código de Generación. Registrar ese GUID para futuras ejecuciones:
+
+```powershell
+$env:SecretStore__ServiceSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$env:SecretStore__IssuerId = 'GUID_INTERNO_DEL_EMISOR'
+$env:SecretStore__Environment = 'TEST'
+$env:SecretStore__Root = Join-Path $env:ProgramData 'GoDental.Secrets.TEST'
+# Una sola vez: crea exclusivamente una raíz NUEVA, vacía y ligada a esa identidad/partición.
+dotnet run --project src/GoDental.Server -c Release --no-launch-profile -- --initialize-secret-store
+if ($LASTEXITCODE -ne 0) { throw 'Provisión detenida; revisar cuenta, perfil, ruta y permisos.' }
+# Se puede repetir: usa sólo bytes aleatorios sintéticos en un subdirectorio privado temporal.
+dotnet run --project src/GoDental.Server -c Release --no-launch-profile -- --check-secret-store
+if ($LASTEXITCODE -ne 0) { throw 'Diagnóstico del almacén no satisfactorio.' }
+```
+
+No ejecutar la inicialización sobre un directorio existente ni cambiar ACL para silenciar un
+fallo. El comando no acepta rutas compartidas, repo/OneDrive ni ubicaciones del operador:
+la raíz debe ser hija directa de ProgramData con prefijo `GoDental.Secrets.`. Si ProgramData está
+redirigido a un medio no local/NTFS, el backend falla de forma segura. Un fallo de permisos para
+crear esa raíz se resuelve con el responsable Windows bajo la identidad real de servicio; no
+conceder permisos amplios sobre ProgramData ni iniciar el host permanentemente como administrador.
+
+No se inicia SQL/Kestrel, no hay endpoints de lectura/importación ni se activa fiscal. Diagnóstico
+correcto comprueba custodia sintética, no certificado, Hacienda o preparación de producción.
+El backend sólo se usa por estos comandos y pruebas hasta existir un caso fiscal aprobado.
+
+Respaldar **la raíz completa** (incluidos marcador de partición y tombstones) de forma cifrada y
+con ACL equivalentes. Un `.bak` SQL o copiar archivos a otro equipo/cuenta no conserva por sí
+solo DPAPI CurrentUser. Restaurar requiere identidad/perfil/DPAPI protegidos o reaprovisionamiento
+oficial documentado; no cambiar a DPAPI LocalMachine para evitar ese requisito. Restaurar un
+backup anterior a una revocación puede reintroducir material retirado: mantenerlo fuera de uso
+hasta reconciliar revocaciones y aprobar el preflight. La recuperación entre hosts no está validada.

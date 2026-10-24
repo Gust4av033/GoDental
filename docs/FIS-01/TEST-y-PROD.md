@@ -65,3 +65,7 @@ Material TEST en perfil PROD y viceversa; alias de otro emisor/purpose; destino 
 cliente; configuración ausente; tipo sin autorización; versión de schema incompatible; certificado
 ausente/vencido; preflight anterior a cambio de credencial; restauración de TEST con trabajos
 PROD; permiso revocado después de encolar. Todos deben impedir la acción sensible sin fuga.
+
+DEV-53 implementa aislamiento **de candidatos** por raíz/emisor/ambiente/SID con DPAPI y ACL.
+Un marcador protegido impide reinterpretar la raíz TEST como PROD por configuración. Son
+valores internos; no habilitan autenticación/transmisión en ninguno de los ambientes MH.

@@ -14,6 +14,18 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
+if (args.Contains("--initialize-secret-store") || args.Contains("--check-secret-store"))
+{
+    if (args.Length != 1)
+    {
+        Console.Error.WriteLine("Usar sólo un comando local de almacén, sin otros argumentos.");
+        Environment.ExitCode = 1;
+        return;
+    }
+    Environment.ExitCode = await SecretStoreCommand.RunAsync(args[0] == "--initialize-secret-store");
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 var listenUrl = builder.Configuration["Server:Url"] ?? "https://localhost:7443";
 if (!Uri.TryCreate(listenUrl, UriKind.Absolute, out var uri) || uri.Scheme != "https" ||

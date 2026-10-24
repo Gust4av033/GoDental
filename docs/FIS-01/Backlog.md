@@ -12,7 +12,7 @@ quedan después de esta prioridad, salvo correcciones necesarias para mantener e
 | A3 | Cerrar modelo fiscal definitivo/DDL y arquitectura de adaptadores | A2 y revisión ARQ-01/DB-01/SEC-01 | PENDIENTE_DE_CONTRATO_OFICIAL; sin endpoints o longitudes adivinados |
 | B1 | Host GoDental.Server .NET 8 y autenticación de operador | ARQ-01 v0.2, política SEC-01 / DEV-51 | IMPLEMENTADO / VALIDADO_LOCALMENTE: CI #203, 22 HTTP y 35 SQL nuevas; regresión 440 xUnit / 825 SQL / 1106 WPF; sin emisión |
 | B2 | Autorización, identidad SQL y acceso a evidencias | B1, roles/provisión runtime/migración diseñados | Parcial DEV-51: permisos actuales, rol EXECUTE limitado y guard de privilegios; falta provisión/TLS real, estaciones y operaciones/evidencias fiscales, cierre SEC-01 |
-| B3 | Secret store y TEST/PROD | B1/B2; custodia genérica interna; formato final tras T05/T06 | Pendiente; Windows/ACL, aislamiento, instalación/rotación/restauración ensayados sin datos reales en CI |
+| B3 | Secret store y TEST/PROD | B1/B2; custodia genérica interna; formato final tras T05/T06 | Base implementada DEV-53: candidatos opacos Windows/DPAPI/ACL, particiones/versiones/revocación y diagnóstico local; validación Windows pendiente, importador/aprobación/auditoría/recuperación entre hosts pendientes |
 | C1 | Registro de contratos, catálogos y schemas locales versionados | A2/A3 y términos aprobados | Pendiente; validación sin red, referencias resueltas localmente, hash/edición por DTE |
 | C2 | Perfiles/autorizaciones/mapeos y snapshot inmutable | C1, migración aditiva aprobada | Pendiente; FE sin opcionales indebidos, CCFE independiente, Cliente posterior no altera snapshot |
 | C3 | Modelos/validadores FE/CCFE y DteAmountCalculator | C1/C2, ejemplos oficiales | Pendiente; fixtures y trazabilidad por regla/campo, sin alterar cálculo comercial por inferencia |
@@ -38,7 +38,7 @@ estados manualmente. No se implementa todo B–J en esta primera iteración.
 
 Leer DEV-50, FIS-01 v0.2 y este backlog. Verificar nuevamente fetch/HEAD/PR/migraciones y
 baseline. Primero A2 si se aportaron archivos oficiales; si siguen faltando, continuar **B2/B3**
-desde DEV-51. B1 ya tiene host/autenticación/sesiones; faltan provisión/TLS y fronteras de las
+desde DEV-51/DEV-53. B1 ya tiene host/autenticación/sesiones; B3 tiene base de candidatos; faltan provisión/TLS y fronteras de las
 operaciones/evidencias fiscales y custodia genérica. No crear permisos/emisión sin caso real.
 No migrar WPF completo. Política inicial de sesión definida en SEC-01.
 

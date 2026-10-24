@@ -84,3 +84,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-49 · Búsqueda y acceso](DEV-49-Busqueda-y-Acceso.md): coordenadas de búsqueda, códigos HTTP/servidor alternativo manual y login con mostrar/ocultar contraseña; sin migración nueva.
 
 - [DEV-52 · Scroll y navegación](DEV-52-Scroll-Navegacion.md): lateral fijo, opción activa visible y continuidad de la rueda en tablas/listas.
+
+- [DEV-53 · Custodia genérica de candidatos secretos](DEV-53-Custodia-Secretos.md): base B3 Windows, sin importación ni activación fiscal y sin migración nueva.

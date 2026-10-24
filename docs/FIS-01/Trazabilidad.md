@@ -71,3 +71,11 @@ fuente, sección y página o ruta exacta de schema, código/miembro concreto, fi
 test. Esta matriz de fase A no sustituye esa granularidad. Un cambio de contrato invalida la
 revisión aplicable y necesita análisis de impacto antes de activarse. Nunca sustituir las fuentes
 faltantes por un test que simplemente refleje una suposición de implementación.
+
+## Custodia genérica · DEV-53
+
+R14/R24/R25 (según alcance de custodia): contrato Application `IFiscalSecretCandidateStore`, backend
+`WindowsFiscalSecretCandidateStore`/`WindowsSecretDirectory`, comandos locales `SecretStoreCommand`,
+pruebas `FiscalSecretModelsTests`/`WindowsSecretStoreTests` y frontera `ServerHttpTests`. Cubre
+candidatos opacos, no aprobación, certificado, interoperabilidad ni contrato de firma oficial.
+Evidencia final y límites en DEV-53; no cambiar estos requisitos a cumplimiento fiscal completo.

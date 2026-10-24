@@ -121,3 +121,6 @@ certificado, JSON fiscal, firma, QR fiscal, autorización o sello ficticios. Mig
 pendientes: **021 → 022 → 023 → 024 → 025 → 026 → 027**, todas en orden. DEV-51 añade
 GoDental.Server B1/identidad interna con 027; firma, transporte, secretos fiscales y producción
 siguen pendientes. Ver [configuración del servidor](../Servidor-Configuracion.md).
+
+Base B3 de custodia genérica: [DEV-53](../DEV-53-Custodia-Secretos.md), candidatos opacos
+Windows sin aprobación/importación fiscal, sin migración nueva. No cierra custodia fiscal S1.

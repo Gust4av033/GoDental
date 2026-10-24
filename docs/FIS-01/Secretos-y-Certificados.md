@@ -77,3 +77,14 @@ para instalar un servicio no equivale al permiso de operación fiscal en GoDenta
 
 Alertas de expiración/caducidad sin revelar valores sensibles. No inventar vigencia del token o
 del certificado; obtenerla de T01/T05/T06 y metadatos verificables.
+
+## Base ejecutable de custodia · DEV-53
+
+[DEV-53](../DEV-53-Custodia-Secretos.md) implementa `IFiscalSecretCandidateStore` para candidatos
+opacos **no verificados**: backend Windows DPAPI CurrentUser + ACL, partición fija por
+emisor/ambiente/SID y referencia por propósito/versión. No sustituye `IFiscalSecretStore` de firma
+ni confirma pertenencia/vigencia. No hay versión activa, importador de archivos ni API/WPF para
+capturarlos. Comandos locales sólo provisionan raíz vacía y ensayan bytes sintéticos;
+[configuración](../Servidor-Configuracion.md#5-raíz-privada-del-servidor--dev-53-candidatos-sin-importación-fiscal).
+Rotación genérica conserva versiones y revoca por tombstone; aprobación/auditoría fiscal,
+reautenticación y recuperación DPAPI en otro host siguen pendientes. Formatos T05/T06 pendientes.

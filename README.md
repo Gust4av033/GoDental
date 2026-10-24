@@ -6,6 +6,8 @@ después servidor central seguro y contratos fiscales verificados, según [backl
 No hay emisión real: faltan fuentes técnicas oficiales, custodia fiscal y acceso TEST.
 Continuación [DEV-51](docs/DEV-51-Servidor-Identidad.md): GoDental.Server ya tiene HTTPS,
 autenticación, sesiones revocables y permisos actuales. [Configuración local](docs/Servidor-Configuracion.md).
+Base B3: [DEV-53](docs/DEV-53-Custodia-Secretos.md) agrega custodia privada Windows de candidatos
+opacos sin importación/activación fiscal ni migración nueva.
 Online implementado se conserva; siguientes conectores y escalas/listas/promociones quedan después
 de esta prioridad. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) mantiene hallazgos S1 abiertos.
 En la PC faltan **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026 → 027**.

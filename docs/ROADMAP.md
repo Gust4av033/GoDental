@@ -7,7 +7,8 @@ El usuario sustituyó los planes DTE previos por [DEV-50](DEV-50-Preparacion-DTE
 D generación → E firma → F Hacienda TEST/reconciliación → G eventos → H representación →
 I certificación → J producción**. Esta primera iteración entrega diseño/auditoría, no transmisión.
 Faltan T01–T06 oficiales y acceso TEST. [DEV-51](DEV-51-Servidor-Identidad.md) implementa B1
-de servidor/identidad y base B2 limitada a sesiones/permisos. Siguen B2/B3 sin emisión externa.
+de servidor/identidad y base B2 limitada a sesiones/permisos. B3 avanza con custodia de candidatos opacos en [DEV-53](DEV-53-Custodia-Secretos.md); siguen
+B2 y el importador/aprobación fiscal B3 pendientes, sin emisión externa.
 Online actual se conserva; conectores pendientes y escalas/listas/promociones quedan después
 de esta prioridad. Instalador/actualizaciones/respaldos y piloto siguen posteriores, salvo backup/
 restauración y controles de seguridad que son requisitos previos al uso productivo.
@@ -55,6 +56,7 @@ no Cloud API habilitada. No se declara chat conectado ni DTE emitido.
 | Paréntesis · búsqueda y acceso | Implementado; CI #193: 418 xUnit / 790 SQL / 1106 WPF | DEV-49; servidores manuales y visibilidad de contraseña, sin migración |
 | Nuevo plan DTE · especificación/preparación | PREPARADO; contratos externos pendientes | DEV-50, FIS-01 v0.2; ocho fuentes preservadas/verificables, servidor y modelo diseñados; sin transmisión ni migración nueva |
 | Servidor B1 · identidad | IMPLEMENTADO; validación y límites DEV-51 | HTTPS, sesiones durables, permisos actuales y rol EXECUTE limitado; 027; sin emisión ni cambio del login WPF |
+| Custodia B3 · candidatos secretos | Base implementada; validación Windows pendiente, sin importador/activación fiscal | DEV-53, DPAPI CurrentUser/ACL, sin migración nueva |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

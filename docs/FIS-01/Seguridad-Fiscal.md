@@ -61,3 +61,8 @@ Cada cierre identifica commit, entorno, principal con que se probó y resultado.
 avisos NuGet no certifica seguridad. Ninguna prueba ordinaria de CI utiliza credenciales reales
 TEST/PROD ni llama a Hacienda. Los fixtures se etiquetan sintéticos y nunca se muestran como
 evidencia de aceptación fiscal real.
+
+Base B3 en [DEV-53](../DEV-53-Custodia-Secretos.md): almacén Windows de candidatos opacos,
+sin endpoints, activación ni importación fiscal. Se documenta la diferencia entre persistir
+revocación y restaurar un backup antiguo: no existe protección completa contra rollback de
+backups ni cierre SEC-03; el futuro preflight necesita reconciliar y aprobar la restauración.

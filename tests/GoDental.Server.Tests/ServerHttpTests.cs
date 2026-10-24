@@ -10,6 +10,24 @@ namespace GoDental.Server.Tests;
 public sealed class ServerHttpTests
 {
     [Fact]
+    public async Task SecretCandidatesCannotBeReadProvisionedOrActivatedOverHttp()
+    {
+        await using var app = new ServerFixture(); using var client = app.Client();
+        app.Repository.Permissions = ["FISCAL.VER", "VENTAS.VER", "FISCAL.CONFIGURAR"];
+        var grant = await ServerFixture.SignIn(client);
+        client.DefaultRequestHeaders.Authorization = new("Bearer", grant.AccessToken);
+        foreach (var path in new[] { "/api/fiscal/secrets", "/api/fiscal/secrets/import", "/api/fiscal/secrets/activate" })
+        {
+            using var response = await client.PostAsJsonAsync(path, new { material = "SYNTHETIC_PRIVATE_MATERIAL" });
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.DoesNotContain("SYNTHETIC_PRIVATE_MATERIAL", await response.Content.ReadAsStringAsync());
+        }
+        using var readiness = await client.GetAsync("/api/fiscal/readiness");
+        Assert.Contains("\"signingEnabled\":false", await readiness.Content.ReadAsStringAsync());
+        Assert.DoesNotContain("SYNTHETIC_PRIVATE_MATERIAL", string.Join('\n', app.Logs.Messages));
+    }
+
+    [Fact]
     public async Task ParallelOperatorsKeepSeparateRequestContexts()
     {
         await using var app = new ServerFixture(); using var first = app.Client(); using var second = app.Client();

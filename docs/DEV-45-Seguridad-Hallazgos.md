@@ -155,3 +155,13 @@ Campos vacíos no llaman al gateway; volver al acceso no omite el cambio obligat
 El servidor público alternativo procede de una lista fija HTTPS documentada, se elige de forma
 manual y conserva el límite común/Retry-After; sin URL libre, redirecciones ni cuerpos HTTP en UI.
 SEC-01/S1, expiración S2 y demás hallazgos abiertos mantienen su fase; no se declaran resueltos.
+
+## Base de custodia B3 · DEV-53 · 24/10/2026
+
+Almacén de candidatos opacos Windows con DPAPI CurrentUser, ACL por SID/ancestros confiables,
+partición emisor/ambiente, versiones inmutables y revocación persistente. Sin importación/lectura
+HTTP ni activación fiscal. Validación final y límites en DEV-53. SEC-03 **continúa abierto**:
+formato/firmador oficial, pertenencia/vigencia, permisos/reautenticación/auditoría del importador,
+restauración en otro host y anti-rollback de backups aún pendientes. Administrador/SYSTEM y
+compromiso de la propia cuenta del servicio quedan fuera del aislamiento que ofrece DPAPI/ACL;
+proteger el host, perfil, respaldos y dumps sigue siendo necesario antes de material real.
