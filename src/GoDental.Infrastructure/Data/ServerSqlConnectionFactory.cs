@@ -41,6 +41,9 @@ public sealed class ServerSqlConnectionFactory : IDbConnectionFactory
     {
         var allowed = await connection.ExecuteScalarAsync<int>(new CommandDefinition("""
             SELECT CASE WHEN ISNULL(IS_MEMBER(N'GoDentalServerRuntime'),0)=1
+                AND (SELECT COUNT(*) FROM sys.procedures p JOIN sys.schemas s ON s.schema_id=p.schema_id
+                    WHERE s.name=N'seg' AND p.name IN(N'ServidorLoginLeer',N'ServidorLoginFinalizar',N'ServidorSesionValidar',N'ServidorSesionRevocar')
+                    AND HAS_PERMS_BY_NAME(QUOTENAME(s.name)+N'.'+QUOTENAME(p.name),N'OBJECT',N'EXECUTE')=1)=4
                 AND ISNULL(IS_SRVROLEMEMBER(N'sysadmin'),0)=0
                 AND ISNULL(IS_SRVROLEMEMBER(N'securityadmin'),0)=0
                 AND ISNULL(HAS_PERMS_BY_NAME(NULL,NULL,N'CONTROL SERVER'),0)=0

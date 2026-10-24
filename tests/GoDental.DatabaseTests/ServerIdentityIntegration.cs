@@ -69,6 +69,15 @@ internal static class ServerIdentityIntegration
         Check(broadRejected, "Un grant directo adicional invalida la identidad runtime");
         await owner.ExecuteAsync("REVOKE SELECT ON OBJECT::seg.Usuarios FROM ServerIdentityTests;");
 
+        await owner.ExecuteAsync("DENY EXECUTE ON OBJECT::seg.ServidorSesionRevocar TO ServerIdentityTests;");
+        var incompleteRejected = false;
+        try { await using var unused = await limited.OpenConnectionAsync(); }
+        catch (UnauthorizedAccessException) { incompleteRejected = true; }
+        Check(incompleteRejected, "Pertenecer al rol no basta si falta un EXECUTE de 027");
+        await owner.ExecuteAsync("REVOKE EXECUTE ON OBJECT::seg.ServidorSesionRevocar FROM ServerIdentityTests;");
+        await using (var restored = await limited.OpenConnectionAsync())
+            Check(restored.State == System.Data.ConnectionState.Open, "Restaurar el permiso 027 completo permite la identidad limitada");
+
         var first = await Login();
         Check(first.AccessToken.Length == 64 && first.ExpiresAt > DateTimeOffset.UtcNow.AddHours(7),
             "Autenticación PBKDF2 real entrega sesión opaca con expiración absoluta");
