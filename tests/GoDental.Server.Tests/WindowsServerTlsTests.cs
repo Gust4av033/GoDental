@@ -19,7 +19,7 @@ public sealed class WindowsServerTlsTests
     [WindowsAdminFact]
     public async Task WindowsCertificateStoreCanServeRealTrustedHttpsWithExactHost()
     {
-        using var fixture = new SyntheticTlsCertificate();
+        using var fixture = await SyntheticTlsCertificate.CreateAsync();
         using var provider = fixture.Provider();
         var certificate = provider.GetCertificate();
         Assert.Equal(fixture.Thumbprint, certificate.Thumbprint);
@@ -38,14 +38,13 @@ public sealed class WindowsServerTlsTests
     }
 
     [WindowsAdminFact]
-    public void WindowsLoaderRejectsUntrustedChainMissingCertificateAndWrongHost()
+    public async Task WindowsLoaderRejectsUntrustedChainMissingCertificateAndWrongHost()
     {
-        using var fixture = new SyntheticTlsCertificate();
+        using var fixture = await SyntheticTlsCertificate.CreateAsync(trustRoot: false);
         using (var missing = fixture.Provider(thumbprint: new string('0', 40)))
             Assert.Throws<ServerDeploymentException>(() => missing.GetCertificate());
         using (var wrong = fixture.Provider(url: "https://different.example:7443"))
             Assert.Throws<ServerDeploymentException>(() => wrong.GetCertificate());
-        fixture.RemoveTrust();
         using var untrusted = fixture.Provider();
         Assert.Throws<ServerDeploymentException>(() => untrusted.GetCertificate());
     }
@@ -57,7 +56,7 @@ public sealed class WindowsServerTlsTests
         private readonly X509Certificate2 _authority;
         private readonly X509Certificate2 _leaf;
         public string Thumbprint => _leaf.Thumbprint;
-        public SyntheticTlsCertificate()
+        private SyntheticTlsCertificate(bool trustRoot)
         {
             var id = Guid.NewGuid().ToString("N");
             using var caKey = RSA.Create(2048);
@@ -82,9 +81,34 @@ public sealed class WindowsServerTlsTests
             using var roots = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             roots.Open(OpenFlags.ReadWrite);
             using var publicRoot = new X509Certificate2(_authority.RawData);
-            roots.Add(publicRoot);
+            if (trustRoot) roots.Add(publicRoot);
             using var personal = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             personal.Open(OpenFlags.ReadWrite); personal.Add(_leaf);
+        }
+        public static async Task<SyntheticTlsCertificate> CreateAsync(bool trustRoot = true)
+        {
+            var fixture = new SyntheticTlsCertificate(trustRoot);
+            if (!trustRoot) return fixture;
+            try
+            {
+                // Windows propaga los cambios de Root de forma asíncrona. Preparar la CA antes
+                // de invocar el selector real, sin callbacks ni flags que acepten una cadena inválida.
+                X509ChainStatusFlags[] last = [];
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                while (!timeout.IsCancellationRequested)
+                {
+                    using var chain = new X509Chain();
+                    chain.ChainPolicy.DisableCertificateDownloads = true;
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+                    if (chain.Build(fixture._leaf)) return fixture;
+                    last = chain.ChainStatus.Select(status => status.Status).ToArray();
+                    try { await Task.Delay(100, timeout.Token); }
+                    catch (OperationCanceledException) { break; }
+                }
+                throw new InvalidOperationException("Confianza sintética Windows no preparada: " + string.Join(",", last));
+            }
+            catch { fixture.Dispose(); throw; }
         }
         public ServerTlsCertificate Provider(string? url = null, string? thumbprint = null) => new(Options.Create(new ServerHostOptions
             { Url = url ?? "https://localhost:7443", HttpsCertificateThumbprint = thumbprint ?? Thumbprint }));
