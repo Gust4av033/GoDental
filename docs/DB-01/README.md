@@ -39,3 +39,6 @@ de zonas/plantillas/campañas y snapshots de criterios, contenido y destinatario
 
 DEV-53 agrega custodia de candidatos fuera de SQL, sin migración nueva. No se usa
 ValorProtegido para almacenar material ni se introducen metadatos fiscales sin contrato aprobado.
+
+DEV-55 no requiere DDL. Refuerza el diagnóstico runtime para exigir las cuatro ejecuciones
+027 además del rol limitado; sin tablas, permisos nuevos ni cambios a scripts históricos.

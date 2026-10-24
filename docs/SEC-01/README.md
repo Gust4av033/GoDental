@@ -47,3 +47,8 @@ antes de habilitar su función. Auditoría NuGet en CI no sustituye la revisión
 Base B3: [DEV-53](../DEV-53-Custodia-Secretos.md) define custodia privada Windows para candidatos
 opacos, ligada a SID/emisor/ambiente/propósito/versión. No otorga permisos fiscales nuevos ni
 habilita importación/activación: el caso sensible y su reautenticación/auditoría siguen pendientes.
+
+DEV-55 define la barrera de arranque B2: SID de servicio verificado, cuenta Windows limitada,
+TLS explícito y rol SQL con procedimientos 027 completos. La cadena TLS se verifica localmente
+sin descargas/revocación online; clientes, provisión y estado de revocación se comprueban en
+el despliegue real. Diagnóstico sanitizado, sin flags de omisión de seguridad en configuración.

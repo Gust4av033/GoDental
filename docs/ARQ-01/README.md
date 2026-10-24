@@ -45,3 +45,10 @@ Infrastructure (DPAPI CurrentUser + ACL por identidad). Sólo candidatos opacos 
 fiscal, sin lectura por HTTP/WPF ni registro en el contenedor comercial. GoDental.Server ofrece
 provisión/diagnóstico local sin importación de material. Diseño y límites en
 [DEV-53](../DEV-53-Custodia-Secretos.md); no requiere DDL ni cambia el contrato fiscal pendiente.
+
+## Barrera de despliegue B2 · DEV-55
+
+El host incorpora diagnóstico local y verificación de arranque por identidad/TLS/SQL. La
+selección de certificado HTTPS y política de escucha pertenecen a GoDental.Server; SQL y
+mínimo privilegio permanecen en Infrastructure. Contrato y límites en DEV-55. No se añade
+Windows Service/instalador ni se cambia el contrato fiscal o el login WPF en este bloque.
