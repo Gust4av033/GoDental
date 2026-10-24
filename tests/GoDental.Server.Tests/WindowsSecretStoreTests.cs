@@ -11,11 +11,23 @@ using Xunit;
 
 namespace GoDental.Server.Tests;
 
-public sealed class WindowsFactAttribute : FactAttribute
+public class WindowsFactAttribute : FactAttribute
 {
     public WindowsFactAttribute()
     {
         if (!OperatingSystem.IsWindows()) Skip = "DPAPI/ACL requieren Windows real; no se sustituyen por un mock.";
+    }
+}
+
+public sealed class WindowsAdminFactAttribute : WindowsFactAttribute
+{
+    public WindowsAdminFactAttribute()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var current = WindowsIdentity.GetCurrent();
+        if (!new WindowsPrincipal(current).IsInRole(WindowsBuiltInRole.Administrator) &&
+            Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != "true")
+            Skip = "La prueba con una cuenta Windows sintética requiere un runner aislado elevado; CI exige ejecutarla.";
     }
 }
 
@@ -315,7 +327,7 @@ public sealed class WindowsSecretStoreTests : IDisposable
         Assert.Equal(SecretStoreFailure.Revoked, error.Failure);
     }
 
-    [WindowsFact]
+    [WindowsAdminFact]
     public async Task AnotherWindowsAccountCannotReadFilesOrDecryptCopiedBlob()
     {
         using var current = WindowsIdentity.GetCurrent();
@@ -327,9 +339,18 @@ public sealed class WindowsSecretStoreTests : IDisposable
         var marker = File.ReadAllBytes(Path.Combine(_root, "scope.bin"));
         var user = "GDtest" + Guid.NewGuid().ToString("N")[..12];
         var password = Convert.ToBase64String(RandomNumberGenerator.GetBytes(36)) + "aA9!";
+        var account = new NativeUser { Name = user, Password = password, Privilege = 1, Flags = 0x0001 | 0x0200 | 0x10000 };
+        var created = false;
         try
         {
-            await RunPowerShell($"$p=ConvertTo-SecureString '{password}' -AsPlainText -Force; New-LocalUser -Name '{user}' -Password $p -AccountNeverExpires -ErrorAction Stop | Out-Null; Add-LocalGroupMember -Group (Get-LocalGroup -SID 'S-1-5-32-545').Name -Member '{user}' -ErrorAction Stop");
+            // NetAPI evita depender de módulos/política de PowerShell; nunca imprime la contraseña.
+            var status = NetUserAdd(null, 1, ref account, out var parameter);
+            Assert.True(status == 0, $"NetUserAdd sintético: estado {status}, parámetro {parameter}.");
+            created = true;
+            var users = ((NTAccount)new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null).Translate(typeof(NTAccount)))
+                .Value.Split('\\').Last();
+            var member = new NativeGroupMember { Name = Environment.MachineName + "\\" + user };
+            Assert.Equal(0u, NetLocalGroupAddMembers(null, users, 3, ref member, 1));
             Assert.True(LogonUser(user, ".", password, 2, 0, out var token));
             using (token)
                 WindowsIdentity.RunImpersonated(token, () =>
@@ -342,25 +363,32 @@ public sealed class WindowsSecretStoreTests : IDisposable
                         "GoDental.Scope.v1"u8.ToArray(), DataProtectionScope.CurrentUser));
                 });
         }
-        finally { await RunPowerShell($"Remove-LocalUser -Name '{user}' -ErrorAction SilentlyContinue"); }
+        finally { if (created) Assert.Equal(0u, NetUserDel(null, user)); }
     }
 
-    private static async Task RunPowerShell(string script)
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct NativeUser
     {
-        using var process = new Process { StartInfo = new("powershell.exe")
-        {
-            Arguments = "-NoLogo -NoProfile -NonInteractive -Command -", UseShellExecute = false,
-            RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true
-        } };
-        process.Start();
-        await process.StandardInput.WriteLineAsync("$ErrorActionPreference='Stop'; " + script);
-        process.StandardInput.Close();
-        var output = process.StandardOutput.ReadToEndAsync();
-        var errors = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        await Task.WhenAll(output, errors); // No revelar texto de proveedor ni credencial sintética en logs.
-        Assert.Equal(0, process.ExitCode);
+        public string Name;
+        public string Password;
+        public uint PasswordAge;
+        public uint Privilege;
+        public string? HomeDirectory;
+        public string? Comment;
+        public uint Flags;
+        public string? ScriptPath;
     }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct NativeGroupMember { public string Name; }
+
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint NetUserAdd(string? server, uint level, ref NativeUser user, out uint parameterError);
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint NetUserDel(string? server, string userName);
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint NetLocalGroupAddMembers(string? server, string groupName, uint level,
+        ref NativeGroupMember member, uint count);
 
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
