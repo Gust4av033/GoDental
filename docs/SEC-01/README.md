@@ -43,3 +43,7 @@ una frontera confiable de identidad: cerrar mínimo privilegio/impersonación an
 y producción, junto con custodia de secretos fiscales. Expiración, ACL, respaldo/restauración y
 firma de distribución se verifican antes de instalador/piloto. Riesgos altos/críticos se corrigen
 antes de habilitar su función. Auditoría NuGet en CI no sustituye la revisión del código/despliegue.
+
+Base B3: [DEV-53](../DEV-53-Custodia-Secretos.md) define custodia privada Windows para candidatos
+opacos, ligada a SID/emisor/ambiente/propósito/versión. No otorga permisos fiscales nuevos ni
+habilita importación/activación: el caso sensible y su reautenticación/auditoría siguen pendientes.

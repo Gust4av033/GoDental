@@ -37,3 +37,11 @@ sólo para satisfacer el nombre de una arquitectura.
 `Wpf`: Bootstrap, Navigation, Views, ViewModels, Controls, Behaviors, Converters, Themes, Resources, Common.
 
 Si una necesidad real exige romper estas fronteras, se documenta y versiona ARQ-01 antes de introducir la excepción.
+
+## Custodia genérica · DEV-53
+
+La base B3 usa contrato Application `IFiscalSecretCandidateStore` y backend Windows de
+Infrastructure (DPAPI CurrentUser + ACL por identidad). Sólo candidatos opacos sin aprobación
+fiscal, sin lectura por HTTP/WPF ni registro en el contenedor comercial. GoDental.Server ofrece
+provisión/diagnóstico local sin importación de material. Diseño y límites en
+[DEV-53](../DEV-53-Custodia-Secretos.md); no requiere DDL ni cambia el contrato fiscal pendiente.

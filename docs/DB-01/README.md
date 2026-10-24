@@ -36,3 +36,6 @@ procedimientos; agrega una función, no un procedimiento. Sin reconstruir conver
 DEV-47 define 026 antes de implementar: SegmentosProspecto y SeguimientosProspecto; versiones
 de zonas/plantillas/campañas y snapshots de criterios, contenido y destinatarios. Estado final:
 81 tablas / 8 vistas / 18 procedimientos, más la función de 025. No reescribe datos históricos.
+
+DEV-53 agrega custodia de candidatos fuera de SQL, sin migración nueva. No se usa
+ValorProtegido para almacenar material ni se introducen metadatos fiscales sin contrato aprobado.
