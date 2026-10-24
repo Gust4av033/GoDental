@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using GoDental.Application.Abstractions.Security;
 using GoDental.Application.DTOs;
 using GoDental.Infrastructure.Security;
+using GoDental.Server.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -18,18 +19,22 @@ internal sealed class ServerFixture : WebApplicationFactory<Program>
     public const string SyntheticPassword = "synthetic-only-server-test-phrase";
     public FakeIdentityRepository Repository { get; } = new();
     public CapturedLogs Logs { get; } = new();
+    public ServerDeploymentStatus StartupStatus { get; set; } = ServerDeploymentStatus.Ready;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string,string?>
         {
-            ["Server:SqlServer"] = "localhost", ["Server:Database"] = "GoDental_Development"
+            ["Server:SqlServer"] = "localhost", ["Server:Database"] = "GoDental_Development",
+            ["Server:ServiceSid"] = "SYNTHETIC_TEST_SID", ["Server:HttpsCertificateThumbprint"] = new string('A', 40)
         }));
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IServerAuthenticationRepository>();
             services.AddSingleton<IServerAuthenticationRepository>(Repository);
+            services.RemoveAll<IServerDeploymentCheck>();
+            services.AddSingleton<IServerDeploymentCheck>(new SyntheticStartupCheck(() => StartupStatus));
         });
         builder.ConfigureLogging(logging => logging.AddProvider(Logs));
     }
@@ -43,6 +48,11 @@ internal sealed class ServerFixture : WebApplicationFactory<Program>
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<ServerAccessGrant>())!;
     }
+}
+
+internal sealed class SyntheticStartupCheck(Func<ServerDeploymentStatus> status) : IServerDeploymentCheck
+{
+    public Task<ServerDeploymentStatus> CheckAsync(CancellationToken ct = default) => Task.FromResult(status());
 }
 
 internal sealed class FakeIdentityRepository : IServerAuthenticationRepository

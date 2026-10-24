@@ -14,7 +14,9 @@ de esta prioridad. Instalador/actualizaciones/respaldos y piloto siguen posterio
 restauración y controles de seguridad que son requisitos previos al uso productivo.
 [DEV-45](DEV-45-Seguridad-Hallazgos.md) conserva hallazgos abiertos; riesgos altos no esperan al final.
 
-**Migraciones pendientes en la PC del usuario: desde 021, incluida; 021 → 022 → 023 → 024 → 025 → 026 → 027.**
+**Estado informado por el usuario el 24/10/2026: PC actualizada hasta la migración 027.**
+[DEV-55](DEV-55-Servidor-Despliegue.md) prepara diagnóstico/arranque de B2, sin migración nueva.
+En otra instalación aplicar sólo pendientes del tramo 021 → 022 → 023 → 024 → 025 → 026 → 027.
 Cada archivo es incremental; el último no incluye los anteriores. No aplicadas desde cloud.
 
 ## Base histórica · revisión del 21/10/2026
@@ -57,6 +59,7 @@ no Cloud API habilitada. No se declara chat conectado ni DTE emitido.
 | Nuevo plan DTE · especificación/preparación | PREPARADO; contratos externos pendientes | DEV-50, FIS-01 v0.2; ocho fuentes preservadas/verificables, servidor y modelo diseñados; sin transmisión ni migración nueva |
 | Servidor B1 · identidad | IMPLEMENTADO; validación y límites DEV-51 | HTTPS, sesiones durables, permisos actuales y rol EXECUTE limitado; 027; sin emisión ni cambio del login WPF |
 | Custodia B3 · candidatos secretos | Base implementada; CI #215 correcto: 468 xUnit / 825 SQL / 1170 WPF; sin importador/activación fiscal | DEV-53, DPAPI CurrentUser/ACL, sin migración nueva |
+| Preparación de despliegue B2 | Implementada; validación nativa pendiente | DEV-55: barrera de arranque, diagnóstico SID/TLS/SQL; provisión real y cierre global pendientes |
 | Instalador y actualizaciones | Diseño propuesto; implementación pendiente antes del piloto productivo | DEV-36: motor SQL, historial, compatibilidad y backups |
 
 DEV-36 define la preparación del despliegue antes de empezar a conservar registros productivos: una base central, instalador principal/cliente, migraciones con historial, respaldo y compatibilidad. No está implementado aún y no reemplaza la secuencia funcional de DEV-30.

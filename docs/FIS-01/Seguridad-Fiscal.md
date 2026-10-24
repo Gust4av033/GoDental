@@ -66,3 +66,7 @@ Base B3 en [DEV-53](../DEV-53-Custodia-Secretos.md): almacén Windows de candida
 sin endpoints, activación ni importación fiscal. Se documenta la diferencia entre persistir
 revocación y restaurar un backup antiguo: no existe protección completa contra rollback de
 backups ni cierre SEC-03; el futuro preflight necesita reconciliar y aprobar la restauración.
+
+DEV-55 fortalece el despliegue B2: cuenta Windows limitada y SID real, certificado HTTPS
+explícito y SQL 027 completo antes de escuchar. Diagnóstico sanitizado sin listener ni secretos.
+No cierra estaciones, operaciones/evidencias fiscales, revocación TLS o provisión LAN reales.

@@ -1,4 +1,4 @@
-# Configuración local de GoDental.Server · bloque B1
+# Configuración local de GoDental.Server · B1 / preparación B2
 
 Servidor ASP.NET Core .NET 8 para identidad de operador. No reemplaza todavía la conexión
 comercial de WPF y no emite DTE. No instalar certificados/credenciales fiscales en este bloque.
@@ -8,7 +8,8 @@ y Windows en el equipo de despliegue; no se ejecutó en las PCs personales desde
 
 ## 1. Base de datos
 
-Aplicar todos los pendientes **021 → 022 → 023 → 024 → 025 → 026 → 027**, con respaldo previo
+El usuario confirma **027 aplicada** en su PC el 24/10/2026; DEV-55 no agrega migraciones.
+Para otra instalación, aplicar sólo pendientes **021 → 022 → 023 → 024 → 025 → 026 → 027**, con respaldo previo
 y el destino real de Ajustes de conexión. La última no contiene las anteriores. No recrear una
 base con registros ni usar el instalador completo contra otra base por asumir el nombre.
 
@@ -59,31 +60,77 @@ directo a usuarios, ventas, fiscal, DDL ni procedimientos comerciales. Revisar t
 Windows heredados, roles/GRANT adicionales y permisos del servidor. Los clientes comerciales
 actuales conservan su deuda de acceso SQL; no se declara cierre global SEC-01.
 
-## 3. TLS y ejecución
+## 3. TLS, cuenta y diagnóstico de despliegue · DEV-55
 
-HTTPS obligatorio, sin confiar automáticamente en `X-Forwarded-Proto`, sin redirección de
-credenciales HTTP. Predeterminado `https://localhost:7443`, sólo el equipo local. Para LAN,
-configurar certificado HTTPS confiable y nombre accesible, firewall y cuenta del servicio antes
-de cambiar escucha. TLS del host **es distinto del certificado de firma fiscal MH**.
+El servidor verifica sus requisitos antes de escuchar. Fuera de Development exige Windows,
+SID de cuenta de servicio igual al proceso y cuenta sin Administradores/LocalSystem/
+LocalService/NetworkService. No utilizar el usuario SQL administrador para superar un fallo.
+La identidad de migraciones, el operador GoDental y la cuenta Windows del servicio son distintas.
 
-Desarrollo local: el SDK ofrece `dotnet dev-certs https --trust` bajo la identidad/perfil que
-ejecuta el host. No sustituye el certificado y la confianza necesarios para un servicio/LAN.
-El host usa la configuración HTTPS normal de Kestrel; material privado fuera de Git y logs.
+HTTPS usa un certificado **TLS del host, no un certificado fiscal MH**. El responsable de
+Windows/PKI instala una hoja para el nombre real del servidor en `LocalMachine/My`, su cadena
+pública confiable y permiso de lectura de la clave privada exclusivamente a la cuenta de servicio
+(y custodios del sistema). Usar certificados de software accesibles sin interacción. No poner PFX,
+contraseñas, claves ni material MH en Git, appsettings, argumentos o historial.
 
-Ejecutar desde PowerShell **bajo la cuenta Windows del servicio**, con permiso de lectura de
-los binarios y de su certificado HTTPS. Estas variables sólo configuran valores no secretos:
+Puede inspeccionarse con `certlm.msc`: Personal → Certificados. Copiar la huella pública de la
+hoja, sin espacios, y verificar SAN para el nombre concreto usado en `Server:Url`, EKU Server
+Authentication y fechas. No hay fallback a CN ni wildcard. El host comprueba cadena local sin
+descargas AIA/OCSP/CRL; esto no acredita estado de revocación ni confianza desde la otra PC.
+El responsable verifica revocación/rotación y configura la confianza pública de la CA en cada
+estación. Nunca distribuir la clave privada al cliente ni desactivar validación TLS.
+
+PowerShell **bajo la cuenta real dedicada, sin elevación**; sustituir valores no secretos:
 
 ```powershell
+$env:DOTNET_ENVIRONMENT = 'Production'
+$env:ASPNETCORE_ENVIRONMENT = 'Production'
 $env:Server__SqlServer = 'TU_INSTANCIA'
 $env:Server__Database = 'TU_BASE'
-$env:Server__Url = 'https://localhost:7443'
+$env:Server__Url = 'https://NOMBRE_REAL_DEL_SERVIDOR:7443'
+$env:Server__ServiceSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$env:Server__HttpsCertificateThumbprint = 'HUELLA_TLS_DE_40_CARACTERES_HEXADECIMALES'
+$env:Server__LocalDevelopmentSqlCertificate = 'false'
+
+dotnet run --project src/GoDental.Server -c Release --no-launch-profile -- --check-server
+if ($LASTEXITCODE -ne 0) { throw 'Despliegue no preparado; revisar el código de diagnóstico.' }
 dotnet run --project src/GoDental.Server -c Release --no-launch-profile
 ```
 
-Sólo para desarrollo **local**: `ASPNETCORE_ENVIRONMENT=Development` y
-`Server__LocalDevelopmentSqlCertificate=true` permiten certificado SQL local en una base
-`GoDental_Development` o `GoDental_Tests_...` validada. No relajan identidad SQL ni HTTPS.
-No usar esta opción en LAN/PROD. No enviar una cadena de conexión del cliente al servidor.
+`--check-server` no inicia HTTP, cambia SQL, instala certificados ni prueba Hacienda. `Ready`
+sólo certifica esas comprobaciones de configuración/identidad/TLS/SQL bajo esa cuenta y momento;
+no habilita emisión, firma, transmisión o PROD fiscal. Si falla, no iniciar el host como administrador
+ni conceder db_owner, permisos amplios o aceptación de certificado SQL en producción.
+
+| Código | Revisión local |
+| --- | --- |
+| ConfigurationInvalid | Instancia/base/URL, SID/huella y entorno; quitar secciones Kestrel alternativas |
+| WindowsRequired | El despliegue seguro configurado requiere Windows |
+| ServiceIdentityDenied | Ejecutar bajo SID dedicado real, sin cuenta incorporada/Administradores |
+| TlsNotReady | Huella única en LocalMachine/My, SAN exacto, fechas/EKU, clave accesible y cadena confiable |
+| SqlIdentityDenied | Revisar rol mínimo y EXECUTE de los cuatro procedimientos 027, sin grants amplios |
+| SqlNotReady | Servicio SQL, nombre/base, TLS y permisos de conexión; no imprime la excepción del proveedor |
+| DevelopmentTlsUnverified | SQL/configuración de desarrollo comprobados; certificado del SDK queda para Kestrel, sin aprobación de despliegue |
+
+Desarrollo local: `DOTNET_ENVIRONMENT` y `ASPNETCORE_ENVIRONMENT` en `Development`, URL loopback
+(`https://localhost:7443`). El SDK ofrece `dotnet dev-certs https --trust` bajo el perfil que ejecuta
+el host. Si no se selecciona huella explícita, Kestrel verifica/resuelve ese certificado al iniciar;
+`--check-server` devuelve `DevelopmentTlsUnverified` y salida 1 en vez de declarar TLS preparado.
+Esto no sustituye el certificado/confiabilidad de LAN. SQL conserva su guard de rol mínimo en
+Development. `Server__LocalDevelopmentSqlCertificate=true` sólo se admite para SQL local y base
+`GoDental_Development`/`GoDental_Tests_...` validada; nunca LAN/producción.
+
+La configuración puede mantenerse en `appsettings.local.json` **del directorio del ejecutable**
+(ignorado por Git), usando una sección `Server` con esas mismas claves no secretas. Las variables
+de entorno tienen precedencia. El directorio de trabajo de un futuro servicio no cambia esa ruta.
+No se aceptan secciones `Kestrel` alternativas; una única URL HTTPS, sin recarga de listeners.
+TLS 1.2/1.3. Selección de certificado/URL requiere reiniciar. Proteger escritura de binarios y
+configuración para que operadores de escritorio no puedan cambiarla.
+
+Para LAN: mantener HTTPS válido y abrir únicamente el puerto configurado hacia las estaciones
+permitidas; no publicar SQL ni el firmador en Internet. Instalación como servicio Windows,
+certificado/firewall/cuenta reales y comprobación desde la segunda PC permanecen pendientes.
+Este bloque prepara su verificación; no efectuó esos cambios en las PCs personales.
 
 ## 4. Operación
 

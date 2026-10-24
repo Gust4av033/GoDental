@@ -117,3 +117,6 @@ Base B3 de custodia: [DEV-53](../DEV-53-Custodia-Secretos.md) implementa candida
 Windows con DPAPI CurrentUser/ACL y comandos locales de diagnóstico. No añade operaciones
 fiscales confiables, aprobación de material ni descarga/importación por API. CI #215 valida
 la base interna, sin certificar despliegue LAN ni protocolos Hacienda.
+
+DEV-55 añade barrera de arranque, selección explícita de certificado HTTPS y diagnóstico local
+de identidad/TLS/SQL. No modifica la identidad fiscal ni cierra la provisión real de las PCs.

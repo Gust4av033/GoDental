@@ -10,7 +10,9 @@ Base B3: [DEV-53](docs/DEV-53-Custodia-Secretos.md) agrega custodia privada Wind
 opacos sin importación/activación fiscal ni migración nueva.
 Online implementado se conserva; siguientes conectores y escalas/listas/promociones quedan después
 de esta prioridad. [DEV-45](docs/DEV-45-Seguridad-Hallazgos.md) mantiene hallazgos S1 abiertos.
-En la PC faltan **desde 021, incluida: 021 → 022 → 023 → 024 → 025 → 026 → 027**.
+El usuario confirma su PC **actualizada hasta 027** (24/10/2026). DEV-55 no añade migraciones.
+[DEV-55](docs/DEV-55-Servidor-Despliegue.md) prepara la barrera de arranque y diagnóstico de
+identidad Windows, certificado HTTPS y SQL mínimo antes de escuchar.
 027 agrega identidad del servidor, sin emisión DTE ni cambios aplicados desde cloud a la PC.
 
 GoDental es una aplicación de escritorio para la operación comercial de un depósito dental: inventario, compras/importaciones, ventas/POS, caja, crédito, seguridad, fiscal y comercial/online.

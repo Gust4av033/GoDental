@@ -88,3 +88,5 @@ Si dos fuentes entran en conflicto, la discrepancia se documenta y resuelve en l
 - [DEV-53 · Custodia genérica de candidatos secretos](DEV-53-Custodia-Secretos.md): base B3 Windows, sin importación ni activación fiscal y sin migración nueva.
 
 - [DEV-54 · Online: navegación y carga](DEV-54-Online-Navegacion-Carga.md): menú interno independiente e indicadores azules visibles durante el desplazamiento.
+
+- [DEV-55 · Preparación verificable de despliegue B2](DEV-55-Servidor-Despliegue.md): diagnóstico de identidad/TLS/SQL y arranque bloqueado, sin migración nueva.
